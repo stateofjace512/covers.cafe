@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Music, Loader } from 'lucide-react';
+import { ArrowLeft, Music, Loader, Camera } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getCoverImageSrc } from '../lib/media';
@@ -9,6 +9,13 @@ import CoverModal from '../components/CoverModal';
 import type { Cover } from '../lib/types';
 
 const PAGE_SIZE = 24;
+const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
+
+function artistPhotoTransformUrl(artistName: string, bust?: number): string {
+  const path = `artists/${encodeURIComponent(artistName)}.jpg`;
+  const t = bust ? `&t=${bust}` : '';
+  return `${SUPABASE_URL}/storage/v1/render/image/public/covers_cafe_avatars/${path}?width=850&height=850&resize=cover&quality=85${t}`;
+}
 
 export default function MusicArtistDetail() {
   const { artistName: encodedName } = useParams<{ artistName: string }>();
@@ -23,6 +30,22 @@ export default function MusicArtistDetail() {
   const [selectedCover, setSelectedCover] = useState<Cover | null>(null);
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
   const [headerCover, setHeaderCover] = useState<Cover | null>(null);
+
+  // Artist photo state
+  const [avatarSrc, setAvatarSrc] = useState('');
+  const [isArtistPhoto, setIsArtistPhoto] = useState(false);
+  const [photoBust, setPhotoBust] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Set initial avatar src whenever artistName changes
+  useEffect(() => {
+    if (!artistName) return;
+    setIsArtistPhoto(true);
+    setAvatarSrc(artistPhotoTransformUrl(artistName, photoBust));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [artistName]);
 
   useEffect(() => {
     if (!artistName) return;
@@ -94,6 +117,34 @@ export default function MusicArtistDetail() {
     }
   };
 
+  const handleAvatarError = () => {
+    if (headerCover) {
+      setAvatarSrc(getCoverImageSrc(headerCover, 200));
+      setIsArtistPhoto(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !artistName) return;
+    setUploading(true);
+    setUploadError('');
+    const path = `artists/${encodeURIComponent(artistName)}.jpg`;
+    const { error } = await supabase.storage
+      .from('covers_cafe_avatars')
+      .upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
+    if (error) {
+      setUploadError('Upload failed. Check storage bucket permissions.');
+    } else {
+      const bust = Date.now();
+      setPhotoBust(bust);
+      setAvatarSrc(artistPhotoTransformUrl(artistName, bust));
+      setIsArtistPhoto(true);
+    }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   return (
     <div>
       <button className="btn btn-secondary ma-back-btn" onClick={() => navigate('/artists')}>
@@ -109,8 +160,16 @@ export default function MusicArtistDetail() {
       >
         <div className="ma-header-blur" />
         <div className="ma-header-content">
-          <div className="ma-avatar">
-            {headerCover ? (
+          <div className={`ma-avatar${isArtistPhoto ? ' ma-avatar--circle' : ''}`}>
+            {avatarSrc ? (
+              <img
+                key={avatarSrc}
+                src={avatarSrc}
+                alt={artistName}
+                className="ma-avatar-img"
+                onError={handleAvatarError}
+              />
+            ) : headerCover ? (
               <img
                 src={getCoverImageSrc(headerCover, 200)}
                 alt={artistName}
@@ -119,6 +178,25 @@ export default function MusicArtistDetail() {
             ) : (
               <Music size={36} style={{ opacity: 0.4 }} />
             )}
+            {user && (
+              <button
+                className="ma-photo-upload-btn"
+                onClick={() => fileInputRef.current?.click()}
+                title="Upload artist photo"
+                disabled={uploading}
+              >
+                {uploading
+                  ? <Loader size={12} className="ma-spinner" />
+                  : <Camera size={12} />}
+              </button>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handlePhotoUpload}
+            />
           </div>
           <div className="ma-header-info">
             <h1 className="ma-artist-name">{artistName}</h1>
@@ -127,6 +205,7 @@ export default function MusicArtistDetail() {
                 {covers.length}{hasMore ? '+' : ''} cover{covers.length !== 1 ? 's' : ''}
               </p>
             )}
+            {uploadError && <p className="ma-upload-error">{uploadError}</p>}
           </div>
         </div>
       </div>
@@ -206,15 +285,29 @@ export default function MusicArtistDetail() {
           box-shadow: 0 4px 16px rgba(0,0,0,0.5);
           background: rgba(255,255,255,0.1);
           display: flex; align-items: center; justify-content: center;
-          color: rgba(255,255,255,0.5);
+          color: rgba(255,255,255,0.5); position: relative;
+          transition: border-radius 0.2s;
         }
+        .ma-avatar--circle { border-radius: 50%; }
         .ma-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .ma-photo-upload-btn {
+          position: absolute; bottom: 0; right: 0;
+          width: 26px; height: 26px; border-radius: 50%;
+          background: rgba(10,5,2,0.8); border: 1px solid rgba(255,255,255,0.3);
+          color: rgba(255,255,255,0.85);
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; opacity: 0; transition: opacity 0.15s;
+          z-index: 2;
+        }
+        .ma-avatar:hover .ma-photo-upload-btn { opacity: 1; }
+        .ma-photo-upload-btn:hover { transform: none; box-shadow: none; background: var(--accent); }
         .ma-header-info { display: flex; flex-direction: column; gap: 6px; }
         .ma-artist-name {
           font-size: 28px; font-weight: bold; color: #fff;
           text-shadow: 0 2px 8px rgba(0,0,0,0.6); margin: 0; line-height: 1.1;
         }
         .ma-cover-count { font-size: 14px; color: rgba(255,255,255,0.65); margin: 0; }
+        .ma-upload-error { font-size: 12px; color: #f87171; margin: 0; }
         .ma-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, Loader, Pencil, Check, X, ImagePlus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { getCoverImageSrc } from '../lib/media';
 import CoverCard from '../components/CoverCard';
 import CoverModal from '../components/CoverModal';
 import type { Cover } from '../lib/types';
@@ -171,6 +172,33 @@ export default function CollectionDetail() {
                 <X size={14} />
               </button>
             </div>
+
+            {/* Cover picker */}
+            <div className="col-edit-cover-section">
+              <span className="col-edit-cover-label">Collection cover</span>
+              {covers.length === 0 ? (
+                <p style={{ fontSize: 12, color: 'var(--body-text-muted)', margin: 0 }}>Add covers to this collection first.</p>
+              ) : (
+                <div className="col-edit-cover-grid">
+                  {covers.map((cover) => {
+                    const isActive = collection?.cover_image_id === cover.id;
+                    return (
+                      <button
+                        key={cover.id}
+                        className={`col-edit-cover-thumb${isActive ? ' col-edit-cover-thumb--active' : ''}`}
+                        onClick={() => handleSetCover(cover.id)}
+                        disabled={setCoverLoading === cover.id}
+                        title={isActive ? 'Remove as cover' : cover.title}
+                      >
+                        <img src={getCoverImageSrc(cover, 120)} alt={cover.title} />
+                        {isActive && <div className="col-edit-cover-check"><Check size={12} /></div>}
+                        {setCoverLoading === cover.id && <div className="col-edit-cover-check"><Loader size={12} className="col-spinner" /></div>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <>
@@ -298,6 +326,24 @@ export default function CollectionDetail() {
           border-color: var(--accent); opacity: 1;
         }
         .col-set-cover-btn:hover { transform: none; box-shadow: none; }
+        .col-edit-cover-section { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--body-card-border); }
+        .col-edit-cover-label { font-size: 11px; font-weight: bold; color: var(--body-text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .col-edit-cover-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+        .col-edit-cover-thumb {
+          width: 56px; height: 56px; border-radius: 4px; overflow: hidden;
+          border: 2px solid transparent; padding: 0; cursor: pointer;
+          position: relative; flex-shrink: 0;
+          transition: border-color 0.12s, opacity 0.12s;
+        }
+        .col-edit-cover-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .col-edit-cover-thumb:hover { border-color: rgba(255,255,255,0.4); }
+        .col-edit-cover-thumb--active { border-color: var(--accent); }
+        .col-edit-cover-check {
+          position: absolute; inset: 0;
+          background: rgba(192,90,26,0.55);
+          display: flex; align-items: center; justify-content: center;
+          color: white;
+        }
       `}</style>
     </div>
   );
