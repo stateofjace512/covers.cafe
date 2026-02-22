@@ -1,0 +1,149 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Upload" description="Upload your album cover art to covers.cafe">
+  <h1 class="section-title">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v13m0-13L8 6m4-4 4 4"/><path d="M20 16v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2"/></svg>
+    Upload a Cover
+  </h1>
+
+  <div class="card upload-card">
+    <div class="upload-drop-zone" id="drop-zone">
+      <div class="upload-drop-inner">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.45;margin-bottom:12px"><path d="M12 2v13m0-13L8 6m4-4 4 4"/><path d="M20 16v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2"/></svg>
+        <p class="upload-drop-label">Drag &amp; drop your cover art here</p>
+        <p class="upload-drop-hint">PNG, JPG, WEBP · Max 10 MB · Square recommended</p>
+        <label class="btn btn-primary upload-browse-btn">
+          Browse Files
+          <input type="file" accept="image/*" style="display:none" />
+        </label>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <form class="upload-form">
+      <div class="form-row">
+        <label class="form-label">Album Title <span class="form-required">*</span></label>
+        <input type="text" placeholder="e.g. Dark Side of the Moon" class="form-input" />
+      </div>
+      <div class="form-row">
+        <label class="form-label">Artist <span class="form-required">*</span></label>
+        <input type="text" placeholder="e.g. Pink Floyd" class="form-input" />
+      </div>
+      <div class="form-row">
+        <label class="form-label">Year</label>
+        <input type="text" placeholder="e.g. 1973" class="form-input form-input--short" />
+      </div>
+      <div class="form-row">
+        <label class="form-label">Tags</label>
+        <input type="text" placeholder="e.g. rock, psychedelic, 70s" class="form-input" />
+        <p class="form-hint">Comma-separated tags to help others find this cover.</p>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" disabled>Submit Cover</button>
+        <span class="form-note">Sign in required to upload.</span>
+      </div>
+    </form>
+  </div>
+</Layout>
+
+<style>
+  .upload-card { max-width: 640px; }
+
+  .upload-drop-zone {
+    border: 3px dashed var(--body-card-border);
+    border-radius: 6px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.04) 100%);
+    box-shadow: var(--shadow-inset);
+    padding: 40px 24px;
+    text-align: center;
+    transition: border-color 0.15s, background 0.15s;
+    cursor: pointer;
+    margin-bottom: 24px;
+  }
+
+  .upload-drop-zone:hover {
+    border-color: var(--accent);
+    background: linear-gradient(180deg, rgba(192,90,26,0.06) 0%, rgba(192,90,26,0.02) 100%);
+  }
+
+  .upload-drop-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: var(--body-text);
+  }
+
+  .upload-drop-label {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--body-text);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+  }
+
+  .upload-drop-hint {
+    font-size: 12px;
+    color: var(--body-text-muted);
+    margin-bottom: 16px;
+  }
+
+  .upload-browse-btn {
+    cursor: pointer;
+  }
+
+  /* Form */
+  .upload-form { display: flex; flex-direction: column; gap: 16px; }
+
+  .form-row { display: flex; flex-direction: column; gap: 5px; }
+
+  .form-label {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--body-text);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+  }
+
+  [data-theme="dark"] .form-label { text-shadow: none; }
+
+  .form-required { color: var(--accent); }
+
+  .form-input {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--body-card-border);
+    background: var(--body-card-bg);
+    color: var(--body-text);
+    font-size: 13px;
+    box-shadow: var(--shadow-inset-sm);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2);
+  }
+
+  .form-input--short { max-width: 120px; }
+
+  .form-hint {
+    font-size: 11px;
+    color: var(--body-text-muted);
+  }
+
+  .form-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-top: 6px;
+  }
+
+  .form-note {
+    font-size: 12px;
+    color: var(--body-text-muted);
+  }
+</style>

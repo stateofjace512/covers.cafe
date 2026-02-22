@@ -1,0 +1,126 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Gallery">
+  <!-- Hero banner -->
+  <div class="hero-banner">
+    <div class="hero-content">
+      <h1 class="hero-title">Discover Album Art</h1>
+      <p class="hero-subtitle">
+        A community-driven gallery for album cover art — created, collected, and shared by music lovers.
+      </p>
+      <div class="hero-actions">
+        <a href="/upload" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v13m0-13L8 6m4-4 4 4"/><path d="M20 16v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2"/></svg>
+          Upload a Cover
+        </a>
+        <a href="/artists" class="btn btn-secondary">Browse Artists</a>
+      </div>
+    </div>
+    <div class="hero-badge-strip">
+      <span class="badge">New</span>
+      <span class="badge">Trending</span>
+      <span class="badge">Top Rated</span>
+    </div>
+  </div>
+
+  <!-- Recent covers -->
+  <section class="mb-4">
+    <h2 class="section-title">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><circle cx="9" cy="9" r="2"/></svg>
+      Recent Covers
+    </h2>
+    <div class="album-grid">
+      {Array.from({ length: 12 }).map((_, i) => (
+        <div class="album-card">
+          <div class="album-card-cover placeholder-cover" style={`--hue: ${(i * 31) % 360}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><circle cx="9" cy="9" r="2"/></svg>
+          </div>
+          <div class="album-card-info">
+            <div class="album-card-title">Album Title {i + 1}</div>
+            <div class="album-card-artist">Artist Name</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+</Layout>
+
+<style>
+  /* Hero */
+  .hero-banner {
+    background: linear-gradient(135deg, var(--header-bg) 0%, var(--sidebar-bg-dark) 60%, var(--header-bg-dark) 100%);
+    border: 1px solid var(--body-card-border);
+    border-radius: 8px;
+    padding: 32px 32px 0;
+    margin-bottom: 32px;
+    box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.12);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E"),
+      repeating-linear-gradient(
+        135deg,
+        rgba(255,255,255,0.03) 0px,
+        rgba(255,255,255,0.03) 1px,
+        transparent 1px,
+        transparent 20px
+      );
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 520px;
+  }
+
+  .hero-title {
+    font-size: 32px;
+    font-weight: bold;
+    color: #fff8f0;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(0,0,0,0.3);
+    margin-bottom: 10px;
+    letter-spacing: -0.5px;
+  }
+
+  .hero-subtitle {
+    font-size: 15px;
+    color: rgba(255,248,240,0.75);
+    margin-bottom: 22px;
+    line-height: 1.6;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .hero-badge-strip {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 8px;
+    padding: 14px 0 16px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 24px;
+  }
+
+  /* Placeholder album covers with warm gradient variation */
+  .placeholder-cover {
+    background: linear-gradient(
+      135deg,
+      hsl(calc(30 + var(--hue, 0) * 0.1), 50%, 30%) 0%,
+      hsl(calc(20 + var(--hue, 0) * 0.15), 60%, 20%) 100%
+    ) !important;
+  }
+</style>
