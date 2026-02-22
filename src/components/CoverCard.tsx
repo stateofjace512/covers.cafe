@@ -15,6 +15,7 @@ interface Props {
 export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClick, onDeleted }: Props) {
   const { user } = useAuth();
   const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const isOwner = user?.id === cover.user_id;
@@ -40,12 +41,14 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
       onMouseLeave={() => setConfirmDelete(false)}
     >
       <div className="album-card-cover">
+        {!imgError && !imgLoaded && <div className="cover-card-shimmer" aria-hidden="true" />}
         {!imgError && cover.image_url ? (
           <img
             src={cover.image_url}
             alt={`${cover.title} by ${cover.artist}`}
-            className="cover-card-img"
+            className={`cover-card-img${imgLoaded ? ' cover-card-img--loaded' : ''}`}
             onError={() => setImgError(true)}
+            onLoad={() => setImgLoaded(true)}
             loading="lazy"
           />
         ) : (
@@ -96,7 +99,16 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
 
       <style>{`
         .cover-card { cursor: pointer; }
-        .cover-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .cover-card-img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.2s ease; }
+        .cover-card-img--loaded { opacity: 1; }
+        .cover-card-shimmer {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(110deg, rgba(255,255,255,0.08) 8%, rgba(255,255,255,0.22) 18%, rgba(255,255,255,0.08) 33%);
+          background-size: 220% 100%;
+          animation: cover-shimmer 1.2s linear infinite;
+        }
+        @keyframes cover-shimmer { to { background-position-x: -220%; } }
         .cover-card-placeholder {
           width: 100%; height: 100%;
           display: flex; align-items: center; justify-content: center;

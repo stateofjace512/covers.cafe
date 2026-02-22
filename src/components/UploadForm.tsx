@@ -21,6 +21,21 @@ interface UploadItem {
   errorMsg?: string;
 }
 
+
+interface CollectionDraft {
+  name: string;
+  isPublic: boolean;
+}
+
+interface UploadCollection {
+  id: string;
+  name: string;
+  isPublic: boolean;
+  itemIndexes: number[];
+}
+
+const normalizeTags = (values: string[]) => Array.from(new Set(values.map((v) => v.trim().toLowerCase()).filter(Boolean)));
+
 async function validateFile(file: File): Promise<string | null> {
   if (file.type !== 'image/jpeg') return 'Only JPG/JPEG files are accepted.';
   return new Promise((resolve) => {
@@ -52,7 +67,8 @@ export default function UploadForm() {
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [year, setYear] = useState('');
-  const [tags, setTags] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -61,7 +77,10 @@ export default function UploadForm() {
 
   // Bulk mode
   const [bulkItems, setBulkItems] = useState<UploadItem[]>([]);
-  const [bulkTags, setBulkTags] = useState('');
+  const [bulkTags, setBulkTags] = useState<string[]>([]);
+  const [bulkTagInput, setBulkTagInput] = useState('');
+  const [collections, setCollections] = useState<UploadCollection[]>([]);
+  const [collectionDraft, setCollectionDraft] = useState<CollectionDraft>({ name: '', isPublic: true });
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkDone, setBulkDone] = useState(false);
   const bulkInputRef = useRef<HTMLInputElement>(null);
@@ -80,6 +99,63 @@ export default function UploadForm() {
     const f = e.dataTransfer.files[0];
     if (f) handleFile(f);
   }, [handleFile]);
+
+
+  const addTag = (value: string, isBulk = false) => {
+    const cleaned = value.replace(/,$/, '').trim();
+    if (!cleaned) return;
+    if (isBulk) setBulkTags((prev) => normalizeTags([...prev, cleaned]));
+    else setTags((prev) => normalizeTags([...prev, cleaned]));
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, isBulk = false) => {
+    const value = (isBulk ? bulkTagInput : tagInput).trim();
+    if (e.key === 'Enter') {
+      if (e.metaKey || e.ctrlKey) {
+        e.preventDefault();
+        if (value) addTag(value, isBulk);
+        if (isBulk) void handleBulkSubmit(e as unknown as React.FormEvent);
+        else void handleSubmit(e as unknown as React.FormEvent);
+        return;
+      }
+      e.preventDefault();
+      if (value || (isBulk ? bulkTagInput : tagInput).endsWith(',')) {
+        addTag(value, isBulk);
+        if (isBulk) setBulkTagInput('');
+        else setTagInput('');
+      }
+    }
+
+    if (e.key === ',' && value) {
+      e.preventDefault();
+      addTag(value, isBulk);
+      if (isBulk) setBulkTagInput('');
+      else setTagInput('');
+    }
+  };
+
+  const removeTag = (value: string, isBulk = false) => {
+    if (isBulk) setBulkTags((prev) => prev.filter((tag) => tag !== value));
+    else setTags((prev) => prev.filter((tag) => tag !== value));
+  };
+
+  const createCollection = () => {
+    const name = collectionDraft.name.trim();
+    if (!name) return;
+    setCollections((prev) => [...prev, { id: crypto.randomUUID(), name, isPublic: collectionDraft.isPublic, itemIndexes: [] }]);
+    setCollectionDraft({ name: '', isPublic: true });
+  };
+
+  const addItemToCollection = (collectionId: string, itemIdx: number) => {
+    setCollections((prev) => prev.map((collection) => {
+      if (collection.id !== collectionId) return collection;
+      if (collection.itemIndexes.includes(itemIdx)) {
+        const again = window.confirm('Are you sure you want to add this image to this collection again?');
+        if (!again) return collection;
+      }
+      return { ...collection, itemIndexes: [...collection.itemIndexes, itemIdx] };
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,7 +187,7 @@ export default function UploadForm() {
       if (storageErr) throw new Error(storageErr.message);
 
       const { data: urlData } = supabase.storage.from('covers_cafe_covers').getPublicUrl(fileName);
-      const tagsArray = tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
+      const tagsArray = normalizeTags([...tags, tagInput]);
 
       const { error: insertErr } = await supabase.from('covers_cafe_covers').insert({
         user_id: user.id,
@@ -188,7 +264,7 @@ export default function UploadForm() {
     }
 
     setBulkUploading(true);
-    const tagsArray = bulkTags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
+    const tagsArray = normalizeTags([...bulkTags, bulkTagInput]);
 
     for (let i = 0; i < bulkItems.length; i++) {
       const item = bulkItems[i];
@@ -353,8 +429,9 @@ export default function UploadForm() {
             </div>
             <div className="form-row">
               <label className="form-label">Tags</label>
-              <input type="text" className="form-input" placeholder="e.g. rock, psychedelic, 70s" value={tags} onChange={(e) => setTags(e.target.value)} />
-              <p className="form-hint">Comma-separated tags.</p>
+              <input type="text" className="form-input" placeholder="Type tag, press Enter (Cmd/Ctrl+Enter submits)" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => handleTagKeyDown(e)} />
+              <div className="tag-list">{tags.map((tag) => <button key={tag} type="button" className="tag-chip" onClick={() => removeTag(tag)}>{tag} <X size={12} /></button>)}</div>
+              <p className="form-hint">Type a word with a comma and press Enter to spend tags fast.</p>
             </div>
             {error && <div className="upload-error"><AlertCircle size={14} /> {error}</div>}
             <div className="upload-actions">
@@ -377,10 +454,12 @@ export default function UploadForm() {
               <input
                 type="text"
                 className="form-input"
-                placeholder="e.g. rock, 90s, alternative"
-                value={bulkTags}
-                onChange={(e) => setBulkTags(e.target.value)}
+                placeholder="Type tags and press Enter"
+                value={bulkTagInput}
+                onChange={(e) => setBulkTagInput(e.target.value)}
+                onKeyDown={(e) => handleTagKeyDown(e, true)}
               />
+              <div className="tag-list">{bulkTags.map((tag) => <button key={tag} type="button" className="tag-chip" onClick={() => removeTag(tag, true)}>{tag} <X size={12} /></button>)}</div>
             </div>
           </div>
 
@@ -406,6 +485,30 @@ export default function UploadForm() {
               </div>
             </div>
           )}
+
+          <div className="upload-fields card">
+            <div className="collections-head">
+              <strong>Collections</strong>
+              <div className="collections-plus-box" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); if (e.dataTransfer.files.length) handleBulkFiles(e.dataTransfer.files); }}>
+                <Plus size={18} />
+              </div>
+            </div>
+            <div className="collections-creator">
+              <input className="form-input" placeholder="Name your collection" value={collectionDraft.name} onChange={(e) => setCollectionDraft((prev) => ({ ...prev, name: e.target.value }))} />
+              <button type="button" className="btn btn-secondary" onClick={() => setCollectionDraft((prev) => ({ ...prev, isPublic: !prev.isPublic }))}>{collectionDraft.isPublic ? 'Public' : 'Private'}</button>
+              <button type="button" className="btn btn-primary" onClick={createCollection}>Create</button>
+            </div>
+            {collections.map((collection) => (
+              <div key={collection.id} className="collection-row">
+                <div className="collection-title">📁 {collection.name} · {collection.isPublic ? 'Public' : 'Private'}</div>
+                <div className="collection-actions">
+                  {bulkItems.map((_, idx) => (
+                    <button key={`${collection.id}-${idx}`} type="button" className="collection-add" onClick={() => addItemToCollection(collection.id, idx)}>+ #{idx + 1}</button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
 
           {bulkItems.length > 0 && (
             <div className="bulk-list">
@@ -531,6 +634,15 @@ export default function UploadForm() {
         .form-input:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
         .form-input:disabled { opacity: 0.5; cursor: not-allowed; }
         .form-hint { font-size: 11px; color: var(--body-text-muted); }
+        .tag-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+        .tag-chip { border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--body-text); border-radius: 999px; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px; }
+        .collections-head { display: flex; align-items: center; justify-content: space-between; }
+        .collections-plus-box { width: 36px; height: 36px; border: 2px dashed var(--body-card-border); display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+        .collections-creator { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
+        .collection-row { border: 1px solid var(--body-card-border); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .collection-title { font-size: 12px; }
+        .collection-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .collection-add { border: 1px solid var(--body-card-border); background: var(--body-card-bg); border-radius: 4px; padding: 3px 6px; }
         .upload-error {
           display: flex; align-items: center; gap: 6px;
           padding: 8px 10px; border-radius: 4px;
