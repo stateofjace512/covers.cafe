@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Moon, Sun, Search, LogOut, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-const LOGO_URL = `https://mstrjk.com/api/cdn/site-assets/icons/cover_cafe_logo.svg`;
-
 export default function Header() {
   const { user, profile, openAuthModal, signOut } = useAuth();
   const [dark, setDark] = useState(false);
@@ -33,13 +31,6 @@ export default function Header() {
 
   return (
     <header className="site-header">
-      <button className="header-logo" onClick={() => navigate('/')} aria-label="covers.cafe home">
-        <span className="header-logo-icon">
-          <img src={LOGO_URL} alt="covers.cafe logo" width={22} height={22} style={{ display: 'block' }} />
-        </span>
-        <span className="header-logo-text">covers<span className="header-logo-dot">.</span>cafe</span>
-      </button>
-
       <form className="header-search-wrap" onSubmit={handleSearch}>
         <Search size={14} className="header-search-icon" />
         <input
