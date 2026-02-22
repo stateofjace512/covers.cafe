@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import nodemailer from 'nodemailer';
 import { getSupabaseServer } from './_supabase';
+import { sendMail, codeEmailHtml, codeEmailText } from './_mailer';
 
 // Rate limit: max 3 codes per email per 15 minutes
 const RATE_WINDOW_MS = 15 * 60 * 1000;
@@ -34,16 +34,42 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   if (isRateLimited(email)) {
-    return new Response('Too many verification requests. Try again later.', { status: 429 });
+    return new Response(
+      JSON.stringify({ ok: false, message: 'Too many requests. Wait a few minutes.' }),
+      { status: 429, headers: { 'Content-Type': 'application/json' } },
+    );
   }
 
   const sb = getSupabaseServer();
   if (!sb) return new Response('Server misconfigured', { status: 503 });
 
+  // DB-level cooldown: if a fresh unused code was sent in the last 90 seconds,
+  // return success silently rather than firing another email. This prevents
+  // auto-resends on page reload from spamming the user or burning Zoho rate limits.
+  const cooloffCutoff = new Date(Date.now() - 90 * 1000).toISOString();
+  const now = new Date().toISOString();
+  const { data: recentCode } = await sb
+    .from('covers_cafe_verification_codes')
+    .select('id')
+    .eq('email', email)
+    .eq('used', false)
+    .gt('expires_at', now)
+    .gt('created_at', cooloffCutoff)
+    .limit(1)
+    .maybeSingle();
+
+  if (recentCode) {
+    // A code was already sent very recently — silently succeed so the UI
+    // moves to the verify step without sending a duplicate email.
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   const code = generateCode();
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
-  // Store code in DB (service role bypasses RLS)
   const { error: insertError } = await sb
     .from('covers_cafe_verification_codes')
     .insert({ email, code, expires_at: expiresAt });
@@ -53,44 +79,15 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response('Failed to create verification code', { status: 500 });
   }
 
-  // Send email via SMTP
-  const smtpHost = import.meta.env.SMTP_HOST;
-  const smtpPort = parseInt(import.meta.env.SMTP_PORT ?? '587', 10);
-  const smtpUser = import.meta.env.SMTP_USER;
-  const smtpPass = import.meta.env.SMTP_PASS;
+  const result = await sendMail({
+    to: email,
+    subject: 'Your covers.cafe verification code',
+    text: codeEmailText(code),
+    html: codeEmailHtml(code),
+  });
 
-  if (!smtpHost || !smtpUser || !smtpPass) {
-    console.error('[send-verification] SMTP env vars not configured');
-    return new Response('Email service not configured', { status: 503 });
-  }
-
-  try {
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass },
-    });
-
-    await transporter.sendMail({
-      from: `"covers.cafe" <${smtpUser}>`,
-      to: email,
-      subject: 'Your covers.cafe verification code',
-      text: `Your verification code is: ${code}\n\nThis code expires in 15 minutes. Do not share it with anyone.`,
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:400px;margin:0 auto;padding:24px;">
-          <h2 style="color:#c05a1a;margin-bottom:8px;">covers.cafe</h2>
-          <p style="margin-bottom:24px;color:#555;">Enter this code to verify your email address:</p>
-          <div style="font-size:36px;font-weight:bold;letter-spacing:8px;text-align:center;
-                      padding:16px;background:#f5f5f5;border-radius:8px;color:#111;margin-bottom:24px;">
-            ${code}
-          </div>
-          <p style="color:#888;font-size:13px;">This code expires in 15 minutes. Do not share it with anyone.</p>
-        </div>
-      `,
-    });
-  } catch (err) {
-    console.error('[send-verification] SMTP error:', err);
+  if (!result.ok) {
+    console.error('[send-verification] SMTP error:', result.error);
     return new Response('Failed to send email', { status: 500 });
   }
 
