@@ -7,7 +7,7 @@ import { getCoverImageSrc } from '../lib/media';
 interface ArtistEntry {
   name: string;
   coverCount: number;
-  sampleCover: { storage_path: string; image_url: string; thumbnail_path: string | null } | null;
+  sampleCover: { storage_path: string; image_url: string } | null;
 }
 
 export default function MusicArtists() {
@@ -21,7 +21,7 @@ export default function MusicArtists() {
       // Fetch all public covers with just the fields we need for grouping
       const { data } = await supabase
         .from('covers_cafe_covers')
-        .select('artist, id, storage_path, image_url, thumbnail_path, favorite_count')
+        .select('artist, id, storage_path, image_url, favorite_count')
         .eq('is_public', true)
         .order('favorite_count', { ascending: false });
 
@@ -37,7 +37,6 @@ export default function MusicArtists() {
             sampleCover: {
               storage_path: row.storage_path,
               image_url: row.image_url,
-              thumbnail_path: row.thumbnail_path,
             },
           });
         }

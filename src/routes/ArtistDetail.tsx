@@ -20,7 +20,7 @@ export default function ArtistDetail() {
     name: string;
     is_public: boolean;
     item_count: number;
-    cover_image: { storage_path: string; image_url: string; thumbnail_path: string | null } | null;
+    cover_image: { storage_path: string; image_url: string } | null;
   }[]>([]);
 
   useEffect(() => {
@@ -71,12 +71,12 @@ export default function ArtistDetail() {
       }
 
       // Fetch cover image data for collections that have one set.
-      const coverImageMap: Record<string, { storage_path: string; image_url: string; thumbnail_path: string | null }> = {};
+      const coverImageMap: Record<string, { storage_path: string; image_url: string }> = {};
       const coverImageIds = rows.map((r) => r.cover_image_id).filter(Boolean) as string[];
       if (coverImageIds.length > 0) {
         const { data: coverImages } = await supabase
           .from('covers_cafe_covers')
-          .select('id,storage_path,image_url,thumbnail_path')
+          .select('id,storage_path,image_url')
           .in('id', coverImageIds);
         for (const c of coverImages ?? []) {
           coverImageMap[c.id] = c;
