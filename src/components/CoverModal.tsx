@@ -688,7 +688,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           transition: background 0.1s, color 0.1s;
         }
         .cover-tag--clickable:hover { background: var(--accent); color: white; border-color: var(--accent); transform: none; box-shadow: none; }
-        .cover-download-wrap { position: relative; display: flex; }
+        .cover-download-wrap { position: relative; z-index: 70; display: flex; }
         .cover-modal-download-btn { border-radius: 4px 0 0 4px; }
         .cover-download-arrow {
           border-radius: 0 4px 4px 0; border-left: 1px solid rgba(255,255,255,0.25);

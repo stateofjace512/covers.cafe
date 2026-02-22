@@ -105,7 +105,7 @@ export default function EditProfile() {
         </div>
         <div className="form-row">
           <label className="form-label">Bio</label>
-          <textarea className="form-input" rows={4} placeholder="Tell the community about yourself…" value={bio} onChange={(e) => setBio(e.target.value)} style={{ resize: 'vertical' }} />
+          <textarea className="form-input" rows={4} placeholder="Tell the community about yourself…" value={bio} onChange={(e) => setBio(e.target.value)} />
         </div>
         <div className="form-row">
           <label className="form-label">Website</label>
