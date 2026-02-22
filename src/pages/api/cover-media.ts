@@ -5,7 +5,8 @@ import sharp from 'sharp';
 const CACHE_31_DAYS = 'public, max-age=2678400, immutable';
 const VALID_SIZES = new Set([500, 800, 1000, 1500, 3000]);
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ request }) => {
+  const url = new URL(request.url);
   const sb = getSupabaseServer();
   if (!sb) return new Response('Media API unavailable', { status: 503 });
 
