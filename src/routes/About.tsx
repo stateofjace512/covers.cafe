@@ -42,16 +42,18 @@ export default function About() {
 
         <p>
           There will always be other places to run to.<br />
-          We built this one out in the wild.<br />
-          <br />
-          So drop your bags at the front door, and get comfortable.
+          We built this one out in the wild.
         </p>
+
+        <p>So drop your bags at the front door, and get comfortable.</p>
 
         <p className="about-sign">☕</p>
       </div>
 
       <style>{`
         .about-page { max-width: 680px; }
+        .legal-body { display: flex; flex-direction: column; gap: 0; }
+        .legal-body p { font-size: 14px; color: var(--body-text); line-height: 1.75; margin: 0 0 14px; }
         .about-lede {
           font-size: 16px !important;
           font-weight: bold;
@@ -61,6 +63,7 @@ export default function About() {
         .about-sign {
           font-size: 22px !important;
           margin-top: 4px !important;
+          line-height: 1 !important;
         }
       `}</style>
     </div>

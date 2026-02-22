@@ -4,6 +4,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
   type ReactNode,
 } from 'react';
 import { supabase } from '../lib/supabase';
@@ -18,8 +19,8 @@ interface AuthContextValue {
   emailVerified: boolean;
   // Modal controls — lifted here so any component can call openAuthModal()
   authModalOpen: boolean;
-  authModalTab: 'login' | 'register';
-  openAuthModal: (tab?: 'login' | 'register') => void;
+  authModalTab: 'login' | 'register' | 'verify';
+  openAuthModal: (tab?: 'login' | 'register' | 'verify') => void;
   closeAuthModal: () => void;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -45,7 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
+  const [authModalTab, setAuthModalTab] = useState<'login' | 'register' | 'verify'>('login');
+  // Guard so we only auto-open the verify modal once per session load, not on every render.
+  const autoVerifyFired = useRef(false);
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await supabase
@@ -78,7 +81,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [fetchProfile]);
 
-  const openAuthModal = useCallback((tab: 'login' | 'register' = 'login') => {
+  // If the user has a live session but hasn't verified their email yet, surface the
+  // verify modal automatically — this keeps the flow alive across page reloads.
+  useEffect(() => {
+    if (user && profile && !profile.email_verified && !autoVerifyFired.current) {
+      autoVerifyFired.current = true;
+      setAuthModalTab('verify');
+      setAuthModalOpen(true);
+    }
+    if (!user || profile?.email_verified) {
+      autoVerifyFired.current = false;
+    }
+  }, [user, profile]);
+
+  const openAuthModal = useCallback((tab: 'login' | 'register' | 'verify' = 'login') => {
     setAuthModalTab(tab);
     setAuthModalOpen(true);
   }, []);

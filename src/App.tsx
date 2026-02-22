@@ -19,6 +19,7 @@ import Privacy from './routes/Privacy';
 import Terms from './routes/Terms';
 import About from './routes/About';
 import Cms from './routes/Cms';
+import NotFound from './routes/NotFound';
 
 
 function LegacyArtistRedirect() {
@@ -50,7 +51,7 @@ function AppContent() {
           <Route path="/terms" element={<Terms />} />
           <Route path="/about" element={<About />} />
           <Route path="/cms" element={<Cms />} />
-          <Route path="*" element={<Gallery />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </AppShell>
 

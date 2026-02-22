@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Mail, Lock, User, AlertCircle, Loader, ShieldCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 interface Props {
-  tab: 'login' | 'register';
+  tab: 'login' | 'register' | 'verify';
   onClose: () => void;
 }
 
@@ -12,8 +12,8 @@ type Step = 'form' | 'verify';
 
 export default function AuthModal({ tab: initialTab, onClose }: Props) {
   const { refreshProfile, closeAuthModal } = useAuth();
-  const [tab, setTab] = useState(initialTab);
-  const [step, setStep] = useState<Step>('form');
+  const [tab, setTab] = useState<'login' | 'register'>(initialTab === 'verify' ? 'login' : initialTab);
+  const [step, setStep] = useState<Step>(initialTab === 'verify' ? 'verify' : 'form');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -21,6 +21,18 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // When opened directly at the verify step (e.g. reload with unverified session),
+  // pull the email from the live session and send a fresh code automatically.
+  useEffect(() => {
+    if (initialTab !== 'verify') return;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      const userEmail = session.user.email ?? '';
+      setEmail(userEmail);
+      sendVerificationCode(session.access_token, userEmail);
+    });
+  }, []); // run once on mount; sendVerificationCode is a hoisted function declaration
 
   // Send a verification code via our SMTP API.
   // The user must already have an active session (token) so verify-code can auth them.
