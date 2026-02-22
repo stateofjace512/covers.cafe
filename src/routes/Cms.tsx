@@ -50,6 +50,7 @@ export default function Cms() {
   const [userOptions, setUserOptions] = useState<UserOption[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserOption | null>(null);
   const [banReason, setBanReason] = useState('');
+  const [removeTag, setRemoveTag] = useState('');
 
   const token = session?.access_token;
 
@@ -153,6 +154,40 @@ export default function Cms() {
     setBusyId(null);
   }
 
+  async function massRemoveByTag() {
+    if (!token) return;
+    const normalizedTag = removeTag.trim().toLowerCase();
+    if (!normalizedTag) {
+      setError('Enter a tag to remove matching covers.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete every cover tagged "${normalizedTag}"? This action cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    setBusyId('mass-remove-tag');
+    setError(null);
+    const res = await fetch('/api/cms/delete-by-tag', {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ tag: normalizedTag }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      setError(text || 'Could not mass remove by tag.');
+    } else {
+      const payload = await res.json() as { deletedCount?: number };
+      setError(`Removed ${payload.deletedCount ?? 0} cover(s) tagged "${normalizedTag}".`);
+      setRemoveTag('');
+    }
+
+    await loadDashboard();
+    setBusyId(null);
+  }
+
   if (loading) return <div>Loading...</div>;
   if (!user) return <div>Please sign in to access CMS.</div>;
   if (operator === false) return <div>You are not an operator.</div>;
@@ -227,6 +262,23 @@ export default function Cms() {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="surface" style={{ marginBottom: 20 }}>
+        <h2 style={{ marginTop: 0 }}>Legal operations</h2>
+        <p style={{ marginTop: 0 }}>Mass remove all covers matching a specific tag.</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input
+            className="form-input"
+            placeholder="Tag (example: infringing-label)"
+            value={removeTag}
+            onChange={(e) => setRemoveTag(e.target.value)}
+            style={{ minWidth: 260 }}
+          />
+          <button className="btn btn-primary" disabled={busyId === 'mass-remove-tag'} onClick={massRemoveByTag}>
+            Mass remove by tag
+          </button>
+        </div>
       </section>
 
       <section className="surface" style={{ marginBottom: 20 }}>
