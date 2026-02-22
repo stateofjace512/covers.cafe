@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AppShell from './components/AppShell';
 import AuthModal from './components/AuthModal';
@@ -29,7 +30,48 @@ function LegacyArtistRedirect() {
 }
 
 function AppContent() {
-  const { authModalOpen, authModalTab, closeAuthModal } = useAuth();
+  const { authModalOpen, authModalTab, closeAuthModal, session, user } = useAuth();
+  const [banStatus, setBanStatus] = useState<{ isBanned: boolean; reason: string | null }>({
+    isBanned: false,
+    reason: null,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadBanStatus() {
+      if (!user || !session?.access_token) {
+        if (!cancelled) setBanStatus({ isBanned: false, reason: null });
+        return;
+      }
+
+      const res = await fetch('/api/account/ban-status', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (!res.ok) {
+        if (!cancelled) setBanStatus({ isBanned: false, reason: null });
+        return;
+      }
+
+      const data = await res.json() as { isBanned: boolean; reason: string | null };
+      if (!cancelled) setBanStatus(data);
+    }
+
+    loadBanStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token, user]);
+
+  if (banStatus.isBanned) {
+    return (
+      <main className="site-main" style={{ display: 'grid', placeItems: 'center', minHeight: '100vh' }}>
+        <h1>You are banned. Reason: {banStatus.reason ?? 'No reason provided.'}</h1>
+      </main>
+    );
+  }
 
   return (
     <>
