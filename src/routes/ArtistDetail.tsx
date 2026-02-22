@@ -5,6 +5,7 @@ import { apiGet } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
 import type { Profile } from '../lib/types';
+import { getSafeImageUrl } from '../lib/user';
 
 export default function ArtistDetail() {
   const { username } = useParams<{ username: string }>();
@@ -52,8 +53,8 @@ export default function ArtistDetail() {
 
       <div className="artist-detail-header card">
         <div className="artist-detail-avatar">
-          {profile?.avatar_url
-            ? <img src={profile.avatar_url} alt={profile.display_name ?? profile.username} className="artist-detail-avatar-img" />
+          {getSafeImageUrl(profile?.avatar_url)
+            ? <img src={getSafeImageUrl(profile?.avatar_url) ?? ''} alt={profile.display_name ?? profile.username} className="artist-detail-avatar-img" />
             : <UserRound size={40} style={{ opacity: 0.3 }} />
           }
         </div>

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader, FolderPlus } from 'lucide-react';
+import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader, FolderPlus, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { apiGet, apiPost } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
-import { getCoverImageSrc } from '../lib/media';
+import { getCoverDownloadUrl, getCoverImageSrc } from '../lib/media';
 
 interface Props {
   cover: Cover;
@@ -38,6 +38,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
   const [panelMode, setPanelMode] = useState<PanelMode>(initialPanelMode);
   const [downloading, setDownloading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [reportReason, setReportReason] = useState<ReportReason>('inappropriate');
   const [reportDetails, setReportDetails] = useState('');
@@ -69,21 +70,18 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     void loadCollections();
   }, [panelMode, user]);
 
-  const handleDownload = async () => {
+  const handleDownload = async (size: 'full' | number) => {
     setDownloading(true);
+    setShowDownloadMenu(false);
     try {
       await supabase.from('covers_cafe_downloads').insert({ cover_id: cover.id, user_id: user?.id ?? null });
       await supabase.rpc('covers_cafe_increment_downloads', { p_cover_id: cover.id });
-      const res = await fetch(getCoverImageSrc(cover));
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `${cover.artist} - ${cover.title}.jpg`;
+      a.href = getCoverDownloadUrl(cover, size);
+      a.download = `${cover.artist} - ${cover.title} (${size === 'full' ? 'full' : `${size}px`}).jpg`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Download failed:', err);
     }
@@ -243,13 +241,20 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                   </button>
                   <button
                     className="btn btn-primary cover-modal-download-btn"
-                    onClick={handleDownload}
+                    onClick={() => setShowDownloadMenu((prev) => !prev)}
                     disabled={downloading}
                   >
                     <Download size={15} />
-                    {downloading ? 'Downloading…' : 'Download'}
+                    {downloading ? 'Downloading…' : 'Download'} <ChevronDown size={14} />
                   </button>
                 </div>
+                  {showDownloadMenu && !downloading && (
+                    <div className="cover-download-menu">
+                      {(['full', 3000, 1500, 1000, 800] as const).map((size) => (
+                        <button key={String(size)} className="cover-download-menu-item" onClick={() => handleDownload(size)}>{size === 'full' ? 'Full Size' : `${size}px`}</button>
+                      ))}
+                    </div>
+                  )}
 
                 <div className="cover-modal-secondary-actions">
                   <button className="btn cover-modal-collection-btn" onClick={openCollectionPanel}>
@@ -415,7 +420,19 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           padding: 2px 7px; border-radius: 3px;
           border: 1px solid var(--sidebar-border); box-shadow: var(--shadow-sm);
         }
-        .cover-modal-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .cover-modal-actions { display: flex; gap: 10px; flex-wrap: wrap; position: relative; }
+        .cover-download-menu {
+          position: absolute; right: 0; top: calc(100% + 6px);
+          display: flex; flex-direction: column; min-width: 140px;
+          background: var(--body-card-bg); border: 1px solid var(--body-card-border);
+          border-radius: 6px; box-shadow: var(--shadow-lg); overflow: hidden; z-index: 5;
+        }
+        .cover-download-menu-item {
+          background: none; border: 0; color: var(--body-text); text-align: left;
+          padding: 8px 10px; font-size: 12px; cursor: pointer;
+        }
+        .cover-download-menu-item:hover { background: var(--sidebar-bg); }
         .cover-modal-secondary-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 4px; border-top: 1px solid var(--body-border); }
         .cover-modal-fav-btn {
           display: flex; align-items: center; gap: 6px;
@@ -426,7 +443,6 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           background: linear-gradient(180deg, #f0c060 0%, #d4a020 55%, #b08010 100%);
           color: #5a3a00; border-color: #8a6010;
         }
-        .cover-modal-download-btn { display: flex; align-items: center; gap: 6px; }
         .cover-modal-download-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .cover-modal-collection-btn {
           display: flex; align-items: center; gap: 5px; font-size: 12px;
