@@ -63,6 +63,22 @@ create policy "collection_items_owner_or_operator"
     )
   );
 
+
+
+create table if not exists covers_cafe_user_bans (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  reason text,
+  banned_by uuid references auth.users(id) on delete set null,
+  banned_at timestamptz not null default now()
+);
+
+alter table covers_cafe_user_bans enable row level security;
+
+create policy if not exists "operators_manage_bans"
+  on covers_cafe_user_bans for all
+  using (covers_cafe_is_operator())
+  with check (covers_cafe_is_operator());
+
 -- Operator can delete any user's media metadata.
 create policy "operators_can_delete_any_cover"
   on covers_cafe_covers for delete
@@ -74,7 +90,7 @@ alter table if exists covers_cafe_profiles
 
 -- Grant full operator role to existing account.
 insert into covers_cafe_operator_roles (user_id, role)
-select id, 'operator' from auth.users where email = 'jakeryanrobison@icloud.com'
+select id, 'operator' from auth.users where email in ('jakeryanrobison@icloud.com', 'clubsarah8@gmail.com')
 on conflict (user_id) do update set role = excluded.role;
 
 -- Allow collections to have a cover/thumbnail image.

@@ -17,6 +17,7 @@ import Settings from './routes/Settings';
 import Coffee from './routes/Coffee';
 import Privacy from './routes/Privacy';
 import Terms from './routes/Terms';
+import Cms from './routes/Cms';
 
 
 function LegacyArtistRedirect() {
@@ -46,6 +47,7 @@ function AppContent() {
           <Route path="/coffee" element={<Coffee />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/cms" element={<Cms />} />
           <Route path="*" element={<Gallery />} />
         </Routes>
       </AppShell>
