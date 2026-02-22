@@ -13,47 +13,7 @@ interface Notification {
   actor_username: string | null;
   content: string | null;
   created_at: string;
-}
-
-const LS_KEY_BASE = 'notifications_last_read';
-const LS_DISMISSED_BASE = 'notifications_dismissed';
-
-function getLastReadKey(userId: string): string {
-  return `${LS_KEY_BASE}:${userId}`;
-}
-
-function getDismissedKey(userId: string): string {
-  return `${LS_DISMISSED_BASE}:${userId}`;
-}
-
-function getLastRead(userId: string): number {
-  try {
-    return parseInt(localStorage.getItem(getLastReadKey(userId)) ?? '0', 10) || 0;
-  } catch {
-    return 0;
-  }
-}
-
-function setLastRead(userId: string, ts: number) {
-  try {
-    localStorage.setItem(getLastReadKey(userId), String(ts));
-  } catch { /* noop */ }
-}
-
-function getDismissed(userId: string): Set<string> {
-  try {
-    const raw = localStorage.getItem(getDismissedKey(userId));
-    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
-  } catch {
-    return new Set();
-  }
-}
-
-function saveDismissed(userId: string, ids: Set<string>) {
-  try {
-    const arr = [...ids].slice(-400);
-    localStorage.setItem(getDismissedKey(userId), JSON.stringify(arr));
-  } catch { /* noop */ }
+  read_at: string | null;
 }
 
 function timeAgo(dateStr: string): string {
@@ -69,24 +29,13 @@ export default function NotificationBell() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [openedAtRead, setOpenedAtRead] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    if (!user?.id) {
-      setDismissed(new Set());
-      setUnreadCount(0);
-      return;
-    }
-    setDismissed(getDismissed(user.id));
-  }, [user?.id]);
-
   const fetchNotifications = useCallback(async () => {
-    if (!user?.id || !session?.access_token) return;
+    if (!user || !session?.access_token) return;
     setLoading(true);
     try {
       const res = await fetch('/api/notifications', {
@@ -94,18 +43,12 @@ export default function NotificationBell() {
       });
       if (res.ok) {
         const data = await res.json() as { notifications: Notification[] };
-        const userDismissed = getDismissed(user.id);
-        setDismissed(userDismissed);
         setNotifications(data.notifications);
-        const lastRead = getLastRead(user.id);
-        const newCount = data.notifications.filter(
-          (n) => !userDismissed.has(n.id) && new Date(n.created_at).getTime() > lastRead,
-        ).length;
-        setUnreadCount(newCount);
+        setUnreadCount(data.notifications.filter((n) => !n.read_at).length);
       }
     } catch { /* noop */ }
     setLoading(false);
-  }, [user?.id, session?.access_token]);
+  }, [user, session?.access_token]);
 
   useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
 
@@ -126,32 +69,56 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [open]);
 
+  const markAllRead = useCallback(async () => {
+    if (!session?.access_token) return;
+    try {
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'mark_read_all' }),
+      });
+    } catch { /* noop */ }
+  }, [session?.access_token]);
+
   const handleOpen = () => {
-    if (!user?.id) return;
     if (!open) {
-      const lastRead = getLastRead(user.id);
-      setOpenedAtRead(lastRead);
       setOpen(true);
-      setLastRead(user.id, Date.now());
+      setNotifications((prev) => prev.map((n) => (n.read_at ? n : { ...n, read_at: new Date().toISOString() })));
       setUnreadCount(0);
+      void markAllRead();
     } else {
       setOpen(false);
     }
   };
 
-  const dismiss = useCallback((id: string) => {
-    if (!user?.id) return;
-    setDismissed((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      saveDismissed(user.id, next);
-      return next;
-    });
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-    setUnreadCount((prev) => Math.max(0, prev - 1));
-  }, [user?.id]);
+  const dismiss = useCallback(async (id: string) => {
+    if (!session?.access_token) return;
+    const prior = notifications;
+    const next = prior.filter((n) => n.id !== id);
+    setNotifications(next);
+    setUnreadCount(next.filter((n) => !n.read_at).length);
 
-  const visible = notifications.filter((n) => !dismissed.has(n.id));
+    try {
+      const res = await fetch('/api/notifications', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) {
+        setNotifications(prior);
+        setUnreadCount(prior.filter((n) => !n.read_at).length);
+      }
+    } catch {
+      setNotifications(prior);
+      setUnreadCount(prior.filter((n) => !n.read_at).length);
+    }
+  }, [notifications, session?.access_token]);
 
   if (!user) return null;
 
@@ -175,8 +142,8 @@ export default function NotificationBell() {
           <div className="notif-panel-header">
             <span className="notif-panel-title">
               Notifications
-              {visible.length > 0 && (
-                <span className="notif-panel-count">{visible.length}</span>
+              {notifications.length > 0 && (
+                <span className="notif-panel-count">{notifications.length}</span>
               )}
             </span>
             <button className="notif-close-btn" onClick={() => setOpen(false)} aria-label="Close">
@@ -185,13 +152,13 @@ export default function NotificationBell() {
           </div>
 
           <div className="notif-list">
-            {loading && visible.length === 0 ? (
+            {loading && notifications.length === 0 ? (
               <p className="notif-empty">Loading…</p>
-            ) : visible.length === 0 ? (
+            ) : notifications.length === 0 ? (
               <p className="notif-empty">No notifications yet. Upload some covers to get started!</p>
             ) : (
-              visible.map((n, idx) => {
-                const isNew = new Date(n.created_at).getTime() > openedAtRead;
+              notifications.map((n, idx) => {
+                const isNew = !n.read_at;
                 return (
                   <div key={n.id} className={`notif-item${isNew ? ' notif-item--new' : ''}`}>
                     <span className="notif-num">{idx + 1}</span>
@@ -221,7 +188,7 @@ export default function NotificationBell() {
                     </div>
                     <button
                       className="notif-dismiss-btn"
-                      onClick={() => dismiss(n.id)}
+                      onClick={() => void dismiss(n.id)}
                       title="Dismiss"
                       aria-label="Dismiss notification"
                     >
