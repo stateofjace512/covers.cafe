@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Moon, Sun, Search, LogOut, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-const LOGO_URL = `${import.meta.env.PUBLIC_SUPABASE_URL}/storage/v1/object/public/site-assets/icons/cover_cafe_logo.svg`;
+const LOGO_URL = `https://mstrjk.com/api/cdn/site-assets/icons/cover_cafe_logo.svg`;
 
 export default function Header() {
   const { user, profile, openAuthModal, signOut } = useAuth();
