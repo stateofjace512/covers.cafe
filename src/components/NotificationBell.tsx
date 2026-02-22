@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell, Star, MessageCircle, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface Notification {
@@ -9,6 +10,7 @@ interface Notification {
   cover_title: string;
   cover_artist: string;
   actor_name: string;
+  actor_username: string | null;
   content: string | null;
   created_at: string;
 }
@@ -39,6 +41,7 @@ function timeAgo(dateStr: string): string {
 
 export default function NotificationBell() {
   const { user, session } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
@@ -143,9 +146,23 @@ export default function NotificationBell() {
                   <div className="notif-body">
                     <p className="notif-text">
                       {n.type === 'favorite' ? (
-                        <><strong>{n.actor_name}</strong> favorited <em>{n.cover_title}</em></>
+                        <>
+                          {n.actor_username
+                            ? <button className="notif-user-link" onClick={() => { navigate(`/users/${n.actor_username}`); setOpen(false); }}>{n.actor_name}</button>
+                            : <strong>{n.actor_name}</strong>
+                          }
+                          {' '}favorited{' '}
+                          <em>{n.cover_title}</em>
+                        </>
                       ) : (
-                        <><strong>{n.actor_name}</strong> commented on <em>{n.cover_title}</em></>
+                        <>
+                          {n.actor_username
+                            ? <button className="notif-user-link" onClick={() => { navigate(`/users/${n.actor_username}`); setOpen(false); }}>{n.actor_name}</button>
+                            : <strong>{n.actor_name}</strong>
+                          }
+                          {' '}commented on{' '}
+                          <em>{n.cover_title}</em>
+                        </>
                       )}
                     </p>
                     {n.content && (
@@ -210,6 +227,13 @@ export default function NotificationBell() {
         .notif-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
         .notif-text { font-size: 12px; color: var(--body-text); line-height: 1.4; margin: 0; }
         .notif-text em { font-style: normal; color: var(--accent); }
+        .notif-user-link {
+          font-weight: bold; color: var(--body-text);
+          background: none; border: none; padding: 0; cursor: pointer;
+          font-size: 12px; box-shadow: none; font-family: inherit;
+          text-decoration: underline; text-underline-offset: 2px;
+        }
+        .notif-user-link:hover { color: var(--accent); transform: none; box-shadow: none; }
         .notif-comment-preview { font-size: 11px; color: var(--body-text-muted); font-style: italic; margin: 0; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .notif-time { font-size: 10px; color: var(--body-text-muted); }
         @media (max-width: 640px) {

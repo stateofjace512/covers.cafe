@@ -276,11 +276,24 @@ export default function Settings() {
     setSigningOutOthers(true);
     setSignOutOthersMsg(null);
     try {
-      const { error } = await supabase.auth.signOut({ scope: 'others' });
-      if (error) {
-        setSignOutOthersMsg({ ok: false, text: error.message });
-      } else {
+      // Use the server-side admin API endpoint so sessions are forcefully revoked
+      // at the database level. The client-side signOut({ scope: 'others' }) only
+      // invalidates refresh tokens; existing access tokens remain valid for ~1 hour.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setSignOutOthersMsg({ ok: false, text: 'No active session found. Please sign in again.' });
+        setSigningOutOthers(false);
+        return;
+      }
+      const res = await fetch('/api/account/signout-others', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const json = await res.json() as { ok: boolean; message?: string };
+      if (json.ok) {
         setSignOutOthersMsg({ ok: true, text: 'All other sessions have been signed out.' });
+      } else {
+        setSignOutOthersMsg({ ok: false, text: json.message ?? 'Could not sign out other devices.' });
       }
     } catch {
       setSignOutOthersMsg({ ok: false, text: 'Could not sign out other devices.' });

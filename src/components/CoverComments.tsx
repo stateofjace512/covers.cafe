@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MessageCircle, Heart, Flag, Loader, Trash2, Pencil, Check, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getClientIdentity } from '../lib/comments/identityTracking.client';
 import { supabase } from '../lib/supabase';
@@ -19,6 +20,7 @@ interface Props {
 
 export default function CoverComments({ coverId }: Props) {
   const { user, session, openAuthModal } = useAuth();
+  const navigate = useNavigate();
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [content, setContent] = useState('');
@@ -206,7 +208,12 @@ export default function CoverComments({ coverId }: Props) {
           {comments.map((comment) => (
             <li key={comment.id} className="cover-comment-item">
               <div className="cover-comment-top">
-                <strong>{comment.author_username}</strong>
+                <button
+                  className="cover-comment-author"
+                  onClick={() => navigate(`/users/${comment.author_username}`)}
+                >
+                  {comment.author_username}
+                </button>
                 <span title={formatDateTooltip(comment.created_at)}>{formatDate(comment.created_at)}</span>
               </div>
               {editingId === comment.id ? (

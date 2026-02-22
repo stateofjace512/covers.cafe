@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { computePhash, isDuplicate } from '../lib/phash';
 import { checkRateLimit, getRateLimitState } from '../lib/rateLimit';
+import InfoModal from './InfoModal';
 
 const MIN_DIM = 500;
 const MAX_DIM = 5000;
@@ -43,23 +44,68 @@ interface UploadCollection {
 
 const normalizeTags = (values: string[]) => Array.from(new Set(values.map((v) => v.trim().toLowerCase()).filter(Boolean)));
 
-async function validateFile(file: File): Promise<string | null> {
-  if (file.type !== 'image/jpeg') return 'Only JPG/JPEG files are accepted.';
+type ValidationResult =
+  | { ok: true }
+  | { ok: false; error: string }
+  | { ok: false; tooLarge: true; width: number; height: number };
+
+async function validateFile(file: File): Promise<ValidationResult> {
+  if (file.type !== 'image/jpeg') return { ok: false, error: 'Only JPG/JPEG files are accepted.' };
   return new Promise((resolve) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
       URL.revokeObjectURL(url);
-      if (img.naturalWidth < MIN_DIM || img.naturalHeight < MIN_DIM)
-        resolve(`Image must be at least ${MIN_DIM}×${MIN_DIM}px (yours: ${img.naturalWidth}×${img.naturalHeight}).`);
-      else if (img.naturalWidth > MAX_DIM || img.naturalHeight > MAX_DIM)
-        resolve(`Image must be at most ${MAX_DIM}×${MAX_DIM}px (yours: ${img.naturalWidth}×${img.naturalHeight}).`);
-      else
-        resolve(null);
+      if (img.naturalWidth < MIN_DIM || img.naturalHeight < MIN_DIM) {
+        resolve({ ok: false, error: `Image must be at least ${MIN_DIM}×${MIN_DIM}px (yours: ${img.naturalWidth}×${img.naturalHeight}).` });
+      } else if (img.naturalWidth > MAX_DIM || img.naturalHeight > MAX_DIM) {
+        // Don't hard-reject — let the caller offer to resize
+        resolve({ ok: false, tooLarge: true, width: img.naturalWidth, height: img.naturalHeight });
+      } else {
+        resolve({ ok: true });
+      }
     };
-    img.onerror = () => { URL.revokeObjectURL(url); resolve('Could not read image dimensions.'); };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve({ ok: false, error: 'Could not read image dimensions.' }); };
     img.src = url;
   });
+}
+
+/**
+ * Resize a file so that its largest dimension is floored to the nearest 1000px
+ * (e.g. 5001 → 5000, 4039 → 4000, 7800 → 7000). The other dimension scales
+ * proportionally. Returns a new JPEG File.
+ */
+async function resizeToNearestThousand(file: File): Promise<File> {
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error('Could not load image for resizing.'));
+    img.src = url;
+  });
+  URL.revokeObjectURL(url);
+
+  const maxDim = Math.max(img.naturalWidth, img.naturalHeight);
+  const targetMaxDim = Math.floor(maxDim / 1000) * 1000;
+  const scale = targetMaxDim / maxDim;
+  const newWidth = Math.round(img.naturalWidth * scale);
+  const newHeight = Math.round(img.naturalHeight * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = newWidth;
+  canvas.height = newHeight;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas not available');
+  ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((b) => {
+      if (b) resolve(b);
+      else reject(new Error('Canvas resize failed'));
+    }, 'image/jpeg', 0.92);
+  });
+
+  return new File([blob], file.name, { type: 'image/jpeg' });
 }
 
 export default function UploadForm() {
@@ -81,6 +127,8 @@ export default function UploadForm() {
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
+  // File awaiting the user's decision to resize (too-large informodal)
+  const [pendingResizeFile, setPendingResizeFile] = useState<File | null>(null);
 
   // Bulk mode
   const [bulkItems, setBulkItems] = useState<UploadItem[]>([]);
@@ -94,10 +142,7 @@ export default function UploadForm() {
   const [bulkDone, setBulkDone] = useState(false);
   const bulkInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = useCallback(async (f: File) => {
-    setError(null);
-    const validationError = await validateFile(f);
-    if (validationError) { setError(validationError); return; }
+  const acceptFile = useCallback((f: File) => {
     setFile(f);
     setPreview(URL.createObjectURL(f));
     if (!title.trim()) {
@@ -106,6 +151,37 @@ export default function UploadForm() {
       applyKnownMetadata(inferredTitle, 'single');
     }
   }, [title, knownCovers]);
+
+  const handleFile = useCallback(async (f: File) => {
+    setError(null);
+    const result = await validateFile(f);
+    if (!result.ok) {
+      if ('tooLarge' in result) {
+        // Offer to resize instead of hard-rejecting
+        setPendingResizeFile(f);
+        return;
+      }
+      setError(result.error);
+      return;
+    }
+    acceptFile(f);
+  }, [acceptFile]);
+
+  const handleResizeConfirm = useCallback(async () => {
+    if (!pendingResizeFile) return;
+    try {
+      const resized = await resizeToNearestThousand(pendingResizeFile);
+      setPendingResizeFile(null);
+      acceptFile(resized);
+    } catch {
+      setPendingResizeFile(null);
+      setError('Resize failed. Please try a smaller image.');
+    }
+  }, [pendingResizeFile, acceptFile]);
+
+  const handleResizeCancel = useCallback(() => {
+    setPendingResizeFile(null);
+  }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -289,9 +365,16 @@ export default function UploadForm() {
   const handleBulkFiles = async (files: FileList | File[]) => {
     const arr = Array.from(files).slice(0, MAX_BULK - bulkItems.length);
     const newItems: UploadItem[] = [];
-    for (const f of arr) {
-      const err = await validateFile(f);
-      if (err) continue; // silently skip invalid files
+    for (let f of arr) {
+      const result = await validateFile(f);
+      if (!result.ok) {
+        if ('tooLarge' in result) {
+          // Auto-resize oversized files in bulk mode — no modal interruption
+          try { f = await resizeToNearestThousand(f); } catch { continue; }
+        } else {
+          continue; // skip invalid (wrong type, too small, etc.)
+        }
+      }
       newItems.push({
         file: f,
         preview: URL.createObjectURL(f),
@@ -459,6 +542,18 @@ export default function UploadForm() {
 
   return (
     <div className="upload-page">
+      {pendingResizeFile && (
+        <InfoModal
+          emoji="💪"
+          title="Woah there!"
+          body="That file is too powerful for us. Try uploading a smaller version or we can resize it for you!"
+          primaryLabel="Resize for me"
+          onPrimary={handleResizeConfirm}
+          secondaryLabel="Cancel"
+          onSecondary={handleResizeCancel}
+          onClose={handleResizeCancel}
+        />
+      )}
       <div className="upload-mode-toggle">
         <button
           className={`upload-mode-btn${mode === 'single' ? ' upload-mode-btn--active' : ''}`}
@@ -475,7 +570,7 @@ export default function UploadForm() {
       </div>
 
       <p className="upload-requirements">
-        JPG only &nbsp;·&nbsp; Min {MIN_DIM}×{MIN_DIM}px &nbsp;·&nbsp; Max {MAX_DIM}×{MAX_DIM}px &nbsp;·&nbsp; Square recommended &nbsp;·&nbsp; Stored full-res, displayed at 500px
+        JPG only &nbsp;·&nbsp; Min {MIN_DIM}×{MIN_DIM}px &nbsp;·&nbsp; Over {MAX_DIM}px? We'll resize it &nbsp;·&nbsp; Square recommended &nbsp;·&nbsp; Stored full-res, displayed at 500px
       </p>
 
       {mode === 'single' && (

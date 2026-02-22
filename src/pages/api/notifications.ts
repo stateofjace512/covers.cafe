@@ -57,14 +57,15 @@ export const GET: APIRoute = async ({ request }) => {
 
   // Fetch actor profiles for favorites
   const favUserIds = [...new Set((favRows ?? []).map((f: { user_id: string }) => f.user_id))];
-  const profileMap: Record<string, string> = {};
+  // Store username (not display_name) so names are always linkable to /users/:username
+  const profileUsernameMap: Record<string, string> = {};
   if (favUserIds.length > 0) {
     const { data: actorProfiles } = await sb
       .from('covers_cafe_profiles')
-      .select('id, username, display_name')
+      .select('id, username')
       .in('id', favUserIds);
     for (const p of actorProfiles ?? []) {
-      profileMap[p.id] = p.display_name ?? p.username ?? 'Someone';
+      profileUsernameMap[p.id] = p.username ?? p.id.slice(0, 8);
     }
   }
 
@@ -89,7 +90,8 @@ export const GET: APIRoute = async ({ request }) => {
       cover_id: f.cover_id,
       cover_title: coverMap[f.cover_id]?.title ?? 'a cover',
       cover_artist: coverMap[f.cover_id]?.artist ?? '',
-      actor_name: profileMap[f.user_id] ?? 'Someone',
+      actor_name: profileUsernameMap[f.user_id] ?? 'someone',
+      actor_username: profileUsernameMap[f.user_id] ?? null,
       content: null,
       created_at: f.created_at,
     })),
@@ -100,6 +102,7 @@ export const GET: APIRoute = async ({ request }) => {
       cover_title: coverMap[c.page_slug]?.title ?? 'a cover',
       cover_artist: coverMap[c.page_slug]?.artist ?? '',
       actor_name: c.author_username,
+      actor_username: c.author_username,
       content: c.content?.slice(0, 100) ?? null,
       created_at: c.created_at,
     })),

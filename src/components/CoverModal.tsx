@@ -764,6 +764,8 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .cover-comment-item { border: 1px solid var(--body-card-border); border-radius: 6px; background: rgba(255,255,255,0.25); padding: 8px 10px; }
         .cover-comment-top { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; color: #2f1b0d; margin-bottom: 4px; }
         .cover-comment-top strong, .cover-comment-top span { color: #2f1b0d; }
+        .cover-comment-author { font-weight: bold; color: #2f1b0d; background: none; border: none; padding: 0; cursor: pointer; font-size: 11px; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; }
+        .cover-comment-author:hover { color: var(--accent); transform: none; box-shadow: none; }
         .cover-comment-body { white-space: pre-wrap; font-size: 13px; margin-bottom: 7px; }
         .cover-comment-edited { font-size: 11px; color: #6f4a30; margin-bottom: 7px; font-style: italic; }
         .cover-comment-edit-wrap { display: flex; flex-direction: column; gap: 8px; }
