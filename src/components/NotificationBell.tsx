@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface Notification {
   id: string;
-  type: 'favorite' | 'comment';
+  type: 'favorite' | 'comment' | 'comment_like' | 'comment_reply';
   cover_id: string;
   cover_title: string;
   cover_artist: string;
@@ -162,8 +162,8 @@ export default function NotificationBell() {
                 return (
                   <div key={n.id} className={`notif-item${isNew ? ' notif-item--new' : ''}`}>
                     <span className="notif-num">{idx + 1}</span>
-                    <span className={`notif-icon ${n.type === 'favorite' ? 'notif-icon--fav' : 'notif-icon--cmt'}`}>
-                      {n.type === 'favorite' ? <Star size={12} fill="currentColor" /> : <MessageCircle size={12} />}
+                    <span className={`notif-icon ${(n.type === 'favorite' || n.type === 'comment_like') ? 'notif-icon--fav' : 'notif-icon--cmt'}`}>
+                      {(n.type === 'favorite' || n.type === 'comment_like') ? <Star size={12} fill="currentColor" /> : <MessageCircle size={12} />}
                     </span>
                     <div className="notif-body">
                       <p className="notif-text">
@@ -176,13 +176,23 @@ export default function NotificationBell() {
                         >
                           {n.actor_name}
                         </button>{' '}
-                        {n.type === 'favorite' ? 'favorited' : 'commented on'}{' '}
+                        {n.type === 'favorite' && 'favorited'}
+                        {n.type === 'comment' && 'commented on'}
+                        {n.type === 'comment_like' && 'liked your comment on'}
+                        {n.type === 'comment_reply' && 'replied to your comment on'}{' '}
                         <button className="notif-cover-link" onClick={() => { navigate(`/?open=${n.cover_id}`); setOpen(false); }}>
                           {n.cover_title}
                         </button>
                       </p>
                       {n.content && (
                         <p className="notif-comment-preview">"{n.content}{n.content.length >= 100 ? '…' : ''}"</p>
+                      )}
+                      {n.type === 'comment_reply' && (
+                        <p className="notif-comment-preview">
+                          <button className="notif-cover-link" onClick={() => { navigate(`/?open=${n.cover_id}`); setOpen(false); }}>
+                            View thread
+                          </button>
+                        </p>
                       )}
                       <span className="notif-time">{timeAgo(n.created_at)}</span>
                     </div>
