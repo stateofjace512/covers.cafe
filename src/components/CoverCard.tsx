@@ -27,7 +27,9 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
     if (!confirmDelete) { setConfirmDelete(true); return; }
     setDeleting(true);
     try {
-      await supabase.storage.from('covers_cafe_covers').remove([cover.storage_path]);
+      const paths = [cover.storage_path];
+      if (cover.thumbnail_path) paths.push(cover.thumbnail_path);
+      await supabase.storage.from('covers_cafe_covers').remove(paths);
       await supabase.from('covers_cafe_covers').delete().eq('id', cover.id);
       onDeleted?.(cover.id);
     } catch {

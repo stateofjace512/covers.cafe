@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { User, UserRoundCog } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
+import { getAvatarSrc } from '../lib/media';
 
 export default function Profile() {
   const { user, profile, openAuthModal } = useAuth();
@@ -30,8 +31,8 @@ export default function Profile() {
       <div className="profile-card card">
         <div className="profile-header">
           <div className="profile-avatar">
-            {profile?.avatar_url
-              ? <img src={profile.avatar_url} alt="avatar" className="profile-avatar-img" />
+            {profile && getAvatarSrc(profile)
+              ? <img src={getAvatarSrc(profile)!} alt="avatar" className="profile-avatar-img" />
               : <User size={40} style={{ opacity: 0.4 }} />
             }
           </div>

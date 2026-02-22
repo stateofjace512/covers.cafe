@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -35,19 +35,12 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
   const [selectedCover, setSelectedCover] = useState<Cover | null>(null);
   const [openCollectionPanel, setOpenCollectionPanel] = useState(false);
   const [isDraggingCover, setIsDraggingCover] = useState(false);
+  const navigate = useNavigate();
   const [sort, setSort] = useState<SortOption>('newest');
-  const [activeTag, setActiveTag] = useState<string | null>(null);
   const [rateLimited, setRateLimited] = useState(false);
 
-  const allTags = useMemo(() => {
-    const set = new Set<string>();
-    covers.forEach((c) => c.tags?.forEach((t) => set.add(t)));
-    return Array.from(set).sort();
-  }, [covers]);
-
   const displayed = useMemo(() => {
-    let list = activeTag ? covers.filter((c) => c.tags?.includes(activeTag)) : covers;
-    list = [...list].sort((a, b) => {
+    let list = [...covers].sort((a, b) => {
       switch (sort) {
         case 'oldest': return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         case 'most_downloaded': return (b.download_count ?? 0) - (a.download_count ?? 0);
@@ -57,7 +50,7 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
       }
     });
     return list;
-  }, [covers, activeTag, sort]);
+  }, [covers, sort]);
 
   const fetchCovers = useCallback(async () => {
     setLoading(true);
@@ -100,7 +93,7 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
         .order('created_at', { ascending: false });
 
       if (searchQuery) {
-        query = query.or(`title.ilike.%${searchQuery}%,artist.ilike.%${searchQuery}%`);
+        query = query.or(`title.ilike.%${searchQuery}%,artist.ilike.%${searchQuery}%,tags.cs.{"${searchQuery.toLowerCase()}"}`);
       }
 
       const { data } = await query;
@@ -179,25 +172,6 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
           </select>
         </div>
 
-        {allTags.length > 0 && (
-          <div className="gallery-tags">
-            <button
-              className={`gallery-tag${activeTag === null ? ' gallery-tag--active' : ''}`}
-              onClick={() => setActiveTag(null)}
-            >
-              All
-            </button>
-            {allTags.map((tag) => (
-              <button
-                key={tag}
-                className={`gallery-tag${activeTag === tag ? ' gallery-tag--active' : ''}`}
-                onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
 
@@ -234,9 +208,7 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
             <circle cx="9" cy="9" r="2"/>
           </svg>
           <p>
-            {activeTag
-              ? `No covers tagged "${activeTag}".`
-              : searchQuery
+            {searchQuery
               ? `No covers found for "${searchQuery}".`
               : filter === 'favorites'
               ? 'No favorites yet. Star covers to save them here.'
@@ -291,16 +263,7 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
           font-family: Arial, Helvetica, sans-serif;
         }
         .gallery-sort-select:focus { border-color: var(--accent); }
-        .gallery-tags { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
-        .gallery-tag {
-          font-size: 11px; font-weight: bold; padding: 3px 9px; border-radius: 12px;
-          border: 1px solid var(--body-card-border);
-          background: var(--sidebar-bg); color: var(--body-text-muted);
-          cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s;
-          box-shadow: none;
-        }
-        .gallery-tag:hover { background: var(--accent); color: white; border-color: var(--accent); transform: none; box-shadow: none; }
-        .gallery-tag--active { background: var(--accent); color: white; border-color: var(--accent-dark); }
+
         .gallery-loading, .gallery-empty {
           display: flex; flex-direction: column;
           align-items: center; justify-content: center;

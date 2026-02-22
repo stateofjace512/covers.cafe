@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserRound } from 'lucide-react';
-import { apiGet } from '../lib/api';
+import { supabase } from '../lib/supabase';
+import { getAvatarSrc } from '../lib/media';
 import type { Profile } from '../lib/types';
 
 interface ArtistRow extends Profile {
@@ -16,8 +17,17 @@ export default function Users() {
 
   useEffect(() => {
     (async () => {
-      const data = await apiGet<ArtistRow[]>('/api/users');
-      setUsers(data);
+      const { data } = await supabase
+        .from('covers_cafe_profiles')
+        .select('*, covers_cafe_covers!inner(id)')
+        .order('username');
+
+      const map = new Map<string, ArtistRow>();
+      (data ?? []).forEach((row: Profile & { covers_cafe_covers?: { id: string }[] }) => {
+        if (!map.has(row.id)) map.set(row.id, { ...row, cover_count: row.covers_cafe_covers?.length ?? 0 });
+      });
+
+      setUsers(Array.from(map.values()));
       setLoading(false);
     })();
   }, []);
@@ -49,25 +59,28 @@ export default function Users() {
         <p className="text-muted">No users found{search ? ` for "${search}"` : ''}.</p>
       ) : (
         <div className="artist-grid">
-          {filtered.map((artist) => (
-            <button
-              key={artist.id}
-              className="artist-card"
-              onClick={() => navigate(`/users/${encodeURIComponent(artist.username)}`)}
-              title={`View covers by ${artist.display_name ?? artist.username}`}
-            >
-              <div className="artist-avatar">
-                {artist.avatar_url
-                  ? <img src={artist.avatar_url} alt={artist.display_name ?? artist.username} className="artist-avatar-img" />
-                  : <UserRound size={28} style={{ opacity: 0.35 }} />
-                }
-              </div>
-              <div className="artist-info">
-                <span className="artist-name">{artist.display_name ?? artist.username}</span>
-                <span className="artist-count">{artist.cover_count} cover{artist.cover_count !== 1 ? 's' : ''}</span>
-              </div>
-            </button>
-          ))}
+          {filtered.map((artist) => {
+            const avatarSrc = getAvatarSrc(artist);
+            return (
+              <button
+                key={artist.id}
+                className="artist-card"
+                onClick={() => navigate(`/users/${encodeURIComponent(artist.username)}`)}
+                title={`View covers by ${artist.display_name ?? artist.username}`}
+              >
+                <div className="artist-avatar">
+                  {avatarSrc
+                    ? <img src={avatarSrc} alt={artist.display_name ?? artist.username} className="artist-avatar-img" />
+                    : <UserRound size={28} style={{ opacity: 0.35 }} />
+                  }
+                </div>
+                <div className="artist-info">
+                  <span className="artist-name">{artist.display_name ?? artist.username}</span>
+                  <span className="artist-count">{artist.cover_count} cover{artist.cover_count !== 1 ? 's' : ''}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
 

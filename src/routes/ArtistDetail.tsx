@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { UserRound, ArrowLeft, Image, Folder } from 'lucide-react';
-import { apiGet } from '../lib/api';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
 import type { Profile } from '../lib/types';
+import { getAvatarSrc } from '../lib/media';
 
 export default function ArtistDetail() {
   const { username } = useParams<{ username: string }>();
@@ -19,15 +20,35 @@ export default function ArtistDetail() {
   useEffect(() => {
     if (!username) return;
     (async () => {
-      try {
-        const detail = await apiGet<{ profile: Profile; coverCount: number }>(`/api/user-detail?username=${encodeURIComponent(username)}`);
-        setProfile(detail.profile);
-        setCoverCount(detail.coverCount);
-        const cols = await apiGet<{ id: string; name: string; item_count: number }[]>(`/api/user-collections?username=${encodeURIComponent(username)}`);
-        setCollections(cols);
-      } catch {
-        setNotFound(true);
-      }
+      const { data: profileData } = await supabase
+        .from('covers_cafe_profiles')
+        .select('*')
+        .eq('username', username)
+        .single();
+
+      if (!profileData) { setNotFound(true); setLoading(false); return; }
+      setProfile(profileData);
+
+      const { count } = await supabase
+        .from('covers_cafe_covers')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', profileData.id)
+        .eq('is_public', true);
+      setCoverCount(count ?? 0);
+
+      const { data: colData } = await supabase
+        .from('covers_cafe_collections')
+        .select('id,name,is_public,covers_cafe_collection_items(id)')
+        .eq('owner_id', profileData.id)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false });
+
+      setCollections((colData ?? []).map((row: { id: string; name: string; is_public: boolean; covers_cafe_collection_items?: { id: string }[] }) => ({
+        id: row.id,
+        name: row.name,
+        item_count: row.covers_cafe_collection_items?.length ?? 0,
+      })));
+
       setLoading(false);
     })();
   }, [username]);
@@ -52,8 +73,8 @@ export default function ArtistDetail() {
 
       <div className="artist-detail-header card">
         <div className="artist-detail-avatar">
-          {profile?.avatar_url
-            ? <img src={profile.avatar_url} alt={profile.display_name ?? profile.username} className="artist-detail-avatar-img" />
+          {profile && getAvatarSrc(profile)
+            ? <img src={getAvatarSrc(profile)!} alt={profile.display_name ?? profile.username} className="artist-detail-avatar-img" />
             : <UserRound size={40} style={{ opacity: 0.3 }} />
           }
         </div>

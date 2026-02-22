@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from './_supabase';
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ request }) => {
+  const url = new URL(request.url);
   const sb = getSupabaseServer();
   if (!sb) return new Response(JSON.stringify([]), { status: 200 });
   const ownerId = url.searchParams.get('owner_id');
