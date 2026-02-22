@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface Notification {
   id: string;
-  type: 'favorite' | 'comment';
+  type: 'favorite' | 'comment' | 'comment_like' | 'comment_reply';
   cover_id: string;
   cover_title: string;
   cover_artist: string;
@@ -13,40 +13,7 @@ interface Notification {
   actor_username: string | null;
   content: string | null;
   created_at: string;
-}
-
-const LS_KEY = 'notifications_last_read';
-const LS_DISMISSED = 'notifications_dismissed';
-
-function getLastRead(): number {
-  try {
-    return parseInt(localStorage.getItem(LS_KEY) ?? '0', 10) || 0;
-  } catch {
-    return 0;
-  }
-}
-
-function setLastRead(ts: number) {
-  try {
-    localStorage.setItem(LS_KEY, String(ts));
-  } catch { /* noop */ }
-}
-
-function getDismissed(): Set<string> {
-  try {
-    const raw = localStorage.getItem(LS_DISMISSED);
-    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
-  } catch {
-    return new Set();
-  }
-}
-
-function saveDismissed(ids: Set<string>) {
-  try {
-    // Keep at most 200 dismissed IDs to avoid unbounded growth
-    const arr = [...ids].slice(-200);
-    localStorage.setItem(LS_DISMISSED, JSON.stringify(arr));
-  } catch { /* noop */ }
+  read_at: string | null;
 }
 
 function timeAgo(dateStr: string): string {
@@ -62,12 +29,8 @@ export default function NotificationBell() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [dismissed, setDismissed] = useState<Set<string>>(() => getDismissed());
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  // Snapshot the lastRead timestamp at the moment the panel opens so the "new"
-  // dots don't disappear while the panel is open.
-  const [openedAtRead, setOpenedAtRead] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -81,12 +44,7 @@ export default function NotificationBell() {
       if (res.ok) {
         const data = await res.json() as { notifications: Notification[] };
         setNotifications(data.notifications);
-        const lastRead = getLastRead();
-        const dismissed = getDismissed();
-        const newCount = data.notifications.filter(
-          (n) => !dismissed.has(n.id) && new Date(n.created_at).getTime() > lastRead
-        ).length;
-        setUnreadCount(newCount);
+        setUnreadCount(data.notifications.filter((n) => !n.read_at).length);
       }
     } catch { /* noop */ }
     setLoading(false);
@@ -111,29 +69,56 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [open]);
 
+  const markAllRead = useCallback(async () => {
+    if (!session?.access_token) return;
+    try {
+      await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'mark_read_all' }),
+      });
+    } catch { /* noop */ }
+  }, [session?.access_token]);
+
   const handleOpen = () => {
     if (!open) {
-      const lastRead = getLastRead();
-      setOpenedAtRead(lastRead);
       setOpen(true);
-      setLastRead(Date.now());
+      setNotifications((prev) => prev.map((n) => (n.read_at ? n : { ...n, read_at: new Date().toISOString() })));
       setUnreadCount(0);
+      void markAllRead();
     } else {
       setOpen(false);
     }
   };
 
-  const dismiss = useCallback((id: string) => {
-    setDismissed((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      saveDismissed(next);
-      return next;
-    });
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  }, []);
+  const dismiss = useCallback(async (id: string) => {
+    if (!session?.access_token) return;
+    const prior = notifications;
+    const next = prior.filter((n) => n.id !== id);
+    setNotifications(next);
+    setUnreadCount(next.filter((n) => !n.read_at).length);
 
-  const visible = notifications.filter((n) => !dismissed.has(n.id));
+    try {
+      const res = await fetch('/api/notifications', {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) {
+        setNotifications(prior);
+        setUnreadCount(prior.filter((n) => !n.read_at).length);
+      }
+    } catch {
+      setNotifications(prior);
+      setUnreadCount(prior.filter((n) => !n.read_at).length);
+    }
+  }, [notifications, session?.access_token]);
 
   if (!user) return null;
 
@@ -157,8 +142,8 @@ export default function NotificationBell() {
           <div className="notif-panel-header">
             <span className="notif-panel-title">
               Notifications
-              {visible.length > 0 && (
-                <span className="notif-panel-count">{visible.length}</span>
+              {notifications.length > 0 && (
+                <span className="notif-panel-count">{notifications.length}</span>
               )}
             </span>
             <button className="notif-close-btn" onClick={() => setOpen(false)} aria-label="Close">
@@ -167,28 +152,34 @@ export default function NotificationBell() {
           </div>
 
           <div className="notif-list">
-            {loading && visible.length === 0 ? (
+            {loading && notifications.length === 0 ? (
               <p className="notif-empty">Loading…</p>
-            ) : visible.length === 0 ? (
+            ) : notifications.length === 0 ? (
               <p className="notif-empty">No notifications yet. Upload some covers to get started!</p>
             ) : (
-              visible.map((n, idx) => {
-                const isNew = new Date(n.created_at).getTime() > openedAtRead;
+              notifications.map((n, idx) => {
+                const isNew = !n.read_at;
                 return (
                   <div key={n.id} className={`notif-item${isNew ? ' notif-item--new' : ''}`}>
                     <span className="notif-num">{idx + 1}</span>
-                    <div className="notif-icon">
-                      {n.type === 'favorite'
-                        ? <Star size={13} fill="currentColor" className="notif-icon--fav" />
-                        : <MessageCircle size={13} className="notif-icon--cmt" />}
-                    </div>
+                    <span className={`notif-icon ${(n.type === 'favorite' || n.type === 'comment_like') ? 'notif-icon--fav' : 'notif-icon--cmt'}`}>
+                      {(n.type === 'favorite' || n.type === 'comment_like') ? <Star size={12} fill="currentColor" /> : <MessageCircle size={12} />}
+                    </span>
                     <div className="notif-body">
                       <p className="notif-text">
-                        {n.actor_username
-                          ? <button className="notif-user-link" onClick={() => { navigate(`/users/${n.actor_username}`); setOpen(false); }}>{n.actor_name}</button>
-                          : <strong>{n.actor_name}</strong>
-                        }
-                        {n.type === 'favorite' ? ' favorited ' : ' commented on '}
+                        <button
+                          className="notif-user-link"
+                          onClick={() => {
+                            if (n.actor_username) navigate(`/users/${encodeURIComponent(n.actor_username)}`);
+                            setOpen(false);
+                          }}
+                        >
+                          {n.actor_name}
+                        </button>{' '}
+                        {n.type === 'favorite' && 'favorited'}
+                        {n.type === 'comment' && 'commented on'}
+                        {n.type === 'comment_like' && 'liked your comment on'}
+                        {n.type === 'comment_reply' && 'replied to your comment on'}{' '}
                         <button className="notif-cover-link" onClick={() => { navigate(`/?open=${n.cover_id}`); setOpen(false); }}>
                           {n.cover_title}
                         </button>
@@ -196,11 +187,18 @@ export default function NotificationBell() {
                       {n.content && (
                         <p className="notif-comment-preview">"{n.content}{n.content.length >= 100 ? '…' : ''}"</p>
                       )}
+                      {n.type === 'comment_reply' && (
+                        <p className="notif-comment-preview">
+                          <button className="notif-cover-link" onClick={() => { navigate(`/?open=${n.cover_id}`); setOpen(false); }}>
+                            View thread
+                          </button>
+                        </p>
+                      )}
                       <span className="notif-time">{timeAgo(n.created_at)}</span>
                     </div>
                     <button
                       className="notif-dismiss-btn"
-                      onClick={() => dismiss(n.id)}
+                      onClick={() => void dismiss(n.id)}
                       title="Dismiss"
                       aria-label="Dismiss notification"
                     >
@@ -258,7 +256,6 @@ export default function NotificationBell() {
           box-shadow: none;
         }
         .notif-close-btn:hover { color: var(--body-text); transform: none; box-shadow: none; }
-        /* min-height: 0 is critical — without it flex children won't shrink and overflow-y won't scroll */
         .notif-list { overflow-y: auto; flex: 1; min-height: 0; }
         .notif-empty { font-size: 13px; color: var(--body-text-muted); padding: 20px 14px; text-align: center; line-height: 1.5; }
         .notif-item {
@@ -281,7 +278,6 @@ export default function NotificationBell() {
         .notif-icon--cmt { color: var(--accent); }
         .notif-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
         .notif-text { font-size: 12px; color: var(--body-text); line-height: 1.4; margin: 0; }
-        .notif-text em { font-style: normal; color: var(--accent); }
         .notif-user-link {
           font-weight: bold; color: var(--body-text);
           background: none; border: none; padding: 0; cursor: pointer;

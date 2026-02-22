@@ -6,10 +6,72 @@ import { useAuth } from '../contexts/AuthContext';
 import { getCoverImageSrc } from '../lib/media';
 import CoverCard from '../components/CoverCard';
 import CoverModal from '../components/CoverModal';
+import InfoModal from '../components/InfoModal';
 import type { Cover } from '../lib/types';
 
 const PAGE_SIZE = 24;
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
+const MAX_DIM = 5000;
+
+type ArtistPhotoValidationResult =
+  | { ok: true }
+  | { ok: false; error: string }
+  | { ok: false; tooLarge: true };
+
+async function validateArtistPhoto(file: File): Promise<ArtistPhotoValidationResult> {
+  if (!file.type.startsWith('image/')) return { ok: false, error: 'Please upload an image file.' };
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      if (img.naturalWidth > MAX_DIM || img.naturalHeight > MAX_DIM) {
+        resolve({ ok: false, tooLarge: true });
+      } else {
+        resolve({ ok: true });
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve({ ok: false, error: 'Could not read image dimensions.' });
+    };
+    img.src = url;
+  });
+}
+
+async function resizeToNearestThousand(file: File): Promise<File> {
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error('Could not load image for resizing.'));
+    img.src = url;
+  });
+  URL.revokeObjectURL(url);
+
+  const maxDim = Math.max(img.naturalWidth, img.naturalHeight);
+  const targetMaxDim = Math.floor(maxDim / 1000) * 1000;
+  if (targetMaxDim <= 0) throw new Error('Invalid dimensions for resize.');
+  const scale = targetMaxDim / maxDim;
+  const newWidth = Math.round(img.naturalWidth * scale);
+  const newHeight = Math.round(img.naturalHeight * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = newWidth;
+  canvas.height = newHeight;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas not available');
+  ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((b) => {
+      if (b) resolve(b);
+      else reject(new Error('Canvas resize failed'));
+    }, 'image/jpeg', 0.92);
+  });
+
+  return new File([blob], file.name.replace(/\.[^.]*$/, '.jpg'), { type: 'image/jpeg' });
+}
 
 function artistPhotoTransformUrl(artistName: string, bust?: number): string {
   const path = `${encodeURIComponent(artistName)}.jpg`;
@@ -36,6 +98,7 @@ export default function MusicArtistDetail() {
   const [photoBust, setPhotoBust] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [pendingResizeFile, setPendingResizeFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Set initial avatar src whenever artistName changes
@@ -119,9 +182,8 @@ export default function MusicArtistDetail() {
     if (headerCover) setAvatarSrc(getCoverImageSrc(headerCover, 200));
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user || !artistName) return;
+  const uploadArtistPhoto = async (file: File) => {
+    if (!user || !artistName) return;
     setUploading(true);
     setUploadError('');
     const path = `${encodeURIComponent(artistName)}.jpg`;
@@ -136,11 +198,57 @@ export default function MusicArtistDetail() {
       setAvatarSrc(artistPhotoTransformUrl(artistName, bust));
     }
     setUploading(false);
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !artistName) return;
+    const validation = await validateArtistPhoto(file);
+    if (!validation.ok) {
+      if ('tooLarge' in validation) {
+        setPendingResizeFile(file);
+      } else {
+        setUploadError(validation.error);
+      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    await uploadArtistPhoto(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleResizeConfirm = async () => {
+    if (!pendingResizeFile) return;
+    try {
+      const resized = await resizeToNearestThousand(pendingResizeFile);
+      setPendingResizeFile(null);
+      await uploadArtistPhoto(resized);
+    } catch {
+      setUploadError('Resize failed. Please try a smaller image.');
+      setPendingResizeFile(null);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleResizeCancel = () => {
+    setPendingResizeFile(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   return (
     <div>
+      {pendingResizeFile && (
+        <InfoModal
+          emoji="💪"
+          title="Woah there!"
+          body="That file is too powerful for us. Try uploading a smaller version or we can resize it for you!"
+          primaryLabel="Resize for me"
+          onPrimary={handleResizeConfirm}
+          secondaryLabel="Cancel"
+          onSecondary={handleResizeCancel}
+          onClose={handleResizeCancel}
+        />
+      )}
       <button className="btn btn-secondary ma-back-btn" onClick={() => navigate('/artists')}>
         <ArrowLeft size={14} /> All Artists
       </button>
