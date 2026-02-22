@@ -64,13 +64,18 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
 
     const loadCollections = async () => {
       setCollectionsLoading(true);
-      const { data } = await supabase
-        .from('covers_cafe_collections')
-        .select('id,name,is_public')
-        .eq('owner_id', user.id)
-        .order('created_at', { ascending: false });
-      setCollections(data ?? []);
-      setCollectionsLoading(false);
+      try {
+        const { data } = await supabase
+          .from('covers_cafe_collections')
+          .select('id,name,is_public')
+          .eq('owner_id', user.id)
+          .order('created_at', { ascending: false });
+        setCollections(data ?? []);
+      } catch {
+        // silently fall through with empty list
+      } finally {
+        setCollectionsLoading(false);
+      }
     };
 
     void loadCollections();
@@ -149,20 +154,23 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     }
 
     setSavingCollection(true);
-    const { data: created, error: createErr } = await supabase
-      .from('covers_cafe_collections')
-      .insert({ owner_id: user.id, name, is_public: newCollectionPublic })
-      .select('id,name,is_public')
-      .single();
-    if (createErr || !created) {
-      setCollectionStatus(createErr?.message ?? 'Could not create collection.');
-      setSavingCollection(false);
-      return;
+    try {
+      const { data: created, error: createErr } = await supabase
+        .from('covers_cafe_collections')
+        .insert({ owner_id: user.id, name, is_public: newCollectionPublic })
+        .select('id,name,is_public')
+        .single();
+      if (createErr || !created) {
+        setCollectionStatus(createErr?.message ?? 'Could not create collection.');
+      } else {
+        setCollections((prev) => [created, ...prev]);
+        setSelectedCollectionId(created.id);
+        setNewCollectionName('');
+        setCollectionStatus(`Created "${created.name}".`);
+      }
+    } catch (err) {
+      setCollectionStatus(err instanceof Error ? err.message : 'Could not create collection.');
     }
-    setCollections((prev) => [created, ...prev]);
-    setSelectedCollectionId(created.id);
-    setNewCollectionName('');
-    setCollectionStatus(`Created "${created.name}".`);
     setSavingCollection(false);
   };
 
@@ -170,21 +178,23 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     if (!user || !collectionId) return;
     setSavingCollection(true);
 
-    const { error: addErr } = await supabase
-      .from('covers_cafe_collection_items')
-      .insert({ collection_id: collectionId, cover_id: cover.id });
-    if (addErr) {
-      if (addErr.code === '23505') {
-        setCollectionStatus('This image is already in that collection.');
+    try {
+      const { error: addErr } = await supabase
+        .from('covers_cafe_collection_items')
+        .insert({ collection_id: collectionId, cover_id: cover.id });
+      if (addErr) {
+        if (addErr.code === '23505') {
+          setCollectionStatus('This image is already in that collection.');
+        } else {
+          setCollectionStatus(addErr.message || 'Could not add to collection.');
+        }
       } else {
-        setCollectionStatus(addErr.message || 'Could not add to collection.');
+        const picked = collections.find((item) => item.id === collectionId);
+        setCollectionStatus(`Added to ${picked?.name ?? 'collection'}.`);
       }
-      setSavingCollection(false);
-      return;
+    } catch (err) {
+      setCollectionStatus(err instanceof Error ? err.message : 'Could not add to collection.');
     }
-
-    const picked = collections.find((item) => item.id === collectionId);
-    setCollectionStatus(`Added to ${picked?.name ?? 'collection'}.`);
     setSavingCollection(false);
   };
 
