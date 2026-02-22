@@ -4,7 +4,7 @@ import { Upload, X, Loader, AlertCircle, CheckCircle, Plus, Trash2 } from 'lucid
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { computePhash, isDuplicate } from '../lib/phash';
-import { checkRateLimit } from '../lib/rateLimit';
+import { checkRateLimit, getRateLimitState } from '../lib/rateLimit';
 
 const MIN_DIM = 500;
 const MAX_DIM = 5000;
@@ -228,9 +228,12 @@ export default function UploadForm() {
     if (!title.trim() || !artist.trim()) { setError('Title and artist are required.'); return; }
 
     if (!checkRateLimit('upload', UPLOAD_RATE_MAX, UPLOAD_RATE_WINDOW)) {
-      setError('You\'re uploading too fast. Please wait a minute before uploading more.');
+      const { retryAfterMs } = getRateLimitState('upload');
+      const waitSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
+      setError(`You're uploading too fast. Please wait ${waitSeconds}s before trying again.`);
       return;
     }
+
 
     setUploading(true);
     setError(null);
@@ -336,8 +339,10 @@ export default function UploadForm() {
     }
 
     if (!checkRateLimit('upload', UPLOAD_RATE_MAX, UPLOAD_RATE_WINDOW)) {
+      const { retryAfterMs } = getRateLimitState('upload');
+      const waitSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
       setBulkItems((prev) => prev.map((it) => ({
-        ...it, status: 'error', errorMsg: 'Upload rate limit reached. Wait a minute.',
+        ...it, status: 'error', errorMsg: `Upload rate limit reached. Try again in ${waitSeconds}s.`,
       })));
       return;
     }
