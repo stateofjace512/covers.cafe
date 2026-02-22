@@ -72,7 +72,7 @@ export default function Gallery() {
         .hero-banner {
           background: linear-gradient(135deg, var(--header-bg) 0%, var(--sidebar-bg-dark) 60%, var(--header-bg-dark) 100%);
           border: 1px solid var(--body-card-border); border-radius: 8px;
-          padding: 32px 32px 0; margin-bottom: 32px;
+          padding: 32px 32px 16px; margin-bottom: 32px; 
           box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.12);
           position: relative; overflow: hidden;
         }
