@@ -1,13 +1,25 @@
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Image, ArrowUpFromLine } from 'lucide-react';
+import { Image, ArrowUpFromLine, Star, Trophy, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
 import CoffeeCupIcon from '../components/CoffeeCupIcon';
+
+export type GalleryTab = 'new' | 'top_rated' | 'acotw';
+
+const TABS: { id: GalleryTab; label: string; icon: React.ReactNode; title: string }[] = [
+  { id: 'new',       label: 'New',       icon: <Sparkles size={13} />, title: 'Recent Covers' },
+  { id: 'top_rated', label: 'Top Rated', icon: <Star size={13} />,     title: 'Top Rated' },
+  { id: 'acotw',     label: 'ACOTW',     icon: <Trophy size={13} />,   title: 'Album Cover Of The Week' },
+];
 
 export default function Gallery() {
   const { user, openAuthModal } = useAuth();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q');
+  const [activeTab, setActiveTab] = useState<GalleryTab>('new');
+
+  const activeTitle = TABS.find((t) => t.id === activeTab)?.title ?? 'Recent Covers';
 
   return (
     <div>
@@ -33,10 +45,17 @@ export default function Gallery() {
               )}
             </div>
           </div>
-          <div className="hero-badge-strip">
-            <span className="badge">New</span>
-            <span className="badge">Community</span>
-            <span className="badge">Free</span>
+          <div className="hero-tab-strip">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                className={`hero-tab${activeTab === tab.id ? ' hero-tab--active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -44,9 +63,9 @@ export default function Gallery() {
       <section>
         <h2 className="section-title">
           <Image size={20} />
-          {searchQuery ? `Results for "${searchQuery}"` : 'Recent Covers'}
+          {searchQuery ? `Results for "${searchQuery}"` : activeTitle}
         </h2>
-        <GalleryGrid filter="all" />
+        <GalleryGrid filter="all" tab={searchQuery ? 'new' : activeTab} />
       </section>
 
       <style>{`
@@ -76,11 +95,28 @@ export default function Gallery() {
           margin-bottom: 22px; line-height: 1.6; text-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
         .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-        .hero-badge-strip {
+        .hero-tab-strip {
           position: relative; z-index: 1;
-          display: flex; gap: 8px;
-          padding: 14px 0 16px;
+          display: flex; gap: 4px;
+          padding: 12px 0 0;
           border-top: 1px solid rgba(255,255,255,0.1); margin-top: 24px;
+        }
+        .hero-tab {
+          display: inline-flex; align-items: center; gap: 6px;
+          padding: 7px 16px 9px;
+          border: none; border-radius: 6px 6px 0 0;
+          font-size: 12px; font-weight: bold; font-family: inherit;
+          cursor: pointer;
+          background: transparent;
+          color: rgba(255,248,240,0.55);
+          transition: color 0.15s, background 0.15s;
+          position: relative; bottom: 0;
+        }
+        .hero-tab:hover { color: rgba(255,248,240,0.9); background: rgba(255,255,255,0.08); }
+        .hero-tab--active {
+          color: #fff8f0;
+          background: rgba(255,255,255,0.12);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
         }
       `}</style>
     </div>

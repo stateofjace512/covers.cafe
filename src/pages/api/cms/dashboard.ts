@@ -24,7 +24,7 @@ export const GET: APIRoute = async ({ request }) => {
       .limit(200),
     sb
       .from('covers_cafe_covers')
-      .select('id, title, artist, created_at, is_public, user_id')
+      .select('id, title, artist, created_at, is_public, is_acotw, user_id')
       .eq('is_public', true)
       .order('created_at', { ascending: false })
       .limit(200),
@@ -35,7 +35,7 @@ export const GET: APIRoute = async ({ request }) => {
   ]);
 
   const reportRows = (reports ?? []) as ReportRow[];
-  const publishedRows = (published ?? []) as { id: string; title: string; artist: string; created_at: string; is_public: boolean; user_id: string }[];
+  const publishedRows = (published ?? []) as { id: string; title: string; artist: string; created_at: string; is_public: boolean; is_acotw: boolean; user_id: string }[];
 
   const ids = [
     ...new Set([

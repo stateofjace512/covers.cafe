@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, Download, User, Trash2 } from 'lucide-react';
+import { Star, Download, User, Trash2, Trophy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
@@ -98,7 +98,19 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
         <div className="album-card-title" title={cover.title}>{cover.title}</div>
         <div className="album-card-artist" title={cover.artist}>{cover.artist}</div>
         <div className="cover-card-meta">
+          {cover.is_acotw && (
+            <span className="cover-card-acotw" title="Album Cover Of The Week">
+              <Trophy size={9} />
+              ACOTW
+            </span>
+          )}
           {cover.year && <span className="cover-card-year">{cover.year}</span>}
+          {(cover.favorite_count ?? 0) > 0 && (
+            <span className="cover-card-fav-count" title={`${cover.favorite_count} favorite${cover.favorite_count === 1 ? '' : 's'}`}>
+              <Star size={9} />
+              {cover.favorite_count}
+            </span>
+          )}
           <span className="cover-card-uploader">
             <User size={10} />
             {cover.profiles?.display_name ?? cover.profiles?.username ?? 'unknown'}
@@ -145,6 +157,8 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
         @keyframes delete-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
         .cover-card-meta { display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
         .cover-card-year { font-size: 11px; color: var(--body-text-muted); background: var(--body-border); padding: 1px 5px; border-radius: 3px; font-weight: bold; }
+        .cover-card-fav-count { display: flex; align-items: center; gap: 2px; font-size: 11px; color: var(--body-text-muted); font-weight: bold; }
+        .cover-card-acotw { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #b8860b; background: rgba(184,134,11,0.12); border: 1px solid rgba(184,134,11,0.3); padding: 1px 5px; border-radius: 3px; }
         .cover-card-uploader { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .album-card-cover { position: relative; }
       `}</style>

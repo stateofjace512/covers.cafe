@@ -8,11 +8,13 @@ import CoverCard from './CoverCard';
 import CoverModal from './CoverModal';
 import RateLimitModal from './RateLimitModal';
 import type { Cover } from '../lib/types';
+import type { GalleryTab } from '../routes/Gallery';
 
-type SortOption = 'newest' | 'oldest' | 'most_downloaded' | 'title_az' | 'artist_az';
+type SortOption = 'newest' | 'oldest' | 'most_downloaded' | 'most_favorited' | 'title_az' | 'artist_az';
 
 interface Props {
   filter?: 'all' | 'favorites' | 'mine' | 'artist';
+  tab?: GalleryTab;
   artistUserId?: string;
 }
 
@@ -20,11 +22,12 @@ const SORT_LABELS: Record<SortOption, string> = {
   newest: 'Newest',
   oldest: 'Oldest',
   most_downloaded: 'Most Downloaded',
+  most_favorited: 'Most Favorited',
   title_az: 'Title A–Z',
   artist_az: 'Artist A–Z',
 };
 
-export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
+export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId }: Props) {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') ?? '';
@@ -39,11 +42,18 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
   const [sort, setSort] = useState<SortOption>('newest');
   const [rateLimited, setRateLimited] = useState(false);
 
+  // When tab changes, reset sort to a sensible default
+  useEffect(() => {
+    if (tab === 'top_rated') setSort('most_favorited');
+    else setSort('newest');
+  }, [tab]);
+
   const displayed = useMemo(() => {
     let list = [...covers].sort((a, b) => {
       switch (sort) {
         case 'oldest': return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         case 'most_downloaded': return (b.download_count ?? 0) - (a.download_count ?? 0);
+        case 'most_favorited': return (b.favorite_count ?? 0) - (a.favorite_count ?? 0);
         case 'title_az': return a.title.localeCompare(b.title);
         case 'artist_az': return a.artist.localeCompare(b.artist);
         default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
@@ -86,14 +96,22 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
         .order('created_at', { ascending: false });
       setCovers((data as Cover[]) ?? []);
     } else {
+      // Public gallery — behaviour varies by tab
       let query = supabase
         .from('covers_cafe_covers')
         .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
-        .eq('is_public', true)
-        .order('created_at', { ascending: false });
+        .eq('is_public', true);
 
       if (searchQuery) {
         query = query.or(`title.ilike.%${searchQuery}%,artist.ilike.%${searchQuery}%,tags.cs.{"${searchQuery.toLowerCase()}"}`);
+        query = query.order('created_at', { ascending: false });
+      } else if (tab === 'acotw') {
+        query = query.eq('is_acotw', true).order('acotw_since', { ascending: false, nullsFirst: false });
+      } else if (tab === 'top_rated') {
+        query = query.order('favorite_count', { ascending: false });
+      } else {
+        // 'new' — default
+        query = query.order('created_at', { ascending: false });
       }
 
       const { data } = await query;
@@ -101,7 +119,7 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
     }
 
     setLoading(false);
-  }, [filter, user, searchQuery, artistUserId]);
+  }, [filter, tab, user, searchQuery, artistUserId]);
 
   const fetchFavorites = useCallback(async () => {
     if (!user) { setFavoritedIds(new Set()); return; }
@@ -135,6 +153,11 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
       isFav ? next.delete(coverId) : next.add(coverId);
       return next;
     });
+    // Optimistically update favorite_count on the local cover
+    setCovers((prev) => prev.map((c) => c.id === coverId
+      ? { ...c, favorite_count: Math.max(0, (c.favorite_count ?? 0) + (isFav ? -1 : 1)) }
+      : c
+    ));
     if (isFav) {
       await supabase.from('covers_cafe_favorites').delete().eq('user_id', user.id).eq('cover_id', coverId);
     } else {
@@ -195,7 +218,7 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
             setIsDraggingCover(false);
           }}
         >
-          Drop cover here to open “Add to Collection”
+          Drop cover here to open "Add to Collection"
         </div>
       )}
 
@@ -219,6 +242,8 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
               ? 'No favorites yet. Star covers to save them here.'
               : filter === 'mine'
               ? 'You haven\'t uploaded any covers yet.'
+              : tab === 'acotw'
+              ? 'No Album Cover Of The Week selected yet.'
               : 'No covers yet. Be the first to upload!'}
           </p>
         </div>

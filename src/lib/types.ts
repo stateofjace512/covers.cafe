@@ -21,7 +21,10 @@ export interface Cover {
   image_url: string;
   thumbnail_path: string | null;
   download_count: number;
+  favorite_count: number;
   is_public: boolean;
+  is_acotw: boolean;
+  acotw_since: string | null;
   created_at: string;
   updated_at: string;
   // joined via select
