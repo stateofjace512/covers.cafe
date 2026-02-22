@@ -1,9 +1,8 @@
-// @ts-check
-const { createClient } = require('@supabase/supabase-js');
-const sharp = require('sharp');
+import { createClient } from '@supabase/supabase-js';
+import sharp from 'sharp';
 
-module.exports = {
-  onSuccess: async ({ utils }) => {
+export default {
+  onSuccess: async () => {
     const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
