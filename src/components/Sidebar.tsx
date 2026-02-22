@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowUpFromLine, ArrowDownToLine, User, Star, Image, Coffee, Cog, UserRoundCog, UserRound, Shield, Info, Trophy } from 'lucide-react';
+import { ArrowUpFromLine, ArrowDownToLine, User, Star, Image, Coffee, Cog, UserRoundCog, UserRound, Shield, Info, Trophy, Music } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getAvatarSrc } from '../lib/media';
 import { supabase } from '../lib/supabase';
@@ -8,7 +8,8 @@ import { supabase } from '../lib/supabase';
 const NAV = [
   { section: 'Discover', label: 'Gallery',      icon: <Image size={18} />,           path: '/' },
   {                       label: 'ACOTW',        icon: <Trophy size={18} />,           path: '/acotw' },
-  {                       label: 'Artists',      icon: <UserRound size={18} />,        path: '/artists' },
+  {                       label: 'Artists',      icon: <Music size={18} />,            path: '/artists' },
+  {                       label: 'Users',        icon: <UserRound size={18} />,        path: '/users' },
   {                       label: 'Favorites',    icon: <Star size={18} />,             path: '/favorites' },
   { section: 'Account',  label: 'Upload',        icon: <ArrowUpFromLine size={18} />,  path: '/upload' },
   {                       label: 'Downloads',    icon: <ArrowDownToLine size={18} />,  path: '/downloads' },

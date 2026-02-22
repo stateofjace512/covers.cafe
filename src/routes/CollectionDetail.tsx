@@ -113,7 +113,7 @@ export default function CollectionDetail() {
   if (notFound) {
     return (
       <div>
-        <button className="btn btn-secondary col-back-btn" onClick={() => navigate(`/artists/${username}`)}>
+        <button className="btn btn-secondary col-back-btn" onClick={() => navigate(`/users/${username}`)}>
           <ArrowLeft size={14} /> Back to {username}
         </button>
         <p className="text-muted">Collection not found.</p>
@@ -125,7 +125,7 @@ export default function CollectionDetail() {
 
   return (
     <div>
-      <button className="btn btn-secondary col-back-btn" onClick={() => navigate(`/artists/${username}`)}>
+      <button className="btn btn-secondary col-back-btn" onClick={() => navigate(`/users/${username}`)}>
         <ArrowLeft size={14} /> {username}
       </button>
 

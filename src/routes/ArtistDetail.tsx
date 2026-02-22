@@ -98,7 +98,7 @@ export default function ArtistDetail() {
   if (loading) return <p className="text-muted">Loading…</p>;
   if (notFound) return (
     <div>
-      <button className="btn btn-secondary" style={{ marginBottom: 20 }} onClick={() => navigate('/artists')}>
+      <button className="btn btn-secondary" style={{ marginBottom: 20 }} onClick={() => navigate('/users')}>
         <ArrowLeft size={14} /> Back to Artists
       </button>
       <p className="text-muted">Artist not found.</p>
@@ -109,8 +109,8 @@ export default function ArtistDetail() {
 
   return (
     <div>
-      <button className="btn btn-secondary artist-back-btn" onClick={() => navigate('/artists')}>
-        <ArrowLeft size={14} /> All Artists
+      <button className="btn btn-secondary artist-back-btn" onClick={() => navigate('/users')}>
+        <ArrowLeft size={14} /> All Users
       </button>
 
       <div className="artist-detail-header card">
@@ -159,10 +159,10 @@ export default function ArtistDetail() {
               <div
                 key={collection.id}
                 className="artist-collection-card card"
-                onClick={() => navigate(`/artists/${username}/collections/${collection.id}`)}
+                onClick={() => navigate(`/users/${username}/collections/${collection.id}`)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && navigate(`/artists/${username}/collections/${collection.id}`)}
+                onKeyDown={(e) => e.key === 'Enter' && navigate(`/users/${username}/collections/${collection.id}`)}
               >
                 <div className="artist-collection-thumb">
                   {collection.cover_image ? (

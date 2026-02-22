@@ -50,14 +50,14 @@ export default function Artists() {
     <div>
       <h1 className="section-title">
         <UserRound size={22} />
-        Artists
+        Users
       </h1>
 
       <div className="toolbar mb-4">
         <input
           type="search"
           className="toolbar-search"
-          placeholder="Search artists…"
+          placeholder="Search users…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -66,7 +66,7 @@ export default function Artists() {
       {loading ? (
         <p className="text-muted">Loading…</p>
       ) : !sorted.length ? (
-        <p className="text-muted">No artists found{search ? ` for "${search}"` : ''}.</p>
+        <p className="text-muted">No users found{search ? ` for "${search}"` : ''}.</p>
       ) : (
         <div className="artist-grid">
           {sorted.map((artist) => {
@@ -76,7 +76,7 @@ export default function Artists() {
               <button
                 key={artist.id}
                 className={`artist-card${isMe ? ' artist-card--me' : ''}`}
-                onClick={() => navigate(`/artists/${encodeURIComponent(artist.username)}`)}
+                onClick={() => navigate(`/users/${encodeURIComponent(artist.username)}`)}
                 title={`View covers by ${artist.display_name ?? artist.username}`}
               >
                 <div className="artist-avatar">

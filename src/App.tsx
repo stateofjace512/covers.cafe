@@ -10,6 +10,8 @@ import Upload from './routes/Upload';
 import Artists from './routes/Artists';
 import ArtistDetail from './routes/ArtistDetail';
 import CollectionDetail from './routes/CollectionDetail';
+import MusicArtists from './routes/MusicArtists';
+import MusicArtistDetail from './routes/MusicArtistDetail';
 import Favorites from './routes/Favorites';
 import Downloads from './routes/Downloads';
 import Profile from './routes/Profile';
@@ -24,15 +26,6 @@ import Acotw from './routes/Acotw';
 import NotFound from './routes/NotFound';
 
 
-function LegacyUserDetailRedirect() {
-  const { username } = useParams<{ username: string }>();
-  return <Navigate to={username ? `/artists/${encodeURIComponent(username)}` : '/artists'} replace />;
-}
-
-function LegacyCollectionRedirect() {
-  const { username, collectionId } = useParams<{ username: string; collectionId: string }>();
-  return <Navigate to={username && collectionId ? `/artists/${encodeURIComponent(username)}/collections/${collectionId}` : '/artists'} replace />;
-}
 
 function AppContent() {
   const { authModalOpen, authModalTab, closeAuthModal, session, user } = useAuth();
@@ -95,12 +88,11 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Gallery />} />
           <Route path="/upload" element={<Upload />} />
-          <Route path="/artists" element={<Artists />} />
-          <Route path="/artists/:username" element={<ArtistDetail />} />
-          <Route path="/artists/:username/collections/:collectionId" element={<CollectionDetail />} />
-          <Route path="/users" element={<Navigate to="/artists" replace />} />
-          <Route path="/users/:username" element={<LegacyUserDetailRedirect />} />
-          <Route path="/users/:username/collections/:collectionId" element={<LegacyCollectionRedirect />} />
+          <Route path="/users" element={<Artists />} />
+          <Route path="/users/:username" element={<ArtistDetail />} />
+          <Route path="/users/:username/collections/:collectionId" element={<CollectionDetail />} />
+          <Route path="/artists" element={<MusicArtists />} />
+          <Route path="/artists/:artistName" element={<MusicArtistDetail />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/downloads" element={<Downloads />} />
           <Route path="/profile" element={<Profile />} />
