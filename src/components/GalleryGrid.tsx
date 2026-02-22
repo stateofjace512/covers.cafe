@@ -147,6 +147,11 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
     if (selectedCover?.id === coverId) setSelectedCover(null);
   };
 
+  const handleCoverUpdated = (updated: Cover) => {
+    setCovers((prev) => prev.map((c) => c.id === updated.id ? updated : c));
+    setSelectedCover(updated);
+  };
+
   if (loading) {
     return (
       <div className="gallery-loading">
@@ -240,6 +245,7 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
           onToggleFavorite={handleToggleFavorite}
           onClose={() => setSelectedCover(null)}
           onDeleted={handleCoverDeleted}
+          onUpdated={handleCoverUpdated}
           initialPanelMode={openCollectionPanel ? 'collection' : 'details'}
         />
       )}
