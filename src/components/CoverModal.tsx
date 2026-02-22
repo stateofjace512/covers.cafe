@@ -185,6 +185,29 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     setSavingCollection(false);
   };
 
+  const setAsCoverImage = async (collectionId: string) => {
+    if (!user || !collectionId) return;
+    setSavingCollection(true);
+    try {
+      const { error } = await supabase
+        .from('covers_cafe_collections')
+        .update({ cover_image_id: cover.id })
+        .eq('id', collectionId)
+        .eq('owner_id', user.id);
+      if (error) {
+        setCollectionStatus(error.message || 'Could not set cover image.');
+        setCollectionStatusIsError(true);
+      } else {
+        setCollectionStatus('Cover image updated.');
+        setCollectionStatusIsError(false);
+      }
+    } catch (err) {
+      setCollectionStatus(err instanceof Error ? err.message : 'Could not set cover image.');
+      setCollectionStatusIsError(true);
+    }
+    setSavingCollection(false);
+  };
+
   const addToCollection = async (collectionId: string) => {
     if (!user || !collectionId) return;
     setSavingCollection(true);
@@ -410,9 +433,14 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                       ))}
                     </select>
                   )}
-                  <button className="btn btn-primary" onClick={() => addToCollection(selectedCollectionId)} disabled={!selectedCollectionId || savingCollection || collectionsLoading}>
-                    {savingCollection ? 'Saving…' : 'Add to This Collection'}
-                  </button>
+                  <div className="cover-report-actions">
+                    <button className="btn btn-primary" onClick={() => addToCollection(selectedCollectionId)} disabled={!selectedCollectionId || savingCollection || collectionsLoading}>
+                      {savingCollection ? 'Saving…' : 'Add to This Collection'}
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => setAsCoverImage(selectedCollectionId)} disabled={!selectedCollectionId || savingCollection || collectionsLoading} title="Use this image as the collection thumbnail">
+                      Set as cover image
+                    </button>
+                  </div>
                 </div>
 
                 <div className="form-row">

@@ -76,3 +76,18 @@ alter table if exists covers_cafe_profiles
 insert into covers_cafe_operator_roles (user_id, role)
 select id, 'operator' from auth.users where email = 'jakeryanrobison@icloud.com'
 on conflict (user_id) do update set role = excluded.role;
+
+-- Allow collections to have a cover/thumbnail image.
+alter table covers_cafe_collections
+  add column if not exists cover_image_id uuid references covers_cafe_covers(id) on delete set null;
+
+-- Allow anyone to read items from public collections (the original ALL policy only covers owners).
+create policy if not exists "collection_items_public_or_owner_can_read"
+  on covers_cafe_collection_items for select
+  using (
+    exists (
+      select 1 from covers_cafe_collections c
+      where c.id = collection_id
+        and (c.is_public or c.owner_id = auth.uid() or covers_cafe_is_operator())
+    )
+  );

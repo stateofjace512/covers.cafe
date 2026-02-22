@@ -8,6 +8,7 @@ import Gallery from './routes/Gallery';
 import Upload from './routes/Upload';
 import Artists from './routes/Artists';
 import ArtistDetail from './routes/ArtistDetail';
+import CollectionDetail from './routes/CollectionDetail';
 import Favorites from './routes/Favorites';
 import Downloads from './routes/Downloads';
 import Profile from './routes/Profile';
@@ -34,6 +35,7 @@ function AppContent() {
           <Route path="/upload" element={<Upload />} />
           <Route path="/users" element={<Artists />} />
           <Route path="/users/:username" element={<ArtistDetail />} />
+          <Route path="/users/:username/collections/:collectionId" element={<CollectionDetail />} />
           <Route path="/artists" element={<Navigate to="/users" replace />} />
           <Route path="/artists/:username" element={<LegacyArtistRedirect />} />
           <Route path="/favorites" element={<Favorites />} />

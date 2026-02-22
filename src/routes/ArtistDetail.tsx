@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { UserRound, ArrowLeft, Image, Folder } from 'lucide-react';
+import { UserRound, ArrowLeft, Image, Folder, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
 import type { Profile } from '../lib/types';
-import { getAvatarSrc } from '../lib/media';
+import { getAvatarSrc, getCoverImageSrc } from '../lib/media';
 
 export default function ArtistDetail() {
   const { username } = useParams<{ username: string }>();
@@ -15,7 +15,13 @@ export default function ArtistDetail() {
   const [coverCount, setCoverCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [collections, setCollections] = useState<{ id: string; name: string; item_count: number }[]>([]);
+  const [collections, setCollections] = useState<{
+    id: string;
+    name: string;
+    is_public: boolean;
+    item_count: number;
+    cover_image: { storage_path: string; image_url: string; thumbnail_path: string | null } | null;
+  }[]>([]);
 
   useEffect(() => {
     if (!username) return;
@@ -36,16 +42,24 @@ export default function ArtistDetail() {
         .eq('is_public', true);
       setCoverCount(count ?? 0);
 
-      const { data: colData } = await supabase
+      const isOwner = user?.id === profileData.id;
+      let colQuery = supabase
         .from('covers_cafe_collections')
-        .select('id,name,is_public,covers_cafe_collection_items(id)')
+        .select('id,name,is_public,cover_image:covers_cafe_covers!cover_image_id(storage_path,image_url,thumbnail_path),covers_cafe_collection_items(id)')
         .eq('owner_id', profileData.id)
-        .eq('is_public', true)
         .order('created_at', { ascending: false });
+      if (!isOwner) colQuery = colQuery.eq('is_public', true);
+      const { data: colData } = await colQuery;
 
-      setCollections((colData ?? []).map((row: { id: string; name: string; is_public: boolean; covers_cafe_collection_items?: { id: string }[] }) => ({
+      setCollections((colData ?? []).map((row: {
+        id: string; name: string; is_public: boolean;
+        cover_image?: { storage_path: string; image_url: string; thumbnail_path: string | null } | null;
+        covers_cafe_collection_items?: { id: string }[];
+      }) => ({
         id: row.id,
         name: row.name,
+        is_public: row.is_public,
+        cover_image: row.cover_image ?? null,
         item_count: row.covers_cafe_collection_items?.length ?? 0,
       })));
 
@@ -107,16 +121,43 @@ export default function ArtistDetail() {
       <section style={{ marginTop: 24 }}>
         <h2 className="section-title">
           <Folder size={18} />
-          Public Collections
+          {isOwnProfile ? 'My Collections' : 'Collections'}
         </h2>
         {collections.length === 0 ? (
-          <p className="text-muted">No public collections yet.</p>
+          <p className="text-muted">{isOwnProfile ? 'You have no collections yet.' : 'No public collections yet.'}</p>
         ) : (
           <div className="artist-collection-grid">
             {collections.map((collection) => (
-              <div key={collection.id} className="artist-collection-card card">
-                <div className="artist-collection-name">{collection.name}</div>
-                <div className="artist-collection-count">{collection.item_count} item{collection.item_count !== 1 ? 's' : ''}</div>
+              <div
+                key={collection.id}
+                className="artist-collection-card card"
+                onClick={() => navigate(`/users/${username}/collections/${collection.id}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && navigate(`/users/${username}/collections/${collection.id}`)}
+              >
+                <div className="artist-collection-thumb">
+                  {collection.cover_image ? (
+                    <img
+                      src={getCoverImageSrc(collection.cover_image, 300)}
+                      alt={collection.name}
+                      className="artist-collection-thumb-img"
+                    />
+                  ) : (
+                    <div className="artist-collection-thumb-empty">
+                      <Folder size={24} style={{ opacity: 0.3 }} />
+                    </div>
+                  )}
+                </div>
+                <div className="artist-collection-info">
+                  <div className="artist-collection-name">
+                    {collection.name}
+                    {!collection.is_public && (
+                      <span className="artist-collection-private"><Lock size={10} /> Private</span>
+                    )}
+                  </div>
+                  <div className="artist-collection-count">{collection.item_count} item{collection.item_count !== 1 ? 's' : ''}</div>
+                </div>
               </div>
             ))}
           </div>
@@ -162,10 +203,16 @@ export default function ArtistDetail() {
         .artist-detail-website { font-size: 13px; color: var(--accent); text-decoration: none; }
         .artist-detail-website:hover { text-decoration: underline; }
         .artist-detail-count { font-size: 13px; color: var(--body-text-muted); margin-top: 4px; }
-        .artist-collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
-        .artist-collection-card { padding: 12px; }
-        .artist-collection-name { font-size: 13px; font-weight: bold; }
-        .artist-collection-count { font-size: 12px; color: var(--body-text-muted); margin-top: 4px; }
+        .artist-collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+        .artist-collection-card { padding: 0; overflow: hidden; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
+        .artist-collection-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .artist-collection-thumb { width: 100%; aspect-ratio: 1; background: var(--sidebar-bg); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .artist-collection-thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .artist-collection-thumb-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--body-text-muted); }
+        .artist-collection-info { padding: 10px 12px; }
+        .artist-collection-name { font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .artist-collection-private { font-size: 10px; font-weight: bold; color: var(--body-text-muted); background: var(--body-border); padding: 1px 6px; border-radius: 8px; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+        .artist-collection-count { font-size: 12px; color: var(--body-text-muted); margin-top: 3px; }
       `}</style>
     </div>
   );
