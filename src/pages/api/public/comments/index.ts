@@ -8,6 +8,16 @@ import { evaluateBanDecision, type AbuseHistory } from '../../../../lib/comments
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
+const sanitizeForDb = (value: string): string => {
+  if (!value) return '';
+  try {
+    const bytes = new TextEncoder().encode(value);
+    return new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+  } catch {
+    return value.replace(/[^\x00-\x7F]/g, '');
+  }
+};
+
 const getBearer = (request: Request) => request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim() || null;
 
 const requireUser = async (request: Request) => {
@@ -115,13 +125,15 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const authorUsername = auth.user.email?.split('@')[0] ?? auth.user.id.slice(0, 8);
+  const sanitizedOriginal = sanitizeForDb(original);
+  const sanitizedNormalized = sanitizeForDb(normalized);
   const { data: inserted, error: insertError } = await supabase
     .from('comments')
     .insert({
       page_type: pageType,
       page_slug: pageSlug,
-      content: original,
-      content_normalized: normalized,
+      content: sanitizedOriginal,
+      content_normalized: sanitizedNormalized,
       parent_comment_id: parentCommentId,
       identity_hash: identity.identityHash,
       session_id: identity.sessionId,
