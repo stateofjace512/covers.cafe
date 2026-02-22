@@ -24,15 +24,23 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
 
   // Send a verification code via our SMTP API.
   // The user must already have an active session (token) so verify-code can auth them.
-  async function sendVerificationCode(token: string, userEmail: string): Promise<boolean> {
-    const res = await fetch('/api/send-verification', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: userEmail }),
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      setError(text || 'Could not send verification email. Try again.');
+  async function sendVerificationCode(_token: string, userEmail: string): Promise<boolean> {
+    try {
+      const res = await fetch('/api/send-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail }),
+      });
+      if (!res.ok) {
+        const contentType = res.headers.get('content-type') ?? '';
+        const msg = contentType.includes('application/json')
+          ? ((await res.json()) as { message?: string }).message
+          : null;
+        setError(msg ?? 'Could not send verification email. Please try again.');
+        return false;
+      }
+    } catch {
+      setError('Network error. Please check your connection and try again.');
       return false;
     }
     return true;
@@ -124,18 +132,30 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
       return;
     }
 
-    const res = await fetch('/api/verify-code', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ email, code }),
-    });
+    let json: { ok: boolean; error?: string };
+    try {
+      const res = await fetch('/api/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ email, code }),
+      });
+      const contentType = res.headers.get('content-type') ?? '';
+      if (!contentType.includes('application/json')) {
+        setError('Verification service unavailable. Please try again later.');
+        setLoading(false);
+        return;
+      }
+      json = await res.json() as { ok: boolean; error?: string };
+    } catch {
+      setError('Network error. Please check your connection and try again.');
+      setLoading(false);
+      return;
+    }
 
-    const json = await res.json() as { ok: boolean; error?: string };
-
-    if (!res.ok || !json.ok) {
+    if (!json.ok) {
       setError(json.error ?? 'Verification failed. Try again.');
       setLoading(false);
       return;
