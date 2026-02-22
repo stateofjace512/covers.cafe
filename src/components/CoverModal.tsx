@@ -65,21 +65,24 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     const loadCollections = async () => {
       setCollectionsLoading(true);
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('covers_cafe_collections')
           .select('id,name,is_public')
           .eq('owner_id', user.id)
           .order('created_at', { ascending: false });
+        if (error) {
+          setCollectionStatus(`Could not load collections: ${error.message}`);
+        }
         setCollections(data ?? []);
-      } catch {
-        // silently fall through with empty list
+      } catch (err) {
+        setCollectionStatus(err instanceof Error ? err.message : 'Could not load collections.');
       } finally {
         setCollectionsLoading(false);
       }
     };
 
     void loadCollections();
-  }, [panelMode, user]);
+  }, [panelMode, user?.id]);
 
   const handleDownload = async (size?: number) => {
     setDownloading(true);
@@ -385,12 +388,16 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
 
                 <div className="form-row">
                   <label className="form-label">This collection</label>
-                  <select className="form-input" value={selectedCollectionId} onChange={(e) => setSelectedCollectionId(e.target.value)}>
-                    <option value="">Select a collection…</option>
-                    {collections.map((item) => (
-                      <option key={item.id} value={item.id}>{item.name} ({item.is_public ? 'Public' : 'Private'})</option>
-                    ))}
-                  </select>
+                  {collectionsLoading ? (
+                    <p className="collection-status">Loading collections…</p>
+                  ) : (
+                    <select className="form-input" value={selectedCollectionId} onChange={(e) => setSelectedCollectionId(e.target.value)}>
+                      <option value="">{collections.length === 0 ? 'No collections yet — create one below' : 'Select a collection…'}</option>
+                      {collections.map((item) => (
+                        <option key={item.id} value={item.id}>{item.name} ({item.is_public ? 'Public' : 'Private'})</option>
+                      ))}
+                    </select>
+                  )}
                   <button className="btn btn-primary" onClick={() => addToCollection(selectedCollectionId)} disabled={!selectedCollectionId || savingCollection || collectionsLoading}>
                     {savingCollection ? 'Saving…' : 'Add to This Collection'}
                   </button>
