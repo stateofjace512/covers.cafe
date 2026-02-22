@@ -16,7 +16,7 @@ export default function Gallery() {
           <div className="hero-content">
             <h1 className="hero-title">Discover Album Art</h1>
             <p className="hero-subtitle">
-              A community-driven gallery for album cover art — created, collected, and shared by music lovers.
+              Too many album covers. Never enough coffee. ☕
             </p>
             <div className="hero-actions">
               {user ? (
