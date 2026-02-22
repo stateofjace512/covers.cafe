@@ -101,6 +101,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
   }, [panelMode, user?.id]);
 
   const handleDownload = async (size?: number) => {
+    if (!user) { openAuthModal('login'); return; }
     setDownloading(true);
     setShowDownloadMenu(false);
     try {

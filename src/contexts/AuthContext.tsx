@@ -15,6 +15,7 @@ interface AuthContextValue {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  emailVerified: boolean;
   // Modal controls — lifted here so any component can call openAuthModal()
   authModalOpen: boolean;
   authModalTab: 'login' | 'register';
@@ -29,6 +30,7 @@ const AuthContext = createContext<AuthContextValue>({
   session: null,
   profile: null,
   loading: true,
+  emailVerified: false,
   authModalOpen: false,
   authModalTab: 'login',
   openAuthModal: () => {},
@@ -67,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
-        setAuthModalOpen(false);
+        // Don't auto-close modal here — AuthModal handles it after verification
       } else {
         setProfile(null);
       }
@@ -91,6 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) await fetchProfile(user.id);
   }, [user, fetchProfile]);
 
+  const emailVerified = profile?.email_verified ?? false;
+
   return (
     <AuthContext.Provider
       value={{
@@ -98,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         profile,
         loading,
+        emailVerified,
         authModalOpen,
         authModalTab,
         openAuthModal,

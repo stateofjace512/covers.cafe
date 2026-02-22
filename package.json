@@ -15,9 +15,13 @@
     "@types/react-dom": "^19.2.3",
     "astro": "^5.17.3",
     "lucide-react": "^0.575.0",
+    "nodemailer": "^8.0.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.0",
     "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^7.0.11"
   }
 }

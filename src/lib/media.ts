@@ -15,8 +15,11 @@ export function getCoverImageSrc(cover: Pick<Cover, 'storage_path' | 'image_url'
   return cover.image_url;
 }
 
-export function getCoverDownloadSrc(cover: Pick<Cover, 'storage_path'>, _size?: number): string {
-  return storageUrl('covers_cafe_covers', cover.storage_path);
+export function getCoverDownloadSrc(cover: Pick<Cover, 'storage_path'>, size?: number): string {
+  // Route through /api/cover-media so Sharp can resize on the server
+  const params = new URLSearchParams({ path: cover.storage_path });
+  if (size) params.set('size', String(size));
+  return `/api/cover-media?${params.toString()}`;
 }
 
 export function getAvatarSrc(profile: Pick<Profile, 'id' | 'avatar_url'>): string | null {

@@ -1,27 +1,75 @@
 import { useState } from 'react';
-import { X, Mail, Lock, User, AlertCircle, Loader } from 'lucide-react';
+import { X, Mail, Lock, User, AlertCircle, Loader, ShieldCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Props {
   tab: 'login' | 'register';
   onClose: () => void;
 }
 
+type Step = 'form' | 'verify';
+
 export default function AuthModal({ tab: initialTab, onClose }: Props) {
+  const { refreshProfile, closeAuthModal } = useAuth();
   const [tab, setTab] = useState(initialTab);
+  const [step, setStep] = useState<Step>('form');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Send a verification code via our SMTP API.
+  // The user must already have an active session (token) so verify-code can auth them.
+  async function sendVerificationCode(token: string, userEmail: string): Promise<boolean> {
+    const res = await fetch('/api/send-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: userEmail }),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      setError(text || 'Could not send verification email. Try again.');
+      return false;
+    }
+    return true;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setError(error.message);
+
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (signInError) {
+      setError(signInError.message);
+      setLoading(false);
+      return;
+    }
+
+    // Check whether this user's profile is verified
+    const { data: profileData } = await supabase
+      .from('covers_cafe_profiles')
+      .select('email_verified')
+      .eq('id', data.user.id)
+      .single();
+
+    if (profileData?.email_verified === false) {
+      // Need to verify — send code then show OTP step
+      const token = data.session?.access_token ?? '';
+      const sent = await sendVerificationCode(token, email);
+      if (sent) {
+        setStep('verify');
+      }
+    } else {
+      // Already verified — close modal
+      closeAuthModal();
+    }
+
     setLoading(false);
   };
 
@@ -32,17 +80,79 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
     if (username.length < 3) { setError('Username must be at least 3 characters.'); return; }
     if (!/^[a-z0-9_]+$/.test(username)) { setError('Username: lowercase letters, numbers, and underscores only.'); return; }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { username: username.trim() } },
     });
-    if (error) {
-      setError(error.message);
-    } else {
-      setSuccess('Account created! Check your email to confirm, then sign in.');
+
+    if (signUpError) {
+      setError(signUpError.message);
+      setLoading(false);
+      return;
+    }
+
+    if (!data.session) {
+      // Supabase email confirmation is still enabled — user must confirm the Supabase
+      // link first, then on their next login they'll go through our OTP step.
+      setSuccess('Account created! Check your email for a confirmation link. After confirming, sign in — you\'ll then verify with a 6-digit code.');
+      setLoading(false);
+      return;
+    }
+
+    // Session returned (Supabase email confirmation disabled) — send our OTP now
+    const token = data.session.access_token;
+    const sent = await sendVerificationCode(token, email);
+    if (sent) {
+      setStep('verify');
     }
     setLoading(false);
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    // Get current session token
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setError('Session expired. Please sign in again.');
+      setStep('form');
+      setLoading(false);
+      return;
+    }
+
+    const res = await fetch('/api/verify-code', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ email, code }),
+    });
+
+    const json = await res.json() as { ok: boolean; error?: string };
+
+    if (!res.ok || !json.ok) {
+      setError(json.error ?? 'Verification failed. Try again.');
+      setLoading(false);
+      return;
+    }
+
+    // Refresh profile so emailVerified updates in context
+    await refreshProfile();
+    closeAuthModal();
+    setLoading(false);
+  };
+
+  const handleResend = async () => {
+    setError(null);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setError('Session expired. Please sign in again.'); return; }
+    const sent = await sendVerificationCode(session.access_token, email);
+    if (sent) setSuccess('A new code has been sent to your email.');
   };
 
   return (
@@ -50,20 +160,26 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
       <div className="modal-box auth-modal" role="dialog" aria-modal="true">
         {/* Header */}
         <div className="modal-header">
-          <div className="auth-tabs">
-            <button
-              className={`auth-tab${tab === 'login' ? ' auth-tab--active' : ''}`}
-              onClick={() => { setTab('login'); setError(null); setSuccess(null); }}
-            >
-              Sign In
-            </button>
-            <button
-              className={`auth-tab${tab === 'register' ? ' auth-tab--active' : ''}`}
-              onClick={() => { setTab('register'); setError(null); setSuccess(null); }}
-            >
-              Create Account
-            </button>
-          </div>
+          {step === 'form' ? (
+            <div className="auth-tabs">
+              <button
+                className={`auth-tab${tab === 'login' ? ' auth-tab--active' : ''}`}
+                onClick={() => { setTab('login'); setError(null); setSuccess(null); }}
+              >
+                Sign In
+              </button>
+              <button
+                className={`auth-tab${tab === 'register' ? ' auth-tab--active' : ''}`}
+                onClick={() => { setTab('register'); setError(null); setSuccess(null); }}
+              >
+                Create Account
+              </button>
+            </div>
+          ) : (
+            <div className="auth-tabs">
+              <span className="auth-tab auth-tab--active">Verify Email</span>
+            </div>
+          )}
           <button className="modal-close-btn" onClick={onClose} aria-label="Close">
             <X size={18} />
           </button>
@@ -71,10 +187,57 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
 
         {/* Body */}
         <div className="modal-body">
-          {success ? (
+          {success && step === 'form' ? (
             <div className="auth-success">
               <span>✓</span> {success}
             </div>
+          ) : step === 'verify' ? (
+            /* OTP verification step */
+            <form onSubmit={handleVerify} className="auth-form">
+              <div className="auth-verify-info">
+                <ShieldCheck size={32} className="auth-verify-icon" />
+                <p>We sent a 6-digit code to <strong>{email}</strong>. Enter it below to verify your account.</p>
+              </div>
+              <div className="auth-field">
+                <label className="auth-label">
+                  <ShieldCheck size={13} /> Verification Code
+                </label>
+                <input
+                  type="text"
+                  className="auth-input auth-code-input"
+                  placeholder="000000"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  required
+                />
+              </div>
+
+              {error && (
+                <div className="auth-error">
+                  <AlertCircle size={14} /> {error}
+                </div>
+              )}
+              {success && (
+                <div className="auth-success" style={{ marginBottom: 0 }}>
+                  <span>✓</span> {success}
+                </div>
+              )}
+
+              <button type="submit" className="btn btn-primary auth-submit-btn" disabled={loading || code.length !== 6}>
+                {loading ? (
+                  <><Loader size={14} className="auth-spinner" /> Verifying…</>
+                ) : (
+                  'Verify'
+                )}
+              </button>
+
+              <button type="button" className="auth-switch-btn" style={{ marginTop: 8 }} onClick={handleResend}>
+                Didn't receive it? Resend code
+              </button>
+            </form>
           ) : (
             <form onSubmit={tab === 'login' ? handleLogin : handleRegister} className="auth-form">
               {tab === 'register' && (
@@ -139,21 +302,23 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
             </form>
           )}
 
-          <div className="auth-switch">
-            {tab === 'login' ? (
-              <>New here?{' '}
-                <button className="auth-switch-btn" onClick={() => { setTab('register'); setError(null); }}>
-                  Create a free account
-                </button>
-              </>
-            ) : (
-              <>Already have an account?{' '}
-                <button className="auth-switch-btn" onClick={() => { setTab('login'); setError(null); }}>
-                  Sign in
-                </button>
-              </>
-            )}
-          </div>
+          {step === 'form' && (
+            <div className="auth-switch">
+              {tab === 'login' ? (
+                <>New here?{' '}
+                  <button className="auth-switch-btn" onClick={() => { setTab('register'); setError(null); }}>
+                    Create a free account
+                  </button>
+                </>
+              ) : (
+                <>Already have an account?{' '}
+                  <button className="auth-switch-btn" onClick={() => { setTab('login'); setError(null); }}>
+                    Sign in
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -206,6 +371,16 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
           border-color: var(--accent);
           box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2);
         }
+        .auth-code-input {
+          font-size: 24px; letter-spacing: 6px; text-align: center;
+          padding: 12px; font-weight: bold;
+        }
+        .auth-verify-info {
+          display: flex; flex-direction: column; align-items: center; gap: 10px;
+          text-align: center; color: var(--body-text-muted); font-size: 14px;
+          padding: 8px 0 4px;
+        }
+        .auth-verify-icon { color: var(--accent); }
         .auth-error {
           display: flex; align-items: center; gap: 6px;
           padding: 8px 10px; border-radius: 4px;
