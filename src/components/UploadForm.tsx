@@ -133,6 +133,21 @@ export default function UploadForm() {
     [knownCovers],
   );
 
+
+  const getInlineSuggestion = (value: string, options: string[]) => {
+    const typed = value.trim();
+    if (!typed) return '';
+    const lower = typed.toLowerCase();
+    const match = options.find((option) => option.toLowerCase().startsWith(lower));
+    if (!match) return '';
+    return match.toLowerCase() === lower ? '' : match;
+  };
+
+  const titleSuggestion = getInlineSuggestion(title, knownTitles);
+  const artistSuggestion = getInlineSuggestion(artist, knownArtists);
+  const tagSuggestion = getInlineSuggestion(tagInput, knownTags);
+  const bulkTagSuggestion = getInlineSuggestion(bulkTagInput, knownTags);
+
   const applyKnownMetadata = (nextTitle: string, modeTarget: 'single' | 'bulk', itemIdx?: number) => {
     const match = knownCovers.find((cover) => cover.title.toLowerCase() === nextTitle.trim().toLowerCase());
     if (!match) return;
@@ -384,6 +399,18 @@ export default function UploadForm() {
     setBulkDone(true);
   };
 
+
+
+  const completeIfSuggested = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    suggestion: string,
+    apply: (value: string) => void,
+  ) => {
+    if (e.key !== 'Tab' || !suggestion) return;
+    e.preventDefault();
+    apply(suggestion);
+  };
+
   if (!user) {
     return (
       <div className="upload-gate card">
@@ -487,11 +514,34 @@ export default function UploadForm() {
           <div className="upload-fields card">
             <div className="form-row">
               <label className="form-label">Album / Cover Title <span style={{ color: 'var(--accent)' }}>*</span></label>
-              <input type="text" className="form-input" placeholder="e.g. Dark Side of the Moon" value={title} list="known-titles" onChange={(e) => setTitle(e.target.value)} onBlur={() => applyKnownMetadata(title, 'single')} required />
+              <div className="autocomplete-field">
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Dark Side of the Moon"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onKeyDown={(e) => completeIfSuggested(e, titleSuggestion, setTitle)}
+                  onBlur={() => applyKnownMetadata(title, 'single')}
+                  required
+                />
+                {titleSuggestion && <div className="autocomplete-hint">↹ Tab to complete: {titleSuggestion}</div>}
+              </div>
             </div>
             <div className="form-row">
               <label className="form-label">Artist <span style={{ color: 'var(--accent)' }}>*</span></label>
-              <input type="text" className="form-input" placeholder="e.g. Pink Floyd" value={artist} list="known-artists" onChange={(e) => setArtist(e.target.value)} required />
+              <div className="autocomplete-field">
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Pink Floyd"
+                  value={artist}
+                  onChange={(e) => setArtist(e.target.value)}
+                  onKeyDown={(e) => completeIfSuggested(e, artistSuggestion, setArtist)}
+                  required
+                />
+                {artistSuggestion && <div className="autocomplete-hint">↹ Tab to complete: {artistSuggestion}</div>}
+              </div>
             </div>
             <div className="upload-row-short">
               <div className="form-row">
@@ -501,7 +551,20 @@ export default function UploadForm() {
             </div>
             <div className="form-row">
               <label className="form-label">Tags</label>
-              <input type="text" className="form-input" placeholder="Type tag, press Enter (Cmd/Ctrl+Enter submits)" value={tagInput} list="known-tags" onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => handleTagKeyDown(e)} />
+              <div className="autocomplete-field">
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Type tag, press Enter (Cmd/Ctrl+Enter submits)"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    completeIfSuggested(e, tagSuggestion, setTagInput);
+                    handleTagKeyDown(e);
+                  }}
+                />
+                {tagSuggestion && <div className="autocomplete-hint">↹ Tab to complete: {tagSuggestion}</div>}
+              </div>
               <div className="tag-list">{tags.map((tag) => <button key={tag} type="button" className="tag-chip" onClick={() => removeTag(tag)}>{tag} <X size={12} /></button>)}</div>
               <p className="form-hint">Type a word with a comma and press Enter to spend tags fast.</p>
             </div>
@@ -523,14 +586,20 @@ export default function UploadForm() {
               <label className="form-label">
                 Shared Tags <span className="form-hint" style={{ fontWeight: 'normal' }}>(applied to all covers in this batch)</span>
               </label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Type tags and press Enter"
-                value={bulkTagInput}
-                onChange={(e) => setBulkTagInput(e.target.value)}
-                onKeyDown={(e) => handleTagKeyDown(e, true)}
-              />
+              <div className="autocomplete-field">
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Type tags and press Enter"
+                  value={bulkTagInput}
+                  onChange={(e) => setBulkTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    completeIfSuggested(e, bulkTagSuggestion, setBulkTagInput);
+                    handleTagKeyDown(e, true);
+                  }}
+                />
+                {bulkTagSuggestion && <div className="autocomplete-hint">↹ Tab to complete: {bulkTagSuggestion}</div>}
+              </div>
               <div className="tag-list">{bulkTags.map((tag) => <button key={tag} type="button" className="tag-chip" onClick={() => removeTag(tag, true)}>{tag} <X size={12} /></button>)}</div>
             </div>
           </div>
@@ -618,7 +687,6 @@ export default function UploadForm() {
                       type="text"
                       className="form-input"
                       placeholder="Artist *"
-                      list="known-artists"
                       value={item.artist}
                       onChange={(e) => updateBulkItem(idx, { artist: e.target.value })}
                       disabled={item.status === 'uploading' || item.status === 'done'}
@@ -656,9 +724,6 @@ export default function UploadForm() {
         </form>
       )}
 
-      <datalist id="known-titles">{knownTitles.map((option) => <option key={option} value={option} />)}</datalist>
-      <datalist id="known-artists">{knownArtists.map((option) => <option key={option} value={option} />)}</datalist>
-      <datalist id="known-tags">{knownTags.map((option) => <option key={option} value={option} />)}</datalist>
 
       <style>{`
         .upload-page { display: flex; flex-direction: column; gap: 16px; max-width: 700px; }
@@ -724,6 +789,8 @@ export default function UploadForm() {
           transition: border-color 0.15s, box-shadow 0.15s;
         }
         .form-input:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
+        .autocomplete-field { display: flex; flex-direction: column; gap: 4px; }
+        .autocomplete-hint { font-size: 11px; color: var(--body-text-muted); opacity: 0.9; }
         .form-input:disabled { opacity: 0.5; cursor: not-allowed; }
         .form-hint { font-size: 11px; color: var(--body-text-muted); }
         .tag-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }

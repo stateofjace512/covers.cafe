@@ -590,6 +590,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         }
         .cover-modal-image { width: 100%; height: 100%; object-fit: contain; display: block; max-height: 480px; }
         .cover-modal-info {
+          position: relative; z-index: 1;
           flex: 1; padding: 28px 24px;
           display: flex; flex-direction: column; gap: 16px;
           background: var(--body-card-bg);
@@ -655,7 +656,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .cover-report-panel, .cover-collection-panel { display: flex; flex-direction: column; gap: 14px; }
         .cover-report-title { font-size: 16px; font-weight: bold; color: var(--body-text); }
         .cover-report-done { font-size: 14px; color: var(--body-text-muted); line-height: 1.5; }
-        .cover-report-textarea { resize: vertical; min-height: 72px; }
+        .cover-report-textarea { resize: none; min-height: 72px; }
         .cover-report-actions { display: flex; gap: 8px; }
         .collection-drop-zone {
           border: 2px dashed var(--body-card-border);
@@ -694,7 +695,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           padding: 0 8px; display: flex; align-items: center;
         }
         .cover-download-menu {
-          position: absolute; top: calc(100% + 4px); right: 0; z-index: 20;
+          position: absolute; top: calc(100% + 4px); right: 0; z-index: 60;
           background: var(--body-card-bg); border: 1px solid var(--body-card-border);
           border-radius: 4px; box-shadow: var(--shadow-md);
           display: flex; flex-direction: column; min-width: 130px; overflow: hidden;

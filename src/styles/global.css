@@ -433,6 +433,21 @@ select:focus {
   box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192, 90, 26, 0.25);
 }
 
+
+/* Remove native number steppers and textarea grabbers */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+textarea {
+  resize: none;
+}
+
 /* ---------- Divider ---------- */
 .divider {
   border: none;
