@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { MessageCircle, Heart, Flag, Loader } from 'lucide-react';
+import { MessageCircle, Heart, Flag, Loader, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getClientIdentity } from '../lib/comments/identityTracking.client';
 import { supabase } from '../lib/supabase';
@@ -34,6 +34,22 @@ export default function CoverComments({ coverId }: Props) {
     }),
     [session?.access_token],
   );
+
+  const currentAuthorName = user ? (user.email?.split('@')[0] ?? user.id.slice(0, 8)) : null;
+
+  const formatDate = (value: string) =>
+    new Intl.DateTimeFormat('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' }).format(new Date(value));
+
+  const formatDateTooltip = (value: string) =>
+    new Date(value).toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZoneName: 'short',
+    });
 
   const loadComments = useCallback(async () => {
     setLoading(true);
@@ -96,9 +112,8 @@ export default function CoverComments({ coverId }: Props) {
     });
 
     const payload = await res.json();
-    if (!res.ok) {
-      setStatus(payload?.error ?? 'Could not post comment right now.');
-    } else {
+    if (!res.ok) setStatus(payload?.error ?? 'Could not post comment right now.');
+    else {
       setContent('');
       if (payload?.isShadowBanned) setStatus('Comment submitted.');
       await loadComments();
@@ -156,11 +171,33 @@ export default function CoverComments({ coverId }: Props) {
     setStatus(res.ok ? 'Report sent. Thanks for helping keep the gallery clean.' : (payload?.error ?? 'Could not submit report.'));
   };
 
+  const deleteComment = async (commentId: string) => {
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
+
+    const res = await fetch('/api/public/comments/delete', {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ commentId }),
+    });
+
+    const payload = await res.json();
+    if (!res.ok) {
+      setStatus(payload?.error ?? 'Could not delete comment.');
+      return;
+    }
+
+    setStatus('Comment deleted.');
+    setComments((prev) => prev.filter((c) => c.id !== commentId));
+  };
+
   return (
     <section className="cover-comments">
       <h3 className="cover-comments-title"><MessageCircle size={14} /> Comments</h3>
 
-      {!user && <p className="cover-comments-muted">Sign in to comment, like, and report.</p>}
+      {!user && <p className="cover-comments-muted">Sign in to comment, like, report, or delete your comments.</p>}
 
       <div className="cover-comments-composer">
         <textarea
@@ -188,7 +225,7 @@ export default function CoverComments({ coverId }: Props) {
             <li key={comment.id} className="cover-comment-item">
               <div className="cover-comment-top">
                 <strong>{comment.author_username}</strong>
-                <span>{new Date(comment.created_at).toLocaleString()}</span>
+                <span title={formatDateTooltip(comment.created_at)}>{formatDate(comment.created_at)}</span>
               </div>
               <p className="cover-comment-body">{comment.content}</p>
               <div className="cover-comment-actions">
@@ -199,6 +236,11 @@ export default function CoverComments({ coverId }: Props) {
                 <button className="cover-comment-action" onClick={() => reportComment(comment.id)}>
                   <Flag size={12} /> Report
                 </button>
+                {currentAuthorName && comment.author_username === currentAuthorName && (
+                  <button className="cover-comment-action cover-comment-action--delete" onClick={() => deleteComment(comment.id)}>
+                    <Trash2 size={12} /> Delete
+                  </button>
+                )}
               </div>
             </li>
           ))}
