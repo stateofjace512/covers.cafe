@@ -12,9 +12,9 @@ const PAGE_SIZE = 24;
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
 
 function artistPhotoTransformUrl(artistName: string, bust?: number): string {
-  const path = `artists/${encodeURIComponent(artistName)}.jpg`;
+  const path = `${encodeURIComponent(artistName)}.jpg`;
   const t = bust ? `&t=${bust}` : '';
-  return `${SUPABASE_URL}/storage/v1/render/image/public/covers_cafe_avatars/${path}?width=850&height=850&resize=cover&quality=85${t}`;
+  return `${SUPABASE_URL}/storage/v1/render/image/public/covers_cafe_artist_photos/${path}?width=850&height=850&resize=cover&quality=85${t}`;
 }
 
 export default function MusicArtistDetail() {
@@ -129,9 +129,9 @@ export default function MusicArtistDetail() {
     if (!file || !user || !artistName) return;
     setUploading(true);
     setUploadError('');
-    const path = `artists/${encodeURIComponent(artistName)}.jpg`;
+    const path = `${encodeURIComponent(artistName)}.jpg`;
     const { error } = await supabase.storage
-      .from('covers_cafe_avatars')
+      .from('covers_cafe_artist_photos')
       .upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
     if (error) {
       setUploadError('Upload failed. Check storage bucket permissions.');
