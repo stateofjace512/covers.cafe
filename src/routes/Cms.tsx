@@ -24,6 +24,7 @@ type PublishedCover = {
   username: string | null;
   storage_path: string;
   is_public: boolean;
+  is_private: boolean;
   is_banned: boolean;
   is_operator: boolean;
 };
@@ -39,6 +40,7 @@ type Ban = {
 type Operator = {
   user_id: string;
   username: string | null;
+  can_be_removed: boolean;
 };
 
 type UserOption = {
@@ -164,6 +166,19 @@ export default function Cms() {
     });
     if (!res.ok) setError('Could not update visibility.');
     else flash('Visibility updated.');
+    await loadDashboard();
+    setBusyId(null);
+  }
+
+  async function setCoverPrivacy(coverId: string, isPrivate: boolean) {
+    if (!token) return;
+    setBusyId(`privacy-${coverId}`);
+    setError(null);
+    const res = await fetch('/api/cms/cover-private', {
+      method: 'POST', headers: authHeaders, body: JSON.stringify({ coverId, isPrivate }),
+    });
+    if (!res.ok) setError('Could not update privacy.');
+    else flash(isPrivate ? 'Cover set to private.' : 'Cover republished.');
     await loadDashboard();
     setBusyId(null);
   }
@@ -437,14 +452,27 @@ export default function Cms() {
                       <strong>{cover.title}</strong>
                       <span>{cover.artist}</span>
                     </div>
+                    <div className="cms-cover-badges">
+                      {cover.is_private && <span className="cms-badge cms-badge--private">Private</span>}
+                    </div>
                     <div className="cms-actions cms-actions--inline">
-                      <button
-                        className="btn"
-                        disabled={busyId === `visibility-${cover.id}`}
-                        onClick={() => setCoverVisibility(cover.id, false)}
-                      >
-                        Unpublish
-                      </button>
+                      {cover.is_private ? (
+                        <button
+                          className="btn"
+                          disabled={busyId === `privacy-${cover.id}`}
+                          onClick={() => setCoverPrivacy(cover.id, false)}
+                        >
+                          Republish
+                        </button>
+                      ) : (
+                        <button
+                          className="btn"
+                          disabled={busyId === `privacy-${cover.id}`}
+                          onClick={() => setCoverPrivacy(cover.id, true)}
+                        >
+                          Unpublish
+                        </button>
+                      )}
                       <button
                         className="btn cms-btn-danger"
                         disabled={busyId === cover.id}
@@ -550,7 +578,7 @@ export default function Cms() {
             {data.operators.map((op) => (
               <div key={op.user_id} className="cms-op-row">
                 <span>@{op.username ?? op.user_id}</span>
-                {op.user_id !== user?.id && (
+                {op.user_id !== user?.id && op.can_be_removed !== false && (
                   <button
                     className="btn cms-btn-danger"
                     disabled={busyId === `operator-${op.user_id}`}
@@ -558,6 +586,9 @@ export default function Cms() {
                   >
                     Remove
                   </button>
+                )}
+                {op.can_be_removed === false && op.user_id !== user?.id && (
+                  <span className="cms-badge cms-badge--locked" title="This operator cannot be removed">Locked</span>
                 )}
               </div>
             ))}
@@ -598,6 +629,9 @@ export default function Cms() {
         .cms-badge--banned { background: rgba(200,50,30,0.12); color: #b42318; border: 1px solid rgba(200,50,30,0.25); }
         .cms-badge--op { background: rgba(115,73,42,0.12); color: var(--accent); border: 1px solid rgba(115,73,42,0.25); }
         .cms-badge--warn { background: rgba(200,130,0,0.12); color: #a06000; border: 1px solid rgba(200,130,0,0.25); font-size: 12px; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+        .cms-badge--private { background: rgba(120,100,140,0.12); color: #6a4a8a; border: 1px solid rgba(120,100,140,0.3); }
+        .cms-badge--locked { background: rgba(80,80,80,0.12); color: #555; border: 1px solid rgba(80,80,80,0.25); }
+        .cms-cover-badges { display: flex; gap: 4px; align-items: center; }
 
         /* User panel */
         .cms-dropdown { position: absolute; z-index: 10; width: 100%; border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; overflow: hidden; background: var(--body-card-bg); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }

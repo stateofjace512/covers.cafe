@@ -65,7 +65,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
   const [editArtist, setEditArtist] = useState('');
   const [editYear, setEditYear] = useState('');
   const [editTags, setEditTags] = useState('');
-  const [editIsPublic, setEditIsPublic] = useState(true);
+  const [editIsPrivate, setEditIsPrivate] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editStatus, setEditStatus] = useState('');
   const [editStatusIsError, setEditStatusIsError] = useState(false);
@@ -172,7 +172,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     setEditArtist(cover.artist);
     setEditYear(cover.year?.toString() ?? '');
     setEditTags((cover.tags ?? []).join(', '));
-    setEditIsPublic(cover.is_public);
+    setEditIsPrivate(cover.is_private);
     setEditStatus('');
     setEditStatusIsError(false);
     setPanelMode('edit');
@@ -191,7 +191,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     const tags = editTags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
     const { data: updated, error } = await supabase
       .from('covers_cafe_covers')
-      .update({ title, artist, year, tags, is_public: editIsPublic })
+      .update({ title, artist, year, tags, is_private: editIsPrivate })
       .eq('id', cover.id)
       .select('*, profiles:covers_cafe_profiles(id,username,display_name,avatar_url)')
       .single();
@@ -601,13 +601,13 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                   <label className="form-label">Visibility</label>
                   <div className="cover-report-actions">
                     <button
-                      className={`btn${editIsPublic ? ' btn-primary' : ' btn-secondary'}`}
-                      onClick={() => setEditIsPublic(true)}
-                    >Public</button>
+                      className={`btn${!editIsPrivate ? ' btn-primary' : ' btn-secondary'}`}
+                      onClick={() => setEditIsPrivate(false)}
+                    >Published</button>
                     <button
-                      className={`btn${!editIsPublic ? ' btn-primary' : ' btn-secondary'}`}
-                      onClick={() => setEditIsPublic(false)}
-                    >Private</button>
+                      className={`btn${editIsPrivate ? ' btn-primary' : ' btn-secondary'}`}
+                      onClick={() => setEditIsPrivate(true)}
+                    >Unpublished</button>
                   </div>
                 </div>
 

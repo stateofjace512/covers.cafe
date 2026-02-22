@@ -22,6 +22,16 @@ export const POST: APIRoute = async ({ request }) => {
       .upsert({ user_id: userId, role: 'operator' });
     if (error) return new Response(error.message, { status: 500 });
   } else {
+    // Block removal of permanently-locked operators
+    const { data: existing } = await adminSb
+      .from('covers_cafe_operator_roles')
+      .select('can_be_removed')
+      .eq('user_id', userId)
+      .single();
+    if (existing && existing.can_be_removed === false) {
+      return new Response('This operator is permanently locked and cannot be removed.', { status: 403 });
+    }
+
     const { error } = await adminSb
       .from('covers_cafe_operator_roles')
       .delete()
