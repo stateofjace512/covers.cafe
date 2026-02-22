@@ -19,6 +19,7 @@ import Privacy from './routes/Privacy';
 import Terms from './routes/Terms';
 import About from './routes/About';
 import Cms from './routes/Cms';
+import Acotw from './routes/Acotw';
 import NotFound from './routes/NotFound';
 
 
@@ -50,6 +51,7 @@ function AppContent() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/about" element={<About />} />
+          <Route path="/acotw" element={<Acotw />} />
           <Route path="/cms" element={<Cms />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

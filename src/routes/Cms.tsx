@@ -17,7 +17,6 @@ type PublishedCover = {
   user_id: string;
   username: string | null;
   is_public: boolean;
-  is_acotw: boolean;
   is_banned: boolean;
 };
 
@@ -126,20 +125,6 @@ export default function Cms() {
     setBusyId(null);
   }
 
-  async function toggleAcotw(coverId: string, isAcotw: boolean) {
-    if (!token) return;
-    setBusyId(`acotw-${coverId}`);
-    setError(null);
-    const res = await fetch('/api/cms/set-acotw', {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({ coverId, isAcotw }),
-    });
-    if (!res.ok) setError('Could not update ACOTW status.');
-    await loadDashboard();
-    setBusyId(null);
-  }
-
   async function banSelectedUser() {
     if (!selectedUser) return;
     setBusyId('ban-user');
@@ -237,14 +222,6 @@ export default function Cms() {
                 <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
                   <button className="btn" disabled={busyId === `visibility-${cover.id}`} onClick={() => setCoverVisibility(cover.id, false)}>Unpublish</button>
                   <button className="btn" disabled={busyId === cover.id} onClick={() => deleteCover(cover.id)}>Delete</button>
-                  <button
-                    className="btn"
-                    disabled={busyId === `acotw-${cover.id}`}
-                    onClick={() => toggleAcotw(cover.id, !cover.is_acotw)}
-                    style={cover.is_acotw ? { color: '#b8860b', borderColor: '#b8860b' } : {}}
-                  >
-                    {cover.is_acotw ? '★ Remove ACOTW' : '☆ Set as ACOTW'}
-                  </button>
                 </div>
               </div>
             ))}
