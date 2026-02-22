@@ -83,11 +83,29 @@ export default function ArtistDetail() {
         }
       }
 
+      // For collections without a custom cover, fall back to the first item's cover art.
+      const fallbackCoverMap: Record<string, { storage_path: string; image_url: string }> = {};
+      const collectionsWithoutCover = rows.filter((r) => !r.cover_image_id).map((r) => r.id);
+      if (collectionsWithoutCover.length > 0) {
+        const { data: sampleItems } = await supabase
+          .from('covers_cafe_collection_items')
+          .select('collection_id, covers_cafe_covers(storage_path, image_url)')
+          .in('collection_id', collectionsWithoutCover)
+          .order('created_at', { ascending: false });
+        for (const item of (sampleItems ?? []) as Array<{ collection_id: string; covers_cafe_covers: { storage_path: string; image_url: string } | null }>) {
+          if (!fallbackCoverMap[item.collection_id] && item.covers_cafe_covers) {
+            fallbackCoverMap[item.collection_id] = item.covers_cafe_covers;
+          }
+        }
+      }
+
       setCollections(rows.map((row) => ({
         id: row.id,
         name: row.name,
         is_public: row.is_public,
-        cover_image: row.cover_image_id ? (coverImageMap[row.cover_image_id] ?? null) : null,
+        cover_image: row.cover_image_id
+          ? (coverImageMap[row.cover_image_id] ?? null)
+          : (fallbackCoverMap[row.id] ?? null),
         item_count: itemCountMap[row.id] ?? 0,
       })));
 
@@ -167,7 +185,7 @@ export default function ArtistDetail() {
                 <div className="artist-collection-thumb">
                   {collection.cover_image ? (
                     <img
-                      src={getCoverImageSrc(collection.cover_image, 300)}
+                      src={getCoverImageSrc(collection.cover_image, 500)}
                       alt={collection.name}
                       className="artist-collection-thumb-img"
                       loading="lazy"

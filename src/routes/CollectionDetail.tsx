@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lock, Loader, Pencil, Check, X } from 'lucide-react';
+import { ArrowLeft, Lock, Loader, Pencil, Check, X, ImagePlus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import CoverCard from '../components/CoverCard';
@@ -12,7 +12,7 @@ export default function CollectionDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [collection, setCollection] = useState<{ id: string; name: string; is_public: boolean; owner_id: string } | null>(null);
+  const [collection, setCollection] = useState<{ id: string; name: string; is_public: boolean; owner_id: string; cover_image_id: string | null } | null>(null);
   const [covers, setCovers] = useState<Cover[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -23,6 +23,7 @@ export default function CollectionDetail() {
   const [editName, setEditName] = useState('');
   const [editPublic, setEditPublic] = useState(true);
   const [editSaving, setEditSaving] = useState(false);
+  const [setCoverLoading, setSetCoverLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!collectionId) return;
@@ -30,7 +31,7 @@ export default function CollectionDetail() {
     (async () => {
       const { data: col, error: colErr } = await supabase
         .from('covers_cafe_collections')
-        .select('id,name,is_public,owner_id')
+        .select('id,name,is_public,owner_id,cover_image_id')
         .eq('id', collectionId)
         .single();
 
@@ -83,6 +84,21 @@ export default function CollectionDetail() {
 
   const cancelEdit = () => setEditing(false);
 
+  const handleSetCover = async (coverId: string) => {
+    if (!collection || !user) return;
+    const newCoverId = collection.cover_image_id === coverId ? null : coverId;
+    setSetCoverLoading(coverId);
+    const { data: updated, error } = await supabase
+      .from('covers_cafe_collections')
+      .update({ cover_image_id: newCoverId })
+      .eq('id', collection.id)
+      .eq('owner_id', user.id)
+      .select('id,name,is_public,owner_id,cover_image_id')
+      .single();
+    if (!error && updated) setCollection(updated);
+    setSetCoverLoading(null);
+  };
+
   const saveEdit = async () => {
     const name = editName.trim();
     if (!name || !collection) return;
@@ -92,7 +108,7 @@ export default function CollectionDetail() {
       .update({ name, is_public: editPublic })
       .eq('id', collection.id)
       .eq('owner_id', user!.id)
-      .select('id,name,is_public,owner_id')
+      .select('id,name,is_public,owner_id,cover_image_id')
       .single();
     if (!error && updated) {
       setCollection(updated);
@@ -181,14 +197,29 @@ export default function CollectionDetail() {
       ) : (
         <div className="album-grid" style={{ marginTop: 24 }}>
           {covers.map((cover) => (
-            <CoverCard
-              key={cover.id}
-              cover={cover}
-              isFavorited={favoritedIds.has(cover.id)}
-              onToggleFavorite={handleToggleFavorite}
-              onClick={() => setSelectedCover(cover)}
-              onDeleted={(id) => setCovers((prev) => prev.filter((c) => c.id !== id))}
-            />
+            <div key={cover.id} className="col-cover-wrap">
+              <CoverCard
+                cover={cover}
+                isFavorited={favoritedIds.has(cover.id)}
+                onToggleFavorite={handleToggleFavorite}
+                onClick={() => setSelectedCover(cover)}
+                onDeleted={(id) => setCovers((prev) => prev.filter((c) => c.id !== id))}
+              />
+              {isOwner && (
+                <button
+                  className={`col-set-cover-btn${collection?.cover_image_id === cover.id ? ' col-set-cover-btn--active' : ''}`}
+                  title={collection?.cover_image_id === cover.id ? 'Remove as collection cover' : 'Set as collection cover'}
+                  onClick={() => handleSetCover(cover.id)}
+                  disabled={setCoverLoading === cover.id}
+                >
+                  {setCoverLoading === cover.id
+                    ? <Loader size={11} className="col-spinner" />
+                    : <ImagePlus size={11} />
+                  }
+                  {collection?.cover_image_id === cover.id ? 'Cover' : 'Set cover'}
+                </button>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -249,6 +280,24 @@ export default function CollectionDetail() {
         .col-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .gallery-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 60px 20px; color: var(--body-text-muted); }
+        .col-cover-wrap { position: relative; }
+        .col-set-cover-btn {
+          position: absolute; bottom: 6px; left: 6px;
+          display: flex; align-items: center; gap: 4px;
+          font-size: 10px; font-weight: bold;
+          padding: 3px 7px; border-radius: 3px;
+          background: rgba(10,5,2,0.75); color: rgba(255,255,255,0.7);
+          border: 1px solid rgba(255,255,255,0.15);
+          backdrop-filter: blur(4px);
+          opacity: 0; transition: opacity 0.15s;
+          cursor: pointer; z-index: 2;
+        }
+        .col-cover-wrap:hover .col-set-cover-btn { opacity: 1; }
+        .col-set-cover-btn--active {
+          background: var(--accent); color: white;
+          border-color: var(--accent); opacity: 1;
+        }
+        .col-set-cover-btn:hover { transform: none; box-shadow: none; }
       `}</style>
     </div>
   );
