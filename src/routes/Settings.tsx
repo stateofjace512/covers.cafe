@@ -1,9 +1,16 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Cog, Moon, Sun, Lock, Mail, Trash2, AlertTriangle, CheckCircle, Loader, ShieldCheck, MonitorSmartphone, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
-type ActiveForm = null | 'password' | 'email' | 'delete';
+interface SessionInfo {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  isCurrent: boolean;
+}
+
+type ActiveForm = null | 'password' | 'email' | 'delete' | 'sessions';
 
 // ---------------------------------------------------------------------------
 // Change Password
@@ -264,42 +271,179 @@ function DeleteAccountForm({ onDone }: { onDone: () => void }) {
 }
 
 // ---------------------------------------------------------------------------
-// Main Settings page
+// Active Sessions Panel
 // ---------------------------------------------------------------------------
-export default function Settings() {
-  const { user, signOut, openAuthModal } = useAuth();
-  const [activeForm, setActiveForm] = useState<ActiveForm>(null);
-  const [signingOutOthers, setSigningOutOthers] = useState(false);
-  const [signOutOthersMsg, setSignOutOthersMsg] = useState<{ ok: boolean; text: string } | null>(null);
+function formatRelativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
+}
 
-  const handleSignOutOtherDevices = async () => {
-    setSigningOutOthers(true);
-    setSignOutOthersMsg(null);
+function ActiveSessionsPanel({ onDone }: { onDone: () => void }) {
+  const [sessions, setSessions] = useState<SessionInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [signingOutId, setSigningOutId] = useState<string | null>(null);
+  const [signingOutAll, setSigningOutAll] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const fetchSessions = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      // Use the server-side admin API endpoint so sessions are forcefully revoked
-      // at the database level. The client-side signOut({ scope: 'others' }) only
-      // invalidates refresh tokens; existing access tokens remain valid for ~1 hour.
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setSignOutOthersMsg({ ok: false, text: 'No active session found. Please sign in again.' });
-        setSigningOutOthers(false);
-        return;
+      if (!session) { setError('No active session.'); setLoading(false); return; }
+      const res = await fetch('/api/account/sessions', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const json = await res.json() as { ok: boolean; sessions?: SessionInfo[]; message?: string };
+      if (json.ok && json.sessions) {
+        setSessions(json.sessions);
+      } else {
+        setError(json.message ?? 'Could not load sessions.');
       }
+    } catch {
+      setError('Could not load sessions.');
+    }
+    setLoading(false);
+  }, []);
+
+  // Fetch on mount
+  useEffect(() => { fetchSessions(); }, [fetchSessions]);
+
+  const handleSignOutOne = async (sessionId: string) => {
+    setSigningOutId(sessionId);
+    setMsg(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setMsg({ ok: false, text: 'No active session.' }); setSigningOutId(null); return; }
+      const res = await fetch('/api/account/signout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ sessionId }),
+      });
+      const json = await res.json() as { ok: boolean; message?: string };
+      if (json.ok) {
+        setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      } else {
+        setMsg({ ok: false, text: json.message ?? 'Could not sign out session.' });
+      }
+    } catch {
+      setMsg({ ok: false, text: 'Could not sign out session.' });
+    }
+    setSigningOutId(null);
+  };
+
+  const handleSignOutAll = async () => {
+    setSigningOutAll(true);
+    setMsg(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setMsg({ ok: false, text: 'No active session.' }); setSigningOutAll(false); return; }
       const res = await fetch('/api/account/signout-others', {
         method: 'POST',
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       const json = await res.json() as { ok: boolean; message?: string };
       if (json.ok) {
-        setSignOutOthersMsg({ ok: true, text: 'All other sessions have been signed out.' });
+        setMsg({ ok: true, text: 'All other sessions have been signed out.' });
+        // Refresh session list to reflect changes
+        await fetchSessions();
       } else {
-        setSignOutOthersMsg({ ok: false, text: json.message ?? 'Could not sign out other devices.' });
+        setMsg({ ok: false, text: json.message ?? 'Could not sign out other devices.' });
       }
     } catch {
-      setSignOutOthersMsg({ ok: false, text: 'Could not sign out other devices.' });
+      setMsg({ ok: false, text: 'Could not sign out other devices.' });
     }
-    setSigningOutOthers(false);
+    setSigningOutAll(false);
   };
+
+  const otherSessions = sessions.filter((s) => !s.isCurrent);
+
+  return (
+    <div className="sessions-panel">
+      {loading && (
+        <div className="sessions-loading">
+          <Loader size={14} className="settings-spinner" /> Loading sessions…
+        </div>
+      )}
+      {error && (
+        <div className="settings-inline-error">
+          <AlertTriangle size={13} /> {error}
+        </div>
+      )}
+      {!loading && !error && sessions.length === 0 && (
+        <div className="sessions-empty">No active sessions found.</div>
+      )}
+      {!loading && sessions.length > 0 && (
+        <ul className="sessions-list">
+          {sessions.map((s) => (
+            <li key={s.id} className={`sessions-item${s.isCurrent ? ' sessions-item--current' : ''}`}>
+              <div className="sessions-item-info">
+                <span className="sessions-item-label">
+                  <MonitorSmartphone size={13} />
+                  {s.isCurrent ? <span className="sessions-current-badge">This device</span> : 'Other device'}
+                </span>
+                <span className="sessions-item-meta">
+                  Signed in {formatRelativeTime(s.created_at)}
+                  {' · '}
+                  Last active {formatRelativeTime(s.updated_at)}
+                </span>
+              </div>
+              {!s.isCurrent && (
+                <button
+                  className="btn btn-secondary sessions-signout-btn"
+                  onClick={() => handleSignOutOne(s.id)}
+                  disabled={signingOutId === s.id || signingOutAll}
+                >
+                  {signingOutId === s.id
+                    ? <><Loader size={12} className="settings-spinner" /> Signing out…</>
+                    : <><LogOut size={12} /> Sign Out</>}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {msg && (
+        <div className={`settings-session-msg${msg.ok ? ' settings-session-msg--ok' : ' settings-session-msg--err'}`}>
+          {msg.ok ? <CheckCircle size={13} /> : <AlertTriangle size={13} />}
+          {msg.text}
+        </div>
+      )}
+      <div className="sessions-actions">
+        {otherSessions.length > 1 && (
+          <button
+            className="btn btn-secondary"
+            onClick={handleSignOutAll}
+            disabled={signingOutAll || signingOutId !== null}
+          >
+            {signingOutAll
+              ? <><Loader size={13} className="settings-spinner" /> Signing out all…</>
+              : <><LogOut size={13} /> Sign Out All Others</>}
+          </button>
+        )}
+        <button type="button" className="btn btn-secondary" onClick={onDone}>Done</button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main Settings page
+// ---------------------------------------------------------------------------
+export default function Settings() {
+  const { user, signOut, openAuthModal } = useAuth();
+  const [activeForm, setActiveForm] = useState<ActiveForm>(null);
+
 
   const setTheme = (theme: 'light' | 'dark') => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -414,29 +558,27 @@ export default function Settings() {
             <div className="settings-divider" />
 
             {/* Sessions */}
-            <div className="settings-row">
+            <div className="settings-row settings-row--expandable">
               <div className="settings-row-info">
                 <span className="settings-row-label"><MonitorSmartphone size={13} /> Active Sessions</span>
                 <span className="settings-row-desc">
-                  Sign out all other devices currently signed in to your account, except this one.
+                  View and manage all devices currently signed in to your account.
                 </span>
               </div>
-              <div className="settings-row-control">
-                <button
-                  className="btn btn-secondary"
-                  onClick={handleSignOutOtherDevices}
-                  disabled={signingOutOthers}
-                >
-                  {signingOutOthers
-                    ? <><Loader size={13} className="settings-spinner" /> Signing out…</>
-                    : <><LogOut size={13} /> Sign Out All Others</>}
-                </button>
-              </div>
+              {activeForm !== 'sessions' && (
+                <div className="settings-row-control">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setActiveForm('sessions')}
+                  >
+                    Manage
+                  </button>
+                </div>
+              )}
             </div>
-            {signOutOthersMsg && (
-              <div className={`settings-session-msg${signOutOthersMsg.ok ? ' settings-session-msg--ok' : ' settings-session-msg--err'}`}>
-                {signOutOthersMsg.ok ? <CheckCircle size={13} /> : <AlertTriangle size={13} />}
-                {signOutOthersMsg.text}
+            {activeForm === 'sessions' && (
+              <div className="settings-inline-expand">
+                <ActiveSessionsPanel onDone={() => setActiveForm(null)} />
               </div>
             )}
           </section>
@@ -559,6 +701,38 @@ export default function Settings() {
         }
         .settings-session-msg--ok { background: rgba(40,160,80,0.1); border: 1px solid rgba(40,160,80,0.3); color: #1a7a40; }
         .settings-session-msg--err { background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3); color: #c83220; }
+
+        /* Sessions panel */
+        .sessions-panel { display: flex; flex-direction: column; gap: 10px; }
+        .sessions-loading, .sessions-empty {
+          display: flex; align-items: center; gap: 6px;
+          font-size: 12px; color: var(--body-text-muted); padding: 6px 0;
+        }
+        .sessions-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+        .sessions-item {
+          display: flex; align-items: center; justify-content: space-between; gap: 12px;
+          padding: 9px 12px; border-radius: 5px;
+          background: var(--body-card-bg); border: 1px solid var(--body-border);
+          flex-wrap: wrap;
+        }
+        .sessions-item--current { border-color: var(--accent); background: rgba(192,90,26,0.04); }
+        [data-theme="dark"] .sessions-item--current { background: rgba(192,90,26,0.08); }
+        .sessions-item-info { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+        .sessions-item-label {
+          font-size: 12px; font-weight: bold; color: var(--body-text);
+          display: flex; align-items: center; gap: 5px;
+        }
+        .sessions-current-badge {
+          display: inline-flex; align-items: center;
+          padding: 1px 6px; border-radius: 10px; font-size: 11px; font-weight: bold;
+          background: var(--accent); color: #fff;
+        }
+        .sessions-item-meta { font-size: 11px; color: var(--body-text-muted); }
+        .sessions-signout-btn { font-size: 12px; padding: 4px 10px; flex-shrink: 0; }
+        .sessions-actions {
+          display: flex; gap: 8px; flex-wrap: wrap; padding-top: 4px;
+          border-top: 1px solid var(--body-border); margin-top: 4px;
+        }
 
         /* Danger button */
         .btn-danger {
