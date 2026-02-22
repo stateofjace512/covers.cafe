@@ -53,6 +53,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
   const [newCollectionPublic, setNewCollectionPublic] = useState(true);
   const [selectedCollectionId, setSelectedCollectionId] = useState('');
   const [collectionStatus, setCollectionStatus] = useState('');
+  const [collectionStatusIsError, setCollectionStatusIsError] = useState(false);
   const [savingCollection, setSavingCollection] = useState(false);
 
   useEffect(() => {
@@ -72,10 +73,12 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           .order('created_at', { ascending: false });
         if (error) {
           setCollectionStatus(`Could not load collections: ${error.message}`);
+          setCollectionStatusIsError(true);
         }
         setCollections(data ?? []);
       } catch (err) {
         setCollectionStatus(err instanceof Error ? err.message : 'Could not load collections.');
+        setCollectionStatusIsError(true);
       } finally {
         setCollectionsLoading(false);
       }
@@ -146,6 +149,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     if (!user) { openAuthModal('login'); return; }
     setPanelMode('collection');
     setCollectionStatus('');
+    setCollectionStatusIsError(false);
   };
 
   const createCollection = async () => {
@@ -153,6 +157,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     const name = newCollectionName.trim();
     if (!name) {
       setCollectionStatus('Name your collection first.');
+      setCollectionStatusIsError(true);
       return;
     }
 
@@ -165,14 +170,17 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .single();
       if (createErr || !created) {
         setCollectionStatus(createErr?.message ?? 'Could not create collection.');
+        setCollectionStatusIsError(true);
       } else {
         setCollections((prev) => [created, ...prev]);
         setSelectedCollectionId(created.id);
         setNewCollectionName('');
         setCollectionStatus(`Created "${created.name}".`);
+        setCollectionStatusIsError(false);
       }
     } catch (err) {
       setCollectionStatus(err instanceof Error ? err.message : 'Could not create collection.');
+      setCollectionStatusIsError(true);
     }
     setSavingCollection(false);
   };
@@ -188,15 +196,19 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
       if (addErr) {
         if (addErr.code === '23505') {
           setCollectionStatus('This image is already in that collection.');
+          setCollectionStatusIsError(false);
         } else {
           setCollectionStatus(addErr.message || 'Could not add to collection.');
+          setCollectionStatusIsError(true);
         }
       } else {
         const picked = collections.find((item) => item.id === collectionId);
         setCollectionStatus(`Added to ${picked?.name ?? 'collection'}.`);
+        setCollectionStatusIsError(false);
       }
     } catch (err) {
       setCollectionStatus(err instanceof Error ? err.message : 'Could not add to collection.');
+      setCollectionStatusIsError(true);
     }
     setSavingCollection(false);
   };
@@ -414,7 +426,11 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                   </div>
                 </div>
 
-                {collectionStatus && <p className="collection-status">{collectionStatus}</p>}
+                {collectionStatus && (
+                  <p className={`collection-status${collectionStatusIsError ? ' collection-status--error' : ' collection-status--ok'}`}>
+                    {collectionStatus}
+                  </p>
+                )}
                 <div className="cover-report-actions">
                   <button className="btn btn-secondary" onClick={() => setPanelMode('details')}>Back</button>
                 </div>
@@ -512,7 +528,9 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           color: var(--body-text-muted);
           background: var(--sidebar-bg);
         }
-        .collection-status { font-size: 12px; color: var(--body-text-muted); }
+        .collection-status { font-size: 12px; font-weight: bold; padding: 6px 10px; border-radius: 4px; }
+        .collection-status--error { color: #c0392b; background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.25); }
+        .collection-status--ok { color: #1e7e34; background: rgba(30,126,52,0.08); border: 1px solid rgba(30,126,52,0.25); }
         .form-row { display: flex; flex-direction: column; gap: 5px; }
         .form-label { font-size: 13px; font-weight: bold; color: var(--body-text); }
         .form-hint { font-size: 11px; color: var(--body-text-muted); font-weight: normal; }
