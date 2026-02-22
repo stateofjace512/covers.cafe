@@ -28,9 +28,9 @@ export default function Header() {
     e.preventDefault();
     if (searchQuery.trim()) navigate(`/?q=${encodeURIComponent(searchQuery.trim())}`);
   };
-
-  return (
-    <header className="site-header">
+   return (
+      <header className="site-header">
+          <span className="header-logo-text">covers<span className="header-logo-dot">.</span>cafe</span>
       <form className="header-search-wrap" onSubmit={handleSearch}>
         <Search size={14} className="header-search-icon" />
         <input
