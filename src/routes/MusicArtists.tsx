@@ -4,10 +4,41 @@ import { Music } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getCoverImageSrc } from '../lib/media';
 
+const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
+
+function artistPhotoUrl(artistName: string): string {
+  return `${SUPABASE_URL}/storage/v1/render/image/public/covers_cafe_artist_photos/${encodeURIComponent(artistName)}.jpg?width=400&height=400&resize=cover&quality=85`;
+}
+
 interface ArtistEntry {
   name: string;
   coverCount: number;
   sampleCover: { storage_path: string; image_url: string } | null;
+}
+
+function ArtistCardImg({ artist }: { artist: ArtistEntry }) {
+  const [src, setSrc] = useState(() => artistPhotoUrl(artist.name));
+
+  return (
+    <div className="music-artist-img-wrap">
+      {src ? (
+        <img
+          src={src}
+          alt={artist.name}
+          className="music-artist-img"
+          loading="lazy"
+          onError={() => {
+            if (artist.sampleCover) setSrc(getCoverImageSrc(artist.sampleCover, 200));
+            else setSrc('');
+          }}
+        />
+      ) : (
+        <div className="music-artist-img-placeholder">
+          <Music size={28} style={{ opacity: 0.3 }} />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function MusicArtists() {
@@ -18,14 +49,12 @@ export default function MusicArtists() {
 
   useEffect(() => {
     (async () => {
-      // Fetch all public covers with just the fields we need for grouping
       const { data } = await supabase
         .from('covers_cafe_covers')
         .select('artist, id, storage_path, image_url, favorite_count')
         .eq('is_public', true)
         .order('favorite_count', { ascending: false });
 
-      // Group by artist name — first cover encountered becomes the sample (most favorited)
       const map = new Map<string, ArtistEntry>();
       for (const row of data ?? []) {
         const key = row.artist?.trim();
@@ -34,16 +63,12 @@ export default function MusicArtists() {
           map.set(key, {
             name: key,
             coverCount: 0,
-            sampleCover: {
-              storage_path: row.storage_path,
-              image_url: row.image_url,
-            },
+            sampleCover: { storage_path: row.storage_path, image_url: row.image_url },
           });
         }
         map.get(key)!.coverCount++;
       }
 
-      // Sort: most covers first
       const sorted = Array.from(map.values()).sort((a, b) => b.coverCount - a.coverCount);
       setArtists(sorted);
       setLoading(false);
@@ -91,20 +116,7 @@ export default function MusicArtists() {
               onClick={() => navigate(`/artists/${encodeURIComponent(artist.name)}`)}
               title={`Browse covers by ${artist.name}`}
             >
-              <div className="music-artist-img-wrap">
-                {artist.sampleCover ? (
-                  <img
-                    src={getCoverImageSrc(artist.sampleCover, 200)}
-                    alt={artist.name}
-                    className="music-artist-img"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="music-artist-img-placeholder">
-                    <Music size={28} style={{ opacity: 0.3 }} />
-                  </div>
-                )}
-              </div>
+              <ArtistCardImg artist={artist} />
               <div className="music-artist-info">
                 <span className="music-artist-name">{artist.name}</span>
                 <span className="music-artist-covers">{artist.coverCount} cover{artist.coverCount !== 1 ? 's' : ''}</span>

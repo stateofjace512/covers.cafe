@@ -33,7 +33,6 @@ export default function MusicArtistDetail() {
 
   // Artist photo state
   const [avatarSrc, setAvatarSrc] = useState('');
-  const [isArtistPhoto, setIsArtistPhoto] = useState(false);
   const [photoBust, setPhotoBust] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
@@ -42,7 +41,6 @@ export default function MusicArtistDetail() {
   // Set initial avatar src whenever artistName changes
   useEffect(() => {
     if (!artistName) return;
-    setIsArtistPhoto(true);
     setAvatarSrc(artistPhotoTransformUrl(artistName, photoBust));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artistName]);
@@ -118,10 +116,7 @@ export default function MusicArtistDetail() {
   };
 
   const handleAvatarError = () => {
-    if (headerCover) {
-      setAvatarSrc(getCoverImageSrc(headerCover, 200));
-      setIsArtistPhoto(false);
-    }
+    if (headerCover) setAvatarSrc(getCoverImageSrc(headerCover, 200));
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,7 +134,6 @@ export default function MusicArtistDetail() {
       const bust = Date.now();
       setPhotoBust(bust);
       setAvatarSrc(artistPhotoTransformUrl(artistName, bust));
-      setIsArtistPhoto(true);
     }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -160,7 +154,7 @@ export default function MusicArtistDetail() {
       >
         <div className="ma-header-blur" />
         <div className="ma-header-content">
-          <div className={`ma-avatar${isArtistPhoto ? ' ma-avatar--circle' : ''}`}>
+          <div className="ma-avatar">
             {avatarSrc ? (
               <img
                 key={avatarSrc}
@@ -266,7 +260,7 @@ export default function MusicArtistDetail() {
           position: relative; border-radius: 8px; overflow: hidden;
           background: var(--sidebar-bg-dark);
           background-size: cover; background-position: center;
-          margin-bottom: 4px; min-height: 140px;
+          margin-bottom: 4px; min-height: 170px;
         }
         .ma-header-blur {
           position: absolute; inset: 0;
@@ -280,15 +274,13 @@ export default function MusicArtistDetail() {
           padding: 28px 24px;
         }
         .ma-avatar {
-          width: 90px; height: 90px; border-radius: 6px; flex-shrink: 0;
+          width: 130px; height: 130px; border-radius: 8px; flex-shrink: 0;
           overflow: hidden; border: 2px solid rgba(255,255,255,0.25);
           box-shadow: 0 4px 16px rgba(0,0,0,0.5);
           background: rgba(255,255,255,0.1);
           display: flex; align-items: center; justify-content: center;
           color: rgba(255,255,255,0.5); position: relative;
-          transition: border-radius 0.2s;
         }
-        .ma-avatar--circle { border-radius: 50%; }
         .ma-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .ma-photo-upload-btn {
           position: absolute; bottom: 0; right: 0;
