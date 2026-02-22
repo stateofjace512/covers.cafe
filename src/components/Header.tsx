@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Moon, Sun, Search, LogOut, User } from 'lucide-react';
+import { Moon, Sun, Search, LogOut, User, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-export default function Header() {
+type HeaderProps = {
+  isMobileNavOpen: boolean;
+  onToggleMobileNav: () => void;
+};
+
+export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderProps) {
   const { user, profile, openAuthModal, signOut } = useAuth();
   const [dark, setDark] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,6 +35,16 @@ export default function Header() {
   };
    return (
       <header className="site-header">
+      <button
+        className="btn btn-ghost header-menu-btn"
+        onClick={onToggleMobileNav}
+        title={isMobileNavOpen ? 'Close menu' : 'Open menu'}
+        aria-label={isMobileNavOpen ? 'Close menu' : 'Open menu'}
+        aria-expanded={isMobileNavOpen}
+        aria-controls="main-sidebar"
+      >
+        {isMobileNavOpen ? <X size={16} /> : <Menu size={16} />}
+      </button>
           <span className="header-logo-text">covers<span className="header-logo-dot">.</span>cafe</span>
       <form className="header-search-wrap" onSubmit={handleSearch}>
         <Search size={14} className="header-search-icon" />
@@ -116,6 +131,7 @@ export default function Header() {
           box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 0 0 2px rgba(240,160,80,0.18) !important;
         }
         .header-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; }
+        .header-menu-btn { display: none; padding: 6px 8px; }
         .header-theme-btn { display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 12px; font-weight: bold; }
         .header-theme-label { font-size: 12px; }
         .header-user-group { display: flex; align-items: center; gap: 4px; }
@@ -123,9 +139,13 @@ export default function Header() {
         .header-username { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
         .header-signout-btn { padding: 6px 8px; }
         @media (max-width: 640px) {
+          .site-header { gap: 8px; padding: 0 10px; }
+          .header-menu-btn { display: inline-flex; }
+          .header-logo-text { font-size: 18px; }
           .header-theme-label { display: none; }
-          .header-search-wrap { max-width: 180px; }
+          .header-search-wrap { max-width: none; min-width: 0; }
           .header-username { display: none; }
+          .header-user-group .btn { padding: 6px 10px; }
         }
       `}</style>
     </header>
