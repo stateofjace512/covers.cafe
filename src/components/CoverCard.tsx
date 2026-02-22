@@ -3,6 +3,7 @@ import { Star, Download, User, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
+import { getCoverImageSrc } from '../lib/media';
 
 interface Props {
   cover: Cover;
@@ -48,9 +49,9 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
     >
       <div className="album-card-cover">
         {!imgError && !imgLoaded && <div className="cover-card-shimmer" aria-hidden="true" />}
-        {!imgError && cover.image_url ? (
+        {!imgError && getCoverImageSrc(cover) ? (
           <img
-            src={cover.image_url}
+            src={getCoverImageSrc(cover)}
             alt={`${cover.title} by ${cover.artist}`}
             className={`cover-card-img${imgLoaded ? ' cover-card-img--loaded' : ''}`}
             onError={() => setImgError(true)}

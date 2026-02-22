@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { apiGet, apiPost } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
+import { getCoverImageSrc } from '../lib/media';
 
 interface Props {
   cover: Cover;
@@ -73,7 +74,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     try {
       await supabase.from('covers_cafe_downloads').insert({ cover_id: cover.id, user_id: user?.id ?? null });
       await supabase.rpc('covers_cafe_increment_downloads', { p_cover_id: cover.id });
-      const res = await fetch(cover.image_url);
+      const res = await fetch(getCoverImageSrc(cover));
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -186,7 +187,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         <div className="cover-modal-inner">
           <div className="cover-modal-image-wrap">
             <img
-              src={cover.image_url}
+              src={getCoverImageSrc(cover)}
               alt={`${cover.title} by ${cover.artist}`}
               className="cover-modal-image"
               draggable={panelMode === 'collection'}
