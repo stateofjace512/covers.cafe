@@ -4,6 +4,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
   type ReactNode,
 } from 'react';
 import { supabase } from '../lib/supabase';
@@ -15,10 +16,11 @@ interface AuthContextValue {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  emailVerified: boolean;
   // Modal controls — lifted here so any component can call openAuthModal()
   authModalOpen: boolean;
-  authModalTab: 'login' | 'register';
-  openAuthModal: (tab?: 'login' | 'register') => void;
+  authModalTab: 'login' | 'register' | 'verify';
+  openAuthModal: (tab?: 'login' | 'register' | 'verify') => void;
   closeAuthModal: () => void;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -29,6 +31,7 @@ const AuthContext = createContext<AuthContextValue>({
   session: null,
   profile: null,
   loading: true,
+  emailVerified: false,
   authModalOpen: false,
   authModalTab: 'login',
   openAuthModal: () => {},
@@ -43,7 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
+  const [authModalTab, setAuthModalTab] = useState<'login' | 'register' | 'verify'>('login');
+  // Guard so we only auto-open the verify modal once per session load, not on every render.
+  const autoVerifyFired = useRef(false);
 
   const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await supabase
@@ -67,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
-        setAuthModalOpen(false);
+        // Don't auto-close modal here — AuthModal handles it after verification
       } else {
         setProfile(null);
       }
@@ -76,7 +81,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [fetchProfile]);
 
-  const openAuthModal = useCallback((tab: 'login' | 'register' = 'login') => {
+  // If the user has a live session but hasn't verified their email yet, surface the
+  // verify modal automatically — this keeps the flow alive across page reloads.
+  useEffect(() => {
+    if (user && profile && !profile.email_verified && !autoVerifyFired.current) {
+      autoVerifyFired.current = true;
+      setAuthModalTab('verify');
+      setAuthModalOpen(true);
+    }
+    if (!user || profile?.email_verified) {
+      autoVerifyFired.current = false;
+    }
+  }, [user, profile]);
+
+  const openAuthModal = useCallback((tab: 'login' | 'register' | 'verify' = 'login') => {
     setAuthModalTab(tab);
     setAuthModalOpen(true);
   }, []);
@@ -91,6 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) await fetchProfile(user.id);
   }, [user, fetchProfile]);
 
+  const emailVerified = profile?.email_verified ?? false;
+
   return (
     <AuthContext.Provider
       value={{
@@ -98,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         profile,
         loading,
+        emailVerified,
         authModalOpen,
         authModalTab,
         openAuthModal,

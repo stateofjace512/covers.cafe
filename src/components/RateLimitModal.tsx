@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import CoffeeCupIcon from './CoffeeCupIcon';
 import { getRateLimitState } from '../lib/rateLimit';
 
 interface Props {
@@ -24,7 +25,7 @@ export default function RateLimitModal({ action, onClose }: Props) {
   return (
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}>
       <div className="modal-box rate-limit-modal" role="alertdialog" aria-modal="true">
-        <div className="rate-limit-emoji">☕</div>
+        <div className="rate-limit-emoji"><CoffeeCupIcon size={72} /></div>
         <h2 className="rate-limit-title">Pls calm down!</h2>
         <p className="rate-limit-body">Take it a little slower, we're old! Try again in about {waitSeconds}s.</p>
         <button className="btn btn-primary" onClick={handleClose} style={{ marginTop: 8 }}>
@@ -38,7 +39,7 @@ export default function RateLimitModal({ action, onClose }: Props) {
           text-align: center; padding: 40px 36px; max-width: 320px;
           gap: 6px;
         }
-        .rate-limit-emoji { font-size: 48px; line-height: 1; margin-bottom: 4px; }
+        .rate-limit-emoji { line-height: 0; margin-bottom: 4px; }
         .rate-limit-title {
           font-size: 22px; font-weight: bold; color: var(--body-text);
           text-shadow: 0 1px 0 rgba(255,255,255,0.4);
