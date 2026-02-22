@@ -1,30 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MessageCircle, Heart, Flag, Loader } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { getClientIdentity } from '../lib/comments/identityTracking.client';
 
 interface CommentRow {
   id: string;
   content: string;
   created_at: string;
   author_username: string;
-  identity_hash: string;
   like_count: number | null;
 }
 
 interface Props {
   coverId: string;
-}
-
-const ANON_KEY = 'covers_cafe_comment_anon_key';
-
-function getAnonIdentity() {
-  let key = localStorage.getItem(ANON_KEY);
-  if (!key) {
-    key = `anon_${crypto.randomUUID()}`;
-    localStorage.setItem(ANON_KEY, key);
-  }
-  return key;
 }
 
 export default function CoverComments({ coverId }: Props) {
@@ -36,32 +24,27 @@ export default function CoverComments({ coverId }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState('');
 
-  const identityHash = useMemo(() => (typeof window === 'undefined' ? '' : (user?.id ?? getAnonIdentity())), [user?.id]);
+  const identity = useMemo(() => (typeof window === 'undefined' ? null : getClientIdentity()), []);
 
   const loadComments = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('comments')
-      .select('id, content, created_at, author_username, identity_hash, like_count, is_shadow_banned')
-      .eq('page_type', 'music')
-      .eq('page_slug', coverId)
-      .eq('is_shadow_banned', false)
-      .order('created_at', { ascending: false });
-
-    setComments((data as CommentRow[]) ?? []);
-
-    if (identityHash) {
-      const { data: likes } = await supabase
-        .from('comment_likes')
-        .select('comment_id')
-        .eq('identity_hash', identityHash)
-        .in('comment_id', ((data as CommentRow[]) ?? []).map((item) => item.id));
-
-      setLikedIds(new Set((likes ?? []).map((item: { comment_id: string }) => item.comment_id)));
+    setStatus('');
+    try {
+      const res = await fetch(`/api/public/comments?pageType=music&pageSlug=${encodeURIComponent(coverId)}`);
+      const payload = await res.json();
+      if (!res.ok) {
+        setStatus(payload?.error ?? 'Could not load comments.');
+        setComments([]);
+      } else {
+        setComments(payload.comments ?? []);
+      }
+    } catch {
+      setStatus('Could not load comments.');
+      setComments([]);
     }
-
+    setLikedIds(new Set());
     setLoading(false);
-  }, [coverId, identityHash]);
+  }, [coverId]);
 
   useEffect(() => {
     void loadComments();
@@ -69,27 +52,29 @@ export default function CoverComments({ coverId }: Props) {
 
   const submitComment = async () => {
     const trimmed = content.trim();
-    if (!trimmed) return;
+    if (!trimmed || !identity) return;
 
     setSubmitting(true);
     setStatus('');
 
-    const authorName = user?.email?.split('@')[0] ?? `anon-${identityHash.slice(0, 8)}`;
-
-    const { error } = await supabase.from('comments').insert({
-      page_type: 'music',
-      page_slug: coverId,
-      content: trimmed,
-      parent_comment_id: null,
-      author_username: authorName,
-      identity_hash: identityHash,
-      like_count: 0,
+    const res = await fetch('/api/public/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pageType: 'music',
+        pageSlug: coverId,
+        content: trimmed,
+        sessionId: identity.sessionId,
+        localStorageId: identity.localStorageId,
+      }),
     });
 
-    if (error) {
-      setStatus('Could not post comment right now.');
+    const payload = await res.json();
+    if (!res.ok) {
+      setStatus(payload?.error ?? 'Could not post comment right now.');
     } else {
       setContent('');
+      if (payload?.isShadowBanned) setStatus('Comment submitted.');
       await loadComments();
     }
 
@@ -97,35 +82,48 @@ export default function CoverComments({ coverId }: Props) {
   };
 
   const toggleLike = async (commentId: string) => {
-    if (!identityHash) return;
+    if (!identity) return;
 
-    const liked = likedIds.has(commentId);
-    if (liked) {
-      await supabase
-        .from('comment_likes')
-        .delete()
-        .eq('comment_id', commentId)
-        .eq('identity_hash', identityHash);
-    } else {
-      await supabase.from('comment_likes').insert({ comment_id: commentId, identity_hash: identityHash });
+    const res = await fetch('/api/public/comments/like', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ commentId, sessionId: identity.sessionId, localStorageId: identity.localStorageId }),
+    });
+    if (!res.ok) {
+      setStatus('Could not update like.');
+      return;
     }
 
-    await loadComments();
+    const payload = await res.json();
+    setLikedIds((prev) => {
+      const next = new Set(prev);
+      if (payload.liked) next.add(commentId);
+      else next.delete(commentId);
+      return next;
+    });
+    setComments((prev) => prev.map((item) => (item.id === commentId ? { ...item, like_count: payload.likeCount } : item)));
   };
 
   const reportComment = async (commentId: string) => {
+    if (!identity) return;
     if (!user) {
       openAuthModal('login');
       return;
     }
 
-    await supabase.from('comment_reports').insert({
-      comment_id: commentId,
-      reporter_identity_hash: identityHash,
-      reason: 'inappropriate',
+    const res = await fetch('/api/public/comments/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        commentId,
+        reason: 'inappropriate',
+        sessionId: identity.sessionId,
+        localStorageId: identity.localStorageId,
+      }),
     });
 
-    setStatus('Report sent. Thanks for helping keep the gallery clean.');
+    const payload = await res.json();
+    setStatus(res.ok ? 'Report sent. Thanks for helping keep the gallery clean.' : (payload?.error ?? 'Could not submit report.'));
   };
 
   return (
