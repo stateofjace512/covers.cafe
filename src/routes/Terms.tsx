@@ -56,38 +56,52 @@ export default function Terms() {
           <li>Use the Service for spam, phishing, or any other fraudulent purpose.</li>
           <li>Attempt to gain unauthorized access to any part of the Service or any related systems.</li>
         </ul>
-
         <h2>5. DMCA and Copyright Policy</h2>
+        
         <p>
-          covers.cafe respects intellectual property rights and expects users to do the same.
+          covers.cafe respects the intellectual property rights of others and expects users to do the same.
           We comply with the Digital Millennium Copyright Act ("DMCA").
         </p>
+        
         <p>
-          If you believe that your copyrighted work has been uploaded to covers.cafe without your authorization,
-          you may submit a DMCA takedown notice to our designated copyright agent:
+          If you believe that content on covers.cafe infringes your copyright, you may submit a DMCA
+          takedown notice to our designated copyright agent:
         </p>
+        
         <div className="legal-dmca-box">
-          <p><strong>DMCA Agent:</strong></p>
-          <p>covers.cafe</p>
-          <p>Email: <strong>mstrjk@mstrjk.com</strong></p>
-          <p>Subject line: <em>DMCA Takedown Notice</em></p>
+          <p>
+            <strong>Designated DMCA Agent:</strong><br />
+            Jacob Robison<br />
+            MSTRJK ENTERTAINMENT GROUP<br />
+            2100 Wickersham Ln Unit 3084<br />
+            Austin, TX 78741<br />
+            Phone: 512-210-4341<br />
+            Email: <a href="mailto:jakerobison17@gmail.com">jakerobison17@gmail.com</a>
+          </p>
         </div>
+        
         <p>Your notice must include:</p>
         <ul>
-          <li>A physical or electronic signature of the copyright owner or authorized agent.</li>
-          <li>Identification of the copyrighted work claimed to be infringed.</li>
-          <li>Identification of the infringing material and its location on covers.cafe (URL).</li>
-          <li>Your contact information (name, address, telephone number, and email).</li>
-          <li>A statement that you have a good faith belief that the use is not authorized by the copyright owner, its agent, or law.</li>
-          <li>A statement, under penalty of perjury, that the information in the notice is accurate and that you are the copyright owner or are authorized to act on behalf of the owner.</li>
+          <li>A physical or electronic signature of the copyright owner or authorized agent;</li>
+          <li>Identification of the copyrighted work claimed to have been infringed;</li>
+          <li>Identification of the infringing material and its location on the Service (URL);</li>
+          <li>Your contact information (name, address, telephone number, and email);</li>
+          <li>A statement that you have a good faith belief that the use is not authorized by the copyright owner, its agent, or the law;</li>
+          <li>A statement, under penalty of perjury, that the information in the notice is accurate and that you are authorized to act on behalf of the copyright owner.</li>
         </ul>
+        
         <p>
-          We will respond to valid DMCA notices promptly by removing or disabling access to the infringing content.
+          We will respond to valid DMCA notices by removing or disabling access to the allegedly infringing content.
           Repeat infringers will have their accounts terminated.
         </p>
+        
         <p>
-          <strong>Counter-Notices:</strong> If you believe your content was removed by mistake, you may send a
-          counter-notice to mstrjk@mstrjk.com with the required information under 17 U.S.C. § 512(g)(3).
+          <strong>Counter-Notices:</strong> If you believe your content was removed by mistake or misidentification,
+          you may submit a counter-notification to our designated DMCA agent at{" "}
+          <a href="mailto:jakerobison17@gmail.com">jakerobison17@gmail.com</a>. Your counter-notification must comply
+          with the requirements of 17 U.S.C. § 512(g)(3), including your physical or electronic signature,
+          identification of the removed material, a statement under penalty of perjury that the removal was a mistake
+          or misidentification, and your consent to the jurisdiction of the federal district court in your district.
         </p>
 
         <h2>6. Termination</h2>
