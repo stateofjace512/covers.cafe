@@ -45,27 +45,45 @@ export default function ArtistDetail() {
       const isOwner = user?.id === profileData.id;
       let colQuery = supabase
         .from('covers_cafe_collections')
-        .select('id,name,is_public,cover_image:covers_cafe_covers!cover_image_id(storage_path,image_url,thumbnail_path),covers_cafe_collection_items(id)')
+        .select('id,name,is_public,cover_image_id,covers_cafe_collection_items(id)')
         .eq('owner_id', profileData.id)
         .order('created_at', { ascending: false });
       if (!isOwner) colQuery = colQuery.eq('is_public', true);
-      const { data: colData } = await colQuery;
+      const { data: colData, error: colError } = await colQuery;
 
-      setCollections((colData ?? []).map((row: {
-        id: string; name: string; is_public: boolean;
-        cover_image?: { storage_path: string; image_url: string; thumbnail_path: string | null } | null;
+      if (colError) {
+        console.error('Collections query error:', colError.message);
+      }
+
+      const rows = colData ?? [];
+
+      // Fetch cover image data separately for any collections that have one set.
+      const coverImageIds = rows.map((r: { cover_image_id?: string | null }) => r.cover_image_id).filter(Boolean) as string[];
+      let coverImageMap: Record<string, { storage_path: string; image_url: string; thumbnail_path: string | null }> = {};
+      if (coverImageIds.length > 0) {
+        const { data: coverImages } = await supabase
+          .from('covers_cafe_covers')
+          .select('id,storage_path,image_url,thumbnail_path')
+          .in('id', coverImageIds);
+        for (const c of coverImages ?? []) {
+          coverImageMap[c.id] = c;
+        }
+      }
+
+      setCollections(rows.map((row: {
+        id: string; name: string; is_public: boolean; cover_image_id?: string | null;
         covers_cafe_collection_items?: { id: string }[];
       }) => ({
         id: row.id,
         name: row.name,
         is_public: row.is_public,
-        cover_image: row.cover_image ?? null,
+        cover_image: row.cover_image_id ? (coverImageMap[row.cover_image_id] ?? null) : null,
         item_count: row.covers_cafe_collection_items?.length ?? 0,
       })));
 
       setLoading(false);
     })();
-  }, [username]);
+  }, [username, user?.id]);
 
   if (loading) return <p className="text-muted">Loading…</p>;
   if (notFound) return (
