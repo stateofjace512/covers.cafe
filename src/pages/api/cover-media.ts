@@ -5,8 +5,19 @@ export const GET: APIRoute = async ({ url }) => {
   const sb = getSupabaseServer();
   if (!sb) return new Response('Media API unavailable', { status: 503 });
 
-  const storagePath = url.searchParams.get('path');
-  if (!storagePath) return new Response('Missing path', { status: 400 });
+  const coverId = url.searchParams.get('id');
+  let storagePath = url.searchParams.get('path');
+
+  if (!storagePath && coverId) {
+    const { data } = await sb
+      .from('covers_cafe_covers')
+      .select('storage_path')
+      .eq('id', coverId)
+      .single();
+    storagePath = data?.storage_path ?? null;
+  }
+
+  if (!storagePath) return new Response('Missing id/path', { status: 400 });
 
   const { data, error } = await sb.storage.from('covers_cafe_covers').download(storagePath);
   if (error || !data) return new Response('Not found', { status: 404 });
