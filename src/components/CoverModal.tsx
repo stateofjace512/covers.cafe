@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
 import { getCoverImageSrc, getCoverDownloadSrc } from '../lib/media';
+import CoverComments from './CoverComments';
 
 interface Props {
   cover: Cover;
@@ -442,6 +443,8 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     Report
                   </button>
                 </div>
+
+                <CoverComments coverId={cover.id} />
               </>
             )}
 
@@ -736,6 +739,18 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           box-shadow: none;
         }
         .cover-download-option:hover { background: var(--accent); color: white; transform: none; }
+        .cover-comments { margin-top: 16px; border-top: 1px solid var(--body-card-border); padding-top: 14px; }
+        .cover-comments-title { display: flex; align-items: center; gap: 6px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--body-text-muted); margin-bottom: 10px; }
+        .cover-comments-composer { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+        .cover-comments-input { width: 100%; min-height: 82px; resize: vertical; border: 1px solid var(--body-card-border); background: var(--body-card-bg); color: var(--body-text); border-radius: 6px; padding: 10px; font: inherit; }
+        .cover-comments-status, .cover-comments-muted { font-size: 12px; color: var(--body-text-muted); }
+        .cover-comments-list { list-style: none; display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow: auto; padding-right: 2px; }
+        .cover-comment-item { border: 1px solid var(--body-card-border); border-radius: 6px; background: rgba(255,255,255,0.25); padding: 8px 10px; }
+        .cover-comment-top { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; color: var(--body-text-muted); margin-bottom: 4px; }
+        .cover-comment-body { white-space: pre-wrap; font-size: 13px; margin-bottom: 7px; }
+        .cover-comment-actions { display: flex; gap: 8px; }
+        .cover-comment-action { border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--sidebar-text); font-size: 11px; font-weight: bold; border-radius: 4px; padding: 3px 8px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+        .cover-comment-action:hover { background: var(--accent); color: #fff; }
         @media (max-width: 600px) {
           .cover-modal-inner { flex-direction: column; }
           .cover-modal-image-wrap { width: 100%; max-width: 100%; height: 220px; }
