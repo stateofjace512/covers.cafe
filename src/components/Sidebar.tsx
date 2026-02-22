@@ -202,8 +202,11 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
         .sidebar-footer {
           border-top: 1px solid var(--sidebar-border); padding: 10px 16px;
           display: flex; align-items: center; justify-content: space-between;
-          background: linear-gradient(0deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0) 100%);
+          /* Solid base color prevents scrolled nav items from bleeding through */
+          background-color: var(--sidebar-bg);
+          background-image: linear-gradient(0deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0) 100%);
           position: sticky; bottom: 0;
+          z-index: 1;
         }
         .sidebar-footer-text { font-size: 11px; font-weight: bold; color: var(--sidebar-text-muted); letter-spacing: 0.3px; }
         .sidebar-footer-links { display: flex; align-items: center; gap: 5px; }

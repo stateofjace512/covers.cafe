@@ -31,8 +31,9 @@ const PAGE_SIZE = 24;
 
 export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId }: Props) {
   const { user } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') ?? '';
+  const openParam = searchParams.get('open');
 
   const [covers, setCovers] = useState<Cover[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +50,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
   const favIdsRef = useRef<string[]>([]);
   const loadingMoreRef = useRef(false);
   const currentPageRef = useRef(0);
+  const handledOpenRef = useRef<string | null>(null);
 
   // When tab changes, reset sort to a sensible default
   useEffect(() => {
@@ -206,6 +208,26 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
     window.addEventListener('dragend', onDragEnd);
     return () => window.removeEventListener('dragend', onDragEnd);
   }, []);
+
+  // Auto-open a cover when ?open=coverId is present (e.g., from notification links)
+  useEffect(() => {
+    if (!openParam || loading || handledOpenRef.current === openParam) return;
+    handledOpenRef.current = openParam;
+    // Clear the param from the URL without a navigation entry
+    setSearchParams((prev) => { const n = new URLSearchParams(prev); n.delete('open'); return n; }, { replace: true });
+    const found = covers.find((c) => c.id === openParam);
+    if (found) {
+      setSelectedCover(found);
+    } else {
+      supabase
+        .from('covers_cafe_covers')
+        .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
+        .eq('id', openParam)
+        .single()
+        .then(({ data }) => { if (data) setSelectedCover(data as Cover); });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openParam, loading]);
 
   const handleToggleFavorite = async (coverId: string) => {
     if (!user) return;
