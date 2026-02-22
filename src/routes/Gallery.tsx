@@ -104,7 +104,7 @@ export default function Gallery() {
         .hero-tab {
           display: inline-flex; align-items: center; gap: 6px;
           padding: 7px 16px 9px;
-          border: none; border-radius: 6px 6px 0 0;
+          border: none; border-radius: 6px 6px 6px 6px;
           font-size: 12px; font-weight: bold; font-family: inherit;
           cursor: pointer;
           background: transparent;
