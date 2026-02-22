@@ -219,7 +219,7 @@ export default function Cms() {
               <div key={cover.id} style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12 }}>
                 <div><strong>{cover.title}</strong> — {cover.artist}</div>
                 <div>By: @{cover.username ?? cover.user_id}{cover.is_banned ? ' (banned user)' : ''}</div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
                   <button className="btn" disabled={busyId === `visibility-${cover.id}`} onClick={() => setCoverVisibility(cover.id, false)}>Unpublish</button>
                   <button className="btn" disabled={busyId === cover.id} onClick={() => deleteCover(cover.id)}>Delete</button>
                 </div>
