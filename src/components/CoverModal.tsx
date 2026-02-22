@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader, FolderPlus, ChevronDown } from 'lucide-react';
+import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader, FolderPlus, ChevronDown, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,11 +12,12 @@ interface Props {
   onToggleFavorite: (coverId: string) => void;
   onClose: () => void;
   onDeleted?: (coverId: string) => void;
+  onUpdated?: (cover: Cover) => void;
   initialPanelMode?: PanelMode;
 }
 
 type ReportReason = 'inappropriate' | 'copyright' | 'spam' | 'other';
-type PanelMode = 'details' | 'report' | 'collection';
+type PanelMode = 'details' | 'report' | 'collection' | 'edit';
 
 interface CollectionRow {
   id: string;
@@ -31,7 +32,7 @@ const REPORT_REASONS: { value: ReportReason; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
-export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClose, onDeleted, initialPanelMode = 'details' }: Props) {
+export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClose, onDeleted, onUpdated, initialPanelMode = 'details' }: Props) {
   const { user, openAuthModal } = useAuth();
   const navigate = useNavigate();
   const isOwner = user?.id === cover.user_id;
@@ -53,7 +54,17 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
   const [newCollectionPublic, setNewCollectionPublic] = useState(true);
   const [selectedCollectionId, setSelectedCollectionId] = useState('');
   const [collectionStatus, setCollectionStatus] = useState('');
+  const [collectionStatusIsError, setCollectionStatusIsError] = useState(false);
   const [savingCollection, setSavingCollection] = useState(false);
+
+  const [editTitle, setEditTitle] = useState('');
+  const [editArtist, setEditArtist] = useState('');
+  const [editYear, setEditYear] = useState('');
+  const [editTags, setEditTags] = useState('');
+  const [editIsPublic, setEditIsPublic] = useState(true);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editStatus, setEditStatus] = useState('');
+  const [editStatusIsError, setEditStatusIsError] = useState(false);
 
   useEffect(() => {
     setPanelMode(initialPanelMode);
@@ -72,10 +83,12 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           .order('created_at', { ascending: false });
         if (error) {
           setCollectionStatus(`Could not load collections: ${error.message}`);
+          setCollectionStatusIsError(true);
         }
         setCollections(data ?? []);
       } catch (err) {
         setCollectionStatus(err instanceof Error ? err.message : 'Could not load collections.');
+        setCollectionStatusIsError(true);
       } finally {
         setCollectionsLoading(false);
       }
@@ -146,6 +159,46 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     if (!user) { openAuthModal('login'); return; }
     setPanelMode('collection');
     setCollectionStatus('');
+    setCollectionStatusIsError(false);
+  };
+
+  const openEditPanel = () => {
+    setEditTitle(cover.title);
+    setEditArtist(cover.artist);
+    setEditYear(cover.year?.toString() ?? '');
+    setEditTags((cover.tags ?? []).join(', '));
+    setEditIsPublic(cover.is_public);
+    setEditStatus('');
+    setEditStatusIsError(false);
+    setPanelMode('edit');
+  };
+
+  const saveEdit = async () => {
+    const title = editTitle.trim();
+    const artist = editArtist.trim();
+    if (!title || !artist) {
+      setEditStatus('Title and artist are required.');
+      setEditStatusIsError(true);
+      return;
+    }
+    setEditSaving(true);
+    const year = editYear.trim() ? parseInt(editYear.trim(), 10) : null;
+    const tags = editTags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
+    const { data: updated, error } = await supabase
+      .from('covers_cafe_covers')
+      .update({ title, artist, year, tags, is_public: editIsPublic })
+      .eq('id', cover.id)
+      .select('*, profiles:covers_cafe_profiles(id,username,display_name,avatar_url)')
+      .single();
+    if (error) {
+      setEditStatus(error.message || 'Could not save changes.');
+      setEditStatusIsError(true);
+    } else if (updated) {
+      setEditStatus('Saved.');
+      setEditStatusIsError(false);
+      onUpdated?.(updated as Cover);
+    }
+    setEditSaving(false);
   };
 
   const createCollection = async () => {
@@ -153,6 +206,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     const name = newCollectionName.trim();
     if (!name) {
       setCollectionStatus('Name your collection first.');
+      setCollectionStatusIsError(true);
       return;
     }
 
@@ -165,14 +219,40 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .single();
       if (createErr || !created) {
         setCollectionStatus(createErr?.message ?? 'Could not create collection.');
+        setCollectionStatusIsError(true);
       } else {
         setCollections((prev) => [created, ...prev]);
         setSelectedCollectionId(created.id);
         setNewCollectionName('');
         setCollectionStatus(`Created "${created.name}".`);
+        setCollectionStatusIsError(false);
       }
     } catch (err) {
       setCollectionStatus(err instanceof Error ? err.message : 'Could not create collection.');
+      setCollectionStatusIsError(true);
+    }
+    setSavingCollection(false);
+  };
+
+  const setAsCoverImage = async (collectionId: string) => {
+    if (!user || !collectionId) return;
+    setSavingCollection(true);
+    try {
+      const { error } = await supabase
+        .from('covers_cafe_collections')
+        .update({ cover_image_id: cover.id })
+        .eq('id', collectionId)
+        .eq('owner_id', user.id);
+      if (error) {
+        setCollectionStatus(error.message || 'Could not set cover image.');
+        setCollectionStatusIsError(true);
+      } else {
+        setCollectionStatus('Cover image updated.');
+        setCollectionStatusIsError(false);
+      }
+    } catch (err) {
+      setCollectionStatus(err instanceof Error ? err.message : 'Could not set cover image.');
+      setCollectionStatusIsError(true);
     }
     setSavingCollection(false);
   };
@@ -188,15 +268,19 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
       if (addErr) {
         if (addErr.code === '23505') {
           setCollectionStatus('This image is already in that collection.');
+          setCollectionStatusIsError(false);
         } else {
           setCollectionStatus(addErr.message || 'Could not add to collection.');
+          setCollectionStatusIsError(true);
         }
       } else {
         const picked = collections.find((item) => item.id === collectionId);
         setCollectionStatus(`Added to ${picked?.name ?? 'collection'}.`);
+        setCollectionStatusIsError(false);
       }
     } catch (err) {
       setCollectionStatus(err instanceof Error ? err.message : 'Could not add to collection.');
+      setCollectionStatusIsError(true);
     }
     setSavingCollection(false);
   };
@@ -305,6 +389,12 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     Add to Collection
                   </button>
                   {isOwner && (
+                    <button className="btn cover-modal-edit-btn" onClick={openEditPanel}>
+                      <Pencil size={14} />
+                      Edit
+                    </button>
+                  )}
+                  {isOwner && (
                     <button
                       className={`btn cover-modal-delete-btn${deleteConfirm ? ' cover-modal-delete-btn--confirm' : ''}`}
                       onClick={handleDelete}
@@ -398,9 +488,14 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                       ))}
                     </select>
                   )}
-                  <button className="btn btn-primary" onClick={() => addToCollection(selectedCollectionId)} disabled={!selectedCollectionId || savingCollection || collectionsLoading}>
-                    {savingCollection ? 'Saving…' : 'Add to This Collection'}
-                  </button>
+                  <div className="cover-report-actions">
+                    <button className="btn btn-primary" onClick={() => addToCollection(selectedCollectionId)} disabled={!selectedCollectionId || savingCollection || collectionsLoading}>
+                      {savingCollection ? 'Saving…' : 'Add to This Collection'}
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => setAsCoverImage(selectedCollectionId)} disabled={!selectedCollectionId || savingCollection || collectionsLoading} title="Use this image as the collection thumbnail">
+                      Set as cover image
+                    </button>
+                  </div>
                 </div>
 
                 <div className="form-row">
@@ -414,9 +509,61 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                   </div>
                 </div>
 
-                {collectionStatus && <p className="collection-status">{collectionStatus}</p>}
+                {collectionStatus && (
+                  <p className={`collection-status${collectionStatusIsError ? ' collection-status--error' : ' collection-status--ok'}`}>
+                    {collectionStatus}
+                  </p>
+                )}
                 <div className="cover-report-actions">
                   <button className="btn btn-secondary" onClick={() => setPanelMode('details')}>Back</button>
+                </div>
+              </div>
+            )}
+
+            {panelMode === 'edit' && (
+              <div className="cover-collection-panel">
+                <h3 className="cover-report-title">Edit Cover</h3>
+
+                <div className="form-row">
+                  <label className="form-label">Title</label>
+                  <input className="form-input" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="Album title" />
+                </div>
+                <div className="form-row">
+                  <label className="form-label">Artist</label>
+                  <input className="form-input" value={editArtist} onChange={(e) => setEditArtist(e.target.value)} placeholder="Artist name" />
+                </div>
+                <div className="form-row">
+                  <label className="form-label">Year <span className="form-hint">(optional)</span></label>
+                  <input className="form-input" value={editYear} onChange={(e) => setEditYear(e.target.value)} placeholder="e.g. 1973" type="number" min="1900" max="2099" />
+                </div>
+                <div className="form-row">
+                  <label className="form-label">Tags <span className="form-hint">(comma-separated)</span></label>
+                  <input className="form-input" value={editTags} onChange={(e) => setEditTags(e.target.value)} placeholder="e.g. jazz, vinyl, 70s" />
+                </div>
+                <div className="form-row">
+                  <label className="form-label">Visibility</label>
+                  <div className="cover-report-actions">
+                    <button
+                      className={`btn${editIsPublic ? ' btn-primary' : ' btn-secondary'}`}
+                      onClick={() => setEditIsPublic(true)}
+                    >Public</button>
+                    <button
+                      className={`btn${!editIsPublic ? ' btn-primary' : ' btn-secondary'}`}
+                      onClick={() => setEditIsPublic(false)}
+                    >Private</button>
+                  </div>
+                </div>
+
+                {editStatus && (
+                  <p className={`collection-status${editStatusIsError ? ' collection-status--error' : ' collection-status--ok'}`}>
+                    {editStatus}
+                  </p>
+                )}
+                <div className="cover-report-actions">
+                  <button className="btn btn-primary" onClick={saveEdit} disabled={editSaving}>
+                    {editSaving ? <><Loader size={13} className="upload-spinner" /> Saving…</> : 'Save Changes'}
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => setPanelMode('details')}>Cancel</button>
                 </div>
               </div>
             )}
@@ -493,6 +640,12 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .cover-modal-delete-btn:hover { background: rgba(200,50,30,0.2); transform: none; box-shadow: none; }
         .cover-modal-delete-btn--confirm { background: #c83220 !important; color: white !important; border-color: #a02010 !important; }
         .cover-modal-delete-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .cover-modal-edit-btn {
+          display: flex; align-items: center; gap: 5px; font-size: 12px;
+          background: var(--sidebar-bg); border: 1px solid var(--sidebar-border);
+          color: var(--body-text); padding: 6px 12px;
+        }
+        .cover-modal-edit-btn:hover { background: var(--sidebar-bg-dark); transform: none; box-shadow: none; }
         .cover-modal-report-btn {
           display: flex; align-items: center; gap: 5px; font-size: 12px;
           background: none; border: 1px solid var(--body-card-border);
@@ -512,7 +665,9 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           color: var(--body-text-muted);
           background: var(--sidebar-bg);
         }
-        .collection-status { font-size: 12px; color: var(--body-text-muted); }
+        .collection-status { font-size: 12px; font-weight: bold; padding: 6px 10px; border-radius: 4px; }
+        .collection-status--error { color: #c0392b; background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.25); }
+        .collection-status--ok { color: #1e7e34; background: rgba(30,126,52,0.08); border: 1px solid rgba(30,126,52,0.25); }
         .form-row { display: flex; flex-direction: column; gap: 5px; }
         .form-label { font-size: 13px; font-weight: bold; color: var(--body-text); }
         .form-hint { font-size: 11px; color: var(--body-text-muted); font-weight: normal; }
