@@ -1,23 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowUpFromLine, ArrowDownToLine, User, Star, Image, Coffee, Cog, UserRoundCog, UserRound, Shield, Info, Trophy, Music } from 'lucide-react';
+import { ArrowUpFromLine, ArrowDownToLine, User, Star, Image, Cog, UserRound, Shield, Info, Trophy, Music } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getAvatarSrc } from '../lib/media';
 import { supabase } from '../lib/supabase';
 
 const NAV = [
-  { section: 'Discover', label: 'Gallery',      icon: <Image size={18} />,           path: '/' },
-  {                       label: 'ACOTW',        icon: <Trophy size={18} />,           path: '/acotw' },
-  {                       label: 'Artists',      icon: <Music size={18} />,            path: '/artists' },
-  {                       label: 'Users',        icon: <UserRound size={18} />,        path: '/users' },
-  {                       label: 'Favorites',    icon: <Star size={18} />,             path: '/favorites' },
-  { section: 'Account',  label: 'Upload',        icon: <ArrowUpFromLine size={18} />,  path: '/upload' },
-  {                       label: 'Downloads',    icon: <ArrowDownToLine size={18} />,  path: '/downloads' },
-  {                       label: 'Profile',      icon: <User size={18} />,             path: '/profile' },
-  {                       label: 'Edit Profile', icon: <UserRoundCog size={18} />,     path: '/profile/edit' },
-  { section: 'More',     label: 'Settings',     icon: <Cog size={18} />,              path: '/settings' },
-  {                       label: 'Coffee',       icon: <Coffee size={18} />,           path: '/coffee' },
-  {                       label: 'About',        icon: <Info size={18} />,             path: '/about' },
+  { section: 'Discover', label: 'Gallery',   icon: <Image size={18} />,           path: '/' },
+  {                       label: 'ACOTW',     icon: <Trophy size={18} />,           path: '/acotw' },
+  {                       label: 'Artists',   icon: <Music size={18} />,            path: '/artists' },
+  {                       label: 'Users',     icon: <UserRound size={18} />,        path: '/users' },
+  {                       label: 'Favorites', icon: <Star size={18} />,             path: '/favorites' },
+  { section: 'Account',  label: 'Upload',    icon: <ArrowUpFromLine size={18} />,  path: '/upload' },
+  {                       label: 'Downloads', icon: <ArrowDownToLine size={18} />,  path: '/downloads' },
+  {                       label: 'Profile',   icon: <User size={18} />,             path: '/profile' },
+  { section: 'More',     label: 'Settings',  icon: <Cog size={18} />,              path: '/settings' },
+  {                       label: 'About',     icon: <Info size={18} />,             path: '/about' },
 ] as const;
 
 const OPERATOR_NAV = { label: 'CMS', icon: <Shield size={18} />, path: '/cms' } as const;

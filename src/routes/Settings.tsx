@@ -417,7 +417,9 @@ export default function Settings() {
             <div className="settings-row">
               <div className="settings-row-info">
                 <span className="settings-row-label"><MonitorSmartphone size={13} /> Active Sessions</span>
-                <span className="settings-row-desc">Sign out all other devices except this one.</span>
+                <span className="settings-row-desc">
+                  Sign out all other devices currently signed in to your account, except this one.
+                </span>
               </div>
               <div className="settings-row-control">
                 <button
@@ -427,7 +429,7 @@ export default function Settings() {
                 >
                   {signingOutOthers
                     ? <><Loader size={13} className="settings-spinner" /> Signing out…</>
-                    : <><LogOut size={13} /> Sign Out Others</>}
+                    : <><LogOut size={13} /> Sign Out All Others</>}
                 </button>
               </div>
             </div>
@@ -471,12 +473,6 @@ export default function Settings() {
           </section>
         )}
 
-        {/* ── About ──────────────────────────────────────────── */}
-        <section className="card settings-section">
-          <h2 className="settings-section-title">About</h2>
-          <div className="settings-kv"><span className="kv-key">Version</span><span className="kv-val">0.1.0</span></div>
-          <div className="settings-kv"><span className="kv-key">Stack</span><span className="kv-val">Astro + React + Supabase</span></div>
-        </section>
 
       </div>
 
@@ -500,10 +496,6 @@ export default function Settings() {
         .settings-row-desc { font-size: 12px; color: var(--body-text-muted); line-height: 1.5; }
         .settings-row-control { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .settings-divider { height: 1px; background: var(--body-border); margin: 14px 0; }
-        .settings-kv { display: flex; align-items: center; gap: 12px; padding: 6px 0; font-size: 13px; }
-        .kv-key { font-weight: bold; color: var(--body-text-muted); min-width: 100px; }
-        .kv-val { color: var(--body-text); }
-
         /* Danger section */
         .settings-danger-section {
           border-color: rgba(200, 50, 30, 0.25);
