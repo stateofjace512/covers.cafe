@@ -357,7 +357,16 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     <User size={13} />
                     <span>
                       Uploaded by{' '}
-                      <strong>{cover.profiles?.display_name ?? cover.profiles?.username ?? 'unknown'}</strong>
+                      {cover.profiles?.username ? (
+                        <button
+                          className="cover-meta-user-link"
+                          onClick={() => navigate(`/users/${cover.profiles!.username}`)}
+                        >
+                          {cover.profiles.username}
+                        </button>
+                      ) : (
+                        <strong>unknown</strong>
+                      )}
                     </span>
                   </div>
                   {cover.created_at && (
@@ -656,6 +665,8 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .cover-meta-row { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--body-text-muted); }
         .cover-meta-row svg { flex-shrink: 0; margin-top: 1px; }
         .cover-meta-date { cursor: help; border-bottom: 1px dashed var(--body-card-border); }
+        .cover-meta-user-link { font-weight: bold; color: var(--body-text); background: none; border: none; padding: 0; cursor: pointer; font-size: 13px; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; }
+        .cover-meta-user-link:hover { color: var(--accent); transform: none; box-shadow: none; }
         .cover-meta-tags { align-items: flex-start; }
         .cover-tags-list { display: flex; flex-wrap: wrap; gap: 5px; }
         .cover-tag {

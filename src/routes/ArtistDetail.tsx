@@ -214,7 +214,7 @@ export default function ArtistDetail() {
       <section style={{ marginTop: 24 }}>
         <h2 className="section-title">
           <Image size={18} />
-          Covers by {profile?.display_name ?? profile?.username}
+          Covers by {profile?.username}
         </h2>
         {profile && <GalleryGrid filter="artist" artistUserId={profile.id} />}
       </section>
