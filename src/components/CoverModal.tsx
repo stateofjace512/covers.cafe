@@ -10,6 +10,7 @@ interface Props {
   onToggleFavorite: (coverId: string) => void;
   onClose: () => void;
   onDeleted?: (coverId: string) => void;
+  initialPanelMode?: PanelMode;
 }
 
 type ReportReason = 'inappropriate' | 'copyright' | 'spam' | 'other';
@@ -28,11 +29,11 @@ const REPORT_REASONS: { value: ReportReason; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
-export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClose, onDeleted }: Props) {
+export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClose, onDeleted, initialPanelMode = 'details' }: Props) {
   const { user, openAuthModal } = useAuth();
   const isOwner = user?.id === cover.user_id;
 
-  const [panelMode, setPanelMode] = useState<PanelMode>('details');
+  const [panelMode, setPanelMode] = useState<PanelMode>(initialPanelMode);
   const [downloading, setDownloading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -48,6 +49,10 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
   const [selectedCollectionId, setSelectedCollectionId] = useState('');
   const [collectionStatus, setCollectionStatus] = useState('');
   const [savingCollection, setSavingCollection] = useState(false);
+
+  useEffect(() => {
+    setPanelMode(initialPanelMode);
+  }, [initialPanelMode, cover.id]);
 
   useEffect(() => {
     if (panelMode !== 'collection' || !user) return;
@@ -338,7 +343,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     }
                   }}
                 >
-                  Drag this photo here, then choose “This collection”.
+                  Drop a dragged cover card here, then choose “This collection”.
                 </div>
 
                 <div className="form-row">

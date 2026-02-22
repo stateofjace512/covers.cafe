@@ -10,9 +10,10 @@ interface Props {
   onToggleFavorite: (coverId: string) => void;
   onClick: () => void;
   onDeleted?: (coverId: string) => void;
+  onDragForCollection?: (cover: Cover) => void;
 }
 
-export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClick, onDeleted }: Props) {
+export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClick, onDeleted, onDragForCollection }: Props) {
   const { user } = useAuth();
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -39,6 +40,11 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
       className="album-card cover-card"
       onClick={onClick}
       onMouseLeave={() => setConfirmDelete(false)}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/cover-id', cover.id);
+        onDragForCollection?.(cover);
+      }}
     >
       <div className="album-card-cover">
         {!imgError && !imgLoaded && <div className="cover-card-shimmer" aria-hidden="true" />}
