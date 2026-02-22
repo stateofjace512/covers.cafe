@@ -403,7 +403,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     <button className="btn btn-secondary" onClick={() => setNewCollectionPublic((prev) => !prev)}>
                       {newCollectionPublic ? 'Public' : 'Private'}
                     </button>
-                    <button className="btn btn-primary" onClick={createCollection} disabled={savingCollection || collectionsLoading}>Create</button>
+                    <button className="btn btn-primary" onClick={createCollection} disabled={savingCollection}>Create</button>
                   </div>
                 </div>
 
