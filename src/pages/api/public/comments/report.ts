@@ -3,10 +3,16 @@ import { getSupabaseServer } from '../../_supabase';
 import { computeIdentity } from '../../../../lib/comments/identityTracking.server';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+const getBearer = (request: Request) => request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim() || null;
 
 export const POST: APIRoute = async ({ request }) => {
   const supabase = getSupabaseServer();
   if (!supabase) return json({ error: 'Supabase is not configured' }, 500);
+
+  const token = getBearer(request);
+  if (!token) return json({ error: 'Authentication required' }, 401);
+  const { data: userData, error: authErr } = await supabase.auth.getUser(token);
+  if (authErr || !userData.user) return json({ error: 'Authentication required' }, 401);
 
   const { commentId, reason, details, sessionId, localStorageId } = await request.json();
   if (!commentId || !reason) return json({ error: 'commentId and reason are required' }, 400);

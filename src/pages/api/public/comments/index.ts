@@ -5,9 +5,20 @@ import { scoreComment } from '../../../../lib/comments/abuseScoring';
 import { computeIdentity } from '../../../../lib/comments/identityTracking.server';
 import { getCooldownState, applyCooldown, isRepeatedAbuse, COOLDOWN_LEVELS } from '../../../../lib/comments/cooldownSystem';
 import { evaluateBanDecision, type AbuseHistory } from '../../../../lib/comments/banSystem';
-import { generateUsernameFromIdentity } from '../../../../lib/comments/usernameGenerator';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+
+const getBearer = (request: Request) => request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim() || null;
+
+const requireUser = async (request: Request) => {
+  const supabase = getSupabaseServer();
+  if (!supabase) return { error: json({ error: 'Supabase is not configured' }, 500), user: null as null };
+  const token = getBearer(request);
+  if (!token) return { error: json({ error: 'Authentication required' }, 401), user: null as null };
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data.user) return { error: json({ error: 'Authentication required' }, 401), user: null as null };
+  return { error: null as Response | null, user: data.user };
+};
 
 export const GET: APIRoute = async ({ url }) => {
   const pageType = url.searchParams.get('pageType');
@@ -33,6 +44,9 @@ export const GET: APIRoute = async ({ url }) => {
 export const POST: APIRoute = async ({ request }) => {
   const supabase = getSupabaseServer();
   if (!supabase) return json({ error: 'Supabase is not configured' }, 500);
+
+  const auth = await requireUser(request);
+  if (auth.error || !auth.user) return auth.error!;
 
   const { pageType, pageSlug, content, parentCommentId = null, sessionId, localStorageId } = await request.json();
   if (!pageType || !pageSlug || !content) return json({ error: 'pageType, pageSlug, and content are required' }, 400);
@@ -66,7 +80,6 @@ export const POST: APIRoute = async ({ request }) => {
   if (cooldownState.isActive) return json({ error: 'Please wait before posting again', cooldownRemaining: cooldownState.remainingMs }, 429);
 
   const abuseScore = scoreComment(original);
-
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
   const { data: recentComments } = await supabase
     .from('comments')
@@ -101,7 +114,7 @@ export const POST: APIRoute = async ({ request }) => {
     cooldownEnd = cooldownUpdate.newEndTime;
   }
 
-  const authorUsername = generateUsernameFromIdentity(identity.identityHash);
+  const authorUsername = auth.user.email?.split('@')[0] ?? auth.user.id.slice(0, 8);
   const { data: inserted, error: insertError } = await supabase
     .from('comments')
     .insert({

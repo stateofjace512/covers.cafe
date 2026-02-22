@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MessageCircle, Heart, Flag, Loader } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getClientIdentity } from '../lib/comments/identityTracking.client';
+import { supabase } from '../lib/supabase';
 
 interface CommentRow {
   id: string;
@@ -16,7 +17,7 @@ interface Props {
 }
 
 export default function CoverComments({ coverId }: Props) {
-  const { user, openAuthModal } = useAuth();
+  const { user, session, openAuthModal } = useAuth();
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [content, setContent] = useState('');
@@ -25,6 +26,14 @@ export default function CoverComments({ coverId }: Props) {
   const [status, setStatus] = useState('');
 
   const identity = useMemo(() => (typeof window === 'undefined' ? null : getClientIdentity()), []);
+
+  const authHeaders = useMemo(
+    () => ({
+      'Content-Type': 'application/json',
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    }),
+    [session?.access_token],
+  );
 
   const loadComments = useCallback(async () => {
     setLoading(true);
@@ -50,16 +59,33 @@ export default function CoverComments({ coverId }: Props) {
     void loadComments();
   }, [loadComments]);
 
+  useEffect(() => {
+    const commentsChannel = supabase
+      .channel(`cover-comments-${coverId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `page_slug=eq.${coverId}` }, () => {
+        void loadComments();
+      })
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(commentsChannel);
+    };
+  }, [coverId, loadComments]);
+
   const submitComment = async () => {
     const trimmed = content.trim();
     if (!trimmed || !identity) return;
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
 
     setSubmitting(true);
     setStatus('');
 
     const res = await fetch('/api/public/comments', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({
         pageType: 'music',
         pageSlug: coverId,
@@ -83,10 +109,14 @@ export default function CoverComments({ coverId }: Props) {
 
   const toggleLike = async (commentId: string) => {
     if (!identity) return;
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
 
     const res = await fetch('/api/public/comments/like', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({ commentId, sessionId: identity.sessionId, localStorageId: identity.localStorageId }),
     });
     if (!res.ok) {
@@ -113,7 +143,7 @@ export default function CoverComments({ coverId }: Props) {
 
     const res = await fetch('/api/public/comments/report', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders,
       body: JSON.stringify({
         commentId,
         reason: 'inappropriate',
@@ -130,15 +160,18 @@ export default function CoverComments({ coverId }: Props) {
     <section className="cover-comments">
       <h3 className="cover-comments-title"><MessageCircle size={14} /> Comments</h3>
 
+      {!user && <p className="cover-comments-muted">Sign in to comment, like, and report.</p>}
+
       <div className="cover-comments-composer">
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
           className="cover-comments-input"
-          placeholder="Add a comment to this cover..."
+          placeholder={user ? 'Add a comment to this cover...' : 'Sign in to comment...'}
           maxLength={5000}
+          disabled={!user}
         />
-        <button className="btn btn-primary" onClick={submitComment} disabled={submitting || !content.trim()}>
+        <button className="btn btn-primary" onClick={submitComment} disabled={!user || submitting || !content.trim()}>
           {submitting ? <><Loader size={13} className="upload-spinner" /> Posting…</> : 'Post comment'}
         </button>
       </div>
