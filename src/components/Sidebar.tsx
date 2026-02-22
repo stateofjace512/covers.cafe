@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowUpFromLine, ArrowDownToLine, User, Star, Image, Coffee, Cog, UserRoundCog, UserRound, Shield } from 'lucide-react';
+import { ArrowUpFromLine, ArrowDownToLine, User, Star, Image, Coffee, Cog, UserRoundCog, UserRound, Shield, Info } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getAvatarSrc } from '../lib/media';
 import { supabase } from '../lib/supabase';
@@ -15,6 +15,7 @@ const NAV = [
   {                       label: 'Edit Profile', icon: <UserRoundCog size={18} />,     path: '/profile/edit' },
   { section: 'More',     label: 'Settings',     icon: <Cog size={18} />,              path: '/settings' },
   {                       label: 'Coffee',       icon: <Coffee size={18} />,           path: '/coffee' },
+  {                       label: 'About',        icon: <Info size={18} />,             path: '/about' },
 ] as const;
 
 const OPERATOR_NAV = { label: 'CMS', icon: <Shield size={18} />, path: '/cms' } as const;
@@ -110,6 +111,8 @@ export default function Sidebar() {
           <button className="sidebar-footer-link" onClick={() => navigate('/privacy')}>Privacy</button>
           <span className="sidebar-footer-sep">·</span>
           <button className="sidebar-footer-link" onClick={() => navigate('/terms')}>Terms</button>
+          <span className="sidebar-footer-sep">·</span>
+          <button className="sidebar-footer-link" onClick={() => navigate('/about')}>About</button>
         </div>
       </div>
 

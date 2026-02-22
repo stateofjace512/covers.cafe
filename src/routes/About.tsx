@@ -1,0 +1,68 @@
+import { Info } from 'lucide-react';
+
+export default function About() {
+  return (
+    <div className="legal-page about-page">
+      <h1 className="section-title"><Info size={22} /> About covers.cafe</h1>
+
+      <div className="legal-body">
+        <p className="about-lede">
+          We know this space is watched.<br />
+          By labels. By copyright offices. By the fans.
+        </p>
+
+        <p>
+          We know album art matters; it matters to artists, to labels, and to the fans who live with it.
+          It's not just a symbolic image. It's something people sit with. Something that becomes heritage.
+          Lineage. Something they pass down like heirlooms. Something they obsess over, reinterpret,
+          rearrange, and carry across devices and years.
+        </p>
+
+        <p>
+          Album art holds deep connections to the hands of the artists — yes — but also the fans,
+          who cherry pick and idealize and scrape at metaphoric varnish on digital art until they see
+          it in a clear light.
+        </p>
+
+        <p>
+          We're not here to replace the official channels. We're here because fans deserve a clean,
+          dedicated place built specifically for album cover culture, and not one buried inside platforms
+          that were never designed for it.
+        </p>
+
+        <p>
+          Other systems weren't built for this use case. They struggle with spam, fragmentation,
+          tracking-heavy environments, or chaos. We built something focused, moderated, and intentional.
+        </p>
+
+        <p>
+          We love our users. We built this for people who care about their libraries, who care about
+          presentation, who care about the art as much as the audio.
+        </p>
+
+        <p>
+          There will always be other places to run to.<br />
+          We built this one out in the wild.<br />
+          <br />
+          So drop your bags at the front door, and get comfortable.
+        </p>
+
+        <p className="about-sign">☕</p>
+      </div>
+
+      <style>{`
+        .about-page { max-width: 680px; }
+        .about-lede {
+          font-size: 16px !important;
+          font-weight: bold;
+          line-height: 1.6 !important;
+          margin-bottom: 20px !important;
+        }
+        .about-sign {
+          font-size: 22px !important;
+          margin-top: 4px !important;
+        }
+      `}</style>
+    </div>
+  );
+}
