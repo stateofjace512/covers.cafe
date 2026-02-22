@@ -1,0 +1,327 @@
+.comment-markdown {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.comment-preview-overlay {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.comment-markdown p {
+  margin: 0 0 0.5rem;
+}
+
+.comment-markdown p:last-child {
+  margin-bottom: 0;
+  display: inline;
+}
+
+.comment-edited-tag {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.25rem;
+}
+
+.comment-markdown h1,
+.comment-markdown h2,
+.comment-markdown h3 {
+  font-weight: 600;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.comment-markdown h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.comment-markdown h2 {
+  font-size: 1.35rem;
+}
+
+.comment-markdown h3 {
+  font-size: 1.1rem;
+}
+
+.comment-markdown ul,
+.comment-markdown ol {
+  margin: 0.5rem 0 0.5rem 1.5rem;
+  padding-left: 0.5rem;
+}
+
+.comment-markdown ul {
+  list-style-type: disc;
+}
+
+.comment-markdown ul ul {
+  list-style-type: circle;
+}
+
+.comment-markdown ul ul ul {
+  list-style-type: square;
+}
+
+.comment-markdown ol {
+  list-style-type: decimal;
+}
+
+.comment-markdown ol ol {
+  list-style-type: lower-alpha;
+}
+
+.comment-markdown ol ol ol {
+  list-style-type: lower-roman;
+}
+
+.comment-markdown li {
+  margin: 0.25rem 0;
+  display: list-item;
+}
+
+.comment-markdown blockquote {
+  margin: 0.5rem 0;
+  padding-left: 0.75rem;
+  border-left: 3px solid #d1d5db;
+  color: #4b5563;
+}
+
+.comment-quote-sticky {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border-left: 3px solid #60a5fa;
+  background: #eff6ff;
+  color: #1f2937;
+}
+
+.comment-subtext {
+  font-size: 0.9em;
+  color: #6b7280;
+}
+
+.comment-markdown pre {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: #0f172a;
+  color: #f8fafc;
+  overflow-x: auto;
+}
+
+.comment-markdown code {
+  padding: 0.1rem 0.25rem;
+  border-radius: 0.35rem;
+  background: #f3f4f6;
+  color: #111827;
+  font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 0.9em;
+}
+
+.comment-markdown pre code {
+  padding: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.comment-mention {
+  display: inline-block;
+  padding: 0 0.25rem;
+  border-radius: 0.35rem;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.comment-mention--self {
+  background: #fef08a;
+  color: #713f12;
+}
+
+.comment-rainbow {
+  color: transparent;
+  background: linear-gradient(
+    90deg,
+    #ff004c,
+    #ff8a00,
+    #ffd400,
+    #22c55e,
+    #06b6d4,
+    #3b82f6,
+    #a855f7,
+    #ff004c
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: rainbow-pan 1.25s linear infinite;
+}
+
+/* Static color classes */
+.comment-color-red { color: #ef4444; }
+.comment-color-orange { color: #f97316; }
+.comment-color-yellow { color: #eab308; }
+.comment-color-lime { color: #84cc16; }
+.comment-color-green { color: #22c55e; }
+.comment-color-lightblue { color: #38bdf8; }
+.comment-color-cyan { color: #06b6d4; }
+.comment-color-blue { color: #3b82f6; }
+.comment-color-indigo { color: #6366f1; }
+.comment-color-purple { color: #a855f7; }
+.comment-color-violet { color: #8b5cf6; }
+.comment-color-pink { color: #ec4899; }
+.comment-color-alt {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.comment-color-alt2 {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Animated glow gradient classes - soft pastel peaks instead of white */
+.comment-glow-red {
+  color: transparent;
+  background: linear-gradient(90deg, #ef4444, #fca5a5, #fef2f2, #fca5a5, #ef4444);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: color-glow-pan 2s linear infinite;
+}
+
+.comment-glow-orange {
+  color: transparent;
+  background: linear-gradient(90deg, #f97316, #fdba74, #fff7ed, #fdba74, #f97316);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: color-glow-pan 2s linear infinite;
+}
+
+.comment-glow-yellow {
+  color: transparent;
+  background: linear-gradient(90deg, #eab308, #fde047, #fefce8, #fde047, #eab308);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: color-glow-pan 2s linear infinite;
+}
+
+.comment-glow-lime {
+  color: transparent;
+  background: linear-gradient(90deg, #84cc16, #bef264, #f7fee7, #bef264, #84cc16);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: color-glow-pan 2s linear infinite;
+}
+
+.comment-glow-green {
+  color: transparent;
+  background: linear-gradient(90deg, #22c55e, #86efac, #f0fdf4, #86efac, #22c55e);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: color-glow-pan 2s linear infinite;
+}
+
+.comment-glow-lightblue {
+  color: transparent;
+  background: linear-gradient(90deg, #38bdf8, #7dd3fc, #f0f9ff, #7dd3fc, #38bdf8);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: color-glow-pan 2s linear infinite;
+}
+
+.comment-glow-cyan {
+  color: transparent;
+  background: linear-gradient(90deg, #06b6d4, #67e8f9, #ecfeff, #67e8f9, #06b6d4);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: color-glow-pan 2s linear infinite;
+}
+
+.comment-glow-blue {
+  color: transparent;
+  background: linear-gradient(90deg, #3b82f6, #93c5fd, #eff6ff, #93c5fd, #3b82f6);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: color-glow-pan 2s linear infinite;
+}
+
+.comment-glow-indigo {
+  color: transparent;
+  background: linear-gradient(90deg, #6366f1, #a5b4fc, #eef2ff, #a5b4fc, #6366f1);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: color-glow-pan 2s linear infinite;
+}
+
+.comment-glow-purple {
+  color: transparent;
+  background: linear-gradient(90deg, #a855f7, #d8b4fe, #faf5ff, #d8b4fe, #a855f7);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: color-glow-pan 2s linear infinite;
+}
+
+.comment-glow-violet {
+  color: transparent;
+  background: linear-gradient(90deg, #8b5cf6, #c4b5fd, #f5f3ff, #c4b5fd, #8b5cf6);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: color-glow-pan 2s linear infinite;
+}
+
+.comment-glow-pink {
+  color: transparent;
+  background: linear-gradient(90deg, #ec4899, #f9a8d4, #fdf2f8, #f9a8d4, #ec4899);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: color-glow-pan 2s linear infinite;
+}
+
+.comment-glow-alt {
+  color: transparent;
+  background: linear-gradient(90deg, #667eea, #a78bfa, #f5f3ff, #a78bfa, #667eea);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: color-glow-pan 2s linear infinite;
+}
+
+.comment-glow-alt2 {
+  color: transparent;
+  background: linear-gradient(90deg, #f093fb, #fbc2eb, #fdf2f8, #fbc2eb, #f093fb);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: color-glow-pan 2s linear infinite;
+}
+
+/* Animated emoji styles */
+.animated-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  width: 1.5em;
+  height: 1.5em;
+  margin: 0 0.1em;
+}
+
+.animated-emoji svg {
+  width: 100%;
+  height: 100%;
+}

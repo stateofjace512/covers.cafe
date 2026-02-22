@@ -1,0 +1,99 @@
+/* PrecisionMark - Rich text formatting toolbar styles */
+
+.precision-mark-toolbar {
+  animation: precision-mark-appear 0.15s ease-out;
+}
+
+@keyframes precision-mark-appear {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom range slider styling */
+.precision-mark-toolbar input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+}
+
+.precision-mark-toolbar input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  border: 2px solid #525252;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.precision-mark-toolbar input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  border: 2px solid #525252;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.precision-mark-toolbar input[type="range"]:focus::-webkit-slider-thumb {
+  border-color: #3b82f6;
+}
+
+.precision-mark-toolbar input[type="range"]:focus::-moz-range-thumb {
+  border-color: #3b82f6;
+}
+
+/* Animated shimmer effect for animated color buttons */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Hue wheel canvas cursor */
+.precision-mark-toolbar canvas {
+  border-radius: 50%;
+}
+
+/* Color picker dropdown positioning */
+.precision-mark-toolbar .relative {
+  position: relative;
+}
+
+/* Scrollbar styling for color picker */
+.precision-mark-toolbar ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.precision-mark-toolbar ::-webkit-scrollbar-track {
+  background: #262626;
+  border-radius: 3px;
+}
+
+.precision-mark-toolbar ::-webkit-scrollbar-thumb {
+  background: #525252;
+  border-radius: 3px;
+}
+
+.precision-mark-toolbar ::-webkit-scrollbar-thumb:hover {
+  background: #6d6d6d;
+}
