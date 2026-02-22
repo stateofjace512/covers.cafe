@@ -510,6 +510,58 @@ textarea {
   overflow-y: auto;
 }
 
+.mobile-nav-backdrop {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .site-main {
+    padding: 20px 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    grid-template-areas:
+      "header"
+      "main";
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--header-h) 1fr;
+  }
+
+  .site-sidebar {
+    position: fixed;
+    z-index: 220;
+    top: var(--header-h);
+    left: 0;
+    width: min(88vw, 320px);
+    height: calc(100vh - var(--header-h));
+    transform: translateX(-102%);
+    transition: transform 0.18s ease;
+    box-shadow: 8px 0 20px rgba(0, 0, 0, 0.35);
+  }
+
+  .site-sidebar.site-sidebar--mobile-open {
+    transform: translateX(0);
+  }
+
+  .mobile-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: var(--header-h) 0 0 0;
+    z-index: 210;
+    border: 0;
+    background: rgba(0, 0, 0, 0.38);
+    backdrop-filter: blur(2px);
+    cursor: pointer;
+  }
+
+  .site-main {
+    min-height: calc(100vh - var(--header-h));
+    padding: 16px 12px;
+  }
+}
+
 #root {
   display: contents;
 }

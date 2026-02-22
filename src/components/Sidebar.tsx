@@ -21,7 +21,12 @@ const NAV = [
 
 const OPERATOR_NAV = { label: 'CMS', icon: <Shield size={18} />, path: '/cms' } as const;
 
-export default function Sidebar() {
+type SidebarProps = {
+  isMobileNavOpen: boolean;
+  onNavigate: () => void;
+};
+
+export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, openAuthModal } = useAuth();
@@ -49,7 +54,12 @@ export default function Sidebar() {
   }, [user]);
 
   return (
-    <aside className="site-sidebar" role="navigation" aria-label="Main navigation">
+    <aside
+      id="main-sidebar"
+      className={`site-sidebar${isMobileNavOpen ? ' site-sidebar--mobile-open' : ''}`}
+      role="navigation"
+      aria-label="Main navigation"
+    >
       {/* User panel */}
       <div className="sidebar-user-panel">
         <div className="sidebar-avatar">
@@ -64,14 +74,14 @@ export default function Sidebar() {
               <span className="sidebar-user-name">
                 {profile?.display_name ?? profile?.username ?? user.email?.split('@')[0]}
               </span>
-              <button className="sidebar-user-action" onClick={() => navigate('/profile')}>
+              <button className="sidebar-user-action" onClick={() => { navigate('/profile'); onNavigate(); }}>
                 View Profile &rsaquo;
               </button>
             </>
           ) : (
             <>
               <span className="sidebar-user-name">Guest</span>
-              <button className="sidebar-user-action" onClick={() => openAuthModal('login')}>
+              <button className="sidebar-user-action" onClick={() => { openAuthModal('login'); onNavigate(); }}>
                 Sign in &rsaquo;
               </button>
             </>
@@ -93,7 +103,10 @@ export default function Sidebar() {
               )}
               <button
                 className={`sidebar-nav-item${isActive ? ' sidebar-nav-item--active' : ''}`}
-                onClick={() => navigate(item.path)}
+                onClick={() => {
+                  navigate(item.path);
+                  onNavigate();
+                }}
                 aria-current={isActive ? 'page' : undefined}
               >
                 <span className="sidebar-nav-icon">{item.icon}</span>
@@ -109,11 +122,11 @@ export default function Sidebar() {
       <div className="sidebar-footer">
         <span className="sidebar-footer-text">covers.cafe</span>
         <div className="sidebar-footer-links">
-          <button className="sidebar-footer-link" onClick={() => navigate('/privacy')}>Privacy</button>
+          <button className="sidebar-footer-link" onClick={() => { navigate('/privacy'); onNavigate(); }}>Privacy</button>
           <span className="sidebar-footer-sep">·</span>
-          <button className="sidebar-footer-link" onClick={() => navigate('/terms')}>Terms</button>
+          <button className="sidebar-footer-link" onClick={() => { navigate('/terms'); onNavigate(); }}>Terms</button>
           <span className="sidebar-footer-sep">·</span>
-          <button className="sidebar-footer-link" onClick={() => navigate('/about')}>About</button>
+          <button className="sidebar-footer-link" onClick={() => { navigate('/about'); onNavigate(); }}>About</button>
         </div>
       </div>
 
