@@ -16,7 +16,7 @@ export const GET: APIRoute = async ({ request }) => {
 
   const { sb } = auth;
 
-  const [{ data: reports }, { data: published }, { data: bans }] = await Promise.all([
+  const [{ data: reports }, { data: published }, { data: bans }, { data: operators }] = await Promise.all([
     sb
       .from('covers_cafe_reports')
       .select('id, reason, details, created_at, cover_id, reporter_id')
@@ -24,18 +24,25 @@ export const GET: APIRoute = async ({ request }) => {
       .limit(200),
     sb
       .from('covers_cafe_covers')
-      .select('id, title, artist, created_at, is_public, is_acotw, user_id')
+      .select('id, title, artist, created_at, is_public, is_acotw, user_id, storage_path')
       .eq('is_public', true)
       .order('created_at', { ascending: false })
-      .limit(200),
+      .limit(500),
     sb
       .from('covers_cafe_user_bans')
-      .select('user_id, reason, banned_at')
+      .select('user_id, reason, banned_at, expires_at')
       .order('banned_at', { ascending: false }),
+    sb
+      .from('covers_cafe_operator_roles')
+      .select('user_id')
+      .eq('role', 'operator'),
   ]);
 
   const reportRows = (reports ?? []) as ReportRow[];
-  const publishedRows = (published ?? []) as { id: string; title: string; artist: string; created_at: string; is_public: boolean; is_acotw: boolean; user_id: string }[];
+  const publishedRows = (published ?? []) as {
+    id: string; title: string; artist: string; created_at: string;
+    is_public: boolean; is_acotw: boolean; user_id: string; storage_path: string;
+  }[];
 
   const ids = [
     ...new Set([
@@ -55,7 +62,8 @@ export const GET: APIRoute = async ({ request }) => {
 
   const usernameMap = new Map((profiles ?? []).map((p: { id: string; username: string | null }) => [p.id, p.username]));
   const coverMap = new Map((reportCovers ?? []).map((c: { id: string; title: string | null }) => [c.id, c.title]));
-  const banMap = new Map((bans ?? []).map((b: { user_id: string; reason: string | null; banned_at: string }) => [b.user_id, b]));
+  const banMap = new Map((bans ?? []).map((b: { user_id: string; reason: string | null; banned_at: string; expires_at?: string | null }) => [b.user_id, b]));
+  const operatorSet = new Set((operators ?? []).map((o: { user_id: string }) => o.user_id));
 
   return new Response(JSON.stringify({
     reports: reportRows.map((r) => ({
@@ -67,10 +75,15 @@ export const GET: APIRoute = async ({ request }) => {
       ...c,
       username: usernameMap.get(c.user_id) ?? null,
       is_banned: banMap.has(c.user_id),
+      is_operator: operatorSet.has(c.user_id),
     })),
-    bans: (bans ?? []).map((b: { user_id: string; reason: string | null; banned_at: string }) => ({
+    bans: (bans ?? []).map((b: { user_id: string; reason: string | null; banned_at: string; expires_at?: string | null }) => ({
       ...b,
       username: usernameMap.get(b.user_id) ?? null,
+    })),
+    operators: (operators ?? []).map((o: { user_id: string }) => ({
+      user_id: o.user_id,
+      username: usernameMap.get(o.user_id) ?? null,
     })),
   }), { status: 200 });
 };
