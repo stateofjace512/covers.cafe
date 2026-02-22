@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, X, Loader, AlertCircle, CheckCircle, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -20,6 +20,28 @@ interface UploadItem {
   status: 'pending' | 'uploading' | 'done' | 'error';
   errorMsg?: string;
 }
+
+
+
+interface KnownCover {
+  title: string;
+  artist: string;
+  tags: string[] | null;
+}
+
+interface CollectionDraft {
+  name: string;
+  isPublic: boolean;
+}
+
+interface UploadCollection {
+  id: string;
+  name: string;
+  isPublic: boolean;
+  itemIndexes: number[];
+}
+
+const normalizeTags = (values: string[]) => Array.from(new Set(values.map((v) => v.trim().toLowerCase()).filter(Boolean)));
 
 async function validateFile(file: File): Promise<string | null> {
   if (file.type !== 'image/jpeg') return 'Only JPG/JPEG files are accepted.';
@@ -52,7 +74,8 @@ export default function UploadForm() {
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [year, setYear] = useState('');
-  const [tags, setTags] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -61,7 +84,12 @@ export default function UploadForm() {
 
   // Bulk mode
   const [bulkItems, setBulkItems] = useState<UploadItem[]>([]);
-  const [bulkTags, setBulkTags] = useState('');
+  const [bulkTags, setBulkTags] = useState<string[]>([]);
+  const [bulkTagInput, setBulkTagInput] = useState('');
+  const [collections, setCollections] = useState<UploadCollection[]>([]);
+  const [collectionDraft, setCollectionDraft] = useState<CollectionDraft>({ name: '', isPublic: true });
+  const [knownCovers, setKnownCovers] = useState<KnownCover[]>([]);
+  const [collectionHint, setCollectionHint] = useState('Drag cover cards into a folder below.');
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkDone, setBulkDone] = useState(false);
   const bulkInputRef = useRef<HTMLInputElement>(null);
@@ -72,7 +100,12 @@ export default function UploadForm() {
     if (validationError) { setError(validationError); return; }
     setFile(f);
     setPreview(URL.createObjectURL(f));
-  }, []);
+    if (!title.trim()) {
+      const inferredTitle = f.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+      setTitle(inferredTitle);
+      applyKnownMetadata(inferredTitle, 'single');
+    }
+  }, [title, knownCovers]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -80,6 +113,98 @@ export default function UploadForm() {
     const f = e.dataTransfer.files[0];
     if (f) handleFile(f);
   }, [handleFile]);
+
+
+  useEffect(() => {
+    const loadKnownMetadata = async () => {
+      const { data } = await supabase
+        .from('covers_cafe_covers')
+        .select('title,artist,tags')
+        .limit(400);
+      if (data) setKnownCovers(data as KnownCover[]);
+    };
+    void loadKnownMetadata();
+  }, []);
+
+  const knownTitles = useMemo(() => Array.from(new Set(knownCovers.map((c) => c.title))).slice(0, 100), [knownCovers]);
+  const knownArtists = useMemo(() => Array.from(new Set(knownCovers.map((c) => c.artist))).slice(0, 100), [knownCovers]);
+  const knownTags = useMemo(
+    () => Array.from(new Set(knownCovers.flatMap((c) => c.tags ?? []).map((tag) => tag.toLowerCase()))).slice(0, 120),
+    [knownCovers],
+  );
+
+  const applyKnownMetadata = (nextTitle: string, modeTarget: 'single' | 'bulk', itemIdx?: number) => {
+    const match = knownCovers.find((cover) => cover.title.toLowerCase() === nextTitle.trim().toLowerCase());
+    if (!match) return;
+    if (modeTarget === 'single') {
+      setArtist((prev) => prev.trim() ? prev : match.artist);
+      setTags((prev) => normalizeTags([...(match.tags ?? []), ...prev]));
+      return;
+    }
+    if (typeof itemIdx !== 'number') return;
+    setBulkItems((prev) => prev.map((item, idx) => idx === itemIdx
+      ? { ...item, artist: item.artist.trim() ? item.artist : match.artist }
+      : item));
+    setBulkTags((prev) => normalizeTags([...(match.tags ?? []), ...prev]));
+  };
+
+  const addTag = (value: string, isBulk = false) => {
+    const cleaned = value.replace(/,$/, '').trim();
+    if (!cleaned) return;
+    if (isBulk) setBulkTags((prev) => normalizeTags([...prev, cleaned]));
+    else setTags((prev) => normalizeTags([...prev, cleaned]));
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, isBulk = false) => {
+    const value = (isBulk ? bulkTagInput : tagInput).trim();
+    if (e.key === 'Enter') {
+      if (e.metaKey || e.ctrlKey) {
+        e.preventDefault();
+        if (value) addTag(value, isBulk);
+        if (isBulk) void handleBulkSubmit(e as unknown as React.FormEvent);
+        else void handleSubmit(e as unknown as React.FormEvent);
+        return;
+      }
+      e.preventDefault();
+      if (value || (isBulk ? bulkTagInput : tagInput).endsWith(',')) {
+        addTag(value, isBulk);
+        if (isBulk) setBulkTagInput('');
+        else setTagInput('');
+      }
+    }
+
+    if (e.key === ',' && value) {
+      e.preventDefault();
+      addTag(value, isBulk);
+      if (isBulk) setBulkTagInput('');
+      else setTagInput('');
+    }
+  };
+
+  const removeTag = (value: string, isBulk = false) => {
+    if (isBulk) setBulkTags((prev) => prev.filter((tag) => tag !== value));
+    else setTags((prev) => prev.filter((tag) => tag !== value));
+  };
+
+  const createCollection = () => {
+    const name = collectionDraft.name.trim();
+    if (!name) return;
+    setCollections((prev) => [...prev, { id: crypto.randomUUID(), name, isPublic: collectionDraft.isPublic, itemIndexes: [] }]);
+    setCollectionHint(`Collection "${name}" created. Drag covers into it.`);
+    setCollectionDraft({ name: '', isPublic: true });
+  };
+
+  const addItemToCollection = (collectionId: string, itemIdx: number) => {
+    setCollections((prev) => prev.map((collection) => {
+      if (collection.id !== collectionId) return collection;
+      if (collection.itemIndexes.includes(itemIdx)) {
+        const again = window.confirm('Are you sure you want to add this image to this collection again?');
+        if (!again) return collection;
+      }
+      setCollectionHint(`Added cover #${itemIdx + 1} to ${collection.name}.`);
+      return { ...collection, itemIndexes: [...collection.itemIndexes, itemIdx] };
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,7 +236,7 @@ export default function UploadForm() {
       if (storageErr) throw new Error(storageErr.message);
 
       const { data: urlData } = supabase.storage.from('covers_cafe_covers').getPublicUrl(fileName);
-      const tagsArray = tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
+      const tagsArray = normalizeTags([...tags, tagInput]);
 
       const { error: insertErr } = await supabase.from('covers_cafe_covers').insert({
         user_id: user.id,
@@ -149,7 +274,14 @@ export default function UploadForm() {
         status: 'pending',
       });
     }
-    setBulkItems((prev) => [...prev, ...newItems].slice(0, MAX_BULK));
+    setBulkItems((prev) => {
+      const next = [...prev, ...newItems].slice(0, MAX_BULK);
+      return next.map((item) => {
+        const match = knownCovers.find((cover) => cover.title.toLowerCase() === item.title.toLowerCase());
+        if (!match) return item;
+        return { ...item, artist: item.artist || match.artist };
+      });
+    });
   };
 
   const updateBulkItem = (idx: number, patch: Partial<UploadItem>) => {
@@ -188,7 +320,7 @@ export default function UploadForm() {
     }
 
     setBulkUploading(true);
-    const tagsArray = bulkTags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
+    const tagsArray = normalizeTags([...bulkTags, bulkTagInput]);
 
     for (let i = 0; i < bulkItems.length; i++) {
       const item = bulkItems[i];
@@ -339,11 +471,11 @@ export default function UploadForm() {
           <div className="upload-fields card">
             <div className="form-row">
               <label className="form-label">Album / Cover Title <span style={{ color: 'var(--accent)' }}>*</span></label>
-              <input type="text" className="form-input" placeholder="e.g. Dark Side of the Moon" value={title} onChange={(e) => setTitle(e.target.value)} required />
+              <input type="text" className="form-input" placeholder="e.g. Dark Side of the Moon" value={title} list="known-titles" onChange={(e) => setTitle(e.target.value)} onBlur={() => applyKnownMetadata(title, 'single')} required />
             </div>
             <div className="form-row">
               <label className="form-label">Artist <span style={{ color: 'var(--accent)' }}>*</span></label>
-              <input type="text" className="form-input" placeholder="e.g. Pink Floyd" value={artist} onChange={(e) => setArtist(e.target.value)} required />
+              <input type="text" className="form-input" placeholder="e.g. Pink Floyd" value={artist} list="known-artists" onChange={(e) => setArtist(e.target.value)} required />
             </div>
             <div className="upload-row-short">
               <div className="form-row">
@@ -353,8 +485,9 @@ export default function UploadForm() {
             </div>
             <div className="form-row">
               <label className="form-label">Tags</label>
-              <input type="text" className="form-input" placeholder="e.g. rock, psychedelic, 70s" value={tags} onChange={(e) => setTags(e.target.value)} />
-              <p className="form-hint">Comma-separated tags.</p>
+              <input type="text" className="form-input" placeholder="Type tag, press Enter (Cmd/Ctrl+Enter submits)" value={tagInput} list="known-tags" onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => handleTagKeyDown(e)} />
+              <div className="tag-list">{tags.map((tag) => <button key={tag} type="button" className="tag-chip" onClick={() => removeTag(tag)}>{tag} <X size={12} /></button>)}</div>
+              <p className="form-hint">Type a word with a comma and press Enter to spend tags fast.</p>
             </div>
             {error && <div className="upload-error"><AlertCircle size={14} /> {error}</div>}
             <div className="upload-actions">
@@ -377,10 +510,12 @@ export default function UploadForm() {
               <input
                 type="text"
                 className="form-input"
-                placeholder="e.g. rock, 90s, alternative"
-                value={bulkTags}
-                onChange={(e) => setBulkTags(e.target.value)}
+                placeholder="Type tags and press Enter"
+                value={bulkTagInput}
+                onChange={(e) => setBulkTagInput(e.target.value)}
+                onKeyDown={(e) => handleTagKeyDown(e, true)}
               />
+              <div className="tag-list">{bulkTags.map((tag) => <button key={tag} type="button" className="tag-chip" onClick={() => removeTag(tag, true)}>{tag} <X size={12} /></button>)}</div>
             </div>
           </div>
 
@@ -407,12 +542,50 @@ export default function UploadForm() {
             </div>
           )}
 
+          <div className="upload-fields card">
+            <div className="collections-head">
+              <strong>Collections (Folders)</strong>
+              <div className="collections-plus-box" onClick={() => setCollectionHint('Name your collection and click Create.')} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); if (e.dataTransfer.files.length) { handleBulkFiles(e.dataTransfer.files); setCollectionHint('Added dropped files to queue. Now create a folder below.'); } }}>
+                <Plus size={18} />
+              </div>
+            </div>
+            <p className="form-hint">{collectionHint}</p>
+            <div className="collections-creator">
+              <input className="form-input" placeholder="Name your collection" value={collectionDraft.name} onChange={(e) => setCollectionDraft((prev) => ({ ...prev, name: e.target.value }))} />
+              <button type="button" className="btn btn-secondary" onClick={() => setCollectionDraft((prev) => ({ ...prev, isPublic: !prev.isPublic }))}>{collectionDraft.isPublic ? 'Public' : 'Private'}</button>
+              <button type="button" className="btn btn-primary" onClick={createCollection}>Create</button>
+            </div>
+            {collections.map((collection) => (
+              <div
+                key={collection.id}
+                className="collection-row"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const idx = Number(e.dataTransfer.getData('text/bulk-index'));
+                  if (!Number.isNaN(idx)) addItemToCollection(collection.id, idx);
+                }}
+              >
+                <div className="collection-title">📁 {collection.name} · {collection.isPublic ? 'Public' : 'Private'}</div>
+                <div className="form-hint">Drop a cover here, or click quick-add:</div>
+                <div className="collection-actions">
+                  {bulkItems.map((_, idx) => (
+                    <button key={`${collection.id}-${idx}`} type="button" className="collection-add" onClick={() => addItemToCollection(collection.id, idx)}>+ #{idx + 1}</button>
+                  ))}
+                </div>
+                <div className="form-hint">{collection.itemIndexes.length} image(s) in this folder.</div>
+              </div>
+            ))}
+          </div>
+
           {bulkItems.length > 0 && (
             <div className="bulk-list">
               {bulkItems.map((item, idx) => (
                 <div
                   key={idx}
                   className={`bulk-item${item.status === 'error' ? ' bulk-item--error' : item.status === 'done' ? ' bulk-item--done' : ''}`}
+                  draggable
+                  onDragStart={(e) => e.dataTransfer.setData('text/bulk-index', String(idx))}
                 >
                   <img src={item.preview} alt="" className="bulk-item-thumb" />
                   <div className="bulk-item-fields">
@@ -422,12 +595,14 @@ export default function UploadForm() {
                       placeholder="Album / Cover Title *"
                       value={item.title}
                       onChange={(e) => updateBulkItem(idx, { title: e.target.value })}
+                      onBlur={() => applyKnownMetadata(item.title, 'bulk', idx)}
                       disabled={item.status === 'uploading' || item.status === 'done'}
                     />
                     <input
                       type="text"
                       className="form-input"
                       placeholder="Artist *"
+                      list="known-artists"
                       value={item.artist}
                       onChange={(e) => updateBulkItem(idx, { artist: e.target.value })}
                       disabled={item.status === 'uploading' || item.status === 'done'}
@@ -464,6 +639,10 @@ export default function UploadForm() {
           )}
         </form>
       )}
+
+      <datalist id="known-titles">{knownTitles.map((option) => <option key={option} value={option} />)}</datalist>
+      <datalist id="known-artists">{knownArtists.map((option) => <option key={option} value={option} />)}</datalist>
+      <datalist id="known-tags">{knownTags.map((option) => <option key={option} value={option} />)}</datalist>
 
       <style>{`
         .upload-page { display: flex; flex-direction: column; gap: 16px; max-width: 700px; }
@@ -531,6 +710,15 @@ export default function UploadForm() {
         .form-input:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
         .form-input:disabled { opacity: 0.5; cursor: not-allowed; }
         .form-hint { font-size: 11px; color: var(--body-text-muted); }
+        .tag-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+        .tag-chip { border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--body-text); border-radius: 999px; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px; }
+        .collections-head { display: flex; align-items: center; justify-content: space-between; }
+        .collections-plus-box { width: 36px; height: 36px; border: 2px dashed var(--body-card-border); display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; }
+        .collections-creator { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
+        .collection-row { border: 1px solid var(--body-card-border); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .collection-title { font-size: 12px; }
+        .collection-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .collection-add { border: 1px solid var(--body-card-border); background: var(--body-card-bg); border-radius: 4px; padding: 3px 6px; }
         .upload-error {
           display: flex; align-items: center; gap: 6px;
           padding: 8px 10px; border-radius: 4px;

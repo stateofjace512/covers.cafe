@@ -33,6 +33,8 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
   const [loading, setLoading] = useState(true);
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
   const [selectedCover, setSelectedCover] = useState<Cover | null>(null);
+  const [openCollectionPanel, setOpenCollectionPanel] = useState(false);
+  const [isDraggingCover, setIsDraggingCover] = useState(false);
   const [sort, setSort] = useState<SortOption>('newest');
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [rateLimited, setRateLimited] = useState(false);
@@ -122,6 +124,12 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
     fetchFavorites();
   }, [fetchCovers, fetchFavorites]);
 
+  useEffect(() => {
+    const onDragEnd = () => setIsDraggingCover(false);
+    window.addEventListener('dragend', onDragEnd);
+    return () => window.removeEventListener('dragend', onDragEnd);
+  }, []);
+
   const handleToggleFavorite = async (coverId: string) => {
     if (!user) return;
     if (!checkRateLimit('favorite', 8, 5000)) {
@@ -192,6 +200,26 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
         )}
       </div>
 
+
+      {isDraggingCover && (
+        <div
+          className="collection-drag-zone"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            const coverId = e.dataTransfer.getData('text/cover-id');
+            const dropped = covers.find((c) => c.id === coverId);
+            if (dropped) {
+              setSelectedCover(dropped);
+              setOpenCollectionPanel(true);
+            }
+            setIsDraggingCover(false);
+          }}
+        >
+          Drop cover here to open “Add to Collection”
+        </div>
+      )}
+
       {searchQuery && (
         <p className="gallery-search-label">
           Results for <strong>"{searchQuery}"</strong> — {displayed.length} found
@@ -225,8 +253,9 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
               cover={cover}
               isFavorited={favoritedIds.has(cover.id)}
               onToggleFavorite={handleToggleFavorite}
-              onClick={() => setSelectedCover(cover)}
+              onClick={() => { setSelectedCover(cover); setOpenCollectionPanel(false); }}
               onDeleted={handleCoverDeleted}
+              onDragForCollection={() => setIsDraggingCover(true)}
             />
           ))}
         </div>
@@ -239,6 +268,7 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
           onToggleFavorite={handleToggleFavorite}
           onClose={() => setSelectedCover(null)}
           onDeleted={handleCoverDeleted}
+          initialPanelMode={openCollectionPanel ? 'collection' : 'details'}
         />
       )}
 
@@ -280,7 +310,8 @@ export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
         .gallery-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .gallery-empty p { font-size: 14px; max-width: 300px; line-height: 1.6; }
-        .gallery-search-label { font-size: 13px; color: var(--body-text-muted); margin-bottom: 12px; }
+.gallery-search-label { font-size: 13px; color: var(--body-text-muted); margin-bottom: 12px; }
+        .collection-drag-zone { margin-bottom: 12px; border: 2px dashed var(--accent); border-radius: 8px; padding: 12px; text-align: center; font-weight: bold; color: var(--accent-dark); background: rgba(192,90,26,0.08); }
       `}</style>
     </>
   );

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { UserRound, ArrowLeft, Image } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { UserRound, ArrowLeft, Image, Folder } from 'lucide-react';
+import { apiGet } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
 import type { Profile } from '../lib/types';
@@ -14,25 +14,20 @@ export default function ArtistDetail() {
   const [coverCount, setCoverCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [collections, setCollections] = useState<{ id: string; name: string; item_count: number }[]>([]);
 
   useEffect(() => {
     if (!username) return;
     (async () => {
-      const { data } = await supabase
-        .from('covers_cafe_profiles')
-        .select('*')
-        .eq('username', decodeURIComponent(username))
-        .single();
-
-      if (!data) { setNotFound(true); setLoading(false); return; }
-      setProfile(data);
-
-      const { count } = await supabase
-        .from('covers_cafe_covers')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', data.id)
-        .eq('is_public', true);
-      setCoverCount(count ?? 0);
+      try {
+        const detail = await apiGet<{ profile: Profile; coverCount: number }>(`/api/user-detail?username=${encodeURIComponent(username)}`);
+        setProfile(detail.profile);
+        setCoverCount(detail.coverCount);
+        const cols = await apiGet<{ id: string; name: string; item_count: number }[]>(`/api/user-collections?username=${encodeURIComponent(username)}`);
+        setCollections(cols);
+      } catch {
+        setNotFound(true);
+      }
       setLoading(false);
     })();
   }, [username]);
@@ -40,8 +35,8 @@ export default function ArtistDetail() {
   if (loading) return <p className="text-muted">Loading…</p>;
   if (notFound) return (
     <div>
-      <button className="btn btn-secondary" style={{ marginBottom: 20 }} onClick={() => navigate('/artists')}>
-        <ArrowLeft size={14} /> Back to Artists
+      <button className="btn btn-secondary" style={{ marginBottom: 20 }} onClick={() => navigate('/users')}>
+        <ArrowLeft size={14} /> Back to Users
       </button>
       <p className="text-muted">Artist not found.</p>
     </div>
@@ -51,8 +46,8 @@ export default function ArtistDetail() {
 
   return (
     <div>
-      <button className="btn btn-secondary artist-back-btn" onClick={() => navigate('/artists')}>
-        <ArrowLeft size={14} /> All Artists
+      <button className="btn btn-secondary artist-back-btn" onClick={() => navigate('/users')}>
+        <ArrowLeft size={14} /> All Users
       </button>
 
       <div className="artist-detail-header card">
@@ -86,6 +81,26 @@ export default function ArtistDetail() {
           </p>
         </div>
       </div>
+
+
+      <section style={{ marginTop: 24 }}>
+        <h2 className="section-title">
+          <Folder size={18} />
+          Public Collections
+        </h2>
+        {collections.length === 0 ? (
+          <p className="text-muted">No public collections yet.</p>
+        ) : (
+          <div className="artist-collection-grid">
+            {collections.map((collection) => (
+              <div key={collection.id} className="artist-collection-card card">
+                <div className="artist-collection-name">{collection.name}</div>
+                <div className="artist-collection-count">{collection.item_count} item{collection.item_count !== 1 ? 's' : ''}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section style={{ marginTop: 24 }}>
         <h2 className="section-title">
@@ -126,6 +141,10 @@ export default function ArtistDetail() {
         .artist-detail-website { font-size: 13px; color: var(--accent); text-decoration: none; }
         .artist-detail-website:hover { text-decoration: underline; }
         .artist-detail-count { font-size: 13px; color: var(--body-text-muted); margin-top: 4px; }
+        .artist-collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+        .artist-collection-card { padding: 12px; }
+        .artist-collection-name { font-size: 13px; font-weight: bold; }
+        .artist-collection-count { font-size: 12px; color: var(--body-text-muted); margin-top: 4px; }
       `}</style>
     </div>
   );

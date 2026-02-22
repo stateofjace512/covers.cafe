@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader, FolderPlus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { apiGet, apiPost } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
+import { getCoverImageSrc } from '../lib/media';
 
 interface Props {
   cover: Cover;
@@ -10,9 +12,18 @@ interface Props {
   onToggleFavorite: (coverId: string) => void;
   onClose: () => void;
   onDeleted?: (coverId: string) => void;
+  initialPanelMode?: PanelMode;
 }
 
 type ReportReason = 'inappropriate' | 'copyright' | 'spam' | 'other';
+type PanelMode = 'details' | 'report' | 'collection';
+
+interface CollectionRow {
+  id: string;
+  name: string;
+  is_public: boolean;
+}
+
 const REPORT_REASONS: { value: ReportReason; label: string }[] = [
   { value: 'inappropriate', label: 'Inappropriate content' },
   { value: 'copyright', label: 'Copyright violation' },
@@ -20,25 +31,50 @@ const REPORT_REASONS: { value: ReportReason; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
-export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClose, onDeleted }: Props) {
+export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClose, onDeleted, initialPanelMode = 'details' }: Props) {
   const { user, openAuthModal } = useAuth();
   const isOwner = user?.id === cover.user_id;
 
+  const [panelMode, setPanelMode] = useState<PanelMode>(initialPanelMode);
   const [downloading, setDownloading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [showReport, setShowReport] = useState(false);
   const [reportReason, setReportReason] = useState<ReportReason>('inappropriate');
   const [reportDetails, setReportDetails] = useState('');
   const [reporting, setReporting] = useState(false);
   const [reportDone, setReportDone] = useState(false);
+
+  const [collections, setCollections] = useState<CollectionRow[]>([]);
+  const [collectionsLoading, setCollectionsLoading] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState('');
+  const [newCollectionPublic, setNewCollectionPublic] = useState(true);
+  const [selectedCollectionId, setSelectedCollectionId] = useState('');
+  const [collectionStatus, setCollectionStatus] = useState('');
+  const [savingCollection, setSavingCollection] = useState(false);
+
+  useEffect(() => {
+    setPanelMode(initialPanelMode);
+  }, [initialPanelMode, cover.id]);
+
+  useEffect(() => {
+    if (panelMode !== 'collection' || !user) return;
+
+    const loadCollections = async () => {
+      setCollectionsLoading(true);
+      const data = await apiGet<CollectionRow[]>(`/api/my-collections?owner_id=${encodeURIComponent(user.id)}`).catch(() => []);
+      setCollections(data);
+      setCollectionsLoading(false);
+    };
+
+    void loadCollections();
+  }, [panelMode, user]);
 
   const handleDownload = async () => {
     setDownloading(true);
     try {
       await supabase.from('covers_cafe_downloads').insert({ cover_id: cover.id, user_id: user?.id ?? null });
       await supabase.rpc('covers_cafe_increment_downloads', { p_cover_id: cover.id });
-      const res = await fetch(cover.image_url);
+      const res = await fetch(getCoverImageSrc(cover));
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -86,6 +122,61 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     setReportDone(true);
   };
 
+  const openCollectionPanel = () => {
+    if (!user) { openAuthModal('login'); return; }
+    setPanelMode('collection');
+    setCollectionStatus('');
+  };
+
+  const createCollection = async () => {
+    if (!user) return;
+    const name = newCollectionName.trim();
+    if (!name) {
+      setCollectionStatus('Name your collection first.');
+      return;
+    }
+
+    setSavingCollection(true);
+    let created: CollectionRow;
+    try {
+      created = await apiPost<CollectionRow>('/api/collection-create', { owner_id: user.id, name, is_public: newCollectionPublic });
+    } catch (err) {
+      setCollectionStatus(err instanceof Error ? err.message : 'Could not create collection.');
+      setSavingCollection(false);
+      return;
+    }
+    setCollections((prev) => [created, ...prev]);
+    setSelectedCollectionId(created.id);
+    setNewCollectionName('');
+    setCollectionStatus(`Created "${created.name}".`);
+    setSavingCollection(false);
+  };
+
+  const addToCollection = async (collectionId: string) => {
+    if (!user || !collectionId) return;
+    setSavingCollection(true);
+
+    try {
+      await apiPost('/api/collection-add-item', { collection_id: collectionId, cover_id: cover.id });
+    } catch (error) {
+      const raw = error instanceof Error ? error.message : '';
+      if (raw.includes('23505')) {
+        const again = window.confirm('Are you sure you want to add this image to this collection again?');
+        if (again) {
+          setCollectionStatus('This image is already in that collection. Keeping existing entry.');
+        }
+      } else {
+        setCollectionStatus(raw || 'Could not add to collection.');
+      }
+      setSavingCollection(false);
+      return;
+    }
+
+    const picked = collections.find((item) => item.id === collectionId);
+    setCollectionStatus(`Added to ${picked?.name ?? 'collection'}.`);
+    setSavingCollection(false);
+  };
+
   return (
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-box cover-modal" role="dialog" aria-modal="true">
@@ -96,14 +187,16 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         <div className="cover-modal-inner">
           <div className="cover-modal-image-wrap">
             <img
-              src={cover.image_url}
+              src={getCoverImageSrc(cover)}
               alt={`${cover.title} by ${cover.artist}`}
               className="cover-modal-image"
+              draggable={panelMode === 'collection'}
+              onDragStart={(e) => e.dataTransfer.setData('text/cover-id', cover.id)}
             />
           </div>
 
           <div className="cover-modal-info">
-            {!showReport ? (
+            {panelMode === 'details' && (
               <>
                 <div className="cover-modal-titles">
                   <h2 className="cover-modal-title">{cover.title}</h2>
@@ -159,6 +252,10 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                 </div>
 
                 <div className="cover-modal-secondary-actions">
+                  <button className="btn cover-modal-collection-btn" onClick={openCollectionPanel}>
+                    <FolderPlus size={14} />
+                    Add to Collection
+                  </button>
                   {isOwner && (
                     <button
                       className={`btn cover-modal-delete-btn${deleteConfirm ? ' cover-modal-delete-btn--confirm' : ''}`}
@@ -171,15 +268,16 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                   )}
                   <button
                     className="btn cover-modal-report-btn"
-                    onClick={() => setShowReport(true)}
+                    onClick={() => setPanelMode('report')}
                   >
                     <Flag size={14} />
                     Report
                   </button>
                 </div>
               </>
-            ) : (
-              /* ── Report panel ── */
+            )}
+
+            {panelMode === 'report' && (
               <div className="cover-report-panel">
                 <h3 className="cover-report-title">Report this cover</h3>
                 {reportDone ? (
@@ -214,10 +312,60 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                       <button className="btn btn-primary" onClick={handleReport} disabled={reporting}>
                         {reporting ? <><Loader size={13} className="upload-spinner" /> Submitting…</> : 'Submit Report'}
                       </button>
-                      <button className="btn btn-secondary" onClick={() => setShowReport(false)}>Cancel</button>
+                      <button className="btn btn-secondary" onClick={() => setPanelMode('details')}>Back</button>
                     </div>
                   </>
                 )}
+              </div>
+            )}
+
+            {panelMode === 'collection' && (
+              <div className="cover-collection-panel">
+                <h3 className="cover-report-title">Add to Collection</h3>
+                <p className="cover-report-done">Any logged-in user can organize any photo into their own collection playlist.</p>
+
+                <div
+                  className="collection-drop-zone"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const droppedCoverId = e.dataTransfer.getData('text/cover-id');
+                    if (droppedCoverId === cover.id && selectedCollectionId) {
+                      void addToCollection(selectedCollectionId);
+                    }
+                  }}
+                >
+                  Drop a dragged cover card here, then choose “This collection”.
+                </div>
+
+                <div className="form-row">
+                  <label className="form-label">This collection</label>
+                  <select className="form-input" value={selectedCollectionId} onChange={(e) => setSelectedCollectionId(e.target.value)}>
+                    <option value="">Select a collection…</option>
+                    {collections.map((item) => (
+                      <option key={item.id} value={item.id}>{item.name} ({item.is_public ? 'Public' : 'Private'})</option>
+                    ))}
+                  </select>
+                  <button className="btn btn-primary" onClick={() => addToCollection(selectedCollectionId)} disabled={!selectedCollectionId || savingCollection || collectionsLoading}>
+                    {savingCollection ? 'Saving…' : 'Add to This Collection'}
+                  </button>
+                </div>
+
+                <div className="form-row">
+                  <label className="form-label">Or create a new collection</label>
+                  <input className="form-input" value={newCollectionName} onChange={(e) => setNewCollectionName(e.target.value)} placeholder="Name your collection" />
+                  <div className="cover-report-actions">
+                    <button className="btn btn-secondary" onClick={() => setNewCollectionPublic((prev) => !prev)}>
+                      {newCollectionPublic ? 'Public' : 'Private'}
+                    </button>
+                    <button className="btn btn-primary" onClick={createCollection} disabled={savingCollection || collectionsLoading}>Create</button>
+                  </div>
+                </div>
+
+                {collectionStatus && <p className="collection-status">{collectionStatus}</p>}
+                <div className="cover-report-actions">
+                  <button className="btn btn-secondary" onClick={() => setPanelMode('details')}>Back</button>
+                </div>
               </div>
             )}
           </div>
@@ -280,6 +428,11 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         }
         .cover-modal-download-btn { display: flex; align-items: center; gap: 6px; }
         .cover-modal-download-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .cover-modal-collection-btn {
+          display: flex; align-items: center; gap: 5px; font-size: 12px;
+          background: var(--sidebar-bg); border: 1px solid var(--sidebar-border); color: var(--body-text);
+          padding: 6px 12px;
+        }
         .cover-modal-delete-btn {
           display: flex; align-items: center; gap: 5px; font-size: 12px;
           background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3);
@@ -294,12 +447,20 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           color: var(--body-text-muted); padding: 6px 12px;
         }
         .cover-modal-report-btn:hover { background: var(--sidebar-bg); color: var(--body-text); transform: none; box-shadow: none; }
-        /* Report panel */
-        .cover-report-panel { display: flex; flex-direction: column; gap: 14px; }
+        .cover-report-panel, .cover-collection-panel { display: flex; flex-direction: column; gap: 14px; }
         .cover-report-title { font-size: 16px; font-weight: bold; color: var(--body-text); }
         .cover-report-done { font-size: 14px; color: var(--body-text-muted); line-height: 1.5; }
         .cover-report-textarea { resize: vertical; min-height: 72px; }
         .cover-report-actions { display: flex; gap: 8px; }
+        .collection-drop-zone {
+          border: 2px dashed var(--body-card-border);
+          border-radius: 6px;
+          padding: 14px;
+          font-size: 12px;
+          color: var(--body-text-muted);
+          background: var(--sidebar-bg);
+        }
+        .collection-status { font-size: 12px; color: var(--body-text-muted); }
         .form-row { display: flex; flex-direction: column; gap: 5px; }
         .form-label { font-size: 13px; font-weight: bold; color: var(--body-text); }
         .form-hint { font-size: 11px; color: var(--body-text-muted); font-weight: normal; }

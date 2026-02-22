@@ -3,6 +3,7 @@ import { Star, Download, User, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
+import { getCoverImageSrc } from '../lib/media';
 
 interface Props {
   cover: Cover;
@@ -10,11 +11,13 @@ interface Props {
   onToggleFavorite: (coverId: string) => void;
   onClick: () => void;
   onDeleted?: (coverId: string) => void;
+  onDragForCollection?: (cover: Cover) => void;
 }
 
-export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClick, onDeleted }: Props) {
+export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClick, onDeleted, onDragForCollection }: Props) {
   const { user } = useAuth();
   const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const isOwner = user?.id === cover.user_id;
@@ -38,14 +41,21 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
       className="album-card cover-card"
       onClick={onClick}
       onMouseLeave={() => setConfirmDelete(false)}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/cover-id', cover.id);
+        onDragForCollection?.(cover);
+      }}
     >
       <div className="album-card-cover">
-        {!imgError && cover.image_url ? (
+        {!imgError && !imgLoaded && <div className="cover-card-shimmer" aria-hidden="true" />}
+        {!imgError && getCoverImageSrc(cover) ? (
           <img
-            src={cover.image_url}
+            src={getCoverImageSrc(cover)}
             alt={`${cover.title} by ${cover.artist}`}
-            className="cover-card-img"
+            className={`cover-card-img${imgLoaded ? ' cover-card-img--loaded' : ''}`}
             onError={() => setImgError(true)}
+            onLoad={() => setImgLoaded(true)}
             loading="lazy"
           />
         ) : (
@@ -96,7 +106,16 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
 
       <style>{`
         .cover-card { cursor: pointer; }
-        .cover-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .cover-card-img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.2s ease; }
+        .cover-card-img--loaded { opacity: 1; }
+        .cover-card-shimmer {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(110deg, rgba(255,255,255,0.08) 8%, rgba(255,255,255,0.22) 18%, rgba(255,255,255,0.08) 33%);
+          background-size: 220% 100%;
+          animation: cover-shimmer 1.2s linear infinite;
+        }
+        @keyframes cover-shimmer { to { background-position-x: -220%; } }
         .cover-card-placeholder {
           width: 100%; height: 100%;
           display: flex; align-items: center; justify-content: center;
