@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader, FolderPlus, ChevronDown, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -41,6 +42,8 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
   const [downloading, setDownloading] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
   const downloadMenuRef = useRef<HTMLDivElement>(null);
+  const downloadMenuOverlayRef = useRef<HTMLDivElement>(null);
+  const [downloadMenuPos, setDownloadMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [reportReason, setReportReason] = useState<ReportReason>('inappropriate');
@@ -285,7 +288,37 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     setSavingCollection(false);
   };
 
+
+  useEffect(() => {
+    if (!showDownloadMenu) return;
+
+    const updatePos = () => {
+      const rect = downloadMenuRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setDownloadMenuPos({ top: rect.bottom + 4, left: rect.right - 130 });
+    };
+
+    const handleDocClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (downloadMenuRef.current?.contains(target)) return;
+      if (downloadMenuOverlayRef.current?.contains(target)) return;
+      setShowDownloadMenu(false);
+    };
+
+    updatePos();
+    window.addEventListener('resize', updatePos);
+    window.addEventListener('scroll', updatePos, true);
+    document.addEventListener('mousedown', handleDocClick);
+
+    return () => {
+      window.removeEventListener('resize', updatePos);
+      window.removeEventListener('scroll', updatePos, true);
+      document.removeEventListener('mousedown', handleDocClick);
+    };
+  }, [showDownloadMenu]);
+
   return (
+    <>
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-box cover-modal" role="dialog" aria-modal="true">
         <button className="cover-modal-close" onClick={onClose} aria-label="Close">
@@ -365,21 +398,17 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     </button>
                     <button
                       className="btn btn-primary cover-download-arrow"
-                      onClick={() => setShowDownloadMenu((v) => !v)}
+                      onClick={() => {
+                        const rect = downloadMenuRef.current?.getBoundingClientRect();
+                        if (rect) setDownloadMenuPos({ top: rect.bottom + 4, left: rect.right - 130 });
+                        setShowDownloadMenu((v) => !v);
+                      }}
                       disabled={downloading}
                       title="More download sizes"
                     >
                       <ChevronDown size={14} />
                     </button>
-                    {showDownloadMenu && (
-                      <div className="cover-download-menu">
-                        <button className="cover-download-option" onClick={() => handleDownload()}>Full Size</button>
-                        <button className="cover-download-option" onClick={() => handleDownload(3000)}>3000px</button>
-                        <button className="cover-download-option" onClick={() => handleDownload(1500)}>1500px</button>
-                        <button className="cover-download-option" onClick={() => handleDownload(1000)}>1000px</button>
-                        <button className="cover-download-option" onClick={() => handleDownload(800)}>800px</button>
-                      </div>
-                    )}
+
                   </div>
                 </div>
 
@@ -695,7 +724,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           padding: 0 8px; display: flex; align-items: center;
         }
         .cover-download-menu {
-          position: absolute; top: calc(100% + 4px); right: 0; z-index: 60;
+          position: fixed; z-index: 400;
           background: var(--body-card-bg); border: 1px solid var(--body-card-border);
           border-radius: 4px; box-shadow: var(--shadow-md);
           display: flex; flex-direction: column; min-width: 130px; overflow: hidden;
@@ -712,5 +741,20 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         }
       `}</style>
     </div>
+    {showDownloadMenu && downloadMenuPos && createPortal(
+      <div
+        className="cover-download-menu"
+        ref={downloadMenuOverlayRef}
+        style={{ top: downloadMenuPos.top, left: downloadMenuPos.left }}
+      >
+        <button className="cover-download-option" onClick={() => handleDownload()}>Full Size</button>
+        <button className="cover-download-option" onClick={() => handleDownload(3000)}>3000px</button>
+        <button className="cover-download-option" onClick={() => handleDownload(1500)}>1500px</button>
+        <button className="cover-download-option" onClick={() => handleDownload(1000)}>1000px</button>
+        <button className="cover-download-option" onClick={() => handleDownload(800)}>800px</button>
+      </div>,
+      document.body,
+    )}
+    </>
   );
 }
