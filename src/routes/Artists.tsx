@@ -3,17 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { UserRound } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getAvatarSrc } from '../lib/media';
+import { useAuth } from '../contexts/AuthContext';
 import type { Profile } from '../lib/types';
 
 interface ArtistRow extends Profile {
   cover_count: number;
 }
 
-export default function Users() {
-  const [artists, setUsers] = useState<ArtistRow[]>([]);
+export default function Artists() {
+  const [artists, setArtists] = useState<ArtistRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     (async () => {
@@ -27,7 +29,7 @@ export default function Users() {
         if (!map.has(row.id)) map.set(row.id, { ...row, cover_count: row.covers_cafe_covers?.length ?? 0 });
       });
 
-      setUsers(Array.from(map.values()));
+      setArtists(Array.from(map.values()));
       setLoading(false);
     })();
   }, []);
@@ -36,18 +38,26 @@ export default function Users() {
     !search || (a.display_name ?? a.username).toLowerCase().includes(search.toLowerCase())
   );
 
+  // Pin the logged-in user first
+  const sorted = user
+    ? [
+        ...filtered.filter((a) => a.id === user.id),
+        ...filtered.filter((a) => a.id !== user.id),
+      ]
+    : filtered;
+
   return (
     <div>
       <h1 className="section-title">
         <UserRound size={22} />
-        Users
+        Artists
       </h1>
 
       <div className="toolbar mb-4">
         <input
           type="search"
           className="toolbar-search"
-          placeholder="Search users…"
+          placeholder="Search artists…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -55,27 +65,31 @@ export default function Users() {
 
       {loading ? (
         <p className="text-muted">Loading…</p>
-      ) : !filtered.length ? (
-        <p className="text-muted">No users found{search ? ` for "${search}"` : ''}.</p>
+      ) : !sorted.length ? (
+        <p className="text-muted">No artists found{search ? ` for "${search}"` : ''}.</p>
       ) : (
         <div className="artist-grid">
-          {filtered.map((artist) => {
+          {sorted.map((artist) => {
             const avatarSrc = getAvatarSrc(artist);
+            const isMe = user?.id === artist.id;
             return (
               <button
                 key={artist.id}
-                className="artist-card"
-                onClick={() => navigate(`/users/${encodeURIComponent(artist.username)}`)}
+                className={`artist-card${isMe ? ' artist-card--me' : ''}`}
+                onClick={() => navigate(`/artists/${encodeURIComponent(artist.username)}`)}
                 title={`View covers by ${artist.display_name ?? artist.username}`}
               >
                 <div className="artist-avatar">
                   {avatarSrc
-                    ? <img src={avatarSrc} alt={artist.display_name ?? artist.username} className="artist-avatar-img" />
+                    ? <img src={avatarSrc} alt={artist.display_name ?? artist.username} className="artist-avatar-img" loading="lazy" />
                     : <UserRound size={28} style={{ opacity: 0.35 }} />
                   }
                 </div>
                 <div className="artist-info">
-                  <span className="artist-name">{artist.display_name ?? artist.username}</span>
+                  <span className="artist-name">
+                    {artist.display_name ?? artist.username}
+                    {isMe && <span className="artist-you-badge">you</span>}
+                  </span>
                   <span className="artist-count">{artist.cover_count} cover{artist.cover_count !== 1 ? 's' : ''}</span>
                 </div>
               </button>
@@ -104,6 +118,7 @@ export default function Users() {
           transition: box-shadow 0.15s, transform 0.15s;
         }
         .artist-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+        .artist-card--me { border-color: var(--accent); box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 0 2px rgba(192,90,26,0.18); }
         .artist-avatar {
           width: 64px; height: 64px; border-radius: 50%;
           background: linear-gradient(145deg, var(--sidebar-bg-light), var(--sidebar-bg-dark));
@@ -114,8 +129,9 @@ export default function Users() {
         }
         .artist-avatar-img { width: 100%; height: 100%; object-fit: cover; }
         .artist-info { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-        .artist-name { font-size: 14px; font-weight: bold; color: var(--body-text); text-shadow: 0 1px 0 rgba(255,255,255,0.4); }
+        .artist-name { font-size: 14px; font-weight: bold; color: var(--body-text); text-shadow: 0 1px 0 rgba(255,255,255,0.4); display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: center; }
         [data-theme="dark"] .artist-name { text-shadow: none; }
+        .artist-you-badge { font-size: 10px; font-weight: bold; background: var(--accent); color: white; padding: 1px 6px; border-radius: 8px; letter-spacing: 0.3px; }
         .artist-count { font-size: 11px; color: var(--body-text-muted); }
       `}</style>
     </div>

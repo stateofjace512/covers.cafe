@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader, FolderPlus, ChevronDown, Pencil } from 'lucide-react';
+import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader, FolderPlus, ChevronDown, Pencil, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -360,6 +360,21 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                       <strong>{cover.profiles?.display_name ?? cover.profiles?.username ?? 'unknown'}</strong>
                     </span>
                   </div>
+                  {cover.created_at && (
+                    <div className="cover-meta-row">
+                      <Clock size={13} />
+                      <span
+                        title={new Date(cover.created_at).toLocaleString('en-US', {
+                          year: 'numeric', month: 'long', day: 'numeric',
+                          hour: '2-digit', minute: '2-digit', second: '2-digit',
+                          timeZoneName: 'short',
+                        })}
+                        className="cover-meta-date"
+                      >
+                        {new Date(cover.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                  )}
                   {cover.tags && cover.tags.length > 0 && (
                     <div className="cover-meta-row cover-meta-tags">
                       <Tag size={13} />
@@ -640,6 +655,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .cover-modal-meta { display: flex; flex-direction: column; gap: 8px; flex: 1; }
         .cover-meta-row { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--body-text-muted); }
         .cover-meta-row svg { flex-shrink: 0; margin-top: 1px; }
+        .cover-meta-date { cursor: help; border-bottom: 1px dashed var(--body-card-border); }
         .cover-meta-tags { align-items: flex-start; }
         .cover-tags-list { display: flex; flex-wrap: wrap; gap: 5px; }
         .cover-tag {

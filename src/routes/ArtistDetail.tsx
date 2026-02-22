@@ -98,8 +98,8 @@ export default function ArtistDetail() {
   if (loading) return <p className="text-muted">Loading…</p>;
   if (notFound) return (
     <div>
-      <button className="btn btn-secondary" style={{ marginBottom: 20 }} onClick={() => navigate('/users')}>
-        <ArrowLeft size={14} /> Back to Users
+      <button className="btn btn-secondary" style={{ marginBottom: 20 }} onClick={() => navigate('/artists')}>
+        <ArrowLeft size={14} /> Back to Artists
       </button>
       <p className="text-muted">Artist not found.</p>
     </div>
@@ -109,14 +109,14 @@ export default function ArtistDetail() {
 
   return (
     <div>
-      <button className="btn btn-secondary artist-back-btn" onClick={() => navigate('/users')}>
-        <ArrowLeft size={14} /> All Users
+      <button className="btn btn-secondary artist-back-btn" onClick={() => navigate('/artists')}>
+        <ArrowLeft size={14} /> All Artists
       </button>
 
       <div className="artist-detail-header card">
         <div className="artist-detail-avatar">
           {profile && getAvatarSrc(profile)
-            ? <img src={getAvatarSrc(profile)!} alt={profile.display_name ?? profile.username} className="artist-detail-avatar-img" />
+            ? <img src={getAvatarSrc(profile)!} alt={profile.display_name ?? profile.username} className="artist-detail-avatar-img" loading="lazy" />
             : <UserRound size={40} style={{ opacity: 0.3 }} />
           }
         </div>
@@ -159,10 +159,10 @@ export default function ArtistDetail() {
               <div
                 key={collection.id}
                 className="artist-collection-card card"
-                onClick={() => navigate(`/users/${username}/collections/${collection.id}`)}
+                onClick={() => navigate(`/artists/${username}/collections/${collection.id}`)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && navigate(`/users/${username}/collections/${collection.id}`)}
+                onKeyDown={(e) => e.key === 'Enter' && navigate(`/artists/${username}/collections/${collection.id}`)}
               >
                 <div className="artist-collection-thumb">
                   {collection.cover_image ? (
@@ -170,6 +170,7 @@ export default function ArtistDetail() {
                       src={getCoverImageSrc(collection.cover_image, 300)}
                       alt={collection.name}
                       className="artist-collection-thumb-img"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="artist-collection-thumb-empty">

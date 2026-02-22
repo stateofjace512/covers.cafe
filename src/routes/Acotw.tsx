@@ -25,11 +25,11 @@ export default function Acotw() {
 
   const authHeader = session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
 
-  const loadCurrent = useCallback(async () => {
-    setLoading(true);
+  const loadCurrent = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     const res = await fetch('/api/acotw/current', { headers: authHeader });
     if (res.ok) setData(await res.json() as PollData);
-    setLoading(false);
+    if (!silent) setLoading(false);
   }, [session?.access_token]);
 
   const loadHistory = useCallback(async () => {
@@ -52,8 +52,7 @@ export default function Acotw() {
       body: JSON.stringify({ coverId }),
     });
     if (res.ok) {
-      // Reload to get fresh counts
-      await loadCurrent();
+      await loadCurrent(true);
     }
     setVoting(null);
   }

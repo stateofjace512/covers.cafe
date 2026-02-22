@@ -24,9 +24,14 @@ import Acotw from './routes/Acotw';
 import NotFound from './routes/NotFound';
 
 
-function LegacyArtistRedirect() {
+function LegacyUserDetailRedirect() {
   const { username } = useParams<{ username: string }>();
-  return <Navigate to={username ? `/users/${encodeURIComponent(username)}` : '/users'} replace />;
+  return <Navigate to={username ? `/artists/${encodeURIComponent(username)}` : '/artists'} replace />;
+}
+
+function LegacyCollectionRedirect() {
+  const { username, collectionId } = useParams<{ username: string; collectionId: string }>();
+  return <Navigate to={username && collectionId ? `/artists/${encodeURIComponent(username)}/collections/${collectionId}` : '/artists'} replace />;
 }
 
 function AppContent() {
@@ -67,8 +72,19 @@ function AppContent() {
 
   if (banStatus.isBanned) {
     return (
-      <main className="site-main" style={{ display: 'grid', placeItems: 'center', minHeight: '100vh' }}>
-        <h1>You are banned. Reason: {banStatus.reason ?? 'No reason provided.'}</h1>
+      <main className="site-main" style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', padding: '20px' }}>
+        <div style={{ textAlign: 'center', maxWidth: 420 }}>
+          <h1 style={{ fontSize: 22, marginBottom: 12 }}>Your account has been banned.</h1>
+          <p style={{ fontSize: 14, color: '#666', marginBottom: 20 }}>
+            Reason: {banStatus.reason ?? 'No reason provided.'}
+          </p>
+          <p style={{ fontSize: 13, color: '#888' }}>
+            If you believe this is a mistake, please review our{' '}
+            <a href="/terms" style={{ color: '#c05a1a' }}>Terms of Service</a>
+            {' '}and{' '}
+            <a href="/privacy" style={{ color: '#c05a1a' }}>Privacy Policy</a>.
+          </p>
+        </div>
       </main>
     );
   }
@@ -79,11 +95,12 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Gallery />} />
           <Route path="/upload" element={<Upload />} />
-          <Route path="/users" element={<Artists />} />
-          <Route path="/users/:username" element={<ArtistDetail />} />
-          <Route path="/users/:username/collections/:collectionId" element={<CollectionDetail />} />
-          <Route path="/artists" element={<Navigate to="/users" replace />} />
-          <Route path="/artists/:username" element={<LegacyArtistRedirect />} />
+          <Route path="/artists" element={<Artists />} />
+          <Route path="/artists/:username" element={<ArtistDetail />} />
+          <Route path="/artists/:username/collections/:collectionId" element={<CollectionDetail />} />
+          <Route path="/users" element={<Navigate to="/artists" replace />} />
+          <Route path="/users/:username" element={<LegacyUserDetailRedirect />} />
+          <Route path="/users/:username/collections/:collectionId" element={<LegacyCollectionRedirect />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/downloads" element={<Downloads />} />
           <Route path="/profile" element={<Profile />} />

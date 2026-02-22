@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Cog, Moon, Sun, Lock, Mail, Trash2, AlertTriangle, CheckCircle, Loader, ShieldCheck } from 'lucide-react';
+import { Cog, Moon, Sun, Lock, Mail, Trash2, AlertTriangle, CheckCircle, Loader, ShieldCheck, MonitorSmartphone, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -269,6 +269,24 @@ function DeleteAccountForm({ onDone }: { onDone: () => void }) {
 export default function Settings() {
   const { user, signOut, openAuthModal } = useAuth();
   const [activeForm, setActiveForm] = useState<ActiveForm>(null);
+  const [signingOutOthers, setSigningOutOthers] = useState(false);
+  const [signOutOthersMsg, setSignOutOthersMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const handleSignOutOtherDevices = async () => {
+    setSigningOutOthers(true);
+    setSignOutOthersMsg(null);
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'others' });
+      if (error) {
+        setSignOutOthersMsg({ ok: false, text: error.message });
+      } else {
+        setSignOutOthersMsg({ ok: true, text: 'All other sessions have been signed out.' });
+      }
+    } catch {
+      setSignOutOthersMsg({ ok: false, text: 'Could not sign out other devices.' });
+    }
+    setSigningOutOthers(false);
+  };
 
   const setTheme = (theme: 'light' | 'dark') => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -377,6 +395,33 @@ export default function Settings() {
             {activeForm === 'email' && (
               <div className="settings-inline-expand">
                 <ChangeEmailForm onDone={() => setActiveForm(null)} />
+              </div>
+            )}
+
+            <div className="settings-divider" />
+
+            {/* Sessions */}
+            <div className="settings-row">
+              <div className="settings-row-info">
+                <span className="settings-row-label"><MonitorSmartphone size={13} /> Active Sessions</span>
+                <span className="settings-row-desc">Sign out all other devices except this one.</span>
+              </div>
+              <div className="settings-row-control">
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleSignOutOtherDevices}
+                  disabled={signingOutOthers}
+                >
+                  {signingOutOthers
+                    ? <><Loader size={13} className="settings-spinner" /> Signing out…</>
+                    : <><LogOut size={13} /> Sign Out Others</>}
+                </button>
+              </div>
+            </div>
+            {signOutOthersMsg && (
+              <div className={`settings-session-msg${signOutOthersMsg.ok ? ' settings-session-msg--ok' : ' settings-session-msg--err'}`}>
+                {signOutOthersMsg.ok ? <CheckCircle size={13} /> : <AlertTriangle size={13} />}
+                {signOutOthersMsg.text}
               </div>
             )}
           </section>
@@ -503,6 +548,12 @@ export default function Settings() {
         }
         .settings-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .settings-session-msg {
+          display: flex; align-items: center; gap: 6px;
+          padding: 7px 10px; border-radius: 4px; font-size: 12px; margin-top: 8px;
+        }
+        .settings-session-msg--ok { background: rgba(40,160,80,0.1); border: 1px solid rgba(40,160,80,0.3); color: #1a7a40; }
+        .settings-session-msg--err { background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3); color: #c83220; }
 
         /* Danger button */
         .btn-danger {
