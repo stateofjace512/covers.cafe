@@ -1,8 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from './_supabase';
 
-export const GET: APIRoute = async ({ request }) => {
-  const url = new URL(request.url);
+export const GET: APIRoute = async ({ url }) => {
   const sb = getSupabaseServer();
   if (!sb) return new Response('Media API unavailable', { status: 503 });
 
