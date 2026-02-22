@@ -31,11 +31,6 @@ export default function Gallery() {
             <p className="hero-subtitle">
               Too many album covers. Never enough coffee. <CoffeeCupIcon size={18} style={{ verticalAlign: 'middle', display: 'inline-block' }} />
             </p>
-            <div className="hero-stats">
-              <span className="hero-pill">Fresh uploads</span>
-              <span className="hero-pill">Top rated picks</span>
-              <span className="hero-pill">Weekly spotlight</span>
-            </div>
             <div className="hero-actions">
               {user ? (
                 <a href="/upload" className="btn btn-primary" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/upload'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
