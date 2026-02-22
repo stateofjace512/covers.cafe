@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Star, Download, User, Trash2, Trophy } from 'lucide-react';
+import { Star, Download, User, Trash2, Trophy, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -106,6 +106,12 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
               ACOTW
             </span>
           )}
+          {cover.is_private && (
+            <span className="cover-card-private" title="Only visible to you">
+              <Lock size={9} />
+              Private
+            </span>
+          )}
           {cover.year && <span className="cover-card-year">{cover.year}</span>}
           {(cover.favorite_count ?? 0) > 0 && (
             <span className="cover-card-fav-count" title={`${cover.favorite_count} favorite${cover.favorite_count === 1 ? '' : 's'}`}>
@@ -169,6 +175,7 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
         .cover-card-year { font-size: 11px; color: var(--body-text-muted); background: var(--body-border); padding: 1px 5px; border-radius: 3px; font-weight: bold; }
         .cover-card-fav-count { display: flex; align-items: center; gap: 2px; font-size: 11px; color: var(--body-text-muted); font-weight: bold; }
         .cover-card-acotw { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #b8860b; background: rgba(184,134,11,0.12); border: 1px solid rgba(184,134,11,0.3); padding: 1px 5px; border-radius: 3px; }
+        .cover-card-private { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #7a6a8a; background: rgba(120,100,140,0.12); border: 1px solid rgba(120,100,140,0.3); padding: 1px 5px; border-radius: 3px; }
         .cover-card-uploader { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         .cover-card-uploader--link { background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; }
         .cover-card-uploader--link:hover { color: var(--accent); transform: none; box-shadow: none; }

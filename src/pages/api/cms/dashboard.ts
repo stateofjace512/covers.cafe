@@ -24,7 +24,7 @@ export const GET: APIRoute = async ({ request }) => {
       .limit(200),
     sb
       .from('covers_cafe_covers')
-      .select('id, title, artist, created_at, is_public, is_acotw, user_id, storage_path')
+      .select('id, title, artist, created_at, is_public, is_private, is_acotw, user_id, storage_path')
       .eq('is_public', true)
       .order('created_at', { ascending: false })
       .limit(500),
@@ -34,14 +34,14 @@ export const GET: APIRoute = async ({ request }) => {
       .order('banned_at', { ascending: false }),
     sb
       .from('covers_cafe_operator_roles')
-      .select('user_id')
+      .select('user_id, can_be_removed')
       .eq('role', 'operator'),
   ]);
 
   const reportRows = (reports ?? []) as ReportRow[];
   const publishedRows = (published ?? []) as {
     id: string; title: string; artist: string; created_at: string;
-    is_public: boolean; is_acotw: boolean; user_id: string; storage_path: string;
+    is_public: boolean; is_private: boolean; is_acotw: boolean; user_id: string; storage_path: string;
   }[];
 
   const ids = [
@@ -63,7 +63,7 @@ export const GET: APIRoute = async ({ request }) => {
   const usernameMap = new Map((profiles ?? []).map((p: { id: string; username: string | null }) => [p.id, p.username]));
   const coverMap = new Map((reportCovers ?? []).map((c: { id: string; title: string | null }) => [c.id, c.title]));
   const banMap = new Map((bans ?? []).map((b: { user_id: string; reason: string | null; banned_at: string; expires_at?: string | null }) => [b.user_id, b]));
-  const operatorSet = new Set((operators ?? []).map((o: { user_id: string }) => o.user_id));
+  const operatorSet = new Set((operators ?? []).map((o: { user_id: string; can_be_removed: boolean }) => o.user_id));
 
   return new Response(JSON.stringify({
     reports: reportRows.map((r) => ({
@@ -81,9 +81,10 @@ export const GET: APIRoute = async ({ request }) => {
       ...b,
       username: usernameMap.get(b.user_id) ?? null,
     })),
-    operators: (operators ?? []).map((o: { user_id: string }) => ({
+    operators: (operators ?? []).map((o: { user_id: string; can_be_removed: boolean }) => ({
       user_id: o.user_id,
       username: usernameMap.get(o.user_id) ?? null,
+      can_be_removed: o.can_be_removed,
     })),
   }), { status: 200 });
 };

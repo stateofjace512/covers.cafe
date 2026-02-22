@@ -103,7 +103,8 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
         supabase
           .from('covers_cafe_covers')
           .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
-          .in('id', pageIds),
+          .in('id', pageIds)
+          .eq('is_private', false),
         currentSort,
       );
       return { data: (data as Cover[]) ?? [], more: from + PAGE_SIZE < ids.length };
@@ -126,7 +127,8 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
           .from('covers_cafe_covers')
           .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
           .eq('user_id', currentArtistUserId)
-          .eq('is_public', true),
+          .eq('is_public', true)
+          .eq('is_private', false),
         currentSort,
       ).range(from, to);
       const d = (data as Cover[]) ?? [];
@@ -136,7 +138,8 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
       let query = supabase
         .from('covers_cafe_covers')
         .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
-        .eq('is_public', true);
+        .eq('is_public', true)
+        .eq('is_private', false);
 
       if (currentSearchQuery) {
         query = query.or(`title.ilike.%${currentSearchQuery}%,artist.ilike.%${currentSearchQuery}%,tags.cs.{"${currentSearchQuery.toLowerCase()}"}`);

@@ -23,6 +23,7 @@ export interface Cover {
   download_count: number;
   favorite_count: number;
   is_public: boolean;
+  is_private: boolean;
   is_acotw: boolean;
   acotw_since: string | null;
   created_at: string;
