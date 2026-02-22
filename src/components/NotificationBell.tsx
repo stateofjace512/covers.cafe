@@ -15,37 +15,44 @@ interface Notification {
   created_at: string;
 }
 
-const LS_KEY = 'notifications_last_read';
-const LS_DISMISSED = 'notifications_dismissed';
+const LS_KEY_BASE = 'notifications_last_read';
+const LS_DISMISSED_BASE = 'notifications_dismissed';
 
-function getLastRead(): number {
+function getLastReadKey(userId: string): string {
+  return `${LS_KEY_BASE}:${userId}`;
+}
+
+function getDismissedKey(userId: string): string {
+  return `${LS_DISMISSED_BASE}:${userId}`;
+}
+
+function getLastRead(userId: string): number {
   try {
-    return parseInt(localStorage.getItem(LS_KEY) ?? '0', 10) || 0;
+    return parseInt(localStorage.getItem(getLastReadKey(userId)) ?? '0', 10) || 0;
   } catch {
     return 0;
   }
 }
 
-function setLastRead(ts: number) {
+function setLastRead(userId: string, ts: number) {
   try {
-    localStorage.setItem(LS_KEY, String(ts));
+    localStorage.setItem(getLastReadKey(userId), String(ts));
   } catch { /* noop */ }
 }
 
-function getDismissed(): Set<string> {
+function getDismissed(userId: string): Set<string> {
   try {
-    const raw = localStorage.getItem(LS_DISMISSED);
+    const raw = localStorage.getItem(getDismissedKey(userId));
     return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
   } catch {
     return new Set();
   }
 }
 
-function saveDismissed(ids: Set<string>) {
+function saveDismissed(userId: string, ids: Set<string>) {
   try {
-    // Keep at most 200 dismissed IDs to avoid unbounded growth
-    const arr = [...ids].slice(-200);
-    localStorage.setItem(LS_DISMISSED, JSON.stringify(arr));
+    const arr = [...ids].slice(-400);
+    localStorage.setItem(getDismissedKey(userId), JSON.stringify(arr));
   } catch { /* noop */ }
 }
 
@@ -62,17 +69,24 @@ export default function NotificationBell() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [dismissed, setDismissed] = useState<Set<string>>(() => getDismissed());
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  // Snapshot the lastRead timestamp at the moment the panel opens so the "new"
-  // dots don't disappear while the panel is open.
   const [openedAtRead, setOpenedAtRead] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
+  useEffect(() => {
+    if (!user?.id) {
+      setDismissed(new Set());
+      setUnreadCount(0);
+      return;
+    }
+    setDismissed(getDismissed(user.id));
+  }, [user?.id]);
+
   const fetchNotifications = useCallback(async () => {
-    if (!user || !session?.access_token) return;
+    if (!user?.id || !session?.access_token) return;
     setLoading(true);
     try {
       const res = await fetch('/api/notifications', {
@@ -80,17 +94,18 @@ export default function NotificationBell() {
       });
       if (res.ok) {
         const data = await res.json() as { notifications: Notification[] };
+        const userDismissed = getDismissed(user.id);
+        setDismissed(userDismissed);
         setNotifications(data.notifications);
-        const lastRead = getLastRead();
-        const dismissed = getDismissed();
+        const lastRead = getLastRead(user.id);
         const newCount = data.notifications.filter(
-          (n) => !dismissed.has(n.id) && new Date(n.created_at).getTime() > lastRead
+          (n) => !userDismissed.has(n.id) && new Date(n.created_at).getTime() > lastRead,
         ).length;
         setUnreadCount(newCount);
       }
     } catch { /* noop */ }
     setLoading(false);
-  }, [user, session?.access_token]);
+  }, [user?.id, session?.access_token]);
 
   useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
 
@@ -112,11 +127,12 @@ export default function NotificationBell() {
   }, [open]);
 
   const handleOpen = () => {
+    if (!user?.id) return;
     if (!open) {
-      const lastRead = getLastRead();
+      const lastRead = getLastRead(user.id);
       setOpenedAtRead(lastRead);
       setOpen(true);
-      setLastRead(Date.now());
+      setLastRead(user.id, Date.now());
       setUnreadCount(0);
     } else {
       setOpen(false);
@@ -124,14 +140,16 @@ export default function NotificationBell() {
   };
 
   const dismiss = useCallback((id: string) => {
+    if (!user?.id) return;
     setDismissed((prev) => {
       const next = new Set(prev);
       next.add(id);
-      saveDismissed(next);
+      saveDismissed(user.id, next);
       return next;
     });
     setNotifications((prev) => prev.filter((n) => n.id !== id));
-  }, []);
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+  }, [user?.id]);
 
   const visible = notifications.filter((n) => !dismissed.has(n.id));
 
@@ -177,18 +195,21 @@ export default function NotificationBell() {
                 return (
                   <div key={n.id} className={`notif-item${isNew ? ' notif-item--new' : ''}`}>
                     <span className="notif-num">{idx + 1}</span>
-                    <div className="notif-icon">
-                      {n.type === 'favorite'
-                        ? <Star size={13} fill="currentColor" className="notif-icon--fav" />
-                        : <MessageCircle size={13} className="notif-icon--cmt" />}
-                    </div>
+                    <span className={`notif-icon ${n.type === 'favorite' ? 'notif-icon--fav' : 'notif-icon--cmt'}`}>
+                      {n.type === 'favorite' ? <Star size={12} fill="currentColor" /> : <MessageCircle size={12} />}
+                    </span>
                     <div className="notif-body">
                       <p className="notif-text">
-                        {n.actor_username
-                          ? <button className="notif-user-link" onClick={() => { navigate(`/users/${n.actor_username}`); setOpen(false); }}>{n.actor_name}</button>
-                          : <strong>{n.actor_name}</strong>
-                        }
-                        {n.type === 'favorite' ? ' favorited ' : ' commented on '}
+                        <button
+                          className="notif-user-link"
+                          onClick={() => {
+                            if (n.actor_username) navigate(`/users/${encodeURIComponent(n.actor_username)}`);
+                            setOpen(false);
+                          }}
+                        >
+                          {n.actor_name}
+                        </button>{' '}
+                        {n.type === 'favorite' ? 'favorited' : 'commented on'}{' '}
                         <button className="notif-cover-link" onClick={() => { navigate(`/?open=${n.cover_id}`); setOpen(false); }}>
                           {n.cover_title}
                         </button>
@@ -258,7 +279,6 @@ export default function NotificationBell() {
           box-shadow: none;
         }
         .notif-close-btn:hover { color: var(--body-text); transform: none; box-shadow: none; }
-        /* min-height: 0 is critical — without it flex children won't shrink and overflow-y won't scroll */
         .notif-list { overflow-y: auto; flex: 1; min-height: 0; }
         .notif-empty { font-size: 13px; color: var(--body-text-muted); padding: 20px 14px; text-align: center; line-height: 1.5; }
         .notif-item {
@@ -281,7 +301,6 @@ export default function NotificationBell() {
         .notif-icon--cmt { color: var(--accent); }
         .notif-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
         .notif-text { font-size: 12px; color: var(--body-text); line-height: 1.4; margin: 0; }
-        .notif-text em { font-style: normal; color: var(--accent); }
         .notif-user-link {
           font-weight: bold; color: var(--body-text);
           background: none; border: none; padding: 0; cursor: pointer;
