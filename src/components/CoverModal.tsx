@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from 'react';
 import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader, FolderPlus, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { apiGet, apiPost } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
 import { getCoverImageSrc, getCoverDownloadSrc } from '../lib/media';
@@ -65,13 +64,25 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
 
     const loadCollections = async () => {
       setCollectionsLoading(true);
-      const data = await apiGet<CollectionRow[]>(`/api/my-collections?owner_id=${encodeURIComponent(user.id)}`).catch(() => []);
-      setCollections(data);
-      setCollectionsLoading(false);
+      try {
+        const { data, error } = await supabase
+          .from('covers_cafe_collections')
+          .select('id,name,is_public')
+          .eq('owner_id', user.id)
+          .order('created_at', { ascending: false });
+        if (error) {
+          setCollectionStatus(`Could not load collections: ${error.message}`);
+        }
+        setCollections(data ?? []);
+      } catch (err) {
+        setCollectionStatus(err instanceof Error ? err.message : 'Could not load collections.');
+      } finally {
+        setCollectionsLoading(false);
+      }
     };
 
     void loadCollections();
-  }, [panelMode, user]);
+  }, [panelMode, user?.id]);
 
   const handleDownload = async (size?: number) => {
     setDownloading(true);
@@ -146,18 +157,23 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     }
 
     setSavingCollection(true);
-    let created: CollectionRow;
     try {
-      created = await apiPost<CollectionRow>('/api/collection-create', { owner_id: user.id, name, is_public: newCollectionPublic });
+      const { data: created, error: createErr } = await supabase
+        .from('covers_cafe_collections')
+        .insert({ owner_id: user.id, name, is_public: newCollectionPublic })
+        .select('id,name,is_public')
+        .single();
+      if (createErr || !created) {
+        setCollectionStatus(createErr?.message ?? 'Could not create collection.');
+      } else {
+        setCollections((prev) => [created, ...prev]);
+        setSelectedCollectionId(created.id);
+        setNewCollectionName('');
+        setCollectionStatus(`Created "${created.name}".`);
+      }
     } catch (err) {
       setCollectionStatus(err instanceof Error ? err.message : 'Could not create collection.');
-      setSavingCollection(false);
-      return;
     }
-    setCollections((prev) => [created, ...prev]);
-    setSelectedCollectionId(created.id);
-    setNewCollectionName('');
-    setCollectionStatus(`Created "${created.name}".`);
     setSavingCollection(false);
   };
 
@@ -166,23 +182,22 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     setSavingCollection(true);
 
     try {
-      await apiPost('/api/collection-add-item', { collection_id: collectionId, cover_id: cover.id });
-    } catch (error) {
-      const raw = error instanceof Error ? error.message : '';
-      if (raw.includes('23505')) {
-        const again = window.confirm('Are you sure you want to add this image to this collection again?');
-        if (again) {
-          setCollectionStatus('This image is already in that collection. Keeping existing entry.');
+      const { error: addErr } = await supabase
+        .from('covers_cafe_collection_items')
+        .insert({ collection_id: collectionId, cover_id: cover.id });
+      if (addErr) {
+        if (addErr.code === '23505') {
+          setCollectionStatus('This image is already in that collection.');
+        } else {
+          setCollectionStatus(addErr.message || 'Could not add to collection.');
         }
       } else {
-        setCollectionStatus(raw || 'Could not add to collection.');
+        const picked = collections.find((item) => item.id === collectionId);
+        setCollectionStatus(`Added to ${picked?.name ?? 'collection'}.`);
       }
-      setSavingCollection(false);
-      return;
+    } catch (err) {
+      setCollectionStatus(err instanceof Error ? err.message : 'Could not add to collection.');
     }
-
-    const picked = collections.find((item) => item.id === collectionId);
-    setCollectionStatus(`Added to ${picked?.name ?? 'collection'}.`);
     setSavingCollection(false);
   };
 
@@ -196,7 +211,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         <div className="cover-modal-inner">
           <div className="cover-modal-image-wrap">
             <img
-              src={getCoverImageSrc(cover)}
+              src={getCoverImageSrc(cover, 800)}
               alt={`${cover.title} by ${cover.artist}`}
               className="cover-modal-image"
               draggable={panelMode === 'collection'}
@@ -373,12 +388,16 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
 
                 <div className="form-row">
                   <label className="form-label">This collection</label>
-                  <select className="form-input" value={selectedCollectionId} onChange={(e) => setSelectedCollectionId(e.target.value)}>
-                    <option value="">Select a collection…</option>
-                    {collections.map((item) => (
-                      <option key={item.id} value={item.id}>{item.name} ({item.is_public ? 'Public' : 'Private'})</option>
-                    ))}
-                  </select>
+                  {collectionsLoading ? (
+                    <p className="collection-status">Loading collections…</p>
+                  ) : (
+                    <select className="form-input" value={selectedCollectionId} onChange={(e) => setSelectedCollectionId(e.target.value)}>
+                      <option value="">{collections.length === 0 ? 'No collections yet — create one below' : 'Select a collection…'}</option>
+                      {collections.map((item) => (
+                        <option key={item.id} value={item.id}>{item.name} ({item.is_public ? 'Public' : 'Private'})</option>
+                      ))}
+                    </select>
+                  )}
                   <button className="btn btn-primary" onClick={() => addToCollection(selectedCollectionId)} disabled={!selectedCollectionId || savingCollection || collectionsLoading}>
                     {savingCollection ? 'Saving…' : 'Add to This Collection'}
                   </button>
@@ -391,7 +410,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     <button className="btn btn-secondary" onClick={() => setNewCollectionPublic((prev) => !prev)}>
                       {newCollectionPublic ? 'Public' : 'Private'}
                     </button>
-                    <button className="btn btn-primary" onClick={createCollection} disabled={savingCollection || collectionsLoading}>Create</button>
+                    <button className="btn btn-primary" onClick={createCollection} disabled={savingCollection}>Create</button>
                   </div>
                 </div>
 

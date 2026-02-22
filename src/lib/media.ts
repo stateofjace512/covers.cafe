@@ -6,9 +6,12 @@ function storageUrl(bucket: string, path: string): string {
   return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
 }
 
-export function getCoverImageSrc(cover: Pick<Cover, 'storage_path' | 'image_url' | 'thumbnail_path'>): string {
-  const path = cover.thumbnail_path || cover.storage_path;
-  if (path) return storageUrl('covers_cafe_covers', path);
+function transformUrl(path: string, width: number): string {
+  return `${SUPABASE_URL}/storage/v1/render/image/public/covers_cafe_covers/${path}?width=${width}&height=${width}&resize=cover&quality=80`;
+}
+
+export function getCoverImageSrc(cover: Pick<Cover, 'storage_path' | 'image_url' | 'thumbnail_path'>, width = 500): string {
+  if (cover.storage_path) return transformUrl(cover.storage_path, width);
   return cover.image_url;
 }
 
