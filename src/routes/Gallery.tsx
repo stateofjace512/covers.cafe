@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Image, ArrowUpFromLine } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
+import CoffeeCupIcon from '../components/CoffeeCupIcon';
 
 export default function Gallery() {
   const { user, openAuthModal } = useAuth();
@@ -16,7 +17,7 @@ export default function Gallery() {
           <div className="hero-content">
             <h1 className="hero-title">Discover Album Art</h1>
             <p className="hero-subtitle">
-              Too many album covers. Never enough coffee. ☕
+              Too many album covers. Never enough coffee. <CoffeeCupIcon size={18} style={{ verticalAlign: 'middle', display: 'inline-block' }} />
             </p>
             <div className="hero-actions">
               {user ? (

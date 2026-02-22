@@ -1,4 +1,5 @@
 import { Info } from 'lucide-react';
+import CoffeeCupIcon from '../components/CoffeeCupIcon';
 
 export default function About() {
   return (
@@ -47,7 +48,7 @@ export default function About() {
 
         <p>So drop your bags at the front door, and get comfortable.</p>
 
-        <p className="about-sign">☕</p>
+        <div className="about-sign"><CoffeeCupIcon size={56} /></div>
       </div>
 
       <style>{`
@@ -60,11 +61,7 @@ export default function About() {
           line-height: 1.6 !important;
           margin-bottom: 20px !important;
         }
-        .about-sign {
-          font-size: 22px !important;
-          margin-top: 4px !important;
-          line-height: 1 !important;
-        }
+        .about-sign { margin-top: 12px; }
       `}</style>
     </div>
   );
