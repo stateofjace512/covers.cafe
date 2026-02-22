@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
-import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader, FolderPlus } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader, FolderPlus, ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { apiGet, apiPost } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
-import { getCoverImageSrc } from '../lib/media';
+import { getCoverImageSrc, getCoverDownloadSrc } from '../lib/media';
 
 interface Props {
   cover: Cover;
@@ -33,10 +34,13 @@ const REPORT_REASONS: { value: ReportReason; label: string }[] = [
 
 export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClose, onDeleted, initialPanelMode = 'details' }: Props) {
   const { user, openAuthModal } = useAuth();
+  const navigate = useNavigate();
   const isOwner = user?.id === cover.user_id;
 
   const [panelMode, setPanelMode] = useState<PanelMode>(initialPanelMode);
   const [downloading, setDownloading] = useState(false);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const downloadMenuRef = useRef<HTMLDivElement>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [reportReason, setReportReason] = useState<ReportReason>('inappropriate');
@@ -69,17 +73,20 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     void loadCollections();
   }, [panelMode, user]);
 
-  const handleDownload = async () => {
+  const handleDownload = async (size?: number) => {
     setDownloading(true);
+    setShowDownloadMenu(false);
     try {
       await supabase.from('covers_cafe_downloads').insert({ cover_id: cover.id, user_id: user?.id ?? null });
       await supabase.rpc('covers_cafe_increment_downloads', { p_cover_id: cover.id });
-      const res = await fetch(getCoverImageSrc(cover));
+      const src = getCoverDownloadSrc(cover, size);
+      const res = await fetch(src);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${cover.artist} - ${cover.title}.jpg`;
+      const suffix = size ? `_${size}px` : '';
+      a.download = `${cover.artist} - ${cover.title}${suffix}.jpg`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -99,7 +106,9 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     if (!deleteConfirm) { setDeleteConfirm(true); return; }
     setDeleting(true);
     try {
-      await supabase.storage.from('covers_cafe_covers').remove([cover.storage_path]);
+      const paths = [cover.storage_path];
+      if (cover.thumbnail_path) paths.push(cover.thumbnail_path);
+      await supabase.storage.from('covers_cafe_covers').remove(paths);
       await supabase.from('covers_cafe_covers').delete().eq('id', cover.id);
       onDeleted?.(cover.id);
       onClose();
@@ -222,7 +231,12 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                       <Tag size={13} />
                       <div className="cover-tags-list">
                         {cover.tags.map((tag) => (
-                          <span key={tag} className="cover-tag">{tag}</span>
+                          <button
+                            key={tag}
+                            className="cover-tag cover-tag--clickable"
+                            onClick={() => { onClose(); navigate(`/?q=${encodeURIComponent(tag)}`); }}
+                            title={`Search for "${tag}"`}
+                          >{tag}</button>
                         ))}
                       </div>
                     </div>
@@ -241,14 +255,33 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     <Star size={15} fill={isFavorited ? 'currentColor' : 'none'} />
                     {isFavorited ? 'Favorited' : 'Favorite'}
                   </button>
-                  <button
-                    className="btn btn-primary cover-modal-download-btn"
-                    onClick={handleDownload}
-                    disabled={downloading}
-                  >
-                    <Download size={15} />
-                    {downloading ? 'Downloading…' : 'Download'}
-                  </button>
+                  <div className="cover-download-wrap" ref={downloadMenuRef}>
+                    <button
+                      className="btn btn-primary cover-modal-download-btn"
+                      onClick={() => handleDownload()}
+                      disabled={downloading}
+                    >
+                      <Download size={15} />
+                      {downloading ? 'Downloading…' : 'Download'}
+                    </button>
+                    <button
+                      className="btn btn-primary cover-download-arrow"
+                      onClick={() => setShowDownloadMenu((v) => !v)}
+                      disabled={downloading}
+                      title="More download sizes"
+                    >
+                      <ChevronDown size={14} />
+                    </button>
+                    {showDownloadMenu && (
+                      <div className="cover-download-menu">
+                        <button className="cover-download-option" onClick={() => handleDownload()}>Full Size</button>
+                        <button className="cover-download-option" onClick={() => handleDownload(3000)}>3000px</button>
+                        <button className="cover-download-option" onClick={() => handleDownload(1500)}>1500px</button>
+                        <button className="cover-download-option" onClick={() => handleDownload(1000)}>1000px</button>
+                        <button className="cover-download-option" onClick={() => handleDownload(800)}>800px</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="cover-modal-secondary-actions">
@@ -473,6 +506,31 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .form-input:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
         .upload-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .cover-tag--clickable {
+          cursor: pointer; background: var(--sidebar-bg); color: var(--sidebar-text);
+          border: 1px solid var(--sidebar-border); padding: 2px 7px; border-radius: 3px;
+          font-size: 11px; font-weight: bold; box-shadow: var(--shadow-sm);
+          transition: background 0.1s, color 0.1s;
+        }
+        .cover-tag--clickable:hover { background: var(--accent); color: white; border-color: var(--accent); transform: none; box-shadow: none; }
+        .cover-download-wrap { position: relative; display: flex; }
+        .cover-modal-download-btn { border-radius: 4px 0 0 4px; }
+        .cover-download-arrow {
+          border-radius: 0 4px 4px 0; border-left: 1px solid rgba(255,255,255,0.25);
+          padding: 0 8px; display: flex; align-items: center;
+        }
+        .cover-download-menu {
+          position: absolute; top: calc(100% + 4px); right: 0; z-index: 20;
+          background: var(--body-card-bg); border: 1px solid var(--body-card-border);
+          border-radius: 4px; box-shadow: var(--shadow-md);
+          display: flex; flex-direction: column; min-width: 130px; overflow: hidden;
+        }
+        .cover-download-option {
+          padding: 8px 14px; text-align: left; font-size: 13px; font-weight: bold;
+          background: none; border: none; color: var(--body-text); cursor: pointer;
+          box-shadow: none;
+        }
+        .cover-download-option:hover { background: var(--accent); color: white; transform: none; }
         @media (max-width: 600px) {
           .cover-modal-inner { flex-direction: column; }
           .cover-modal-image-wrap { width: 100%; max-width: 100%; height: 220px; }

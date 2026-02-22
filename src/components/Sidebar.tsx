@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowUpFromLine, ArrowDownToLine, User, Star, Image, Coffee, Cog, UserRoundCog, UserRound } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { getAvatarSrc } from '../lib/media';
 
 const NAV = [
   { section: 'Discover', label: 'Gallery',      icon: <Image size={18} />,           path: '/' },
@@ -24,8 +25,8 @@ export default function Sidebar() {
       {/* User panel */}
       <div className="sidebar-user-panel">
         <div className="sidebar-avatar">
-          {profile?.avatar_url
-            ? <img src={profile.avatar_url} alt="avatar" className="sidebar-avatar-img" />
+          {profile && getAvatarSrc(profile)
+            ? <img src={getAvatarSrc(profile)!} alt="avatar" className="sidebar-avatar-img" />
             : <User size={26} />
           }
         </div>

@@ -7,7 +7,7 @@ import { computePhash, isDuplicate } from '../lib/phash';
 import { checkRateLimit } from '../lib/rateLimit';
 
 const MIN_DIM = 500;
-const MAX_DIM = 3000;
+const MAX_DIM = 5000;
 const MAX_BULK = 10;
 const UPLOAD_RATE_MAX = 5;
 const UPLOAD_RATE_WINDOW = 60_000; // 1 minute
@@ -251,6 +251,14 @@ export default function UploadForm() {
       });
 
       if (insertErr) throw new Error(insertErr.message);
+
+      // Generate 500px thumbnail in the background (non-blocking)
+      fetch('/api/generate-thumbnail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storage_path: fileName }),
+      }).catch(() => {/* thumbnail generation is best-effort */});
+
       setSuccess(true);
       setTimeout(() => navigate('/'), 1800);
     } catch (err: unknown) {
@@ -355,6 +363,14 @@ export default function UploadForm() {
         });
 
         if (insertErr) throw new Error(insertErr.message);
+
+        // Generate thumbnail in background (non-blocking)
+        fetch('/api/generate-thumbnail', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ storage_path: fileName }),
+        }).catch(() => {/* best-effort */});
+
         updateBulkItem(i, { status: 'done' });
       } catch (err: unknown) {
         updateBulkItem(i, {
@@ -427,7 +443,7 @@ export default function UploadForm() {
       </div>
 
       <p className="upload-requirements">
-        JPG only &nbsp;·&nbsp; Min {MIN_DIM}×{MIN_DIM}px &nbsp;·&nbsp; Max {MAX_DIM}×{MAX_DIM}px &nbsp;·&nbsp; Square recommended
+        JPG only &nbsp;·&nbsp; Min {MIN_DIM}×{MIN_DIM}px &nbsp;·&nbsp; Max {MAX_DIM}×{MAX_DIM}px &nbsp;·&nbsp; Square recommended &nbsp;·&nbsp; Stored full-res, displayed at 500px
       </p>
 
       {mode === 'single' && (
