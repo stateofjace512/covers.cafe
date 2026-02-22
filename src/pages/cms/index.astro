@@ -1,0 +1,26 @@
+---
+import '../../styles/global.css';
+import App from '../../App';
+const logoUrl = `/cover_cafe_logo.svg`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Upload and discover album cover art at covers.cafe" />
+    <link rel="icon" type="image/svg+xml" href={logoUrl} />
+    <title>covers.cafe</title>
+    <!-- Prevent flash of wrong theme -->
+    <script is:inline>
+      (function () {
+        var t = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
+  </head>
+  <body>
+    <App client:only="react" />
+  </body>
+</html>

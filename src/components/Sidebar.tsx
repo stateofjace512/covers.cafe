@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowUpFromLine, ArrowDownToLine, User, Star, Image, Coffee, Cog, UserRoundCog, UserRound } from 'lucide-react';
+import { ArrowUpFromLine, ArrowDownToLine, User, Star, Image, Coffee, Cog, UserRoundCog, UserRound, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getAvatarSrc } from '../lib/media';
+import { supabase } from '../lib/supabase';
 
 const NAV = [
   { section: 'Discover', label: 'Gallery',      icon: <Image size={18} />,           path: '/' },
@@ -15,10 +17,34 @@ const NAV = [
   {                       label: 'Coffee',       icon: <Coffee size={18} />,           path: '/coffee' },
 ] as const;
 
+const OPERATOR_NAV = { label: 'CMS', icon: <Shield size={18} />, path: '/cms' } as const;
+
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, openAuthModal } = useAuth();
+  const [isOperator, setIsOperator] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    async function loadOperator() {
+      if (!user) {
+        setIsOperator(false);
+        return;
+      }
+      const { data } = await supabase
+        .from('covers_cafe_operator_roles')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .eq('role', 'operator')
+        .maybeSingle();
+      if (active) setIsOperator(Boolean(data));
+    }
+    loadOperator();
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   return (
     <aside className="site-sidebar" role="navigation" aria-label="Main navigation">
@@ -53,7 +79,7 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="sidebar-nav">
-        {NAV.map((item) => {
+        {[...NAV, ...(isOperator ? [OPERATOR_NAV] : [])].map((item) => {
           const isActive = item.path === '/'
             ? location.pathname === '/'
             : location.pathname.startsWith(item.path);
