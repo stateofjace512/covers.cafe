@@ -45,7 +45,7 @@ export default function ArtistDetail() {
       const isOwner = user?.id === profileData.id;
       let colQuery = supabase
         .from('covers_cafe_collections')
-        .select('id,name,is_public,cover_image_id,covers_cafe_collection_items(id)')
+        .select('id,name,is_public,cover_image_id')
         .eq('owner_id', profileData.id)
         .order('created_at', { ascending: false });
       if (!isOwner) colQuery = colQuery.eq('is_public', true);
@@ -55,11 +55,24 @@ export default function ArtistDetail() {
         console.error('Collections query error:', colError.message);
       }
 
-      const rows = colData ?? [];
+      const rows = (colData ?? []) as { id: string; name: string; is_public: boolean; cover_image_id: string | null }[];
 
-      // Fetch cover image data separately for any collections that have one set.
-      const coverImageIds = rows.map((r: { cover_image_id?: string | null }) => r.cover_image_id).filter(Boolean) as string[];
-      let coverImageMap: Record<string, { storage_path: string; image_url: string; thumbnail_path: string | null }> = {};
+      // Fetch item counts separately to avoid RLS interaction via embedding.
+      const collectionIds = rows.map((r) => r.id);
+      const itemCountMap: Record<string, number> = {};
+      if (collectionIds.length > 0) {
+        const { data: itemRows } = await supabase
+          .from('covers_cafe_collection_items')
+          .select('collection_id')
+          .in('collection_id', collectionIds);
+        for (const r of itemRows ?? []) {
+          itemCountMap[r.collection_id] = (itemCountMap[r.collection_id] ?? 0) + 1;
+        }
+      }
+
+      // Fetch cover image data for collections that have one set.
+      const coverImageMap: Record<string, { storage_path: string; image_url: string; thumbnail_path: string | null }> = {};
+      const coverImageIds = rows.map((r) => r.cover_image_id).filter(Boolean) as string[];
       if (coverImageIds.length > 0) {
         const { data: coverImages } = await supabase
           .from('covers_cafe_covers')
@@ -70,15 +83,12 @@ export default function ArtistDetail() {
         }
       }
 
-      setCollections(rows.map((row: {
-        id: string; name: string; is_public: boolean; cover_image_id?: string | null;
-        covers_cafe_collection_items?: { id: string }[];
-      }) => ({
+      setCollections(rows.map((row) => ({
         id: row.id,
         name: row.name,
         is_public: row.is_public,
         cover_image: row.cover_image_id ? (coverImageMap[row.cover_image_id] ?? null) : null,
-        item_count: row.covers_cafe_collection_items?.length ?? 0,
+        item_count: itemCountMap[row.id] ?? 0,
       })));
 
       setLoading(false);
