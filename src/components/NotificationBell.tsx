@@ -146,7 +146,7 @@ export default function NotificationBell() {
         title="Notifications"
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} new)` : ''}`}
       >
-        <Bell size={16} />
+        <Bell size={16} style={unreadCount > 0 ? { color: '#d4a020' } : undefined} />
         {unreadCount > 0 && (
           <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
         )}
@@ -189,7 +189,9 @@ export default function NotificationBell() {
                           : <strong>{n.actor_name}</strong>
                         }
                         {n.type === 'favorite' ? ' favorited ' : ' commented on '}
-                        <em>{n.cover_title}</em>
+                        <button className="notif-cover-link" onClick={() => { navigate(`/?open=${n.cover_id}`); setOpen(false); }}>
+                          {n.cover_title}
+                        </button>
                       </p>
                       {n.content && (
                         <p className="notif-comment-preview">"{n.content}{n.content.length >= 100 ? '…' : ''}"</p>
@@ -287,6 +289,13 @@ export default function NotificationBell() {
           text-decoration: underline; text-underline-offset: 2px;
         }
         .notif-user-link:hover { color: var(--accent); transform: none; box-shadow: none; }
+        .notif-cover-link {
+          font-style: italic; color: var(--accent);
+          background: none; border: none; padding: 0; cursor: pointer;
+          font-size: 12px; box-shadow: none; font-family: inherit;
+          text-decoration: underline; text-underline-offset: 2px;
+        }
+        .notif-cover-link:hover { opacity: 0.8; transform: none; box-shadow: none; }
         .notif-comment-preview { font-size: 11px; color: var(--body-text-muted); font-style: italic; margin: 0; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .notif-time { font-size: 10px; color: var(--body-text-muted); }
         .notif-dismiss-btn {
