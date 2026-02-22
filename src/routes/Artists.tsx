@@ -1,32 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserRound } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { apiGet } from '../lib/api';
 import type { Profile } from '../lib/types';
 
 interface ArtistRow extends Profile {
   cover_count: number;
 }
 
-export default function Artists() {
-  const [artists, setArtists] = useState<ArtistRow[]>([]);
+export default function Users() {
+  const [artists, setUsers] = useState<ArtistRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('covers_cafe_profiles')
-        .select('*, covers_cafe_covers!inner(id)')
-        .order('username');
-      const map = new Map<string, ArtistRow>();
-      (data ?? []).forEach((row: Profile & { covers_cafe_covers: { id: string }[] }) => {
-        if (!map.has(row.id)) {
-          map.set(row.id, { ...row, cover_count: row.covers_cafe_covers?.length ?? 0 });
-        }
-      });
-      setArtists(Array.from(map.values()));
+      const data = await apiGet<ArtistRow[]>('/api/users');
+      setArtists(data);
       setLoading(false);
     })();
   }, []);
@@ -46,7 +37,7 @@ export default function Artists() {
         <input
           type="search"
           className="toolbar-search"
-          placeholder="Search artists…"
+          placeholder="Search users…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -55,14 +46,14 @@ export default function Artists() {
       {loading ? (
         <p className="text-muted">Loading…</p>
       ) : !filtered.length ? (
-        <p className="text-muted">No artists found{search ? ` for "${search}"` : ''}.</p>
+        <p className="text-muted">No users found{search ? ` for "${search}"` : ''}.</p>
       ) : (
         <div className="artist-grid">
           {filtered.map((artist) => (
             <button
               key={artist.id}
               className="artist-card"
-              onClick={() => navigate(`/artists/${encodeURIComponent(artist.username)}`)}
+              onClick={() => navigate(`/users/${encodeURIComponent(artist.username)}`)}
               title={`View covers by ${artist.display_name ?? artist.username}`}
             >
               <div className="artist-avatar">

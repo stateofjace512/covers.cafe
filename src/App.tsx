@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AppShell from './components/AppShell';
 import AuthModal from './components/AuthModal';
@@ -17,6 +17,12 @@ import Coffee from './routes/Coffee';
 import Privacy from './routes/Privacy';
 import Terms from './routes/Terms';
 
+
+function LegacyArtistRedirect() {
+  const { username } = useParams<{ username: string }>();
+  return <Navigate to={username ? `/users/${encodeURIComponent(username)}` : '/users'} replace />;
+}
+
 function AppContent() {
   const { authModalOpen, authModalTab, closeAuthModal } = useAuth();
 
@@ -26,8 +32,10 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Gallery />} />
           <Route path="/upload" element={<Upload />} />
-          <Route path="/artists" element={<Artists />} />
-          <Route path="/artists/:username" element={<ArtistDetail />} />
+          <Route path="/users" element={<Artists />} />
+          <Route path="/users/:username" element={<ArtistDetail />} />
+          <Route path="/artists" element={<Navigate to="/users" replace />} />
+          <Route path="/artists/:username" element={<LegacyArtistRedirect />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/downloads" element={<Downloads />} />
           <Route path="/profile" element={<Profile />} />

@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const NAV = [
   { section: 'Discover', label: 'Gallery',      icon: <Image size={18} />,           path: '/' },
-  {                       label: 'Artists',      icon: <UserRound size={18} />,        path: '/artists' },
+  {                       label: 'Users',      icon: <UserRound size={18} />,        path: '/users' },
   {                       label: 'Favorites',    icon: <Star size={18} />,             path: '/favorites' },
   { section: 'Account',  label: 'Upload',        icon: <ArrowUpFromLine size={18} />,  path: '/upload' },
   {                       label: 'Downloads',    icon: <ArrowDownToLine size={18} />,  path: '/downloads' },

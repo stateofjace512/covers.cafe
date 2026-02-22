@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader, FolderPlus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { apiGet, apiPost } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
 
@@ -59,12 +60,8 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
 
     const loadCollections = async () => {
       setCollectionsLoading(true);
-      const { data } = await supabase
-        .from('covers_cafe_collections')
-        .select('id,name,is_public')
-        .eq('owner_id', user.id)
-        .order('created_at', { ascending: false });
-      setCollections((data as CollectionRow[] | null) ?? []);
+      const data = await apiGet<CollectionRow[]>(`/api/my-collections?owner_id=${encodeURIComponent(user.id)}`).catch(() => []);
+      setCollections(data);
       setCollectionsLoading(false);
     };
 
@@ -139,19 +136,14 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     }
 
     setSavingCollection(true);
-    const { data, error } = await supabase
-      .from('covers_cafe_collections')
-      .insert({ owner_id: user.id, name, is_public: newCollectionPublic })
-      .select('id,name,is_public')
-      .single();
-
-    if (error) {
-      setCollectionStatus(error.message);
+    let created: CollectionRow;
+    try {
+      created = await apiPost<CollectionRow>('/api/collection-create', { owner_id: user.id, name, is_public: newCollectionPublic });
+    } catch (err) {
+      setCollectionStatus(err instanceof Error ? err.message : 'Could not create collection.');
       setSavingCollection(false);
       return;
     }
-
-    const created = data as CollectionRow;
     setCollections((prev) => [created, ...prev]);
     setSelectedCollectionId(created.id);
     setNewCollectionName('');
@@ -163,18 +155,17 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     if (!user || !collectionId) return;
     setSavingCollection(true);
 
-    const { error } = await supabase
-      .from('covers_cafe_collection_items')
-      .insert({ collection_id: collectionId, cover_id: cover.id });
-
-    if (error) {
-      if (error.code === '23505') {
+    try {
+      await apiPost('/api/collection-add-item', { collection_id: collectionId, cover_id: cover.id });
+    } catch (error) {
+      const raw = error instanceof Error ? error.message : '';
+      if (raw.includes('23505')) {
         const again = window.confirm('Are you sure you want to add this image to this collection again?');
         if (again) {
           setCollectionStatus('This image is already in that collection. Keeping existing entry.');
         }
       } else {
-        setCollectionStatus(error.message);
+        setCollectionStatus(raw || 'Could not add to collection.');
       }
       setSavingCollection(false);
       return;
