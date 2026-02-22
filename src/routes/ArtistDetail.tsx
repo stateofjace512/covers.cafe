@@ -10,7 +10,7 @@ import { getAvatarSrc, getCoverImageSrc } from '../lib/media';
 export default function ArtistDetail() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [coverCount, setCoverCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ export default function ArtistDetail() {
   }[]>([]);
 
   useEffect(() => {
-    if (!username) return;
+    if (!username || authLoading) return;
     (async () => {
       const { data: profileData } = await supabase
         .from('covers_cafe_profiles')
@@ -93,7 +93,7 @@ export default function ArtistDetail() {
 
       setLoading(false);
     })();
-  }, [username, user?.id]);
+  }, [username, user?.id, authLoading]);
 
   if (loading) return <p className="text-muted">Loading…</p>;
   if (notFound) return (
