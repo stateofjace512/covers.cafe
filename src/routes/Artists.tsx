@@ -17,7 +17,7 @@ export default function Users() {
   useEffect(() => {
     (async () => {
       const data = await apiGet<ArtistRow[]>('/api/users');
-      setArtists(data);
+      setUsers(data);
       setLoading(false);
     })();
   }, []);
@@ -30,7 +30,7 @@ export default function Users() {
     <div>
       <h1 className="section-title">
         <UserRound size={22} />
-        Artists
+        Users
       </h1>
 
       <div className="toolbar mb-4">
