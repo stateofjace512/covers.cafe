@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lock, Loader, Pencil, Check, X } from 'lucide-react';
+import { ArrowLeft, Lock, Loader, Pencil, Check, X, ImagePlus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { getCoverImageSrc } from '../lib/media';
 import CoverCard from '../components/CoverCard';
 import CoverModal from '../components/CoverModal';
 import type { Cover } from '../lib/types';
@@ -12,7 +13,7 @@ export default function CollectionDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [collection, setCollection] = useState<{ id: string; name: string; is_public: boolean; owner_id: string } | null>(null);
+  const [collection, setCollection] = useState<{ id: string; name: string; is_public: boolean; owner_id: string; cover_image_id: string | null } | null>(null);
   const [covers, setCovers] = useState<Cover[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -23,6 +24,7 @@ export default function CollectionDetail() {
   const [editName, setEditName] = useState('');
   const [editPublic, setEditPublic] = useState(true);
   const [editSaving, setEditSaving] = useState(false);
+  const [setCoverLoading, setSetCoverLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!collectionId) return;
@@ -30,7 +32,7 @@ export default function CollectionDetail() {
     (async () => {
       const { data: col, error: colErr } = await supabase
         .from('covers_cafe_collections')
-        .select('id,name,is_public,owner_id')
+        .select('id,name,is_public,owner_id,cover_image_id')
         .eq('id', collectionId)
         .single();
 
@@ -83,6 +85,21 @@ export default function CollectionDetail() {
 
   const cancelEdit = () => setEditing(false);
 
+  const handleSetCover = async (coverId: string) => {
+    if (!collection || !user) return;
+    const newCoverId = collection.cover_image_id === coverId ? null : coverId;
+    setSetCoverLoading(coverId);
+    const { data: updated, error } = await supabase
+      .from('covers_cafe_collections')
+      .update({ cover_image_id: newCoverId })
+      .eq('id', collection.id)
+      .eq('owner_id', user.id)
+      .select('id,name,is_public,owner_id,cover_image_id')
+      .single();
+    if (!error && updated) setCollection(updated);
+    setSetCoverLoading(null);
+  };
+
   const saveEdit = async () => {
     const name = editName.trim();
     if (!name || !collection) return;
@@ -92,7 +109,7 @@ export default function CollectionDetail() {
       .update({ name, is_public: editPublic })
       .eq('id', collection.id)
       .eq('owner_id', user!.id)
-      .select('id,name,is_public,owner_id')
+      .select('id,name,is_public,owner_id,cover_image_id')
       .single();
     if (!error && updated) {
       setCollection(updated);
@@ -155,6 +172,33 @@ export default function CollectionDetail() {
                 <X size={14} />
               </button>
             </div>
+
+            {/* Cover picker */}
+            <div className="col-edit-cover-section">
+              <span className="col-edit-cover-label">Collection cover</span>
+              {covers.length === 0 ? (
+                <p style={{ fontSize: 12, color: 'var(--body-text-muted)', margin: 0 }}>Add covers to this collection first.</p>
+              ) : (
+                <div className="col-edit-cover-grid">
+                  {covers.map((cover) => {
+                    const isActive = collection?.cover_image_id === cover.id;
+                    return (
+                      <button
+                        key={cover.id}
+                        className={`col-edit-cover-thumb${isActive ? ' col-edit-cover-thumb--active' : ''}`}
+                        onClick={() => handleSetCover(cover.id)}
+                        disabled={setCoverLoading === cover.id}
+                        title={isActive ? 'Remove as cover' : cover.title}
+                      >
+                        <img src={getCoverImageSrc(cover, 120)} alt={cover.title} />
+                        {isActive && <div className="col-edit-cover-check"><Check size={12} /></div>}
+                        {setCoverLoading === cover.id && <div className="col-edit-cover-check"><Loader size={12} className="col-spinner" /></div>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <>
@@ -181,14 +225,29 @@ export default function CollectionDetail() {
       ) : (
         <div className="album-grid" style={{ marginTop: 24 }}>
           {covers.map((cover) => (
-            <CoverCard
-              key={cover.id}
-              cover={cover}
-              isFavorited={favoritedIds.has(cover.id)}
-              onToggleFavorite={handleToggleFavorite}
-              onClick={() => setSelectedCover(cover)}
-              onDeleted={(id) => setCovers((prev) => prev.filter((c) => c.id !== id))}
-            />
+            <div key={cover.id} className="col-cover-wrap">
+              <CoverCard
+                cover={cover}
+                isFavorited={favoritedIds.has(cover.id)}
+                onToggleFavorite={handleToggleFavorite}
+                onClick={() => setSelectedCover(cover)}
+                onDeleted={(id) => setCovers((prev) => prev.filter((c) => c.id !== id))}
+              />
+              {isOwner && (
+                <button
+                  className={`col-set-cover-btn${collection?.cover_image_id === cover.id ? ' col-set-cover-btn--active' : ''}`}
+                  title={collection?.cover_image_id === cover.id ? 'Remove as collection cover' : 'Set as collection cover'}
+                  onClick={() => handleSetCover(cover.id)}
+                  disabled={setCoverLoading === cover.id}
+                >
+                  {setCoverLoading === cover.id
+                    ? <Loader size={11} className="col-spinner" />
+                    : <ImagePlus size={11} />
+                  }
+                  {collection?.cover_image_id === cover.id ? 'Cover' : 'Set cover'}
+                </button>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -249,6 +308,42 @@ export default function CollectionDetail() {
         .col-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .gallery-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 60px 20px; color: var(--body-text-muted); }
+        .col-cover-wrap { position: relative; }
+        .col-set-cover-btn {
+          position: absolute; bottom: 6px; left: 6px;
+          display: flex; align-items: center; gap: 4px;
+          font-size: 10px; font-weight: bold;
+          padding: 3px 7px; border-radius: 3px;
+          background: rgba(10,5,2,0.75); color: rgba(255,255,255,0.7);
+          border: 1px solid rgba(255,255,255,0.15);
+          backdrop-filter: blur(4px);
+          opacity: 0; transition: opacity 0.15s;
+          cursor: pointer; z-index: 2;
+        }
+        .col-cover-wrap:hover .col-set-cover-btn { opacity: 1; }
+        .col-set-cover-btn--active {
+          background: var(--accent); color: white;
+          border-color: var(--accent); opacity: 1;
+        }
+        .col-set-cover-btn:hover { transform: none; box-shadow: none; }
+        .col-edit-cover-section { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--body-card-border); }
+        .col-edit-cover-label { font-size: 11px; font-weight: bold; color: var(--body-text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .col-edit-cover-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+        .col-edit-cover-thumb {
+          width: 56px; height: 56px; border-radius: 4px; overflow: hidden;
+          border: 2px solid transparent; padding: 0; cursor: pointer;
+          position: relative; flex-shrink: 0;
+          transition: border-color 0.12s, opacity 0.12s;
+        }
+        .col-edit-cover-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .col-edit-cover-thumb:hover { border-color: rgba(255,255,255,0.4); }
+        .col-edit-cover-thumb--active { border-color: var(--accent); }
+        .col-edit-cover-check {
+          position: absolute; inset: 0;
+          background: rgba(192,90,26,0.55);
+          display: flex; align-items: center; justify-content: center;
+          color: white;
+        }
       `}</style>
     </div>
   );

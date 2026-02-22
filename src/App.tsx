@@ -10,6 +10,8 @@ import Upload from './routes/Upload';
 import Artists from './routes/Artists';
 import ArtistDetail from './routes/ArtistDetail';
 import CollectionDetail from './routes/CollectionDetail';
+import MusicArtists from './routes/MusicArtists';
+import MusicArtistDetail from './routes/MusicArtistDetail';
 import Favorites from './routes/Favorites';
 import Downloads from './routes/Downloads';
 import Profile from './routes/Profile';
@@ -24,10 +26,6 @@ import Acotw from './routes/Acotw';
 import NotFound from './routes/NotFound';
 
 
-function LegacyArtistRedirect() {
-  const { username } = useParams<{ username: string }>();
-  return <Navigate to={username ? `/users/${encodeURIComponent(username)}` : '/users'} replace />;
-}
 
 function AppContent() {
   const { authModalOpen, authModalTab, closeAuthModal, session, user } = useAuth();
@@ -67,8 +65,19 @@ function AppContent() {
 
   if (banStatus.isBanned) {
     return (
-      <main className="site-main" style={{ display: 'grid', placeItems: 'center', minHeight: '100vh' }}>
-        <h1>You are banned. Reason: {banStatus.reason ?? 'No reason provided.'}</h1>
+      <main className="site-main" style={{ display: 'grid', placeItems: 'center', minHeight: '100vh', padding: '20px' }}>
+        <div style={{ textAlign: 'center', maxWidth: 420 }}>
+          <h1 style={{ fontSize: 22, marginBottom: 12 }}>Your account has been banned.</h1>
+          <p style={{ fontSize: 14, color: '#666', marginBottom: 20 }}>
+            Reason: {banStatus.reason ?? 'No reason provided.'}
+          </p>
+          <p style={{ fontSize: 13, color: '#888' }}>
+            If you believe this is a mistake, please review our{' '}
+            <a href="/terms" style={{ color: '#c05a1a' }}>Terms of Service</a>
+            {' '}and{' '}
+            <a href="/privacy" style={{ color: '#c05a1a' }}>Privacy Policy</a>.
+          </p>
+        </div>
       </main>
     );
   }
@@ -82,8 +91,8 @@ function AppContent() {
           <Route path="/users" element={<Artists />} />
           <Route path="/users/:username" element={<ArtistDetail />} />
           <Route path="/users/:username/collections/:collectionId" element={<CollectionDetail />} />
-          <Route path="/artists" element={<Navigate to="/users" replace />} />
-          <Route path="/artists/:username" element={<LegacyArtistRedirect />} />
+          <Route path="/artists" element={<MusicArtists />} />
+          <Route path="/artists/:artistName" element={<MusicArtistDetail />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/downloads" element={<Downloads />} />
           <Route path="/profile" element={<Profile />} />

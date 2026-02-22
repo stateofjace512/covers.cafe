@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Moon, Sun, Search, LogOut, User, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import NotificationBell from './NotificationBell';
 
 type HeaderProps = {
   isMobileNavOpen: boolean;
@@ -67,6 +68,8 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
           {dark ? <Sun size={16} /> : <Moon size={16} />}
           <span className="header-theme-label">{dark ? 'Light' : 'Dark'}</span>
         </button>
+
+        <NotificationBell />
 
         {user ? (
           <div className="header-user-group">

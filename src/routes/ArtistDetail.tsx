@@ -20,7 +20,7 @@ export default function ArtistDetail() {
     name: string;
     is_public: boolean;
     item_count: number;
-    cover_image: { storage_path: string; image_url: string; thumbnail_path: string | null } | null;
+    cover_image: { storage_path: string; image_url: string } | null;
   }[]>([]);
 
   useEffect(() => {
@@ -71,15 +71,31 @@ export default function ArtistDetail() {
       }
 
       // Fetch cover image data for collections that have one set.
-      const coverImageMap: Record<string, { storage_path: string; image_url: string; thumbnail_path: string | null }> = {};
+      const coverImageMap: Record<string, { storage_path: string; image_url: string }> = {};
       const coverImageIds = rows.map((r) => r.cover_image_id).filter(Boolean) as string[];
       if (coverImageIds.length > 0) {
         const { data: coverImages } = await supabase
           .from('covers_cafe_covers')
-          .select('id,storage_path,image_url,thumbnail_path')
+          .select('id,storage_path,image_url')
           .in('id', coverImageIds);
         for (const c of coverImages ?? []) {
           coverImageMap[c.id] = c;
+        }
+      }
+
+      // For collections without a custom cover, fall back to the first item's cover art.
+      const fallbackCoverMap: Record<string, { storage_path: string; image_url: string }> = {};
+      const collectionsWithoutCover = rows.filter((r) => !r.cover_image_id).map((r) => r.id);
+      if (collectionsWithoutCover.length > 0) {
+        const { data: sampleItems } = await supabase
+          .from('covers_cafe_collection_items')
+          .select('collection_id, covers_cafe_covers(storage_path, image_url)')
+          .in('collection_id', collectionsWithoutCover)
+          .order('created_at', { ascending: false });
+        for (const item of (sampleItems ?? []) as Array<{ collection_id: string; covers_cafe_covers: { storage_path: string; image_url: string } | null }>) {
+          if (!fallbackCoverMap[item.collection_id] && item.covers_cafe_covers) {
+            fallbackCoverMap[item.collection_id] = item.covers_cafe_covers;
+          }
         }
       }
 
@@ -87,7 +103,9 @@ export default function ArtistDetail() {
         id: row.id,
         name: row.name,
         is_public: row.is_public,
-        cover_image: row.cover_image_id ? (coverImageMap[row.cover_image_id] ?? null) : null,
+        cover_image: row.cover_image_id
+          ? (coverImageMap[row.cover_image_id] ?? null)
+          : (fallbackCoverMap[row.id] ?? null),
         item_count: itemCountMap[row.id] ?? 0,
       })));
 
@@ -99,7 +117,7 @@ export default function ArtistDetail() {
   if (notFound) return (
     <div>
       <button className="btn btn-secondary" style={{ marginBottom: 20 }} onClick={() => navigate('/users')}>
-        <ArrowLeft size={14} /> Back to Users
+        <ArrowLeft size={14} /> Back to Artists
       </button>
       <p className="text-muted">Artist not found.</p>
     </div>
@@ -116,7 +134,7 @@ export default function ArtistDetail() {
       <div className="artist-detail-header card">
         <div className="artist-detail-avatar">
           {profile && getAvatarSrc(profile)
-            ? <img src={getAvatarSrc(profile)!} alt={profile.display_name ?? profile.username} className="artist-detail-avatar-img" />
+            ? <img src={getAvatarSrc(profile)!} alt={profile.display_name ?? profile.username} className="artist-detail-avatar-img" loading="lazy" />
             : <UserRound size={40} style={{ opacity: 0.3 }} />
           }
         </div>
@@ -167,9 +185,10 @@ export default function ArtistDetail() {
                 <div className="artist-collection-thumb">
                   {collection.cover_image ? (
                     <img
-                      src={getCoverImageSrc(collection.cover_image, 300)}
+                      src={getCoverImageSrc(collection.cover_image, 500)}
                       alt={collection.name}
                       className="artist-collection-thumb-img"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="artist-collection-thumb-empty">

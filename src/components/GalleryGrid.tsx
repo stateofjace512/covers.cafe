@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -27,6 +27,8 @@ const SORT_LABELS: Record<SortOption, string> = {
   artist_az: 'Artist A–Z',
 };
 
+const PAGE_SIZE = 24;
+
 export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId }: Props) {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
@@ -34,6 +36,8 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
 
   const [covers, setCovers] = useState<Cover[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
   const [selectedCover, setSelectedCover] = useState<Cover | null>(null);
   const [openCollectionPanel, setOpenCollectionPanel] = useState(false);
@@ -42,84 +46,110 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
   const [sort, setSort] = useState<SortOption>('newest');
   const [rateLimited, setRateLimited] = useState(false);
 
+  const favIdsRef = useRef<string[]>([]);
+  const loadingMoreRef = useRef(false);
+  const currentPageRef = useRef(0);
+
   // When tab changes, reset sort to a sensible default
   useEffect(() => {
     if (tab === 'top_rated') setSort('most_favorited');
     else setSort('newest');
   }, [tab]);
 
-  const displayed = useMemo(() => {
-    let list = [...covers].sort((a, b) => {
-      switch (sort) {
-        case 'oldest': return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        case 'most_downloaded': return (b.download_count ?? 0) - (a.download_count ?? 0);
-        case 'most_favorited': return (b.favorite_count ?? 0) - (a.favorite_count ?? 0);
-        case 'title_az': return a.title.localeCompare(b.title);
-        case 'artist_az': return a.artist.localeCompare(b.artist);
-        default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function applySort(q: any, currentSort: SortOption): any {
+    switch (currentSort) {
+      case 'oldest': return q.order('created_at', { ascending: true });
+      case 'most_downloaded': return q.order('download_count', { ascending: false });
+      case 'most_favorited': return q.order('favorite_count', { ascending: false });
+      case 'title_az': return q.order('title', { ascending: true });
+      case 'artist_az': return q.order('artist', { ascending: true });
+      default: return q.order('created_at', { ascending: false });
+    }
+  }
+
+  async function fetchPage(
+    pageNum: number,
+    currentFilter: typeof filter,
+    currentTab: typeof tab,
+    currentUser: typeof user,
+    currentSearchQuery: string,
+    currentArtistUserId: typeof artistUserId,
+    currentSort: SortOption,
+  ): Promise<{ data: Cover[]; more: boolean }> {
+    const from = pageNum * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    if (currentFilter === 'favorites') {
+      if (!currentUser) return { data: [], more: false };
+
+      if (pageNum === 0) {
+        const { data: favs } = await supabase
+          .from('covers_cafe_favorites')
+          .select('cover_id')
+          .eq('user_id', currentUser.id);
+        favIdsRef.current = favs?.map((f: { cover_id: string }) => f.cover_id) ?? [];
       }
-    });
-    return list;
-  }, [covers, sort]);
 
-  const fetchCovers = useCallback(async () => {
-    setLoading(true);
+      const ids = favIdsRef.current;
+      if (!ids.length) return { data: [], more: false };
 
-    if (filter === 'favorites') {
-      if (!user) { setCovers([]); setLoading(false); return; }
-      const { data: favs } = await supabase
-        .from('covers_cafe_favorites')
-        .select('cover_id')
-        .eq('user_id', user.id);
-      const ids = favs?.map((f: { cover_id: string }) => f.cover_id) ?? [];
-      if (!ids.length) { setCovers([]); setLoading(false); return; }
-      const { data } = await supabase
-        .from('covers_cafe_covers')
-        .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
-        .in('id', ids)
-        .order('created_at', { ascending: false });
-      setCovers((data as Cover[]) ?? []);
-    } else if (filter === 'mine') {
-      if (!user) { setCovers([]); setLoading(false); return; }
-      const { data } = await supabase
-        .from('covers_cafe_covers')
-        .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      setCovers((data as Cover[]) ?? []);
-    } else if (filter === 'artist' && artistUserId) {
-      const { data } = await supabase
-        .from('covers_cafe_covers')
-        .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
-        .eq('user_id', artistUserId)
-        .eq('is_public', true)
-        .order('created_at', { ascending: false });
-      setCovers((data as Cover[]) ?? []);
+      const pageIds = ids.slice(from, from + PAGE_SIZE);
+      if (!pageIds.length) return { data: [], more: false };
+
+      const { data } = await applySort(
+        supabase
+          .from('covers_cafe_covers')
+          .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
+          .in('id', pageIds),
+        currentSort,
+      );
+      return { data: (data as Cover[]) ?? [], more: from + PAGE_SIZE < ids.length };
+
+    } else if (currentFilter === 'mine') {
+      if (!currentUser) return { data: [], more: false };
+      const { data } = await applySort(
+        supabase
+          .from('covers_cafe_covers')
+          .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
+          .eq('user_id', currentUser.id),
+        currentSort,
+      ).range(from, to);
+      const d = (data as Cover[]) ?? [];
+      return { data: d, more: d.length === PAGE_SIZE };
+
+    } else if (currentFilter === 'artist' && currentArtistUserId) {
+      const { data } = await applySort(
+        supabase
+          .from('covers_cafe_covers')
+          .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
+          .eq('user_id', currentArtistUserId)
+          .eq('is_public', true),
+        currentSort,
+      ).range(from, to);
+      const d = (data as Cover[]) ?? [];
+      return { data: d, more: d.length === PAGE_SIZE };
+
     } else {
-      // Public gallery — behaviour varies by tab
       let query = supabase
         .from('covers_cafe_covers')
         .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
         .eq('is_public', true);
 
-      if (searchQuery) {
-        query = query.or(`title.ilike.%${searchQuery}%,artist.ilike.%${searchQuery}%,tags.cs.{"${searchQuery.toLowerCase()}"}`);
-        query = query.order('created_at', { ascending: false });
-      } else if (tab === 'acotw') {
+      if (currentSearchQuery) {
+        query = query.or(`title.ilike.%${currentSearchQuery}%,artist.ilike.%${currentSearchQuery}%,tags.cs.{"${currentSearchQuery.toLowerCase()}"}`);
+        query = applySort(query, currentSort);
+      } else if (currentTab === 'acotw') {
         query = query.eq('is_acotw', true).order('acotw_since', { ascending: false, nullsFirst: false });
-      } else if (tab === 'top_rated') {
-        query = query.order('favorite_count', { ascending: false });
       } else {
-        // 'new' — default
-        query = query.order('created_at', { ascending: false });
+        query = applySort(query, currentSort);
       }
 
-      const { data } = await query;
-      setCovers((data as Cover[]) ?? []);
+      const { data } = await query.range(from, to);
+      const d = (data as Cover[]) ?? [];
+      return { data: d, more: d.length === PAGE_SIZE };
     }
-
-    setLoading(false);
-  }, [filter, tab, user, searchQuery, artistUserId]);
+  }
 
   const fetchFavorites = useCallback(async () => {
     if (!user) { setFavoritedIds(new Set()); return; }
@@ -131,9 +161,45 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
   }, [user]);
 
   useEffect(() => {
-    fetchCovers();
+    let cancelled = false;
+    currentPageRef.current = 0;
+    favIdsRef.current = [];
+    setLoading(true);
+    setHasMore(false);
+
+    const capturedFilter = filter;
+    const capturedTab = tab;
+    const capturedUser = user;
+    const capturedSearchQuery = searchQuery;
+    const capturedArtistUserId = artistUserId;
+    const capturedSort = sort;
+
+    fetchPage(0, capturedFilter, capturedTab, capturedUser, capturedSearchQuery, capturedArtistUserId, capturedSort)
+      .then(({ data, more }) => {
+        if (cancelled) return;
+        setCovers(data);
+        setHasMore(more);
+        setLoading(false);
+      });
+
     fetchFavorites();
-  }, [fetchCovers, fetchFavorites]);
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, tab, user?.id, searchQuery, artistUserId, sort, fetchFavorites]);
+
+  const handleLoadMore = async () => {
+    if (loadingMoreRef.current || !hasMore) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    const nextPage = currentPageRef.current + 1;
+    currentPageRef.current = nextPage;
+    const { data, more } = await fetchPage(nextPage, filter, tab, user, searchQuery, artistUserId, sort);
+    setCovers((prev) => [...prev, ...data]);
+    setHasMore(more);
+    setLoadingMore(false);
+    loadingMoreRef.current = false;
+  };
 
   useEffect(() => {
     const onDragEnd = () => setIsDraggingCover(false);
@@ -153,7 +219,6 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
       isFav ? next.delete(coverId) : next.add(coverId);
       return next;
     });
-    // Optimistically update favorite_count on the local cover
     setCovers((prev) => prev.map((c) => c.id === coverId
       ? { ...c, favorite_count: Math.max(0, (c.favorite_count ?? 0) + (isFav ? -1 : 1)) }
       : c
@@ -199,9 +264,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
             ))}
           </select>
         </div>
-
       </div>
-
 
       {isDraggingCover && (
         <div
@@ -224,11 +287,11 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
 
       {searchQuery && (
         <p className="gallery-search-label">
-          Results for <strong>"{searchQuery}"</strong> — {displayed.length} found
+          Results for <strong>"{searchQuery}"</strong> — {covers.length} loaded
         </p>
       )}
 
-      {!displayed.length ? (
+      {!covers.length ? (
         <div className="gallery-empty">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3 }}>
             <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -248,19 +311,35 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
           </p>
         </div>
       ) : (
-        <div className="album-grid">
-          {displayed.map((cover) => (
-            <CoverCard
-              key={cover.id}
-              cover={cover}
-              isFavorited={favoritedIds.has(cover.id)}
-              onToggleFavorite={handleToggleFavorite}
-              onClick={() => { setSelectedCover(cover); setOpenCollectionPanel(false); }}
-              onDeleted={handleCoverDeleted}
-              onDragForCollection={() => setIsDraggingCover(true)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="album-grid">
+            {covers.map((cover) => (
+              <CoverCard
+                key={cover.id}
+                cover={cover}
+                isFavorited={favoritedIds.has(cover.id)}
+                onToggleFavorite={handleToggleFavorite}
+                onClick={() => { setSelectedCover(cover); setOpenCollectionPanel(false); }}
+                onDeleted={handleCoverDeleted}
+                onDragForCollection={() => setIsDraggingCover(true)}
+              />
+            ))}
+          </div>
+
+          {hasMore && (
+            <div className="gallery-load-more">
+              <button
+                className="btn btn-secondary gallery-load-more-btn"
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+              >
+                {loadingMore
+                  ? <><Loader size={14} className="gallery-spinner" /> Loading…</>
+                  : 'Load more'}
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {selectedCover && (
@@ -304,8 +383,15 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
         .gallery-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .gallery-empty p { font-size: 14px; max-width: 300px; line-height: 1.6; }
-.gallery-search-label { font-size: 13px; color: var(--body-text-muted); margin-bottom: 12px; }
+        .gallery-search-label { font-size: 13px; color: var(--body-text-muted); margin-bottom: 12px; }
         .collection-drag-zone { margin-bottom: 12px; border: 2px dashed var(--accent); border-radius: 8px; padding: 12px; text-align: center; font-weight: bold; color: var(--accent-dark); background: rgba(192,90,26,0.08); }
+        .gallery-load-more {
+          display: flex; justify-content: center; padding: 24px 0 8px;
+        }
+        .gallery-load-more-btn {
+          display: flex; align-items: center; gap: 7px;
+          padding: 9px 28px; font-size: 13px; font-weight: bold;
+        }
       `}</style>
     </>
   );
