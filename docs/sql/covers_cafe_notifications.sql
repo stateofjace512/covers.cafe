@@ -82,34 +82,39 @@ begin
     return;
   end if;
 
-  insert into public.covers_cafe_notifications (
-    user_id,
-    actor_user_id,
-    actor_identity_hash,
-    type,
-    cover_id,
-    target_comment_id,
-    cover_title,
-    cover_artist,
-    actor_name,
-    actor_username,
-    content,
-    created_at
-  )
-  values (
-    p_user_id,
-    p_actor_user_id,
-    p_actor_identity_hash,
-    p_type,
-    p_cover_id,
-    p_target_comment_id,
-    coalesce(p_cover_title, 'a cover'),
-    coalesce(p_cover_artist, ''),
-    coalesce(p_actor_name, 'someone'),
-    p_actor_username,
-    p_content,
-    p_created_at
-  );
+  begin
+    insert into public.covers_cafe_notifications (
+      user_id,
+      actor_user_id,
+      actor_identity_hash,
+      type,
+      cover_id,
+      target_comment_id,
+      cover_title,
+      cover_artist,
+      actor_name,
+      actor_username,
+      content,
+      created_at
+    )
+    values (
+      p_user_id,
+      p_actor_user_id,
+      p_actor_identity_hash,
+      p_type,
+      p_cover_id,
+      p_target_comment_id,
+      coalesce(p_cover_title, 'a cover'),
+      coalesce(p_cover_artist, ''),
+      coalesce(p_actor_name, 'someone'),
+      p_actor_username,
+      p_content,
+      p_created_at
+    );
+  exception when others then
+    -- Notifications must never block comment/favorite/like writes.
+    return;
+  end;
 end;
 $$;
 
