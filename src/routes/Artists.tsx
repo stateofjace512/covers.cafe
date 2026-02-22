@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { UserRound } from 'lucide-react';
 import { apiGet } from '../lib/api';
 import type { Profile } from '../lib/types';
+import { getSafeImageUrl } from '../lib/user';
 
 interface ArtistRow extends Profile {
   cover_count: number;
@@ -57,8 +58,8 @@ export default function Users() {
               title={`View covers by ${artist.display_name ?? artist.username}`}
             >
               <div className="artist-avatar">
-                {artist.avatar_url
-                  ? <img src={artist.avatar_url} alt={artist.display_name ?? artist.username} className="artist-avatar-img" />
+                {getSafeImageUrl(artist.avatar_url)
+                  ? <img src={getSafeImageUrl(artist.avatar_url) ?? ''} alt={artist.display_name ?? artist.username} className="artist-avatar-img" />
                   : <UserRound size={28} style={{ opacity: 0.35 }} />
                 }
               </div>

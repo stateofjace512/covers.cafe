@@ -7,7 +7,7 @@ import { computePhash, isDuplicate } from '../lib/phash';
 import { checkRateLimit } from '../lib/rateLimit';
 
 const MIN_DIM = 500;
-const MAX_DIM = 3000;
+const MAX_DIM = 5000;
 const MAX_BULK = 10;
 const UPLOAD_RATE_MAX = 5;
 const UPLOAD_RATE_WINDOW = 60_000; // 1 minute

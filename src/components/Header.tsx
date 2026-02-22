@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Moon, Sun, Search, LogOut, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { getDisplayName } from '../lib/user';
 
 export default function Header() {
   const { user, profile, openAuthModal, signOut } = useAuth();
@@ -58,7 +59,7 @@ export default function Header() {
             <button className="btn btn-ghost header-user-btn" onClick={() => navigate('/profile')}>
               <User size={15} />
               <span className="header-username">
-                {profile?.display_name ?? profile?.username ?? user.email?.split('@')[0]}
+                {getDisplayName(profile, user)}
               </span>
             </button>
             <button className="btn btn-ghost header-signout-btn" onClick={() => signOut()} title="Sign out">

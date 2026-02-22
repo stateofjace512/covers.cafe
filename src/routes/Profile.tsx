@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { User, UserRoundCog } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { getDisplayName, getSafeImageUrl } from '../lib/user';
 import GalleryGrid from '../components/GalleryGrid';
 
 export default function Profile() {
@@ -30,13 +31,13 @@ export default function Profile() {
       <div className="profile-card card">
         <div className="profile-header">
           <div className="profile-avatar">
-            {profile?.avatar_url
-              ? <img src={profile.avatar_url} alt="avatar" className="profile-avatar-img" />
+            {getSafeImageUrl(profile?.avatar_url)
+              ? <img src={getSafeImageUrl(profile?.avatar_url) ?? ''} alt="avatar" className="profile-avatar-img" />
               : <User size={40} style={{ opacity: 0.4 }} />
             }
           </div>
           <div className="profile-info">
-            <h1 className="profile-name">{profile?.display_name ?? profile?.username ?? user.email?.split('@')[0]}</h1>
+            <h1 className="profile-name">{getDisplayName(profile, user)}</h1>
             {profile?.username && <p className="profile-username">@{profile.username}</p>}
             {profile?.bio && <p className="profile-bio">{profile.bio}</p>}
             {profile?.website && <a href={profile.website} className="profile-website" target="_blank" rel="noopener noreferrer">{profile.website}</a>}

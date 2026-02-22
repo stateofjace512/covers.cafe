@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowUpFromLine, ArrowDownToLine, User, Star, Image, Coffee, Cog, UserRoundCog, UserRound } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { getDisplayName, getSafeImageUrl } from '../lib/user';
 
 const NAV = [
   { section: 'Discover', label: 'Gallery',      icon: <Image size={18} />,           path: '/' },
@@ -24,8 +25,8 @@ export default function Sidebar() {
       {/* User panel */}
       <div className="sidebar-user-panel">
         <div className="sidebar-avatar">
-          {profile?.avatar_url
-            ? <img src={profile.avatar_url} alt="avatar" className="sidebar-avatar-img" />
+          {getSafeImageUrl(profile?.avatar_url)
+            ? <img src={getSafeImageUrl(profile?.avatar_url) ?? ''} alt="avatar" className="sidebar-avatar-img" />
             : <User size={26} />
           }
         </div>
@@ -33,7 +34,7 @@ export default function Sidebar() {
           {user ? (
             <>
               <span className="sidebar-user-name">
-                {profile?.display_name ?? profile?.username ?? user.email?.split('@')[0]}
+                {getDisplayName(profile, user)}
               </span>
               <button className="sidebar-user-action" onClick={() => navigate('/profile')}>
                 View Profile &rsaquo;
