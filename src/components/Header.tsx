@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Moon, Sun, Search, Coffee, LogOut, User } from 'lucide-react';
+import { Moon, Sun, Search, LogOut, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+
+const LOGO_URL = `${import.meta.env.PUBLIC_SUPABASE_URL}/storage/v1/object/public/site-assets/icons/cover_cafe_logo.svg`;
 
 export default function Header() {
   const { user, profile, openAuthModal, signOut } = useAuth();
@@ -32,7 +34,9 @@ export default function Header() {
   return (
     <header className="site-header">
       <button className="header-logo" onClick={() => navigate('/')} aria-label="covers.cafe home">
-        <span className="header-logo-icon"><Coffee size={22} /></span>
+        <span className="header-logo-icon">
+          <img src={LOGO_URL} alt="covers.cafe logo" width={22} height={22} style={{ display: 'block' }} />
+        </span>
         <span className="header-logo-text">covers<span className="header-logo-dot">.</span>cafe</span>
       </button>
 

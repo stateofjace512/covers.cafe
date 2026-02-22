@@ -79,7 +79,11 @@ export default function Sidebar() {
       {/* Footer */}
       <div className="sidebar-footer">
         <span className="sidebar-footer-text">covers.cafe</span>
-        <span className="sidebar-footer-version">v0.1</span>
+        <div className="sidebar-footer-links">
+          <button className="sidebar-footer-link" onClick={() => navigate('/privacy')}>Privacy</button>
+          <span className="sidebar-footer-sep">·</span>
+          <button className="sidebar-footer-link" onClick={() => navigate('/terms')}>Terms</button>
+        </div>
       </div>
 
       <style>{`
@@ -157,11 +161,14 @@ export default function Sidebar() {
           position: sticky; bottom: 0;
         }
         .sidebar-footer-text { font-size: 11px; font-weight: bold; color: var(--sidebar-text-muted); letter-spacing: 0.3px; }
-        .sidebar-footer-version {
-          font-size: 10px; color: var(--sidebar-text-muted);
-          background: rgba(0,0,0,0.12); padding: 2px 6px;
-          border-radius: 3px; border: 1px solid var(--sidebar-border);
+        .sidebar-footer-links { display: flex; align-items: center; gap: 5px; }
+        .sidebar-footer-link {
+          font-size: 10px; color: var(--sidebar-text-muted); background: none;
+          border: none; cursor: pointer; padding: 0; box-shadow: none;
+          text-decoration: underline; text-underline-offset: 2px;
         }
+        .sidebar-footer-link:hover { color: var(--accent); transform: none; box-shadow: none; }
+        .sidebar-footer-sep { font-size: 10px; color: var(--sidebar-text-muted); }
       `}</style>
     </aside>
   );

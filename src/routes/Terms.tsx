@@ -1,0 +1,175 @@
+import { FileText } from 'lucide-react';
+
+export default function Terms() {
+  return (
+    <div className="legal-page">
+      <h1 className="section-title"><FileText size={22} /> Terms of Service</h1>
+      <p className="legal-updated">Last updated: February 2026</p>
+
+      <div className="legal-body">
+        <p>
+          These Terms of Service ("Terms") govern your access to and use of covers.cafe ("Service", "we", "us").
+          By accessing or using covers.cafe you agree to be bound by these Terms.
+          If you do not agree, do not use the Service.
+        </p>
+
+        <h2>1. Eligibility</h2>
+        <p>
+          You must be at least 13 years old to use covers.cafe. By using the Service you represent
+          that you meet this requirement and that you have the legal capacity to enter into these Terms.
+        </p>
+
+        <h2>2. Accounts</h2>
+        <p>
+          You are responsible for maintaining the security of your account credentials.
+          You must not share your password or allow unauthorized access to your account.
+          We reserve the right to terminate accounts that violate these Terms, impersonate others,
+          or engage in fraudulent activity. You are responsible for all activity that occurs under your account.
+        </p>
+
+        <h2>3. User Content</h2>
+        <p>
+          covers.cafe allows you to upload, share, and display album cover art and related metadata ("Content").
+          By submitting Content you represent and warrant that:
+        </p>
+        <ul>
+          <li>You own the Content or have all necessary rights and licenses to post it.</li>
+          <li>Your Content does not infringe any third party's intellectual property rights, privacy rights, or any other rights.</li>
+          <li>Your Content does not violate any applicable law or regulation.</li>
+          <li>Your Content is not obscene, defamatory, harassing, threatening, or otherwise objectionable.</li>
+        </ul>
+        <p>
+          By uploading Content you grant covers.cafe a non-exclusive, worldwide, royalty-free license to host,
+          display, and distribute your Content solely for the purpose of operating the Service.
+          You retain all ownership rights to your Content.
+        </p>
+
+        <h2>4. Prohibited Conduct</h2>
+        <p>You agree not to:</p>
+        <ul>
+          <li>Upload content that infringes any copyright, trademark, patent, trade secret, or other intellectual property right.</li>
+          <li>Upload content that is illegal, obscene, pornographic, defamatory, threatening, harassing, or hateful.</li>
+          <li>Impersonate any person or entity or misrepresent your affiliation with any person or entity.</li>
+          <li>Scrape, crawl, or use automated means to access the Service without our prior written consent.</li>
+          <li>Circumvent or attempt to circumvent any technical measures we use to protect the Service.</li>
+          <li>Upload content that contains malware, viruses, or any malicious code.</li>
+          <li>Use the Service for spam, phishing, or any other fraudulent purpose.</li>
+          <li>Attempt to gain unauthorized access to any part of the Service or any related systems.</li>
+        </ul>
+
+        <h2>5. DMCA and Copyright Policy</h2>
+        <p>
+          covers.cafe respects intellectual property rights and expects users to do the same.
+          We comply with the Digital Millennium Copyright Act ("DMCA").
+        </p>
+        <p>
+          If you believe that your copyrighted work has been uploaded to covers.cafe without your authorization,
+          you may submit a DMCA takedown notice to our designated copyright agent:
+        </p>
+        <div className="legal-dmca-box">
+          <p><strong>DMCA Agent:</strong></p>
+          <p>covers.cafe</p>
+          <p>Email: <strong>mstrjk@mstrjk.com</strong></p>
+          <p>Subject line: <em>DMCA Takedown Notice</em></p>
+        </div>
+        <p>Your notice must include:</p>
+        <ul>
+          <li>A physical or electronic signature of the copyright owner or authorized agent.</li>
+          <li>Identification of the copyrighted work claimed to be infringed.</li>
+          <li>Identification of the infringing material and its location on covers.cafe (URL).</li>
+          <li>Your contact information (name, address, telephone number, and email).</li>
+          <li>A statement that you have a good faith belief that the use is not authorized by the copyright owner, its agent, or law.</li>
+          <li>A statement, under penalty of perjury, that the information in the notice is accurate and that you are the copyright owner or are authorized to act on behalf of the owner.</li>
+        </ul>
+        <p>
+          We will respond to valid DMCA notices promptly by removing or disabling access to the infringing content.
+          Repeat infringers will have their accounts terminated.
+        </p>
+        <p>
+          <strong>Counter-Notices:</strong> If you believe your content was removed by mistake, you may send a
+          counter-notice to mstrjk@mstrjk.com with the required information under 17 U.S.C. § 512(g)(3).
+        </p>
+
+        <h2>6. Termination</h2>
+        <p>
+          We reserve the right to suspend or permanently terminate your account and access to the Service at any time,
+          with or without cause, and with or without notice, including for violations of these Terms.
+          Upon termination, your right to use the Service immediately ceases.
+          Provisions that by their nature should survive termination (including Sections 3, 5, 7, and 8) will survive.
+        </p>
+
+        <h2>7. Disclaimer of Warranties</h2>
+        <p>
+          THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED,
+          INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+          NON-INFRINGEMENT. WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, OR SECURE,
+          OR THAT ANY DEFECTS WILL BE CORRECTED.
+        </p>
+
+        <h2>8. Limitation of Liability</h2>
+        <p>
+          TO THE FULLEST EXTENT PERMITTED BY LAW, COVERS.CAFE AND ITS OPERATORS SHALL NOT BE LIABLE FOR ANY
+          INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES,
+          WHETHER INCURRED DIRECTLY OR INDIRECTLY, OR ANY LOSS OF DATA, USE, GOODWILL, OR OTHER INTANGIBLE LOSSES,
+          RESULTING FROM (I) YOUR USE OF OR INABILITY TO USE THE SERVICE; (II) UNAUTHORIZED ACCESS TO OR ALTERATION
+          OF YOUR CONTENT; OR (III) ANY OTHER MATTER RELATING TO THE SERVICE.
+        </p>
+        <p>
+          OUR TOTAL AGGREGATE LIABILITY TO YOU SHALL NOT EXCEED THE GREATER OF $10 USD OR THE AMOUNTS YOU PAID
+          TO US IN THE THREE MONTHS PRECEDING THE CLAIM.
+        </p>
+
+        <h2>9. Indemnification</h2>
+        <p>
+          You agree to indemnify and hold harmless covers.cafe and its operators from any claims, damages, losses,
+          liabilities, costs, and expenses (including reasonable attorney's fees) arising from your use of the Service,
+          your Content, or your violation of these Terms.
+        </p>
+
+        <h2>10. Governing Law</h2>
+        <p>
+          These Terms are governed by and construed in accordance with applicable law.
+          Any disputes shall be resolved through binding arbitration or in a court of competent jurisdiction.
+        </p>
+
+        <h2>11. Changes to These Terms</h2>
+        <p>
+          We may modify these Terms at any time. When we do, we will update the "Last updated" date.
+          Your continued use of the Service after changes constitutes your acceptance of the revised Terms.
+          If the changes are material, we will make reasonable efforts to notify registered users.
+        </p>
+
+        <h2>12. Contact</h2>
+        <p>
+          Questions about these Terms? Email us at <strong>mstrjk@mstrjk.com</strong>.
+        </p>
+      </div>
+
+      <style>{`
+        .legal-page { max-width: 720px; }
+        .legal-updated { font-size: 12px; color: var(--body-text-muted); margin-bottom: 24px; }
+        .legal-body { display: flex; flex-direction: column; gap: 0; }
+        .legal-body p, .legal-body ul { font-size: 14px; color: var(--body-text); line-height: 1.75; margin: 0 0 14px; }
+        .legal-body ul { padding-left: 20px; }
+        .legal-body li { margin-bottom: 6px; }
+        .legal-body h2 {
+          font-size: 16px; font-weight: bold; color: var(--body-text);
+          margin: 24px 0 10px;
+          padding-bottom: 6px; border-bottom: 1px solid var(--body-card-border);
+          text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+        }
+        [data-theme="dark"] .legal-body h2 { text-shadow: none; }
+        .legal-body strong { color: var(--body-text); }
+        .legal-dmca-box {
+          background: var(--sidebar-bg);
+          border: 1px solid var(--body-card-border);
+          border-left: 4px solid var(--accent);
+          border-radius: 4px; padding: 14px 18px;
+          margin: 0 0 14px;
+          display: flex; flex-direction: column; gap: 4px;
+        }
+        .legal-dmca-box p { margin: 0 !important; }
+      `}</style>
+    </div>
+  );
+}

@@ -1,18 +1,30 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Loader } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { checkRateLimit } from '../lib/rateLimit';
 import CoverCard from './CoverCard';
 import CoverModal from './CoverModal';
+import RateLimitModal from './RateLimitModal';
 import type { Cover } from '../lib/types';
 
+type SortOption = 'newest' | 'oldest' | 'most_downloaded' | 'title_az' | 'artist_az';
+
 interface Props {
-  /** 'all' = public gallery, 'favorites' = current user's favorites, 'mine' = user's uploads */
-  filter?: 'all' | 'favorites' | 'mine';
+  filter?: 'all' | 'favorites' | 'mine' | 'artist';
+  artistUserId?: string;
 }
 
-export default function GalleryGrid({ filter = 'all' }: Props) {
+const SORT_LABELS: Record<SortOption, string> = {
+  newest: 'Newest',
+  oldest: 'Oldest',
+  most_downloaded: 'Most Downloaded',
+  title_az: 'Title A–Z',
+  artist_az: 'Artist A–Z',
+};
+
+export default function GalleryGrid({ filter = 'all', artistUserId }: Props) {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') ?? '';
@@ -21,6 +33,29 @@ export default function GalleryGrid({ filter = 'all' }: Props) {
   const [loading, setLoading] = useState(true);
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
   const [selectedCover, setSelectedCover] = useState<Cover | null>(null);
+  const [sort, setSort] = useState<SortOption>('newest');
+  const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [rateLimited, setRateLimited] = useState(false);
+
+  const allTags = useMemo(() => {
+    const set = new Set<string>();
+    covers.forEach((c) => c.tags?.forEach((t) => set.add(t)));
+    return Array.from(set).sort();
+  }, [covers]);
+
+  const displayed = useMemo(() => {
+    let list = activeTag ? covers.filter((c) => c.tags?.includes(activeTag)) : covers;
+    list = [...list].sort((a, b) => {
+      switch (sort) {
+        case 'oldest': return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'most_downloaded': return (b.download_count ?? 0) - (a.download_count ?? 0);
+        case 'title_az': return a.title.localeCompare(b.title);
+        case 'artist_az': return a.artist.localeCompare(b.artist);
+        default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+    return list;
+  }, [covers, activeTag, sort]);
 
   const fetchCovers = useCallback(async () => {
     setLoading(true);
@@ -47,6 +82,14 @@ export default function GalleryGrid({ filter = 'all' }: Props) {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       setCovers((data as Cover[]) ?? []);
+    } else if (filter === 'artist' && artistUserId) {
+      const { data } = await supabase
+        .from('covers_cafe_covers')
+        .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
+        .eq('user_id', artistUserId)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false });
+      setCovers((data as Cover[]) ?? []);
     } else {
       let query = supabase
         .from('covers_cafe_covers')
@@ -63,9 +106,8 @@ export default function GalleryGrid({ filter = 'all' }: Props) {
     }
 
     setLoading(false);
-  }, [filter, user, searchQuery]);
+  }, [filter, user, searchQuery, artistUserId]);
 
-  // Fetch user's favorites to show star state
   const fetchFavorites = useCallback(async () => {
     if (!user) { setFavoritedIds(new Set()); return; }
     const { data } = await supabase
@@ -82,25 +124,26 @@ export default function GalleryGrid({ filter = 'all' }: Props) {
 
   const handleToggleFavorite = async (coverId: string) => {
     if (!user) return;
+    if (!checkRateLimit('favorite', 8, 5000)) {
+      setRateLimited(true);
+      return;
+    }
     const isFav = favoritedIds.has(coverId);
-    // Optimistic update
     setFavoritedIds((prev) => {
       const next = new Set(prev);
       isFav ? next.delete(coverId) : next.add(coverId);
       return next;
     });
-
     if (isFav) {
-      await supabase
-        .from('covers_cafe_favorites')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('cover_id', coverId);
+      await supabase.from('covers_cafe_favorites').delete().eq('user_id', user.id).eq('cover_id', coverId);
     } else {
-      await supabase
-        .from('covers_cafe_favorites')
-        .insert({ user_id: user.id, cover_id: coverId });
+      await supabase.from('covers_cafe_favorites').insert({ user_id: user.id, cover_id: coverId });
     }
+  };
+
+  const handleCoverDeleted = (coverId: string) => {
+    setCovers((prev) => prev.filter((c) => c.id !== coverId));
+    if (selectedCover?.id === coverId) setSelectedCover(null);
   };
 
   if (loading) {
@@ -112,45 +155,82 @@ export default function GalleryGrid({ filter = 'all' }: Props) {
     );
   }
 
-  if (!covers.length) {
-    return (
-      <div className="gallery-empty">
-        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3 }}>
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-          <circle cx="9" cy="9" r="2"/>
-        </svg>
-        <p>
-          {searchQuery
-            ? `No covers found for "${searchQuery}".`
-            : filter === 'favorites'
-            ? 'No favorites yet. Star covers to save them here.'
-            : filter === 'mine'
-            ? 'You haven\'t uploaded any covers yet.'
-            : 'No covers yet. Be the first to upload!'}
-        </p>
-      </div>
-    );
-  }
-
   return (
     <>
+      <div className="gallery-toolbar">
+        <div className="gallery-sort-wrap">
+          <label className="gallery-sort-label">Sort:</label>
+          <select
+            className="gallery-sort-select"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortOption)}
+          >
+            {(Object.keys(SORT_LABELS) as SortOption[]).map((k) => (
+              <option key={k} value={k}>{SORT_LABELS[k]}</option>
+            ))}
+          </select>
+        </div>
+
+        {allTags.length > 0 && (
+          <div className="gallery-tags">
+            <button
+              className={`gallery-tag${activeTag === null ? ' gallery-tag--active' : ''}`}
+              onClick={() => setActiveTag(null)}
+            >
+              All
+            </button>
+            {allTags.map((tag) => (
+              <button
+                key={tag}
+                className={`gallery-tag${activeTag === tag ? ' gallery-tag--active' : ''}`}
+                onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {searchQuery && (
         <p className="gallery-search-label">
-          Showing results for <strong>"{searchQuery}"</strong> — {covers.length} found
+          Results for <strong>"{searchQuery}"</strong> — {displayed.length} found
         </p>
       )}
-      <div className="album-grid">
-        {covers.map((cover) => (
-          <CoverCard
-            key={cover.id}
-            cover={cover}
-            isFavorited={favoritedIds.has(cover.id)}
-            onToggleFavorite={handleToggleFavorite}
-            onClick={() => setSelectedCover(cover)}
-          />
-        ))}
-      </div>
+
+      {!displayed.length ? (
+        <div className="gallery-empty">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3 }}>
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+            <circle cx="9" cy="9" r="2"/>
+          </svg>
+          <p>
+            {activeTag
+              ? `No covers tagged "${activeTag}".`
+              : searchQuery
+              ? `No covers found for "${searchQuery}".`
+              : filter === 'favorites'
+              ? 'No favorites yet. Star covers to save them here.'
+              : filter === 'mine'
+              ? 'You haven\'t uploaded any covers yet.'
+              : 'No covers yet. Be the first to upload!'}
+          </p>
+        </div>
+      ) : (
+        <div className="album-grid">
+          {displayed.map((cover) => (
+            <CoverCard
+              key={cover.id}
+              cover={cover}
+              isFavorited={favoritedIds.has(cover.id)}
+              onToggleFavorite={handleToggleFavorite}
+              onClick={() => setSelectedCover(cover)}
+              onDeleted={handleCoverDeleted}
+            />
+          ))}
+        </div>
+      )}
 
       {selectedCover && (
         <CoverModal
@@ -158,10 +238,39 @@ export default function GalleryGrid({ filter = 'all' }: Props) {
           isFavorited={favoritedIds.has(selectedCover.id)}
           onToggleFavorite={handleToggleFavorite}
           onClose={() => setSelectedCover(null)}
+          onDeleted={handleCoverDeleted}
         />
       )}
 
+      {rateLimited && (
+        <RateLimitModal action="favorite" onClose={() => setRateLimited(false)} />
+      )}
+
       <style>{`
+        .gallery-toolbar {
+          display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap;
+          margin-bottom: 16px;
+        }
+        .gallery-sort-wrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .gallery-sort-label { font-size: 12px; font-weight: bold; color: var(--body-text-muted); }
+        .gallery-sort-select {
+          padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: bold;
+          border: 1px solid var(--body-card-border);
+          background: var(--body-card-bg); color: var(--body-text);
+          box-shadow: var(--shadow-sm); cursor: pointer; outline: none;
+          font-family: Arial, Helvetica, sans-serif;
+        }
+        .gallery-sort-select:focus { border-color: var(--accent); }
+        .gallery-tags { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+        .gallery-tag {
+          font-size: 11px; font-weight: bold; padding: 3px 9px; border-radius: 12px;
+          border: 1px solid var(--body-card-border);
+          background: var(--sidebar-bg); color: var(--body-text-muted);
+          cursor: pointer; transition: background 0.12s, color 0.12s, border-color 0.12s;
+          box-shadow: none;
+        }
+        .gallery-tag:hover { background: var(--accent); color: white; border-color: var(--accent); transform: none; box-shadow: none; }
+        .gallery-tag--active { background: var(--accent); color: white; border-color: var(--accent-dark); }
         .gallery-loading, .gallery-empty {
           display: flex; flex-direction: column;
           align-items: center; justify-content: center;
@@ -171,10 +280,7 @@ export default function GalleryGrid({ filter = 'all' }: Props) {
         .gallery-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .gallery-empty p { font-size: 14px; max-width: 300px; line-height: 1.6; }
-        .gallery-search-label {
-          font-size: 13px; color: var(--body-text-muted);
-          margin-bottom: 16px;
-        }
+        .gallery-search-label { font-size: 13px; color: var(--body-text-muted); margin-bottom: 12px; }
       `}</style>
     </>
   );
