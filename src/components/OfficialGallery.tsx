@@ -47,7 +47,7 @@ function coverPath(publicId: number | null | undefined, artist: string | null, a
 }
 
 export default function OfficialGallery() {
-  const { user } = useAuth();
+  const { session } = useAuth();
   const navigate = useNavigate();
   const [artist, setArtist] = useState('Taylor Swift');
   const [album, setAlbum] = useState('');
@@ -74,15 +74,19 @@ export default function OfficialGallery() {
   }, []);
 
   const persistAsCovers = useCallback(async (rows: OfficialUpsertRow[]) => {
-    if (!rows.length || !user) return;
-    const urls = Array.from(new Set(rows.map((r) => r.album_cover_url)));
-    const { data: existing } = await supabase.from('covers_cafe_covers').select('image_url').in('image_url', urls).contains('tags', ['official']);
-    const existingSet = new Set((existing ?? []).map((r: { image_url: string }) => r.image_url));
-    const inserts = rows.filter((r) => !existingSet.has(r.album_cover_url)).map((r) => ({ user_id: user.id, title: r.album_title ?? 'Unknown album', artist: r.artist_name ?? 'Unknown artist', year: r.release_year, tags: ['official'], storage_path: '', image_url: r.album_cover_url, is_public: true, is_private: false }));
-    if (!inserts.length) return;
-    const { error } = await supabase.from('covers_cafe_covers').insert(inserts);
-    if (error) console.warn('Unable to mirror official covers into covers table:', error.message);
-  }, [user]);
+    if (!rows.length || !session?.access_token) return;
+    const res = await fetch('/api/official/mirror', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ rows }),
+    });
+    if (!res.ok) {
+      console.warn('Unable to mirror official covers into covers table.');
+    }
+  }, [session?.access_token]);
 
   const loadCachedPage = useCallback(async (pageNumber: number) => {
     if (!normalizedArtist) { setCovers([]); setHasMore(false); return [] as OfficialCoverRow[]; }
