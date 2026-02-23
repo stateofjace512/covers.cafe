@@ -79,7 +79,7 @@ function getFuzzyMatches(value: string, options: string[], maxResults = 2): stri
     .map(({ o }) => o);
 }
 
-const ARTIST_SPLIT_RE = /\s*(?:&|feat\.?|ft\.?|with|,)\s*/i;
+const ARTIST_SPLIT_RE = /\s+(?:feat\.?|ft\.?|with)\s+|\s*[&,]\s*/i;
 
 function detectArtistSplit(value: string): string[] {
   const parts = value.split(ARTIST_SPLIT_RE).map((p) => p.trim()).filter(Boolean);
@@ -609,16 +609,16 @@ export default function UploadForm() {
       {splitConfirmPending && (
         <InfoModal
           emoji="🎤"
-          title="Multiple artists detected"
+          title="Separate these artists?"
           body={
             splitConfirmPending === 'single'
               ? <>
                   {artistSplitParts.map((p) => <span key={p} className="fuzzy-hint-tag" style={{ marginRight: 4 }}>{p}</span>)}
                   <br /><br />
-                  Each artist will link to their own page. If this is a group or duo, tap Edit and retype the name without a separator.
+                  Do you want to split these into separate artist links? If this is a group or duo name, tap Edit and retype it without a separator.
                 </>
               : <>
-                  One or more of your uploads has multiple artists. Each artist will link to their own page. If any are groups or duos, tap Edit and retype those names without a separator.
+                  One or more uploads has multiple artists detected. Do you want to split them into separate artist links? If any are group or duo names, tap Edit and retype without a separator.
                 </>
           }
           primaryLabel="Yes, separate them"
