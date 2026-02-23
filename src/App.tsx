@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AppShell from './components/AppShell';
@@ -28,9 +28,137 @@ import NotFound from './routes/NotFound';
 import CoverDetail from './routes/CoverDetail';
 
 
+interface SeoPayload {
+  title: string;
+  description: string;
+}
+
+const DEFAULT_SEO: SeoPayload = {
+  title: 'covers.cafe | Upload and discover album cover art',
+  description: 'Discover, upload, and share album cover art at covers.cafe. Browse artists, favorites, collections, and downloads in one place.',
+};
+
+function upsertMetaByName(name: string, content: string) {
+  if (typeof document === 'undefined') return;
+  let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
+  if (!el) {
+    el = document.createElement('meta');
+    el.setAttribute('name', name);
+    document.head.appendChild(el);
+  }
+  el.setAttribute('content', content);
+}
+
+function upsertMetaByProperty(property: string, content: string) {
+  if (typeof document === 'undefined') return;
+  let el = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null;
+  if (!el) {
+    el = document.createElement('meta');
+    el.setAttribute('property', property);
+    document.head.appendChild(el);
+  }
+  el.setAttribute('content', content);
+}
+
+function upsertCanonical(href: string) {
+  if (typeof document === 'undefined') return;
+  let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+  if (!link) {
+    link = document.createElement('link');
+    link.setAttribute('rel', 'canonical');
+    document.head.appendChild(link);
+  }
+  link.setAttribute('href', href);
+}
+
+function getSeoForPath(pathname: string): SeoPayload {
+  if (pathname === '/') return {
+    title: 'covers.cafe | Home',
+    description: 'Browse new, top rated, and trending album cover art. Search by title, artist, and tags on covers.cafe.',
+  };
+  if (pathname === '/upload') return {
+    title: 'Upload Covers | covers.cafe',
+    description: 'Upload album cover art, add tags, and publish your work for the community at covers.cafe.',
+  };
+  if (pathname === '/users') return {
+    title: 'User Artists | covers.cafe',
+    description: 'Discover covers.cafe community artists, browse profiles, and explore uploaded cover collections.',
+  };
+  if (pathname.startsWith('/users/') && pathname.includes('/collections/')) return {
+    title: 'Collection | covers.cafe',
+    description: 'Explore a curated cover collection on covers.cafe and discover related album artwork.',
+  };
+  if (pathname.startsWith('/users/')) return {
+    title: 'User Profile | covers.cafe',
+    description: 'View user profile details, uploaded covers, and public collections on covers.cafe.',
+  };
+  if (pathname === '/artists') return {
+    title: 'Music Artists | covers.cafe',
+    description: 'Browse music artists and discover the most shared and favorited album cover art by artist name.',
+  };
+  if (pathname.startsWith('/artists/')) return {
+    title: 'Artist Covers | covers.cafe',
+    description: 'Browse cover art for a specific artist, favorite your picks, and download images on covers.cafe.',
+  };
+  if (pathname === '/favorites') return {
+    title: 'Favorites | covers.cafe',
+    description: 'Access your favorite album covers and manage your saved artwork in one place.',
+  };
+  if (pathname === '/downloads') return {
+    title: 'Downloads | covers.cafe',
+    description: 'Review and revisit album covers you downloaded from covers.cafe.',
+  };
+  if (pathname === '/profile') return {
+    title: 'My Profile | covers.cafe',
+    description: 'Manage your covers.cafe profile, view uploads, and keep track of your account activity.',
+  };
+  if (pathname === '/profile/edit') return {
+    title: 'Edit Profile | covers.cafe',
+    description: 'Update your profile details, avatar, and links for your covers.cafe account.',
+  };
+  if (pathname === '/settings') return {
+    title: 'Settings | covers.cafe',
+    description: 'Customize appearance, preferences, and account settings on covers.cafe.',
+  };
+  if (pathname === '/coffee') return {
+    title: 'Support covers.cafe | Buy Me a Coffee',
+    description: 'Support covers.cafe and help keep the album cover art community online.',
+  };
+  if (pathname === '/privacy') return {
+    title: 'Privacy Policy | covers.cafe',
+    description: 'Read the covers.cafe privacy policy and learn how user data is handled.',
+  };
+  if (pathname === '/terms') return {
+    title: 'Terms of Service | covers.cafe',
+    description: 'Review the covers.cafe terms of service for site use, content, and account guidelines.',
+  };
+  if (pathname === '/about') return {
+    title: 'About | covers.cafe',
+    description: 'Learn about covers.cafe, the mission, and the community behind the album cover archive.',
+  };
+  if (pathname === '/acotw') return {
+    title: 'Album Cover of the Week | covers.cafe',
+    description: 'See weekly featured picks and vote results for Album Cover of the Week on covers.cafe.',
+  };
+  if (pathname === '/cms') return {
+    title: 'CMS | covers.cafe',
+    description: 'Admin and moderation tools for managing covers.cafe content and reports.',
+  };
+  if (pathname.startsWith('/cover/')) return {
+    title: 'Cover Details | covers.cafe',
+    description: 'View full-size album artwork, metadata, tags, favorites, and downloads for a cover on covers.cafe.',
+  };
+  return {
+    title: 'Page Not Found | covers.cafe',
+    description: 'The page you requested was not found on covers.cafe. Explore the gallery and discover album cover art.',
+  };
+}
+
+
 
 function AppContent() {
   const { authModalOpen, authModalTab, closeAuthModal, session, user } = useAuth();
+  const location = useLocation();
   const [banStatus, setBanStatus] = useState<{ isBanned: boolean; reason: string | null }>({
     isBanned: false,
     reason: null,
@@ -39,6 +167,21 @@ function AppContent() {
   useEffect(() => {
     applyUserPreferencesToDocument();
   }, []);
+
+  useEffect(() => {
+    const seo = getSeoForPath(location.pathname);
+    document.title = seo.title;
+    upsertMetaByName('description', seo.description);
+    upsertMetaByProperty('og:title', seo.title);
+    upsertMetaByProperty('og:description', seo.description);
+    upsertMetaByProperty('og:type', 'website');
+    upsertMetaByProperty('og:url', `${window.location.origin}${location.pathname}`);
+    upsertMetaByName('twitter:card', 'summary_large_image');
+    upsertMetaByName('twitter:title', seo.title);
+    upsertMetaByName('twitter:description', seo.description);
+    upsertCanonical(`${window.location.origin}${location.pathname}`);
+  }, [location.pathname]);
+
 
   useEffect(() => {
     let cancelled = false;

@@ -86,7 +86,7 @@ export default function CoverDetail() {
       if (!data) { setCover(null); setLoading(false); return; }
       const c = data as Cover;
       setCover(c);
-      document.title = `${c.artist} - ${c.title} | covers.cafe`;
+      document.title = `${c.artist} | ${c.title} | covers.cafe`;
 
       const { data: more } = await supabase
         .from('covers_cafe_covers')
