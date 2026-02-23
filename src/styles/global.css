@@ -54,6 +54,11 @@
   --accent-dark: #8f3f0f;
   --accent-text: #fff8f0;
 
+  /* Skeuomorphic theme images */
+  --skeu-hero: url('/themes/themelight/hero-banner_light-mode.jpg');
+  --skeu-card: url('/themes/themelight/album-card-info_light-mode.jpg');
+  --skeu-btn: url('/themes/themelight/btn btn-primary_light-mode.jpg');
+
   /* Fonts */
   --font-body: 'BodyFont', Arial, Helvetica, sans-serif;
   --font-header: 'HeaderFont', Arial, Helvetica, sans-serif;
@@ -115,6 +120,11 @@
   --btn-shadow: 0 3px 0 rgba(0, 0, 0, 0.5), 0 1px 4px rgba(0, 0, 0, 0.4);
   --btn-shadow-hover: 0 4px 0 rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.45);
   --btn-shadow-active: 0 1px 0 rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.35);
+
+  /* Skeuomorphic theme images */
+  --skeu-hero: url('/themes/themedark/hero-banner_dark-mode.jpg');
+  --skeu-card: url('/themes/themedark/album-card-info_dark-mode.jpg');
+  --skeu-btn: url('/themes/themedark/btn btn-primary_dark-mode.jpg');
 }
 
 /* ---------- Reset & Base ---------- */
@@ -312,6 +322,19 @@ a:hover {
   color: var(--accent-text);
 }
 
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--skeu-btn);
+  background-size: cover;
+  background-position: center;
+  mix-blend-mode: overlay;
+  opacity: 0.38;
+  pointer-events: none;
+  border-radius: 4px;
+}
+
 .btn-primary:hover {
   background: linear-gradient(180deg, #f08040 0%, var(--accent-light) 55%, var(--accent) 100%);
   color: var(--accent-text);
@@ -413,6 +436,20 @@ h1, h2, h3, h4, h5, h6 {
 .album-card-info {
   padding: 10px 12px;
   border-top: 1px solid var(--body-card-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.album-card-info::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--skeu-card);
+  background-size: 100% auto;
+  background-position: center var(--card-skeu-y, 0%);
+  mix-blend-mode: overlay;
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 .album-card-title {
@@ -421,6 +458,7 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  position: relative;
 }
 
 .album-card-artist {
@@ -429,6 +467,7 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  position: relative;
 }
 
 /* ---------- Form elements ---------- */

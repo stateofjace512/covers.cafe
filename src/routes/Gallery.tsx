@@ -82,11 +82,11 @@ export default function Gallery() {
         }
         .hero-banner::before {
           content: ''; position: absolute; inset: 0;
-          background:
-            repeating-linear-gradient(
-              135deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px,
-              transparent 1px, transparent 20px
-            );
+          background-image: var(--skeu-hero);
+          background-size: cover;
+          background-position: center;
+          mix-blend-mode: overlay;
+          opacity: 0.35;
           pointer-events: none;
         }
         .hero-content { position: relative; z-index: 1; max-width: 620px; }

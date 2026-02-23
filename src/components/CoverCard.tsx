@@ -25,6 +25,8 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
   const { user } = useAuth();
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
+  // Derive a stable pseudo-random vertical offset (0–80%) from the cover ID for the skeuomorphic card texture
+  const cardSkeuY = (parseInt(cover.id.replace(/-/g, '').slice(-6), 16) % 81) + '%';
   const [imgLoaded, setImgLoaded] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -102,7 +104,7 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
         </div>
       </div>
 
-      <div className="album-card-info">
+      <div className="album-card-info" style={{ '--card-skeu-y': cardSkeuY } as React.CSSProperties}>
         <div className="album-card-title" title={cover.title}>{cover.title}</div>
         <div className="album-card-artist" title={cover.artist}>{cover.artist}</div>
         <div className="cover-card-meta">
@@ -177,7 +179,7 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
         .cover-card-delete-btn { color: #c83220; }
         .cover-card-delete-btn--confirm { background: #c83220 !important; color: white !important; animation: delete-pulse 0.4s ease; }
         @keyframes delete-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-        .cover-card-meta { display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
+        .cover-card-meta { display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap; position: relative; }
         .cover-card-year { font-size: 17px; color: var(--body-text-muted); background: var(--body-border); padding: 1px 5px; border-radius: 3px; }
         .cover-card-fav-count { display: flex; align-items: center; gap: 2px; font-size: 17px; color: var(--body-text-muted); }
         .cover-card-acotw { display: inline-flex; align-items: center; gap: 3px; font-size: 16px; color: #b8860b; background: rgba(184,134,11,0.12); border: 1px solid rgba(184,134,11,0.3); padding: 1px 5px; border-radius: 3px; }
