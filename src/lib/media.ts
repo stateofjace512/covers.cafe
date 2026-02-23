@@ -22,6 +22,9 @@ export function getCoverDownloadSrc(cover: Pick<Cover, 'storage_path'>, size?: n
   return `/api/cover-media?${params.toString()}`;
 }
 
-export function getAvatarSrc(profile: Pick<Profile, 'avatar_url'>): string | null {
-  return profile.avatar_url;
+export function getAvatarSrc(profile: Pick<Profile, 'avatar_url'> & { updated_at?: string }): string | null {
+  if (!profile.avatar_url) return null;
+  const sep = profile.avatar_url.includes('?') ? '&' : '?';
+  const ts = profile.updated_at ? new Date(profile.updated_at).getTime() : Date.now();
+  return `${profile.avatar_url}${sep}v=${ts}`;
 }

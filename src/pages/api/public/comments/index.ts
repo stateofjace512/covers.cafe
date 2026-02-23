@@ -114,7 +114,12 @@ export const POST: APIRoute = async ({ request }) => {
     cooldownEnd = cooldownUpdate.newEndTime;
   }
 
-  const authorUsername = auth.user.email?.split('@')[0] ?? auth.user.id.slice(0, 8);
+  const { data: authorProfile } = await supabase
+    .from('covers_cafe_profiles')
+    .select('username')
+    .eq('id', auth.user.id)
+    .single();
+  const authorUsername = authorProfile?.username ?? auth.user.email?.split('@')[0] ?? auth.user.id.slice(0, 8);
   const { data: inserted, error: insertError } = await supabase
     .from('comments')
     .insert({

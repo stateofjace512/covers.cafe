@@ -19,7 +19,7 @@ interface Props {
 }
 
 export default function CoverComments({ coverId }: Props) {
-  const { user, session, openAuthModal } = useAuth();
+  const { user, profile, session, openAuthModal } = useAuth();
   const navigate = useNavigate();
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
@@ -41,7 +41,7 @@ export default function CoverComments({ coverId }: Props) {
     [session?.access_token],
   );
 
-  const currentAuthorName = user ? (user.email?.split('@')[0] ?? user.id.slice(0, 8)) : null;
+  const currentAuthorName = user ? (profile?.username ?? user.email?.split('@')[0] ?? user.id.slice(0, 8)) : null;
 
   const formatDate = (value: string) =>
     new Intl.DateTimeFormat('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' }).format(new Date(value));
@@ -190,53 +190,109 @@ export default function CoverComments({ coverId }: Props) {
   };
 
   return (
-    <section className="cover-comments">
-      <h3 className="cover-comments-title"><MessageCircle size={14} /> Comments</h3>
-      {!user && <p className="cover-comments-muted">Sign in to comment, like, report, edit, or delete your comments.</p>}
+    <section className="cc-section">
+      <h3 className="cc-heading">
+        <MessageCircle size={15} />
+        Comments
+        {comments.length > 0 && <span className="cc-count">{comments.length}</span>}
+      </h3>
 
-      <div className="cover-comments-composer">
-        <textarea value={content} onChange={(e) => setContent(e.target.value)} className="cover-comments-input" placeholder={user ? 'Add a comment to this cover...' : 'Sign in to comment...'} maxLength={5000} disabled={!user} />
-        <button className="btn btn-primary" onClick={submitComment} disabled={!user || submitting || !content.trim()}>
-          {submitting ? <><Loader size={13} className="upload-spinner" /> Posting…</> : 'Post comment'}
-        </button>
+      {/* Composer */}
+      <div className="cc-composer">
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="cc-textarea"
+          placeholder={user ? `Comment as @${currentAuthorName ?? '…'}` : 'Sign in to comment…'}
+          maxLength={5000}
+          disabled={!user}
+          rows={3}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) void submitComment();
+          }}
+        />
+        <div className="cc-composer-footer">
+          {!user && (
+            <button className="cc-signin-prompt" onClick={() => openAuthModal('login')}>
+              Sign in to join the conversation
+            </button>
+          )}
+          <button
+            className="btn btn-primary cc-post-btn"
+            onClick={submitComment}
+            disabled={!user || submitting || !content.trim()}
+          >
+            {submitting ? <><Loader size={13} className="upload-spinner" /> Posting…</> : 'Post'}
+          </button>
+        </div>
       </div>
 
-      {status && <p className="cover-comments-status">{status}</p>}
+      {status && <p className="cc-status">{status}</p>}
 
-      {loading ? <p className="cover-comments-muted">Loading comments…</p> : comments.length === 0 ? <p className="cover-comments-muted">No comments yet. Start the convo.</p> : (
-        <ul className="cover-comments-list">
+      {/* Comment list */}
+      {loading ? (
+        <p className="cc-empty"><Loader size={14} className="upload-spinner" /> Loading comments…</p>
+      ) : comments.length === 0 ? (
+        <p className="cc-empty">No comments yet — be the first!</p>
+      ) : (
+        <ul className="cc-list">
           {comments.map((comment) => (
-            <li key={comment.id} className="cover-comment-item">
-              <div className="cover-comment-top">
+            <li key={comment.id} className="cc-item">
+              <div className="cc-item-header">
                 <button
-                  className="cover-comment-author"
+                  className="cc-author"
                   onClick={() => navigate(`/users/${comment.author_username}`)}
                 >
-                  {comment.author_username}
+                  @{comment.author_username}
                 </button>
-                <span title={formatDateTooltip(comment.created_at)}>{formatDate(comment.created_at)}</span>
+                <span className="cc-date" title={formatDateTooltip(comment.created_at)}>
+                  {formatDate(comment.created_at)}
+                </span>
               </div>
+
               {editingId === comment.id ? (
-                <div className="cover-comment-edit-wrap">
-                  <textarea className="cover-comments-input" value={editContent} onChange={(e) => setEditContent(e.target.value)} maxLength={5000} />
-                  <div className="cover-comment-actions">
-                    <button className="cover-comment-action" onClick={() => saveEdit(comment.id)} disabled={editSaving || !editContent.trim()}>
+                <div className="cc-edit-wrap">
+                  <textarea
+                    className="cc-textarea"
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    maxLength={5000}
+                    rows={3}
+                  />
+                  <div className="cc-actions">
+                    <button className="cc-action" onClick={() => saveEdit(comment.id)} disabled={editSaving || !editContent.trim()}>
                       <Check size={12} /> {editSaving ? 'Saving…' : 'Save'}
                     </button>
-                    <button className="cover-comment-action" onClick={cancelEdit}><X size={12} /> Cancel</button>
+                    <button className="cc-action" onClick={cancelEdit}><X size={12} /> Cancel</button>
                   </div>
                 </div>
               ) : (
                 <>
-                  <p className="cover-comment-body">{comment.content}</p>
-                  {comment.edited_at && <p className="cover-comment-edited" title={formatDateTooltip(comment.edited_at)}>edited {formatDate(comment.edited_at)}</p>}
-                  <div className="cover-comment-actions">
-                    <button className="cover-comment-action" onClick={() => toggleLike(comment.id)}><Heart size={12} fill={likedIds.has(comment.id) ? 'currentColor' : 'none'} />{comment.like_count ?? 0}</button>
-                    <button className="cover-comment-action" onClick={() => reportComment(comment.id)}><Flag size={12} /> Report</button>
+                  <p className="cc-body">{comment.content}</p>
+                  {comment.edited_at && (
+                    <p className="cc-edited" title={formatDateTooltip(comment.edited_at)}>
+                      edited {formatDate(comment.edited_at)}
+                    </p>
+                  )}
+                  <div className="cc-actions">
+                    <button
+                      className={`cc-action${likedIds.has(comment.id) ? ' cc-action--liked' : ''}`}
+                      onClick={() => toggleLike(comment.id)}
+                    >
+                      <Heart size={12} fill={likedIds.has(comment.id) ? 'currentColor' : 'none'} />
+                      {comment.like_count ?? 0}
+                    </button>
+                    <button className="cc-action" onClick={() => reportComment(comment.id)}>
+                      <Flag size={12} /> Report
+                    </button>
                     {currentAuthorName && comment.author_username === currentAuthorName && (
                       <>
-                        <button className="cover-comment-action" onClick={() => startEdit(comment)}><Pencil size={12} /> Edit</button>
-                        <button className="cover-comment-action cover-comment-action--delete" onClick={() => deleteComment(comment.id)}><Trash2 size={12} /> Delete</button>
+                        <button className="cc-action" onClick={() => startEdit(comment)}>
+                          <Pencil size={12} /> Edit
+                        </button>
+                        <button className="cc-action cc-action--delete" onClick={() => deleteComment(comment.id)}>
+                          <Trash2 size={12} /> Delete
+                        </button>
                       </>
                     )}
                   </div>
@@ -246,6 +302,225 @@ export default function CoverComments({ coverId }: Props) {
           ))}
         </ul>
       )}
+
+      <style>{`
+        .cc-section {
+          margin-top: 28px;
+          padding-top: 22px;
+          border-top: 2px solid var(--body-border);
+        }
+
+        .cc-heading {
+          font-size: 16px;
+          font-weight: bold;
+          color: var(--body-text);
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          margin-bottom: 14px;
+          text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+        }
+
+        [data-theme="dark"] .cc-heading { text-shadow: none; }
+
+        .cc-count {
+          background: var(--accent);
+          color: var(--accent-text);
+          font-size: 11px;
+          font-weight: bold;
+          padding: 1px 7px;
+          border-radius: 10px;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+        }
+
+        .cc-composer {
+          background: var(--body-card-bg);
+          border: 1px solid var(--body-card-border);
+          border-radius: 7px;
+          box-shadow: var(--shadow-inset-sm);
+          overflow: hidden;
+          margin-bottom: 16px;
+        }
+
+        .cc-textarea {
+          width: 100%;
+          border: none;
+          background: transparent;
+          padding: 12px 14px;
+          font-size: 13px;
+          color: var(--body-text);
+          outline: none;
+          box-shadow: none;
+          resize: none;
+          font-family: Arial, Helvetica, sans-serif;
+          line-height: 1.5;
+        }
+
+        .cc-textarea:focus { box-shadow: none; border-color: transparent; }
+
+        .cc-composer-footer {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 10px;
+          padding: 8px 12px;
+          border-top: 1px solid var(--body-border);
+          background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 100%);
+        }
+
+        .cc-signin-prompt {
+          background: none;
+          border: none;
+          font-size: 12px;
+          color: var(--accent);
+          cursor: pointer;
+          padding: 0;
+          box-shadow: none;
+          font-family: Arial, Helvetica, sans-serif;
+          margin-right: auto;
+        }
+
+        .cc-signin-prompt:hover { text-decoration: underline; }
+
+        .cc-post-btn { font-size: 13px; padding: 5px 14px; }
+
+        .cc-status {
+          font-size: 13px;
+          color: var(--body-text-muted);
+          margin-bottom: 12px;
+          padding: 8px 12px;
+          background: var(--body-card-bg);
+          border: 1px solid var(--body-border);
+          border-radius: 5px;
+        }
+
+        .cc-empty {
+          font-size: 13px;
+          color: var(--body-text-muted);
+          padding: 20px 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .cc-list {
+          list-style: none;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .cc-item {
+          background: var(--body-card-bg);
+          border: 1px solid var(--body-card-border);
+          border-radius: 7px;
+          box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.35);
+          padding: 12px 14px;
+          background-image: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 40%);
+        }
+
+        .cc-item-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 7px;
+        }
+
+        .cc-author {
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 13px;
+          font-weight: bold;
+          color: var(--accent);
+          padding: 0;
+          box-shadow: none;
+          font-family: Arial, Helvetica, sans-serif;
+          letter-spacing: 0.2px;
+        }
+
+        .cc-author:hover { color: var(--accent-light); text-decoration: underline; }
+
+        .cc-date {
+          font-size: 11px;
+          color: var(--body-text-muted);
+          margin-left: auto;
+        }
+
+        .cc-body {
+          font-size: 14px;
+          color: var(--body-text);
+          line-height: 1.55;
+          word-break: break-word;
+          margin-bottom: 8px;
+          white-space: pre-wrap;
+        }
+
+        .cc-edited {
+          font-size: 11px;
+          color: var(--body-text-muted);
+          font-style: italic;
+          margin-bottom: 8px;
+        }
+
+        .cc-actions {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-wrap: wrap;
+          margin-top: 6px;
+        }
+
+        .cc-edit-wrap {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .cc-edit-wrap .cc-textarea {
+          border: 1px solid var(--body-card-border);
+          border-radius: 5px;
+          box-shadow: var(--shadow-inset-sm);
+          padding: 8px 10px;
+        }
+
+        .cc-action {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          background: none;
+          border: 1px solid var(--body-border);
+          border-radius: 4px;
+          padding: 3px 8px;
+          font-size: 11px;
+          color: var(--body-text-muted);
+          cursor: pointer;
+          font-family: Arial, Helvetica, sans-serif;
+          box-shadow: none;
+          transition: background 0.1s, color 0.1s;
+        }
+
+        .cc-action:hover {
+          background: var(--body-border);
+          color: var(--body-text);
+        }
+
+        .cc-action--liked {
+          color: var(--accent);
+          border-color: var(--accent);
+        }
+
+        .cc-action--liked:hover {
+          background: rgba(192, 90, 26, 0.12);
+          color: var(--accent);
+        }
+
+        .cc-action--delete:hover {
+          background: rgba(180, 40, 20, 0.1);
+          color: #c0392b;
+          border-color: #c0392b;
+        }
+      `}</style>
     </section>
   );
 }
