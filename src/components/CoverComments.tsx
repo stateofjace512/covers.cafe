@@ -11,7 +11,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getClientIdentity } from '../lib/comments/identityTracking.client';
 import { supabase } from '../lib/supabase';
-import CastleIcon from './CastleIcon';
 import type { Cover } from '../lib/types';
 
 interface CommentRow {
@@ -42,8 +41,6 @@ export default function CoverComments({ coverId, cover }: Props) {
   const [editContent, setEditContent] = useState('');
   const [editSaving, setEditSaving] = useState(false);
   const [isOperator, setIsOperator] = useState(false);
-  const [pinningId, setPinningId] = useState<string | null>(null);
-  const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
 
   const identity = useMemo(() => (typeof window === 'undefined' ? null : getClientIdentity()), []);
 
@@ -120,47 +117,6 @@ export default function CoverComments({ coverId, cover }: Props) {
     return () => { active = false; };
   }, [user]);
 
-  // Load existing POH pins for this page so we can show pinned state
-  useEffect(() => {
-    async function loadPins() {
-      const res = await fetch('/api/poh/pins');
-      if (!res.ok) return;
-      const { pins } = await res.json() as { pins: { comment_id: string | null }[] };
-      const ids = new Set(pins.map((p) => p.comment_id).filter(Boolean) as string[]);
-      setPinnedIds(ids);
-    }
-    void loadPins();
-  }, []);
-
-  const pinComment = async (comment: CommentRow) => {
-    if (!session?.access_token) return;
-    setPinningId(comment.id);
-    const res = await fetch('/api/cms/pin-comment', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({
-        commentId:        comment.id,
-        commentContent:   comment.content,
-        authorUsername:   comment.author_username,
-        authorUserId:     comment.user_id ?? null,
-        coverId:          cover?.id ?? null,
-        coverTitle:       cover?.title ?? null,
-        coverArtist:      cover?.artist ?? null,
-        coverStoragePath: cover?.storage_path ?? null,
-        coverImageUrl:    cover?.image_url ?? null,
-        pageType:         'music',
-        pageSlug:         cover?.page_slug ?? null,
-      }),
-    });
-    const payload = await res.json();
-    if (res.ok) {
-      setPinnedIds((prev) => new Set([...prev, comment.id]));
-      setStatus('Inducted to the Pin of Heuristics.');
-    } else {
-      setStatus(payload?.error ?? 'Could not pin comment.');
-    }
-    setPinningId(null);
-  };
 
   const submitComment = async () => {
     const trimmed = content.trim();
@@ -367,33 +323,6 @@ export default function CoverComments({ coverId, cover }: Props) {
                           <TrashIcon size={12} /> Delete
                         </button>
                       </>
-                    )}
-                    {isOperator && (
-                      pinnedIds.has(comment.id) ? (
-                        <span className="cc-action cc-action--pinned" title="Inducted to the Pin of Heuristics">
-                          <CastleIcon size={12} /> POH
-                        </span>
-                      ) : (comment.like_count ?? 0) >= 3 ? (
-                        <button
-                          className="cc-action cc-action--pin"
-                          onClick={() => pinComment(comment)}
-                          disabled={pinningId === comment.id}
-                          title="Induct to the Pin of Heuristics"
-                        >
-                          {pinningId === comment.id
-                            ? <LoadingIcon size={11} className="upload-spinner" />
-                            : <CastleIcon size={11} />
-                          }
-                          POH
-                        </button>
-                      ) : (
-                        <span
-                          className="cc-action cc-action--pin cc-action--pin-locked"
-                          title={`Needs ${3 - (comment.like_count ?? 0)} more like${3 - (comment.like_count ?? 0) === 1 ? '' : 's'} to be eligible`}
-                        >
-                          <CastleIcon size={11} /> POH
-                        </span>
-                      )
                     )}
                   </div>
                 </>
@@ -617,42 +546,7 @@ export default function CoverComments({ coverId, cover }: Props) {
           border-color: #c0392b;
         }
 
-        .cc-action--pin {
-          color: #b8860b;
-          border-color: rgba(184, 134, 11, 0.4);
-        }
 
-        .cc-action--pin:hover {
-          background: rgba(184, 134, 11, 0.1);
-          color: #9a6e08;
-          border-color: #b8860b;
-        }
-
-        .cc-action--pin-locked {
-          opacity: 0.35;
-          cursor: not-allowed;
-          pointer-events: auto;
-        }
-
-        .cc-action--pin-locked:hover {
-          background: none;
-          color: #b8860b;
-          border-color: rgba(184, 134, 11, 0.4);
-          transform: none;
-        }
-
-        .cc-action--pinned {
-          cursor: default;
-          color: #b8860b;
-          border-color: rgba(184, 134, 11, 0.5);
-          background: rgba(184, 134, 11, 0.08);
-          font-size: 17px;
-        }
-
-        .cc-action--pinned:hover {
-          transform: none;
-          background: rgba(184, 134, 11, 0.08);
-        }
       `}</style>
     </section>
   );

@@ -23,7 +23,6 @@ import Terms from './routes/Terms';
 import About from './routes/About';
 import Cms from './routes/Cms';
 import Acotw from './routes/Acotw';
-import Poh from './routes/Poh';
 import NotFound from './routes/NotFound';
 import CoverDetail from './routes/CoverDetail';
 
@@ -105,7 +104,6 @@ function AppContent() {
           <Route path="/terms" element={<Terms />} />
           <Route path="/about" element={<About />} />
           <Route path="/acotw" element={<Acotw />} />
-          <Route path="/poh" element={<Poh />} />
           <Route path="/cms" element={<Cms />} />
           <Route path="/cover/:slug" element={<CoverDetail />} />
           <Route path="*" element={<NotFound />} />
