@@ -703,7 +703,7 @@ export default function UploadForm() {
                   <div className="fuzzy-hint fuzzy-hint--split">
                     Multiple artists detected:{' '}
                     {artistSplitParts.map((p) => <span key={p} className="fuzzy-hint-tag">{p}</span>)}
-                    {' '}— save each as a separate upload?
+                    {' '}— each will link to their own artist page.
                   </div>
                 )}
               </div>
@@ -896,7 +896,7 @@ export default function UploadForm() {
                       <div className="fuzzy-hint fuzzy-hint--split" style={{ width: '100%' }}>
                         Multiple artists:{' '}
                         {bulkArtistSplit.map((p) => <span key={p} className="fuzzy-hint-tag">{p}</span>)}
-                        {' '}— save each as a separate upload?
+                        {' '}— each will link to their own artist page.
                       </div>
                     )}
                     {item.errorMsg && (

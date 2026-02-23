@@ -1,5 +1,15 @@
 import type { Cover } from './types';
 
+const ARTIST_SPLIT_RE = /\s*(?:&|feat\.?|ft\.?|with|,)\s*/i;
+
+/** Split a compound artist string (e.g. "Taylor Swift & Lana Del Rey") into individual names. */
+export function parseArtists(artist: string): string[] {
+  const trimmed = artist.trim();
+  if (!trimmed) return [];
+  const parts = trimmed.split(ARTIST_SPLIT_RE).map((p) => p.trim()).filter(Boolean);
+  return parts.length >= 1 ? parts : [trimmed];
+}
+
 function slugifyPart(value: string): string {
   return value
     .toLowerCase()

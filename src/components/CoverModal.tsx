@@ -18,6 +18,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
 import { getCoverImageSrc, getCoverDownloadSrc } from '../lib/media';
+import { parseArtists, slugifyArtist } from '../lib/coverRoutes';
 import CoverComments from './CoverComments';
 
 interface Props {
@@ -355,7 +356,17 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
               <>
                 <div className="cover-modal-titles">
                   <h2 className="cover-modal-title">{cover.title}</h2>
-                  <p className="cover-modal-artist">{cover.artist}</p>
+                  <p className="cover-modal-artist">
+                    {parseArtists(cover.artist).map((name, i, arr) => (
+                      <span key={name}>
+                        <button
+                          className="cover-modal-artist-link"
+                          onClick={() => { onClose(); navigate(`/artists/${slugifyArtist(name)}`, { state: { originalName: name } }); }}
+                        >{name}</button>
+                        {i < arr.length - 1 && ' & '}
+                      </span>
+                    ))}
+                  </p>
                 </div>
 
                 <div className="cover-modal-meta">
@@ -672,6 +683,8 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         }
         [data-theme="dark"] .cover-modal-title { }
         .cover-modal-artist { font-size: 19px; color: var(--body-text-muted); }
+        .cover-modal-artist-link { background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; font-size: inherit; color: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: transparent; transition: text-decoration-color 0.15s, color 0.15s; }
+        .cover-modal-artist-link:hover { color: var(--accent); text-decoration-color: currentColor; transform: none; box-shadow: none; }
         .cover-modal-meta { display: flex; flex-direction: column; gap: 8px; flex: 1; }
         .cover-meta-row { display: flex; align-items: flex-start; gap: 8px; font-size: 19px; color: var(--body-text-muted); }
         .cover-meta-row svg { flex-shrink: 0; margin-top: 1px; }
