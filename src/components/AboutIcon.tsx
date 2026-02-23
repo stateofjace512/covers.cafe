@@ -14,7 +14,6 @@ export default function AboutIcon({ size = 18, className, style }: Props) {
       width={w}
       height={size}
       viewBox="0 0 120 120"
-      shapeRendering="crispEdges"
       aria-hidden="true"
       className={className}
       style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
