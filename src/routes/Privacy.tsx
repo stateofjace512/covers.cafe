@@ -107,18 +107,17 @@ export default function Privacy() {
 
       <style>{`
         .legal-page { max-width: 720px; }
-        .legal-updated { font-size: 15px; color: var(--body-text-muted); margin-bottom: 24px; }
+        .legal-updated { font-size: 18px; color: var(--body-text-muted); margin-bottom: 24px; }
         .legal-body { display: flex; flex-direction: column; gap: 0; }
-        .legal-body p, .legal-body ul { font-size: 17px; color: var(--body-text); line-height: 1.75; margin: 0 0 14px; }
+        .legal-body p, .legal-body ul { font-size: 20px; color: var(--body-text); line-height: 1.75; margin: 0 0 14px; }
         .legal-body ul { padding-left: 20px; }
         .legal-body li { margin-bottom: 6px; }
         .legal-body h2 {
-          font-size: 16px; font-weight: bold; color: var(--body-text);
+          font-size: 19px; font-weight: bold; color: var(--body-text);
           margin: 24px 0 10px;
           padding-bottom: 6px; border-bottom: 1px solid var(--body-card-border);
-          text-shadow: 0 1px 0 rgba(255,255,255,0.4);
         }
-        [data-theme="dark"] .legal-body h2 { text-shadow: none; }
+        [data-theme="dark"] .legal-body h2 { }
         .legal-body strong { color: var(--body-text); }
       `}</style>
     </div>

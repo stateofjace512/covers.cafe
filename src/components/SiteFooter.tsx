@@ -52,17 +52,16 @@ export default function SiteFooter() {
         }
 
         .site-footer-logo {
-          font-size: 18px;
+          font-size: 21px;
           font-weight: bold;
           color: var(--body-text);
           letter-spacing: 0.5px;
-          text-shadow: 0 1px 0 rgba(255,255,255,0.4);
         }
 
-        [data-theme="dark"] .site-footer-logo { text-shadow: none; }
+        [data-theme="dark"] .site-footer-logo { }
 
         .site-footer-tagline {
-          font-size: 14px;
+          font-size: 17px;
           color: var(--body-text-muted);
           letter-spacing: 0.3px;
         }
@@ -78,7 +77,7 @@ export default function SiteFooter() {
           border: 1px solid transparent;
           border-radius: 4px;
           color: var(--body-text-muted);
-          font-size: 15px;
+          font-size: 18px;
           font-family: var(--font-body);
           cursor: pointer;
           padding: 4px 10px;
@@ -93,7 +92,7 @@ export default function SiteFooter() {
         }
 
         .site-footer-copy {
-          font-size: 14px;
+          font-size: 17px;
           color: var(--body-text-muted);
           opacity: 0.7;
         }

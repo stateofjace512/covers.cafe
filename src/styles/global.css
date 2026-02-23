@@ -126,7 +126,7 @@
 
 html {
   font-family: var(--font-body);
-  font-size: 18px;
+  font-size: 21px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -272,11 +272,10 @@ a:hover {
   border-radius: 5px;
   border: 1px solid rgba(0, 0, 0, 0.25);
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 19px;
   font-weight: bold;
   letter-spacing: 0.3px;
   cursor: pointer;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
   box-shadow: var(--btn-shadow);
   transition: box-shadow 0.1s, transform 0.1s, background-color 0.15s;
   position: relative;
@@ -323,7 +322,6 @@ a:hover {
   background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
   color: var(--header-text);
   border-color: rgba(255,255,255,0.2);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
 
 .btn-ghost:hover {
@@ -336,14 +334,13 @@ a:hover {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: bold;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   background: linear-gradient(180deg, var(--accent-light) 0%, var(--accent) 100%);
   color: var(--accent-text);
   box-shadow: 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
-  text-shadow: 0 1px 1px rgba(0,0,0,0.3);
   border: 1px solid var(--accent-dark);
 }
 
@@ -354,10 +351,9 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ---------- Section headings ---------- */
 .section-title {
-  font-size: 20px;
+  font-size: 23px;
   font-weight: bold;
   color: var(--body-text);
-  text-shadow: 0 1px 0 rgba(255,255,255,0.5);
   border-bottom: 2px solid var(--body-border);
   padding-bottom: 8px;
   margin-bottom: 18px;
@@ -367,7 +363,6 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 [data-theme="dark"] .section-title {
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 /* ---------- Album grid ---------- */
@@ -419,7 +414,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .album-card-title {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: bold;
   color: var(--body-text);
   white-space: nowrap;
@@ -428,7 +423,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .album-card-artist {
-  font-size: 15px;
+  font-size: 18px;
   color: var(--body-text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -442,7 +437,7 @@ input[type="email"],
 textarea,
 select {
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 19px;
   padding: 7px 11px;
   border-radius: 4px;
   border: 1px solid var(--body-card-border);
@@ -490,7 +485,7 @@ textarea {
 .ml-auto { margin-left: auto; }
 .text-muted { color: var(--body-text-muted); }
 .font-bold { font-weight: bold; }
-.text-sm { font-size: 15px; }
+.text-sm { font-size: 18px; }
 .mt-4 { margin-top: 16px; }
 .mb-4 { margin-bottom: 16px; }
 

@@ -411,22 +411,21 @@ export default function CoverComments({ coverId, cover }: Props) {
         }
 
         .cc-heading {
-          font-size: 16px;
+          font-size: 19px;
           font-weight: bold;
           color: var(--body-text);
           display: flex;
           align-items: center;
           gap: 7px;
           margin-bottom: 14px;
-          text-shadow: 0 1px 0 rgba(255,255,255,0.4);
         }
 
-        [data-theme="dark"] .cc-heading { text-shadow: none; }
+        [data-theme="dark"] .cc-heading { }
 
         .cc-count {
           background: var(--accent);
           color: var(--accent-text);
-          font-size: 14px;
+          font-size: 17px;
           font-weight: bold;
           padding: 1px 7px;
           border-radius: 10px;
@@ -447,7 +446,7 @@ export default function CoverComments({ coverId, cover }: Props) {
           border: none;
           background: transparent;
           padding: 12px 14px;
-          font-size: 16px;
+          font-size: 19px;
           color: var(--body-text);
           outline: none;
           box-shadow: none;
@@ -471,7 +470,7 @@ export default function CoverComments({ coverId, cover }: Props) {
         .cc-signin-prompt {
           background: none;
           border: none;
-          font-size: 15px;
+          font-size: 18px;
           color: var(--accent);
           cursor: pointer;
           padding: 0;
@@ -482,10 +481,10 @@ export default function CoverComments({ coverId, cover }: Props) {
 
         .cc-signin-prompt:hover { text-decoration: underline; }
 
-        .cc-post-btn { font-size: 16px; padding: 5px 14px; }
+        .cc-post-btn { font-size: 19px; padding: 5px 14px; }
 
         .cc-status {
-          font-size: 16px;
+          font-size: 19px;
           color: var(--body-text-muted);
           margin-bottom: 12px;
           padding: 8px 12px;
@@ -495,7 +494,7 @@ export default function CoverComments({ coverId, cover }: Props) {
         }
 
         .cc-empty {
-          font-size: 16px;
+          font-size: 19px;
           color: var(--body-text-muted);
           padding: 20px 0;
           display: flex;
@@ -530,7 +529,7 @@ export default function CoverComments({ coverId, cover }: Props) {
           background: none;
           border: none;
           cursor: pointer;
-          font-size: 16px;
+          font-size: 19px;
           font-weight: bold;
           color: var(--accent);
           padding: 0;
@@ -542,13 +541,13 @@ export default function CoverComments({ coverId, cover }: Props) {
         .cc-author:hover { color: var(--accent-light); text-decoration: underline; }
 
         .cc-date {
-          font-size: 14px;
+          font-size: 17px;
           color: var(--body-text-muted);
           margin-left: auto;
         }
 
         .cc-body {
-          font-size: 17px;
+          font-size: 20px;
           color: var(--body-text);
           line-height: 1.55;
           word-break: break-word;
@@ -557,7 +556,7 @@ export default function CoverComments({ coverId, cover }: Props) {
         }
 
         .cc-edited {
-          font-size: 14px;
+          font-size: 17px;
           color: var(--body-text-muted);
           font-style: italic;
           margin-bottom: 8px;
@@ -592,7 +591,7 @@ export default function CoverComments({ coverId, cover }: Props) {
           border: 1px solid var(--body-border);
           border-radius: 4px;
           padding: 3px 8px;
-          font-size: 14px;
+          font-size: 17px;
           color: var(--body-text-muted);
           cursor: pointer;
           font-family: var(--font-body);
@@ -650,7 +649,7 @@ export default function CoverComments({ coverId, cover }: Props) {
           color: #b8860b;
           border-color: rgba(184, 134, 11, 0.5);
           background: rgba(184, 134, 11, 0.08);
-          font-size: 14px;
+          font-size: 17px;
         }
 
         .cc-action--pinned:hover {

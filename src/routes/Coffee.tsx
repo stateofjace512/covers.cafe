@@ -24,8 +24,8 @@ export default function CoffeePage() {
           max-width: 380px; text-align: center; padding: 50px 32px;
           display: flex; flex-direction: column; align-items: center; gap: 12px;
         }
-        .coffee-message { font-size: 20px; font-weight: bold; color: var(--body-text); margin: 0; }
-        .coffee-sub { font-size: 17px; color: var(--body-text-muted); line-height: 1.6; margin: 0; }
+        .coffee-message { font-size: 23px; font-weight: bold; color: var(--body-text); margin: 0; }
+        .coffee-sub { font-size: 20px; color: var(--body-text-muted); line-height: 1.6; margin: 0; }
         .coffee-btn { margin-top: 8px; text-decoration: none; }
         .coffee-btn:hover { text-decoration: none; }
       `}</style>

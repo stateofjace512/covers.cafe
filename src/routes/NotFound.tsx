@@ -43,17 +43,16 @@ export default function NotFound() {
           line-height: 1;
           margin: 0 0 10px;
           letter-spacing: -2px;
-          text-shadow: 0 2px 0 rgba(255,255,255,0.5), 0 -1px 0 rgba(0,0,0,0.1);
         }
-        [data-theme="dark"] .not-found-code { text-shadow: none; }
+        [data-theme="dark"] .not-found-code { }
         .not-found-headline {
-          font-size: 18px;
+          font-size: 21px;
           font-weight: bold;
           color: var(--body-text);
           margin: 0 0 10px;
         }
         .not-found-sub {
-          font-size: 17px;
+          font-size: 20px;
           color: var(--body-text-muted);
           line-height: 1.65;
           margin: 0 0 28px;
@@ -63,7 +62,7 @@ export default function NotFound() {
           align-items: center;
           gap: 8px;
           padding: 10px 24px;
-          font-size: 17px;
+          font-size: 20px;
           font-weight: bold;
         }
       `}</style>

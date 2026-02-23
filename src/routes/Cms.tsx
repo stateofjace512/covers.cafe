@@ -616,19 +616,19 @@ export default function Cms() {
 
       <style>{`
         .cms-section { margin-bottom: 20px; padding: 20px 22px; }
-        .cms-h2 { font-size: 18px; font-weight: bold; margin: 0 0 14px; color: var(--body-text); }
-        .cms-desc { font-size: 16px; color: var(--body-text-muted); margin: 0 0 10px; }
+        .cms-h2 { font-size: 21px; font-weight: bold; margin: 0 0 14px; color: var(--body-text); }
+        .cms-desc { font-size: 19px; color: var(--body-text-muted); margin: 0 0 10px; }
         .cms-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-        .cms-count { font-size: 15px; color: var(--body-text-muted); background: var(--body-border); padding: 2px 7px; border-radius: 10px; font-weight: bold; }
-        .cms-msg { padding: 9px 14px; border-radius: 6px; font-size: 16px; margin-bottom: 12px; }
+        .cms-count { font-size: 18px; color: var(--body-text-muted); background: var(--body-border); padding: 2px 7px; border-radius: 10px; font-weight: bold; }
+        .cms-msg { padding: 9px 14px; border-radius: 6px; font-size: 19px; margin-bottom: 12px; }
         .cms-msg--ok { background: rgba(40,160,80,0.1); border: 1px solid rgba(40,160,80,0.35); color: #1a7a40; }
         .cms-msg--err { background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3); color: #b42318; }
 
         /* Badges */
-        .cms-badge { font-size: 14px; font-weight: bold; padding: 2px 7px; border-radius: 10px; }
+        .cms-badge { font-size: 17px; font-weight: bold; padding: 2px 7px; border-radius: 10px; }
         .cms-badge--banned { background: rgba(200,50,30,0.12); color: #b42318; border: 1px solid rgba(200,50,30,0.25); }
         .cms-badge--op { background: rgba(115,73,42,0.12); color: var(--accent); border: 1px solid rgba(115,73,42,0.25); }
-        .cms-badge--warn { background: rgba(200,130,0,0.12); color: #a06000; border: 1px solid rgba(200,130,0,0.25); font-size: 15px; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+        .cms-badge--warn { background: rgba(200,130,0,0.12); color: #a06000; border: 1px solid rgba(200,130,0,0.25); font-size: 18px; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
         .cms-badge--private { background: rgba(120,100,140,0.12); color: #6a4a8a; border: 1px solid rgba(120,100,140,0.3); }
         .cms-badge--locked { background: rgba(80,80,80,0.12); color: #555; border: 1px solid rgba(80,80,80,0.25); }
         .cms-cover-badges { display: flex; gap: 4px; align-items: center; }
@@ -637,11 +637,11 @@ export default function Cms() {
         .cms-dropdown { position: absolute; z-index: 10; width: 100%; border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; overflow: hidden; background: var(--body-card-bg); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
         .cms-dropdown-item { width: 100%; border-radius: 0; justify-content: flex-start; text-align: left; }
         .cms-user-panel { margin-top: 12px; padding: 14px; border: 1px solid var(--body-border); border-radius: 8px; display: grid; gap: 10px; background: var(--body-card-bg); }
-        .cms-user-header { display: flex; align-items: center; gap: 8px; font-size: 17px; }
-        .cms-ban-info { font-size: 15px; color: var(--body-text-muted); display: flex; flex-direction: column; gap: 2px; }
+        .cms-user-header { display: flex; align-items: center; gap: 8px; font-size: 20px; }
+        .cms-ban-info { font-size: 18px; color: var(--body-text-muted); display: flex; flex-direction: column; gap: 2px; }
         .cms-field-group { display: grid; gap: 8px; }
         .cms-row { display: flex; align-items: center; gap: 8px; }
-        .cms-label { font-size: 15px; font-weight: bold; color: var(--body-text-muted); white-space: nowrap; }
+        .cms-label { font-size: 18px; font-weight: bold; color: var(--body-text-muted); white-space: nowrap; }
         .cms-select { flex: 1; }
         .cms-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .cms-actions--inline { flex-shrink: 0; }
@@ -649,36 +649,35 @@ export default function Cms() {
         /* Cover list */
         .cms-covers-list { display: grid; gap: 12px; }
         .cms-user-group { border: 1px solid var(--body-border); border-radius: 8px; overflow: hidden; }
-        .cms-user-group-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--body-card-bg); font-size: 16px; font-weight: bold; border-bottom: 1px solid var(--body-border); }
+        .cms-user-group-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--body-card-bg); font-size: 19px; font-weight: bold; border-bottom: 1px solid var(--body-border); }
         .cms-cover-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--body-border); }
         .cms-cover-row:last-child { border-bottom: none; }
         .cms-cover-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 4px; flex-shrink: 0; border: 1px solid var(--body-border); }
-        .cms-cover-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 16px; overflow: hidden; }
+        .cms-cover-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 19px; overflow: hidden; }
         .cms-cover-meta strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .cms-cover-meta span { color: var(--body-text-muted); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cms-cover-meta span { color: var(--body-text-muted); font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         /* Reports */
         .cms-report-list { display: grid; gap: 10px; }
         .cms-report-card { border: 1px solid var(--body-border); border-radius: 8px; padding: 12px; display: grid; gap: 10px; }
-        .cms-report-meta { display: flex; flex-direction: column; gap: 4px; font-size: 16px; }
+        .cms-report-meta { display: flex; flex-direction: column; gap: 4px; font-size: 19px; }
 
         /* Bans */
         .cms-ban-list { display: grid; gap: 8px; }
         .cms-ban-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--body-border); border-radius: 8px; }
         .cms-ban-details { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
-        .cms-ban-user { font-size: 16px; font-weight: bold; }
-        .cms-ban-reason { font-size: 15px; color: var(--body-text-muted); }
-        .cms-ban-date { font-size: 14px; color: var(--body-text-muted); }
+        .cms-ban-user { font-size: 19px; font-weight: bold; }
+        .cms-ban-reason { font-size: 18px; color: var(--body-text-muted); }
+        .cms-ban-date { font-size: 17px; color: var(--body-text-muted); }
 
         /* Operators */
         .cms-op-list { display: grid; gap: 6px; }
-        .cms-op-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--body-border); border-radius: 8px; font-size: 16px; font-weight: bold; }
+        .cms-op-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--body-border); border-radius: 8px; font-size: 19px; font-weight: bold; }
 
         /* Danger button */
         .cms-btn-danger {
           background: linear-gradient(180deg, #e04030 0%, #b83020 100%);
           color: #fff; border-color: #a02818;
-          text-shadow: 0 1px 1px rgba(0,0,0,0.3);
         }
         .cms-btn-danger:hover { background: linear-gradient(180deg, #e85040 0%, #c03828 100%); transform: translateY(-1px); }
         .cms-btn-danger:active { transform: translateY(0); }

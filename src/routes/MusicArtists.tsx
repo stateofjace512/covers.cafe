@@ -131,12 +131,12 @@ export default function MusicArtists() {
         .toolbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
         .music-artist-search {
           padding: 7px 12px; border-radius: 4px; border: 1px solid var(--body-card-border);
-          background: var(--body-card-bg); color: var(--body-text); font-size: 16px;
+          background: var(--body-card-bg); color: var(--body-text); font-size: 19px;
           box-shadow: var(--shadow-inset-sm); outline: none; width: 220px;
           font-family: var(--font-body); transition: border-color 0.15s, box-shadow 0.15s;
         }
         .music-artist-search:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
-        .music-artist-count-label { font-size: 15px; color: var(--body-text-muted); font-weight: bold; }
+        .music-artist-count-label { font-size: 18px; color: var(--body-text-muted); font-weight: bold; }
         .music-artist-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -162,13 +162,12 @@ export default function MusicArtists() {
         .music-artist-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--body-text-muted); }
         .music-artist-info { padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; }
         .music-artist-name {
-          font-size: 22px; font-weight: bold; color: var(--body-text);
+          font-size: 25px; font-weight: bold; color: var(--body-text);
           font-family: var(--font-header);
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-          text-shadow: 0 1px 0 rgba(255,255,255,0.4);
         }
-        [data-theme="dark"] .music-artist-name { text-shadow: none; }
-        .music-artist-covers { font-size: 17px; color: var(--body-text-muted); font-family: var(--font-body); }
+        [data-theme="dark"] .music-artist-name { }
+        .music-artist-covers { font-size: 20px; color: var(--body-text-muted); font-family: var(--font-body); }
       `}</style>
     </div>
   );

@@ -102,7 +102,7 @@ export default function Artists() {
         .toolbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
         .toolbar-search {
           padding: 7px 12px; border-radius: 4px; border: 1px solid var(--body-card-border);
-          background: var(--body-card-bg); color: var(--body-text); font-size: 16px;
+          background: var(--body-card-bg); color: var(--body-text); font-size: 19px;
           box-shadow: var(--shadow-inset-sm); outline: none; width: 220px;
           font-family: var(--font-body); transition: border-color 0.15s, box-shadow 0.15s;
         }
@@ -129,10 +129,10 @@ export default function Artists() {
         }
         .artist-avatar-img { width: 100%; height: 100%; object-fit: cover; }
         .artist-info { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-        .artist-name { font-size: 17px; font-weight: bold; color: var(--body-text); text-shadow: 0 1px 0 rgba(255,255,255,0.4); display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: center; }
-        [data-theme="dark"] .artist-name { text-shadow: none; }
-        .artist-you-badge { font-size: 13px; font-weight: bold; background: var(--accent); color: white; padding: 1px 6px; border-radius: 8px; letter-spacing: 0.3px; }
-        .artist-count { font-size: 14px; color: var(--body-text-muted); }
+        .artist-name { font-size: 20px; font-weight: bold; color: var(--body-text); display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: center; }
+        [data-theme="dark"] .artist-name { }
+        .artist-you-badge { font-size: 16px; font-weight: bold; background: var(--accent); color: white; padding: 1px 6px; border-radius: 8px; letter-spacing: 0.3px; }
+        .artist-count { font-size: 17px; color: var(--body-text-muted); }
       `}</style>
     </div>
   );

@@ -148,30 +148,28 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
         .sidebar-avatar-img { width: 100%; height: 100%; object-fit: cover; }
         .sidebar-user-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .sidebar-user-name {
-          font-size: 17px; font-weight: bold; color: var(--sidebar-text);
-          text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+          font-size: 20px; font-weight: bold; color: var(--sidebar-text);
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        [data-theme="dark"] .sidebar-user-name { text-shadow: none; }
+        [data-theme="dark"] .sidebar-user-name { }
         .sidebar-user-action {
-          font-size: 15px; color: var(--accent); font-weight: bold;
+          font-size: 18px; color: var(--accent); font-weight: bold;
           background: none; border: none; cursor: pointer; padding: 0; text-align: left;
           box-shadow: none;
         }
         .sidebar-user-action:hover { color: var(--accent-light); transform: none; }
         .sidebar-nav { padding: 10px 0; flex: 1; }
         .sidebar-section-label {
-          font-size: 16px; font-weight: bold; letter-spacing: 1.2px;
+          font-size: 19px; font-weight: bold; letter-spacing: 1.2px;
           font-family: var(--font-header);
           text-transform: uppercase; color: var(--sidebar-text-muted);
           padding: 14px 16px 4px;
-          text-shadow: 0 1px 0 rgba(255,255,255,0.3);
         }
-        [data-theme="dark"] .sidebar-section-label { text-shadow: none; }
+        [data-theme="dark"] .sidebar-section-label { }
         .sidebar-nav-item {
           display: flex; align-items: center; gap: 11px;
           width: 100%; padding: 9px 16px;
-          color: var(--sidebar-text); font-size: 21px; font-weight: bold; font-family: var(--font-header);
+          color: var(--sidebar-text); font-size: 24px; font-weight: bold; font-family: var(--font-header);
           background: none; border: none; border-left: 3px solid transparent;
           cursor: pointer; text-align: left;
           transition: background 0.12s, border-color 0.12s;
@@ -186,7 +184,6 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
           background: linear-gradient(90deg, var(--sidebar-active-bg) 0%, rgba(115,73,42,0.85) 100%);
           color: var(--sidebar-active-text) !important;
           border-left-color: #f0a060;
-          text-shadow: 0 1px 2px rgba(0,0,0,0.4);
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.15) !important;
         }
         .sidebar-nav-item--active:hover {
