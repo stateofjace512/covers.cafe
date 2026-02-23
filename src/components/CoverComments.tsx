@@ -19,7 +19,7 @@ interface Props {
 }
 
 export default function CoverComments({ coverId }: Props) {
-  const { user, session, openAuthModal } = useAuth();
+  const { user, session, profile, openAuthModal } = useAuth();
   const navigate = useNavigate();
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
@@ -41,7 +41,7 @@ export default function CoverComments({ coverId }: Props) {
     [session?.access_token],
   );
 
-  const currentAuthorName = user ? (user.email?.split('@')[0] ?? user.id.slice(0, 8)) : null;
+  const currentAuthorName = profile?.username ?? null;
 
   const formatDate = (value: string) =>
     new Intl.DateTimeFormat('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' }).format(new Date(value));
