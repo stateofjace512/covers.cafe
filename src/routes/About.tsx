@@ -70,7 +70,7 @@ export default function About() {
       <style>{`
         .about-page { max-width: 680px; }
         .legal-body { display: flex; flex-direction: column; gap: 0; }
-        .legal-body p { font-size: 14px; color: var(--body-text); line-height: 1.75; margin: 0 0 14px; }
+        .legal-body p { font-size: 17px; color: var(--body-text); line-height: 1.75; margin: 0 0 14px; }
         .about-lede {
           font-size: 16px !important;
           font-weight: bold;
@@ -88,7 +88,7 @@ export default function About() {
           flex-direction: column;
           gap: 8px;
         }
-        .about-meta-row { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+        .about-meta-row { display: flex; align-items: center; gap: 12px; font-size: 16px; }
         .about-meta-key { font-weight: bold; color: var(--body-text-muted); min-width: 70px; }
         .about-meta-val { color: var(--body-text); }
         .about-meta-link { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }

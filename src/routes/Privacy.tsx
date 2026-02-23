@@ -107,9 +107,9 @@ export default function Privacy() {
 
       <style>{`
         .legal-page { max-width: 720px; }
-        .legal-updated { font-size: 12px; color: var(--body-text-muted); margin-bottom: 24px; }
+        .legal-updated { font-size: 15px; color: var(--body-text-muted); margin-bottom: 24px; }
         .legal-body { display: flex; flex-direction: column; gap: 0; }
-        .legal-body p, .legal-body ul { font-size: 14px; color: var(--body-text); line-height: 1.75; margin: 0 0 14px; }
+        .legal-body p, .legal-body ul { font-size: 17px; color: var(--body-text); line-height: 1.75; margin: 0 0 14px; }
         .legal-body ul { padding-left: 20px; }
         .legal-body li { margin-bottom: 6px; }
         .legal-body h2 {

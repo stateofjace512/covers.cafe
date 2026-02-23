@@ -45,7 +45,7 @@ export default function RateLimitModal({ action, onClose }: Props) {
           text-shadow: 0 1px 0 rgba(255,255,255,0.4);
         }
         [data-theme="dark"] .rate-limit-title { text-shadow: none; }
-        .rate-limit-body { font-size: 15px; color: var(--body-text-muted); line-height: 1.5; }
+        .rate-limit-body { font-size: 18px; color: var(--body-text-muted); line-height: 1.5; }
       `}</style>
     </div>
   );

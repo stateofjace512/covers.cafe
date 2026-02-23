@@ -246,7 +246,7 @@ export default function Poh() {
         }
 
         .poh-subtitle {
-          font-size: 13px;
+          font-size: 16px;
           color: #6b3d1f;
           font-style: italic;
           letter-spacing: 0.4px;
@@ -285,8 +285,8 @@ export default function Poh() {
         }
 
         .poh-empty-icon { font-size: 48px; opacity: 0.35; }
-        .poh-empty p { font-size: 15px; font-style: italic; }
-        .poh-empty-sub { font-size: 12px; opacity: 0.7; }
+        .poh-empty p { font-size: 18px; font-style: italic; }
+        .poh-empty-sub { font-size: 15px; opacity: 0.7; }
 
         /* ── Hall grid ──────────────────────────────────────────────── */
         .poh-hall {
@@ -441,7 +441,7 @@ export default function Poh() {
 
         /* The quote */
         .poh-quote {
-          font-size: 14px;
+          font-size: 17px;
           line-height: 1.7;
           color: #2a1505;
           font-family: Georgia, 'Times New Roman', serif;
@@ -498,7 +498,7 @@ export default function Poh() {
           background: none;
           border: none;
           cursor: pointer;
-          font-size: 12px;
+          font-size: 15px;
           font-weight: bold;
           color: #8b4513;
           padding: 0;
@@ -522,7 +522,7 @@ export default function Poh() {
         }
 
         .poh-on {
-          font-size: 11px;
+          font-size: 14px;
           color: #7a5030;
           font-style: italic;
           white-space: nowrap;
@@ -604,7 +604,7 @@ export default function Poh() {
         }
 
         .poh-plaque-text {
-          font-size: 11px;
+          font-size: 14px;
           font-weight: bold;
           letter-spacing: 0.8px;
           text-transform: uppercase;
@@ -619,7 +619,7 @@ export default function Poh() {
         }
 
         .poh-plaque-date {
-          font-size: 10px;
+          font-size: 13px;
           color: rgba(58,32,0,0.75);
           letter-spacing: 0.4px;
           font-style: italic;

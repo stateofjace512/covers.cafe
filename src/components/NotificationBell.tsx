@@ -222,7 +222,7 @@ export default function NotificationBell() {
         .notif-badge {
           position: absolute; top: 2px; right: 2px;
           background: #e03020; color: white;
-          font-size: 9px; font-weight: bold;
+          font-size: 12px; font-weight: bold;
           border-radius: 8px; padding: 1px 4px;
           min-width: 14px; text-align: center; line-height: 1.4;
           border: 1.5px solid var(--header-bg);
@@ -246,11 +246,11 @@ export default function NotificationBell() {
           flex-shrink: 0;
         }
         .notif-panel-title {
-          font-size: 13px; font-weight: bold; color: var(--body-text);
+          font-size: 16px; font-weight: bold; color: var(--body-text);
           display: flex; align-items: center; gap: 7px;
         }
         .notif-panel-count {
-          font-size: 11px; font-weight: bold;
+          font-size: 14px; font-weight: bold;
           background: var(--accent); color: white;
           border-radius: 10px; padding: 1px 6px; line-height: 1.5;
         }
@@ -261,7 +261,7 @@ export default function NotificationBell() {
         }
         .notif-close-btn:hover { color: var(--body-text); transform: none; box-shadow: none; }
         .notif-list { overflow-y: auto; flex: 1; min-height: 0; }
-        .notif-empty { font-size: 13px; color: var(--body-text-muted); padding: 20px 14px; text-align: center; line-height: 1.5; }
+        .notif-empty { font-size: 16px; color: var(--body-text-muted); padding: 20px 14px; text-align: center; line-height: 1.5; }
         .notif-item {
           display: flex; gap: 8px; align-items: flex-start;
           padding: 9px 10px 9px 12px;
@@ -273,7 +273,7 @@ export default function NotificationBell() {
         .notif-item--new { background: rgba(192,90,26,0.06); }
         .notif-item--new:hover { background: rgba(192,90,26,0.1); }
         .notif-num {
-          font-size: 9px; font-weight: bold; color: var(--body-text-muted);
+          font-size: 12px; font-weight: bold; color: var(--body-text-muted);
           min-width: 16px; text-align: right; margin-top: 3px; flex-shrink: 0;
           opacity: 0.5;
         }
@@ -281,23 +281,23 @@ export default function NotificationBell() {
         .notif-icon--fav { color: #d4a020; }
         .notif-icon--cmt { color: var(--accent); }
         .notif-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
-        .notif-text { font-size: 12px; color: var(--body-text); line-height: 1.4; margin: 0; }
+        .notif-text { font-size: 15px; color: var(--body-text); line-height: 1.4; margin: 0; }
         .notif-user-link {
           font-weight: bold; color: var(--body-text);
           background: none; border: none; padding: 0; cursor: pointer;
-          font-size: 12px; box-shadow: none; font-family: inherit;
+          font-size: 15px; box-shadow: none; font-family: inherit;
           text-decoration: underline; text-underline-offset: 2px;
         }
         .notif-user-link:hover { color: var(--accent); transform: none; box-shadow: none; }
         .notif-cover-link {
           font-style: italic; color: var(--accent);
           background: none; border: none; padding: 0; cursor: pointer;
-          font-size: 12px; box-shadow: none; font-family: inherit;
+          font-size: 15px; box-shadow: none; font-family: inherit;
           text-decoration: underline; text-underline-offset: 2px;
         }
         .notif-cover-link:hover { opacity: 0.8; transform: none; box-shadow: none; }
-        .notif-comment-preview { font-size: 11px; color: var(--body-text-muted); font-style: italic; margin: 0; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .notif-time { font-size: 10px; color: var(--body-text-muted); }
+        .notif-comment-preview { font-size: 14px; color: var(--body-text-muted); font-style: italic; margin: 0; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .notif-time { font-size: 13px; color: var(--body-text-muted); }
         .notif-dismiss-btn {
           flex-shrink: 0; margin-top: 1px;
           display: flex; align-items: center; justify-content: center;

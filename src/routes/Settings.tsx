@@ -633,7 +633,7 @@ export default function Settings() {
         .settings-layout { display: flex; flex-direction: column; gap: 20px; max-width: 600px; }
         .settings-section { padding: 20px 22px; }
         .settings-section-title {
-          font-size: 15px; font-weight: bold; color: var(--body-text);
+          font-size: 18px; font-weight: bold; color: var(--body-text);
           text-shadow: 0 1px 0 rgba(255,255,255,0.4);
           margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--body-border);
           display: flex; align-items: center; gap: 6px;
@@ -643,10 +643,10 @@ export default function Settings() {
         .settings-row--expandable { padding-bottom: 4px; }
         .settings-row-info { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 180px; }
         .settings-row-label {
-          font-size: 13px; font-weight: bold; color: var(--body-text);
+          font-size: 16px; font-weight: bold; color: var(--body-text);
           display: flex; align-items: center; gap: 5px;
         }
-        .settings-row-desc { font-size: 12px; color: var(--body-text-muted); line-height: 1.5; }
+        .settings-row-desc { font-size: 15px; color: var(--body-text-muted); line-height: 1.5; }
         .settings-row-control { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .settings-divider { height: 1px; background: var(--body-border); margin: 14px 0; }
         /* Danger section */
@@ -670,7 +670,7 @@ export default function Settings() {
           width: 100%; padding: 8px 12px; border-radius: 4px;
           border: 1px solid var(--body-card-border);
           background: var(--body-card-bg); color: var(--body-text);
-          font-size: 13px; font-family: var(--font-body);
+          font-size: 16px; font-family: var(--font-body);
           box-shadow: var(--shadow-inset-sm); outline: none;
           transition: border-color 0.15s, box-shadow 0.15s;
           box-sizing: border-box;
@@ -685,30 +685,30 @@ export default function Settings() {
         .settings-inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .settings-inline-error {
           display: flex; align-items: center; gap: 6px;
-          padding: 7px 10px; border-radius: 4px; font-size: 12px;
+          padding: 7px 10px; border-radius: 4px; font-size: 15px;
           background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3); color: #c83220;
         }
         .settings-inline-success {
           display: flex; align-items: center; gap: 6px;
-          padding: 9px 12px; border-radius: 4px; font-size: 13px; font-weight: bold;
+          padding: 9px 12px; border-radius: 4px; font-size: 16px; font-weight: bold;
           background: rgba(40,160,80,0.1); border: 1px solid rgba(40,160,80,0.3); color: #1a7a40;
         }
         .settings-inline-hint {
           display: flex; align-items: flex-start; gap: 6px;
-          font-size: 12px; color: var(--body-text-muted); line-height: 1.5;
+          font-size: 15px; color: var(--body-text-muted); line-height: 1.5;
           padding: 8px 10px; border-radius: 4px; background: var(--body-card-bg);
           border: 1px solid var(--body-border);
         }
         .settings-delete-warning {
           display: flex; align-items: flex-start; gap: 7px;
-          padding: 10px 12px; border-radius: 4px; font-size: 12px; line-height: 1.5;
+          padding: 10px 12px; border-radius: 4px; font-size: 15px; line-height: 1.5;
           background: rgba(200,50,30,0.08); border: 1px solid rgba(200,50,30,0.25); color: #c83220;
         }
         .settings-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .settings-session-msg {
           display: flex; align-items: center; gap: 6px;
-          padding: 7px 10px; border-radius: 4px; font-size: 12px; margin-top: 8px;
+          padding: 7px 10px; border-radius: 4px; font-size: 15px; margin-top: 8px;
         }
         .settings-session-msg--ok { background: rgba(40,160,80,0.1); border: 1px solid rgba(40,160,80,0.3); color: #1a7a40; }
         .settings-session-msg--err { background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3); color: #c83220; }
@@ -717,7 +717,7 @@ export default function Settings() {
         .sessions-panel { display: flex; flex-direction: column; gap: 10px; }
         .sessions-loading, .sessions-empty {
           display: flex; align-items: center; gap: 6px;
-          font-size: 12px; color: var(--body-text-muted); padding: 6px 0;
+          font-size: 15px; color: var(--body-text-muted); padding: 6px 0;
         }
         .sessions-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
         .sessions-item {
@@ -730,16 +730,16 @@ export default function Settings() {
         [data-theme="dark"] .sessions-item--current { background: rgba(192,90,26,0.08); }
         .sessions-item-info { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
         .sessions-item-label {
-          font-size: 12px; font-weight: bold; color: var(--body-text);
+          font-size: 15px; font-weight: bold; color: var(--body-text);
           display: flex; align-items: center; gap: 5px;
         }
         .sessions-current-badge {
           display: inline-flex; align-items: center;
-          padding: 1px 6px; border-radius: 10px; font-size: 11px; font-weight: bold;
+          padding: 1px 6px; border-radius: 10px; font-size: 14px; font-weight: bold;
           background: var(--accent); color: #fff;
         }
-        .sessions-item-meta { font-size: 11px; color: var(--body-text-muted); }
-        .sessions-signout-btn { font-size: 12px; padding: 4px 10px; flex-shrink: 0; }
+        .sessions-item-meta { font-size: 14px; color: var(--body-text-muted); }
+        .sessions-signout-btn { font-size: 15px; padding: 4px 10px; flex-shrink: 0; }
         .sessions-actions {
           display: flex; gap: 8px; flex-wrap: wrap; padding-top: 4px;
           border-top: 1px solid var(--body-border); margin-top: 4px;

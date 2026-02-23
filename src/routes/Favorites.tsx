@@ -27,7 +27,7 @@ export default function Favorites() {
       <style>{`
         .empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 60px 40px; max-width: 440px; }
         .empty-title { font-size: 20px; font-weight: bold; color: var(--body-text); margin-bottom: 10px; }
-        .empty-body { font-size: 14px; color: var(--body-text-muted); line-height: 1.6; }
+        .empty-body { font-size: 17px; color: var(--body-text-muted); line-height: 1.6; }
       `}</style>
     </div>
   );

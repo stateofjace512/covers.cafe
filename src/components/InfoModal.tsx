@@ -97,7 +97,7 @@ export default function InfoModal({
         }
         [data-theme="dark"] .info-modal-title { text-shadow: none; }
         .info-modal-body {
-          font-size: 15px;
+          font-size: 18px;
           color: var(--body-text-muted);
           line-height: 1.55;
           margin: 0;

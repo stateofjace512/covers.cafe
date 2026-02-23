@@ -249,14 +249,14 @@ export default function ArtistDetail() {
         }
         [data-theme="dark"] .artist-detail-name { text-shadow: none; }
         .artist-detail-you {
-          font-size: 11px; font-weight: bold; background: var(--accent);
+          font-size: 14px; font-weight: bold; background: var(--accent);
           color: white; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.3px;
         }
-        .artist-detail-username { font-size: 13px; color: var(--body-text-muted); }
-        .artist-detail-bio { font-size: 14px; color: var(--body-text); max-width: 480px; line-height: 1.5; }
-        .artist-detail-website { font-size: 13px; color: var(--accent); text-decoration: none; }
+        .artist-detail-username { font-size: 16px; color: var(--body-text-muted); }
+        .artist-detail-bio { font-size: 17px; color: var(--body-text); max-width: 480px; line-height: 1.5; }
+        .artist-detail-website { font-size: 16px; color: var(--accent); text-decoration: none; }
         .artist-detail-website:hover { text-decoration: underline; }
-        .artist-detail-count { font-size: 13px; color: var(--body-text-muted); margin-top: 4px; }
+        .artist-detail-count { font-size: 16px; color: var(--body-text-muted); margin-top: 4px; }
         .artist-collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
         .artist-collection-card { padding: 0; overflow: hidden; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
         .artist-collection-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
@@ -264,9 +264,9 @@ export default function ArtistDetail() {
         .artist-collection-thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .artist-collection-thumb-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--body-text-muted); }
         .artist-collection-info { padding: 10px 12px; }
-        .artist-collection-name { font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-        .artist-collection-private { font-size: 10px; font-weight: bold; color: var(--body-text-muted); background: var(--body-border); padding: 1px 6px; border-radius: 8px; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
-        .artist-collection-count { font-size: 12px; color: var(--body-text-muted); margin-top: 3px; }
+        .artist-collection-name { font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .artist-collection-private { font-size: 13px; font-weight: bold; color: var(--body-text-muted); background: var(--body-border); padding: 1px 6px; border-radius: 8px; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+        .artist-collection-count { font-size: 15px; color: var(--body-text-muted); margin-top: 3px; }
       `}</style>
     </div>
   );

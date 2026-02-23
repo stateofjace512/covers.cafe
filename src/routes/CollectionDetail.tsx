@@ -282,7 +282,7 @@ export default function CollectionDetail() {
         }
         [data-theme="dark"] .col-detail-name { text-shadow: none; }
         .col-detail-private {
-          font-size: 11px; font-weight: bold;
+          font-size: 14px; font-weight: bold;
           background: var(--sidebar-bg); color: var(--body-text-muted);
           padding: 2px 8px; border-radius: 10px;
           border: 1px solid var(--body-card-border);
@@ -294,7 +294,7 @@ export default function CollectionDetail() {
           display: flex; align-items: center;
         }
         .col-edit-btn:hover { background: var(--sidebar-bg); color: var(--body-text); transform: none; box-shadow: none; }
-        .col-detail-count { font-size: 13px; color: var(--body-text-muted); margin-top: 6px; }
+        .col-detail-count { font-size: 16px; color: var(--body-text-muted); margin-top: 6px; }
         .col-edit-form { display: flex; flex-direction: column; gap: 10px; }
         .col-edit-name-input {
           font-size: 20px; font-weight: bold; color: var(--body-text);
@@ -305,12 +305,12 @@ export default function CollectionDetail() {
         }
         .col-edit-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .col-visibility-btn {
-          font-size: 12px; padding: 5px 12px;
+          font-size: 15px; padding: 5px 12px;
           background: var(--sidebar-bg); border: 1px solid var(--sidebar-border); color: var(--body-text-muted);
         }
         .col-visibility-btn--active { background: var(--accent); color: white; border-color: var(--accent); }
         .col-visibility-btn:hover { transform: none; box-shadow: none; }
-        .col-save-btn { display: flex; align-items: center; gap: 5px; font-size: 12px; }
+        .col-save-btn { display: flex; align-items: center; gap: 5px; font-size: 15px; }
         .col-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .gallery-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 60px 20px; color: var(--body-text-muted); }
@@ -318,7 +318,7 @@ export default function CollectionDetail() {
         .col-set-cover-btn {
           position: absolute; bottom: 6px; left: 6px;
           display: flex; align-items: center; gap: 4px;
-          font-size: 10px; font-weight: bold;
+          font-size: 13px; font-weight: bold;
           padding: 3px 7px; border-radius: 3px;
           background: rgba(10,5,2,0.75); color: rgba(255,255,255,0.7);
           border: 1px solid rgba(255,255,255,0.15);
@@ -333,7 +333,7 @@ export default function CollectionDetail() {
         }
         .col-set-cover-btn:hover { transform: none; box-shadow: none; }
         .col-edit-cover-section { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--body-card-border); }
-        .col-edit-cover-label { font-size: 11px; font-weight: bold; color: var(--body-text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .col-edit-cover-label { font-size: 14px; font-weight: bold; color: var(--body-text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
         .col-edit-cover-grid { display: flex; flex-wrap: wrap; gap: 6px; }
         .col-edit-cover-thumb {
           width: 56px; height: 56px; border-radius: 4px; overflow: hidden;

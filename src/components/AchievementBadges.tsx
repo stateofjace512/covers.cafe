@@ -117,7 +117,7 @@ export default function AchievementBadges({ userId }: Props) {
         }
 
         .ach-heading {
-          font-size: 13px;
+          font-size: 16px;
           font-weight: bold;
           text-transform: uppercase;
           letter-spacing: 0.8px;
@@ -175,13 +175,13 @@ export default function AchievementBadges({ userId }: Props) {
         }
 
         .ach-label {
-          font-size: 13px;
+          font-size: 16px;
           font-weight: bold;
           color: var(--body-text);
         }
 
         .ach-detail {
-          font-size: 12px;
+          font-size: 15px;
           color: var(--body-text-muted);
           white-space: nowrap;
           overflow: hidden;
@@ -203,7 +203,7 @@ export default function AchievementBadges({ userId }: Props) {
         }
 
         .ach-date {
-          font-size: 11px;
+          font-size: 14px;
           color: var(--body-text-muted);
           opacity: 0.7;
         }

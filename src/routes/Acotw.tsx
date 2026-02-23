@@ -234,22 +234,22 @@ export default function Acotw() {
           display: flex; align-items: center; justify-content: center; color: #f0c040;
         }
         .acotw-title { font-size: 24px; font-weight: bold; margin: 0 0 6px; }
-        .acotw-subtitle { font-size: 14px; color: rgba(255,248,240,0.7); margin: 0; line-height: 1.5; }
+        .acotw-subtitle { font-size: 17px; color: rgba(255,248,240,0.7); margin: 0; line-height: 1.5; }
 
         .acotw-loading { display: flex; align-items: center; gap: 10px; color: var(--body-text-muted); padding: 40px 0; }
         .acotw-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .acotw-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px 20px; color: var(--body-text-muted); text-align: center; }
-        .acotw-empty p { font-size: 14px; max-width: 300px; line-height: 1.6; }
+        .acotw-empty p { font-size: 17px; max-width: 300px; line-height: 1.6; }
 
         .acotw-meta {
           display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
           padding: 12px 16px; background: var(--body-card-bg);
           border: 1px solid var(--body-card-border); border-radius: 6px;
         }
-        .acotw-vote-total { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: bold; color: var(--body-text-muted); }
-        .acotw-voted-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--body-text-muted); }
+        .acotw-vote-total { display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: bold; color: var(--body-text-muted); }
+        .acotw-voted-label { display: flex; align-items: center; gap: 6px; font-size: 16px; color: var(--body-text-muted); }
         .acotw-signin-btn { margin-left: auto; }
 
         /* Winner banner */
@@ -260,15 +260,15 @@ export default function Acotw() {
         }
         .acotw-winner-badge {
           display: flex; align-items: center; gap: 6px;
-          font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px;
+          font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px;
           color: #b8860b; white-space: nowrap; writing-mode: vertical-rl; text-orientation: mixed;
           transform: rotate(180deg);
         }
         .acotw-winner-cover-wrap { width: 80px; height: 80px; border-radius: 4px; overflow: hidden; flex-shrink: 0; box-shadow: var(--shadow-lg); }
         .acotw-winner-img { width: 100%; height: 100%; object-fit: cover; }
         .acotw-winner-title { font-size: 18px; font-weight: bold; color: var(--body-text); }
-        .acotw-winner-artist { font-size: 14px; color: var(--body-text-muted); margin-top: 2px; }
-        .acotw-winner-votes { font-size: 12px; color: #b8860b; margin-top: 6px; font-weight: bold; }
+        .acotw-winner-artist { font-size: 17px; color: var(--body-text-muted); margin-top: 2px; }
+        .acotw-winner-votes { font-size: 15px; color: #b8860b; margin-top: 6px; font-weight: bold; }
 
         /* Nominees grid */
         .acotw-grid {
@@ -295,15 +295,15 @@ export default function Acotw() {
         }
 
         .acotw-card-body { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
-        .acotw-card-title { font-size: 13px; font-weight: bold; color: var(--body-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .acotw-card-artist { font-size: 11px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .acotw-card-count { font-size: 11px; color: var(--body-text-muted); min-height: 16px; }
+        .acotw-card-title { font-size: 16px; font-weight: bold; color: var(--body-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .acotw-card-artist { font-size: 14px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .acotw-card-count { font-size: 14px; color: var(--body-text-muted); min-height: 16px; }
 
         .acotw-bar-wrap { position: relative; height: 6px; background: var(--body-border); border-radius: 3px; overflow: hidden; }
         .acotw-bar { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s ease; }
-        .acotw-bar-pct { position: absolute; right: 0; top: -14px; font-size: 10px; color: var(--body-text-muted); }
+        .acotw-bar-pct { position: absolute; right: 0; top: -14px; font-size: 13px; color: var(--body-text-muted); }
 
-        .acotw-vote-btn { width: 100%; justify-content: center; font-size: 12px; padding: 5px 10px; gap: 5px; }
+        .acotw-vote-btn { width: 100%; justify-content: center; font-size: 15px; padding: 5px 10px; gap: 5px; }
         .acotw-vote-btn--active { background: var(--accent) !important; color: white !important; border-color: var(--accent-dark) !important; }
 
         /* Archive */
@@ -311,15 +311,15 @@ export default function Acotw() {
         .acotw-archive-toggle {
           display: flex; align-items: center; gap: 8px;
           background: none; border: 1px solid var(--body-card-border); border-radius: 6px;
-          padding: 8px 14px; font-size: 13px; font-weight: bold; color: var(--body-text);
+          padding: 8px 14px; font-size: 16px; font-weight: bold; color: var(--body-text);
           cursor: pointer; transition: background 0.12s;
         }
         .acotw-archive-toggle:hover { background: var(--body-card-bg); transform: none; box-shadow: none; }
         .acotw-archive-count {
           margin-left: 4px; background: var(--accent); color: white;
-          font-size: 10px; padding: 1px 6px; border-radius: 10px;
+          font-size: 13px; padding: 1px 6px; border-radius: 10px;
         }
-        .acotw-archive-empty { font-size: 14px; color: var(--body-text-muted); padding: 16px 0; }
+        .acotw-archive-empty { font-size: 17px; color: var(--body-text-muted); padding: 16px 0; }
 
         .acotw-archive-grid {
           display: grid;
@@ -333,10 +333,10 @@ export default function Acotw() {
         }
         .acotw-archive-img { width: 48px; height: 48px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
         .acotw-archive-info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-        .acotw-archive-week { font-size: 10px; color: #b8860b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
-        .acotw-archive-title { font-size: 13px; font-weight: bold; color: var(--body-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .acotw-archive-artist { font-size: 11px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .acotw-archive-votes { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--body-text-muted); margin-top: 2px; }
+        .acotw-archive-week { font-size: 13px; color: #b8860b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .acotw-archive-title { font-size: 16px; font-weight: bold; color: var(--body-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .acotw-archive-artist { font-size: 14px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .acotw-archive-votes { display: flex; align-items: center; gap: 4px; font-size: 14px; color: var(--body-text-muted); margin-top: 2px; }
       `}</style>
     </div>
   );

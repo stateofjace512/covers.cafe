@@ -413,8 +413,8 @@ export default function MusicArtistDetail() {
           font-size: 28px; font-weight: bold; color: #fff;
           text-shadow: 0 2px 8px rgba(0,0,0,0.6); margin: 0; line-height: 1.1;
         }
-        .ma-cover-count { font-size: 14px; color: rgba(255,255,255,0.65); margin: 0; }
-        .ma-upload-error { font-size: 12px; color: #f87171; margin: 0; }
+        .ma-cover-count { font-size: 17px; color: rgba(255,255,255,0.65); margin: 0; }
+        .ma-upload-error { font-size: 15px; color: #f87171; margin: 0; }
         .ma-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>

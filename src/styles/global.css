@@ -126,7 +126,7 @@
 
 html {
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -271,7 +271,7 @@ a:hover {
   border-radius: 5px;
   border: 1px solid rgba(0, 0, 0, 0.25);
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: bold;
   letter-spacing: 0.3px;
   cursor: pointer;
@@ -335,7 +335,7 @@ a:hover {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 10px;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: bold;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -418,7 +418,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .album-card-title {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: bold;
   color: var(--body-text);
   white-space: nowrap;
@@ -427,7 +427,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .album-card-artist {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--body-text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -441,7 +441,7 @@ input[type="email"],
 textarea,
 select {
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 16px;
   padding: 7px 11px;
   border-radius: 4px;
   border: 1px solid var(--body-card-border);
@@ -489,7 +489,7 @@ textarea {
 .ml-auto { margin-left: auto; }
 .text-muted { color: var(--body-text-muted); }
 .font-bold { font-weight: bold; }
-.text-sm { font-size: 12px; }
+.text-sm { font-size: 15px; }
 .mt-4 { margin-top: 16px; }
 .mb-4 { margin-bottom: 16px; }
 

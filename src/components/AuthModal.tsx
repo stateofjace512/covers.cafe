@@ -454,7 +454,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
         }
         .auth-tabs { display: flex; gap: 0; }
         .auth-tab {
-          padding: 14px 18px; font-size: 14px; font-weight: bold;
+          padding: 14px 18px; font-size: 17px; font-weight: bold;
           background: none; border: none; border-bottom: 3px solid transparent;
           cursor: pointer; color: var(--body-text-muted); margin-bottom: -1px;
           transition: color 0.12s, border-color 0.12s; box-shadow: none;
@@ -475,7 +475,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
         .auth-field { display: flex; flex-direction: column; gap: 5px; }
         .auth-label {
           display: flex; align-items: center; gap: 5px;
-          font-size: 12px; font-weight: bold; color: var(--body-text-muted);
+          font-size: 15px; font-weight: bold; color: var(--body-text-muted);
           text-transform: uppercase; letter-spacing: 0.5px;
         }
         .auth-input {
@@ -485,7 +485,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
           border: 1px solid var(--body-card-border);
           background: var(--body-card-bg);
           color: var(--body-text);
-          font-size: 14px;
+          font-size: 17px;
           box-shadow: var(--shadow-inset-sm);
           outline: none;
           font-family: var(--font-body);
@@ -501,11 +501,11 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
         }
         .auth-verify-info {
           display: flex; flex-direction: column; align-items: center; gap: 10px;
-          text-align: center; color: var(--body-text-muted); font-size: 14px;
+          text-align: center; color: var(--body-text-muted); font-size: 17px;
           padding: 8px 0 4px;
         }
         .auth-verify-icon { color: var(--accent); }
-        .auth-back-btn { margin-top: 4px; opacity: 0.6; font-size: 12px; }
+        .auth-back-btn { margin-top: 4px; opacity: 0.6; font-size: 15px; }
         .auth-back-btn:hover { opacity: 1; }
         .auth-back-btn:disabled { cursor: not-allowed; opacity: 0.35; }
         .auth-error {
@@ -513,29 +513,29 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
           padding: 8px 10px; border-radius: 4px;
           background: rgba(200, 50, 30, 0.1);
           border: 1px solid rgba(200, 50, 30, 0.3);
-          color: #c83220; font-size: 13px;
+          color: #c83220; font-size: 16px;
         }
         .auth-success {
           padding: 14px; border-radius: 4px; text-align: center;
           background: rgba(40, 160, 80, 0.1);
           border: 1px solid rgba(40, 160, 80, 0.3);
-          color: #1a7a40; font-size: 14px; font-weight: bold;
+          color: #1a7a40; font-size: 17px; font-weight: bold;
           margin-bottom: 16px;
         }
         .auth-submit-btn {
           width: 100%; justify-content: center;
-          padding: 10px 16px; font-size: 14px;
+          padding: 10px 16px; font-size: 17px;
         }
         .auth-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .auth-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .auth-switch {
           margin-top: 16px; text-align: center;
-          font-size: 13px; color: var(--body-text-muted);
+          font-size: 16px; color: var(--body-text-muted);
         }
         .auth-switch-btn {
           background: none; border: none; color: var(--accent); font-weight: bold;
-          cursor: pointer; font-size: 13px; padding: 0; box-shadow: none;
+          cursor: pointer; font-size: 16px; padding: 0; box-shadow: none;
           font-family: var(--font-body);
         }
         .auth-switch-btn:hover { color: var(--accent-light); transform: none; box-shadow: none; }

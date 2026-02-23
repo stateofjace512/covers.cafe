@@ -53,7 +53,7 @@ export default function NotFound() {
           margin: 0 0 10px;
         }
         .not-found-sub {
-          font-size: 14px;
+          font-size: 17px;
           color: var(--body-text-muted);
           line-height: 1.65;
           margin: 0 0 28px;
@@ -63,7 +63,7 @@ export default function NotFound() {
           align-items: center;
           gap: 8px;
           padding: 10px 24px;
-          font-size: 14px;
+          font-size: 17px;
           font-weight: bold;
         }
       `}</style>

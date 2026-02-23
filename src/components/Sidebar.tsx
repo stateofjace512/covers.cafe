@@ -148,20 +148,20 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
         .sidebar-avatar-img { width: 100%; height: 100%; object-fit: cover; }
         .sidebar-user-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .sidebar-user-name {
-          font-size: 14px; font-weight: bold; color: var(--sidebar-text);
+          font-size: 17px; font-weight: bold; color: var(--sidebar-text);
           text-shadow: 0 1px 0 rgba(255,255,255,0.3);
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         [data-theme="dark"] .sidebar-user-name { text-shadow: none; }
         .sidebar-user-action {
-          font-size: 12px; color: var(--accent); font-weight: bold;
+          font-size: 15px; color: var(--accent); font-weight: bold;
           background: none; border: none; cursor: pointer; padding: 0; text-align: left;
           box-shadow: none;
         }
         .sidebar-user-action:hover { color: var(--accent-light); transform: none; }
         .sidebar-nav { padding: 10px 0; flex: 1; }
         .sidebar-section-label {
-          font-size: 10px; font-weight: bold; letter-spacing: 1.2px;
+          font-size: 13px; font-weight: bold; letter-spacing: 1.2px;
           text-transform: uppercase; color: var(--sidebar-text-muted);
           padding: 14px 16px 4px;
           text-shadow: 0 1px 0 rgba(255,255,255,0.3);
@@ -170,7 +170,7 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
         .sidebar-nav-item {
           display: flex; align-items: center; gap: 11px;
           width: 100%; padding: 9px 16px;
-          color: var(--sidebar-text); font-size: 14px; font-weight: bold;
+          color: var(--sidebar-text); font-size: 17px; font-weight: bold;
           background: none; border: none; border-left: 3px solid transparent;
           cursor: pointer; text-align: left;
           transition: background 0.12s, border-color 0.12s;

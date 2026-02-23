@@ -129,7 +129,7 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
           border: 1px solid rgba(0,0,0,0.35) !important;
           background: rgba(0,0,0,0.22) !important;
           color: var(--header-text) !important;
-          font-size: 13px !important;
+          font-size: 16px !important;
           box-shadow: inset 0 2px 4px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.08) !important;
           outline: none !important;
         }
@@ -141,11 +141,11 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
         }
         .header-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; }
         .header-menu-btn { display: none; padding: 6px 8px; }
-        .header-theme-btn { display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 12px; font-weight: bold; }
-        .header-theme-label { font-size: 12px; }
+        .header-theme-btn { display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 15px; font-weight: bold; }
+        .header-theme-label { font-size: 15px; }
         .header-user-group { display: flex; align-items: center; gap: 4px; }
-        .header-user-btn { display: flex; align-items: center; gap: 6px; padding: 6px 10px; font-size: 12px; }
-        .header-username { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
+        .header-user-btn { display: flex; align-items: center; gap: 6px; padding: 6px 10px; font-size: 15px; }
+        .header-username { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
         .header-signout-btn { padding: 6px 8px; }
         @media (max-width: 640px) {
           .site-header { gap: 8px; padding: 0 10px; }

@@ -52,7 +52,7 @@ export default function SiteFooter() {
         }
 
         .site-footer-logo {
-          font-size: 15px;
+          font-size: 18px;
           font-weight: bold;
           color: var(--body-text);
           letter-spacing: 0.5px;
@@ -62,7 +62,7 @@ export default function SiteFooter() {
         [data-theme="dark"] .site-footer-logo { text-shadow: none; }
 
         .site-footer-tagline {
-          font-size: 11px;
+          font-size: 14px;
           color: var(--body-text-muted);
           letter-spacing: 0.3px;
         }
@@ -78,7 +78,7 @@ export default function SiteFooter() {
           border: 1px solid transparent;
           border-radius: 4px;
           color: var(--body-text-muted);
-          font-size: 12px;
+          font-size: 15px;
           font-family: var(--font-body);
           cursor: pointer;
           padding: 4px 10px;
@@ -93,7 +93,7 @@ export default function SiteFooter() {
         }
 
         .site-footer-copy {
-          font-size: 11px;
+          font-size: 14px;
           color: var(--body-text-muted);
           opacity: 0.7;
         }
