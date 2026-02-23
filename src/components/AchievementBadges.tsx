@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AcotwTrophyIcon from './AcotwTrophyIcon';
 
 type Achievement = {
   id: string;
@@ -54,7 +55,7 @@ export default function AchievementBadges({ userId }: Props) {
           if (a.type === 'acotw') {
             return (
               <div key={a.id} className="ach-badge ach-badge--acotw" title={`Album Cover of the Week · ${a.metadata?.week_start ? formatMonth(a.metadata.week_start) : ''}`}>
-                <span className="ach-icon">🏆</span>
+                <span className="ach-icon"><AcotwTrophyIcon size={25} /></span>
                 <div className="ach-info">
                   <span className="ach-label">Album Cover of the Week</span>
                   {a.metadata?.cover_title && (

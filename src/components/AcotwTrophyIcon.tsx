@@ -1,0 +1,65 @@
+interface Props {
+  size?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export default function AcotwTrophyIcon({ size = 25, className, style }: Props) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size * (120 / 110)}
+      height={size}
+      viewBox="0 0 120 110"
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+      className={className}
+      style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
+    >
+      <defs>
+        <linearGradient id="ach-gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#F6C453" />
+          <stop offset="25%" stopColor="#E0A106" />
+          <stop offset="50%" stopColor="#C78C00" />
+          <stop offset="75%" stopColor="#E0A106" />
+          <stop offset="100%" stopColor="#F6C453" />
+        </linearGradient>
+        <filter id="ach-gold-bevel" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow in="SourceAlpha" dx="0" dy="2.5" stdDeviation="2" floodColor="#2b1600" floodOpacity="0.45" result="shadow" />
+          <feComposite in="SourceGraphic" in2="SourceGraphic" operator="over" result="base" />
+          <feMorphology in="SourceAlpha" operator="erode" radius="1.2" result="innerA" />
+          <feGaussianBlur in="innerA" stdDeviation="1.8" result="innerBlurA" />
+          <feOffset in="innerBlurA" dx="1.6" dy="1.8" result="innerOffA" />
+          <feComposite in="innerOffA" in2="innerA" operator="out" result="innerShadowMask" />
+          <feColorMatrix in="innerShadowMask" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0" result="innerShadowAlpha" />
+          <feFlood floodColor="#5b3a00" floodOpacity="1" result="shadowColor" />
+          <feComposite in="shadowColor" in2="innerShadowAlpha" operator="in" result="innerShadow" />
+          <feGaussianBlur in="innerA" stdDeviation="1.4" result="innerBlurB" />
+          <feOffset in="innerBlurB" dx="-1.4" dy="-1.6" result="innerOffB" />
+          <feComposite in="innerOffB" in2="innerA" operator="out" result="innerHighlightMask" />
+          <feColorMatrix in="innerHighlightMask" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.65 0" result="innerHighlightAlpha" />
+          <feFlood floodColor="#FFD36A" floodOpacity="1" result="highlightColor" />
+          <feComposite in="highlightColor" in2="innerHighlightAlpha" operator="in" result="innerHighlight" />
+          <feGaussianBlur in="SourceAlpha" stdDeviation="1.1" result="bump" />
+          <feSpecularLighting in="bump" surfaceScale="3.5" specularConstant="0.75" specularExponent="45" lightingColor="#FFDA7A" result="spec">
+            <feDistantLight azimuth="315" elevation="55" />
+          </feSpecularLighting>
+          <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn" />
+          <feColorMatrix in="specIn" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.35 0" result="specSoft" />
+          <feMerge>
+            <feMergeNode in="shadow" />
+            <feMergeNode in="base" />
+            <feMergeNode in="innerShadow" />
+            <feMergeNode in="innerHighlight" />
+            <feMergeNode in="specSoft" />
+          </feMerge>
+        </filter>
+      </defs>
+      <path
+        fill="url(#ach-gold-gradient)"
+        filter="url(#ach-gold-bevel)"
+        d="M44 0h6v1h-6zm13 0h6v1h-6zm13 0h6v1h-6zM44 1h6v1h-6zm13 0h6v1h-6zm13 0h6v1h-6zM44 2h6v1h-6zm13 0h6v1h-6zm13 0h6v1h-6zM44 3h6v1h-6zm13 0h6v1h-6zm13 0h6v1h-6zM44 4h6v1h-6zm13 0h6v1h-6zm13 0h6v1h-6zM44 5h6v1h-6zm13 0h6v1h-6zm13 0h6v1h-6zM44 6h6v1h-6zm13 0h6v1h-6zm13 0h6v1h-6zM44 7h32v1H44zm0 1h32v1H44zm0 1h32v1H44zm0 1h32v1H44zm0 1h32v1H44zm0 1h32v1H44zm0 1h32v1H44zm0 1h32v1H44zM8 15h6v1H8zm11 0h6v1h-6zm12 0h5v1h-5zm17 0h24v1H48zm36 0h5v1h-5zm11 0h6v1h-6zm11 0h6v1h-6zM8 16h6v1H8zm11 0h6v1h-6zm12 0h5v1h-5zm17 0h24v1H48zm36 0h5v1h-5zm11 0h6v1h-6zm11 0h6v1h-6zM8 17h6v1H8zm11 0h6v1h-6zm12 0h5v1h-5zm17 0h24v1H48zm36 0h5v1h-5zm11 0h6v1h-6zm11 0h6v1h-6zM8 18h6v1H8zm11 0h6v1h-6zm12 0h5v1h-5zm17 0h24v1H48zm36 0h5v1h-5zm11 0h6v1h-6zm11 0h6v1h-6zM8 19h6v1H8zm11 0h6v1h-6zm12 0h5v1h-5zm17 0h9v1h-9zm15 0h9v1h-9zm21 0h5v1h-5zm11 0h6v1h-6zm11 0h6v1h-6zM8 20h6v1H8zm11 0h6v1h-6zm12 0h5v1h-5zm17 0h9v1h-9zm15 0h9v1h-9zm21 0h5v1h-5zm11 0h6v1h-6zm11 0h6v1h-6zM8 21h6v1H8zm11 0h6v1h-6zm12 0h5v1h-5zm17 0h9v1h-9zm15 0h9v1h-9zm21 0h5v1h-5zm11 0h6v1h-6zm11 0h6v1h-6zM8 22h6v1H8zm11 0h6v1h-6zm12 0h5v1h-5zm17 0h9v1h-9zm15 0h9v1h-9zm21 0h5v1h-5zm11 0h6v1h-6zm11 0h6v1h-6zM8 23h28v1H8zm40 0h9v1h-9zm15 0h9v1h-9zm21 0h28v1H84zM8 24h28v1H8zm40 0h9v1h-9zm15 0h9v1h-9zm21 0h28v1H84zM8 25h28v1H8zm40 0h9v1h-9zm15 0h9v1h-9zm21 0h28v1H84zM8 26h28v1H8zm40 0h9v1h-9zm15 0h9v1h-9zm21 0h28v1H84zM8 27h28v1H8zm40 0h9v1h-9zm15 0h9v1h-9zm21 0h28v1H84zM8 28h28v1H8zm40 0h9v1h-9zm15 0h9v1h-9zm21 0h28v1H84zM8 29h28v1H8zm40 0h9v1h-9zm15 0h9v1h-9zm21 0h28v1H84zM8 30h28v1H8zm40 0h9v1h-9zm15 0h9v1h-9zm21 0h28v1H84zm-72 1h20v1H12zm36 0h24v1H48zm40 0h20v1H88zm-76 1h20v1H12zm36 0h24v1H48zm40 0h20v1H88zm-76 1h20v1H12zm36 0h24v1H48zm40 0h20v1H88zm-76 1h20v1H12zm36 0h24v1H48zm40 0h20v1H88zm-76 1h7v1h-7zm13 0h7v1h-7zm23 0h24v1H48zm40 0h7v1h-7zm12 0h8v1h-8zm-88 1h7v1h-7zm13 0h7v1h-7zm23 0h24v1H48zm40 0h7v1h-7zm12 0h8v1h-8zm-88 1h7v1h-7zm13 0h7v1h-7zm23 0h24v1H48zm40 0h7v1h-7zm12 0h8v1h-8zm-88 1h7v1h-7zm13 0h7v1h-7zm23 0h24v1H48zm40 0h7v1h-7zm12 0h8v1h-8zm-88 1h7v1h-7zm13 0h7v1h-7zm11 0h8v1h-8zm12 0h24v1H48zm28 0h8v1h-8zm12 0h7v1h-7zm12 0h8v1h-8zm-88 1h7v1h-7zm13 0h7v1h-7zm11 0h8v1h-8zm12 0h24v1H48zm28 0h8v1h-8zm12 0h7v1h-7zm12 0h8v1h-8zm-88 1h7v1h-7zm13 0h7v1h-7zm11 0h8v1h-8zm12 0h24v1H48zm28 0h8v1h-8zm12 0h7v1h-7zm12 0h8v1h-8zm-88 1h7v1h-7zm13 0h7v1h-7zm11 0h8v1h-8zm12 0h24v1H48zm28 0h8v1h-8zm12 0h7v1h-7zm12 0h8v1h-8zm-88 1h20v1H12zm24 0h48v1H36zm52 0h20v1H88zm-76 1h20v1H12zm24 0h48v1H36zm52 0h20v1H88zm-76 1h20v1H12zm24 0h48v1H36zm52 0h20v1H88zm-76 1h20v1H12zm24 0h48v1H36zm52 0h20v1H88zm-76 1h20v1H12zm24 0h48v1H36zm52 0h20v1H88zm-76 1h20v1H12zm24 0h48v1H36zm52 0h20v1H88zm-76 1h20v1H12zm24 0h48v1H36zm52 0h20v1H88zm-76 1h20v1H12zm24 0h48v1H36zm52 0h20v1H88zm-76 1h20v1H12zm24 0h48v1H36zm52 0h20v1H88zm-60 1h4v1h-4zm8 0h7v1h-7zm12 0h9v1h-9zm15 0h9v1h-9zm14 0h7v1h-7zm11 0h4v1h-4zm-60 1h4v1h-4zm8 0h7v1h-7zm12 0h9v1h-9zm15 0h9v1h-9zm14 0h7v1h-7zm11 0h4v1h-4zm-60 1h4v1h-4zm8 0h7v1h-7zm12 0h9v1h-9zm15 0h9v1h-9zm14 0h7v1h-7zm11 0h4v1h-4zM0 55h4v1H0zm9 0h5v1H9zm10 0h5v1h-5zm9 0h4v1h-4zm8 0h7v1h-7zm12 0h9v1h-9zm15 0h9v1h-9zm14 0h7v1h-7zm11 0h4v1h-4zm8 0h5v1h-5zm10 0h5v1h-5zm10 0h4v1h-4zM0 56h4v1H0zm9 0h5v1H9zm10 0h5v1h-5zm9 0h4v1h-4zm8 0h7v1h-7zm12 0h9v1h-9zm15 0h9v1h-9zm14 0h7v1h-7zm11 0h4v1h-4zm8 0h5v1h-5zm10 0h5v1h-5zm10 0h4v1h-4zM0 57h4v1H0zm9 0h5v1H9zm10 0h5v1h-5zm9 0h4v1h-4zm8 0h7v1h-7zm12 0h9v1h-9zm15 0h9v1h-9zm14 0h7v1h-7zm11 0h4v1h-4zm8 0h5v1h-5zm10 0h5v1h-5zm10 0h4v1h-4zM0 58h4v1H0zm9 0h5v1H9zm10 0h5v1h-5zm9 0h4v1h-4zm8 0h7v1h-7zm12 0h9v1h-9zm15 0h9v1h-9zm14 0h7v1h-7zm11 0h4v1h-4zm8 0h5v1h-5zm10 0h5v1h-5zm10 0h4v1h-4zM0 59h4v1H0zm9 0h5v1H9zm10 0h5v1h-5zm9 0h4v1h-4zm8 0h7v1h-7zm12 0h9v1h-9zm15 0h9v1h-9zm14 0h7v1h-7zm11 0h4v1h-4zm8 0h5v1h-5zm10 0h5v1h-5zm10 0h4v1h-4zM0 60h24v1H0zm28 0h4v1h-4zm8 0h48v1H36zm52 0h4v1h-4zm8 0h24v1H96zM0 61h24v1H0zm28 0h4v1h-4zm8 0h48v1H36zm52 0h4v1h-4zm8 0h24v1H96zM0 62h24v1H0zm28 0h4v1h-4zm8 0h48v1H36zm52 0h4v1h-4zm8 0h24v1H96zM0 63h24v1H0zm28 0h4v1h-4zm8 0h48v1H36zm52 0h4v1h-4zm8 0h24v1H96zM0 64h24v1H0zm28 0h4v1h-4zm8 0h48v1H36zm52 0h4v1h-4zm8 0h24v1H96zM0 65h24v1H0zm28 0h4v1h-4zm8 0h48v1H36zm52 0h4v1h-4zm8 0h24v1H96zM4 66h16v1H4zm20 0h8v1h-8zm12 0h48v1H36zm52 0h8v1h-8zm12 0h16v1h-16zM4 67h16v1H4zm20 0h8v1h-8zm12 0h48v1H36zm52 0h8v1h-8zm12 0h16v1h-16zM4 68h16v1H4zm20 0h8v1h-8zm12 0h48v1H36zm52 0h8v1h-8zm12 0h16v1h-16zM4 69h16v1H4zm20 0h8v1h-8zm12 0h48v1H36zm52 0h8v1h-8zm12 0h16v1h-16zM4 70h16v1H4zm96 0h16v1h-16zM4 71h16v1H4zm96 0h16v1h-16zM4 72h16v1H4zm96 0h16v1h-16zM4 73h5v1H4zm10 0h6v1h-6zm10 0h4v1h-4zm9 0h7v1h-7zm12 0h7v1h-7zm11 0h7v1h-7zm12 0h7v1h-7zm12 0h7v1h-7zm12 0h4v1h-4zm8 0h6v1h-6zm11 0h5v1h-5zM4 74h5v1H4zm10 0h6v1h-6zm10 0h4v1h-4zm9 0h7v1h-7zm12 0h7v1h-7zm11 0h7v1h-7zm12 0h7v1h-7zm12 0h7v1h-7zm12 0h4v1h-4zm8 0h6v1h-6zm11 0h5v1h-5zM4 75h5v1H4zm10 0h6v1h-6zm10 0h4v1h-4zm9 0h7v1h-7zm12 0h7v1h-7zm11 0h7v1h-7zm12 0h7v1h-7zm12 0h7v1h-7zm12 0h4v1h-4zm8 0h6v1h-6zm11 0h5v1h-5zM4 76h5v1H4zm10 0h6v1h-6zm10 0h4v1h-4zm9 0h7v1h-7zm12 0h7v1h-7zm11 0h7v1h-7zm12 0h7v1h-7zm12 0h7v1h-7zm12 0h4v1h-4zm8 0h6v1h-6zm11 0h5v1h-5zM4 77h5v1H4zm10 0h6v1h-6zm10 0h4v1h-4zm9 0h7v1h-7zm12 0h7v1h-7zm11 0h7v1h-7zm12 0h7v1h-7zm12 0h7v1h-7zm12 0h4v1h-4zm8 0h6v1h-6zm11 0h5v1h-5zM4 78h5v1H4zm10 0h6v1h-6zm10 0h72v1H24zm76 0h6v1h-6zm11 0h5v1h-5zM4 79h5v1H4zm10 0h6v1h-6zm10 0h72v1H24zm76 0h6v1h-6zm11 0h5v1h-5zM4 80h5v1H4zm10 0h6v1h-6zm10 0h72v1H24zm76 0h6v1h-6zm11 0h5v1h-5zM4 81h16v1H4zm20 0h72v1H24zm76 0h16v1h-16zM4 82h16v1H4zm20 0h72v1H24zm76 0h16v1h-16zM4 83h16v1H4zm20 0h72v1H24zm76 0h16v1h-16zM4 84h16v1H4zm20 0h72v1H24zm76 0h16v1h-16zM4 85h16v1H4zm20 0h72v1H24zm76 0h16v1h-16zM4 86h16v1H4zm20 0h32v1H24zm40 0h32v1H64zm36 0h16v1h-16zM4 87h16v1H4zm20 0h32v1H24zm40 0h32v1H64zm36 0h16v1h-16zM4 88h16v1H4zm20 0h32v1H24zm40 0h32v1H64zm36 0h16v1h-16zM4 89h16v1H4zm20 0h28v1H24zm44 0h28v1H68zm32 0h16v1h-16zM4 90h16v1H4zm20 0h28v1H24zm44 0h28v1H68zm32 0h16v1h-16zM4 91h16v1H4zm20 0h28v1H24zm44 0h28v1H68zm32 0h16v1h-16zM4 92h16v1H4zm20 0h28v1H24zm44 0h28v1H68zm32 0h16v1h-16zM4 93h16v1H4zm20 0h28v1H24zm44 0h28v1H68zm32 0h16v1h-16zM4 94h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16zM4 95h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16zM4 96h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16zM4 97h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16zM4 98h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16zM4 99h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16zm-96 1h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16zm-96 1h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16zm-96 1h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16zm-96 1h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16zm-96 1h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16zm-96 1h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16zm-96 1h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16zm-96 1h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16zm-96 1h16v1H4zm20 0h24v1H24zm48 0h24v1H72zm28 0h16v1h-16z"
+      />
+    </svg>
+  );
+}
