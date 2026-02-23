@@ -142,13 +142,13 @@ export default function CoverComments({ coverId, cover }: Props) {
         coverStoragePath: cover?.storage_path ?? null,
         coverImageUrl:    cover?.image_url ?? null,
         pageType:         'music',
-        pageSlug:         coverId,
+        pageSlug:         cover?.page_slug ?? null,
       }),
     });
     const payload = await res.json();
     if (res.ok) {
       setPinnedIds((prev) => new Set([...prev, comment.id]));
-      setStatus('🏟️ Inducted to the Pin of Heuristics.');
+      setStatus('Inducted to the Pin of Heuristics.');
     } else {
       setStatus(payload?.error ?? 'Could not pin comment.');
     }

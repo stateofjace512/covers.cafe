@@ -82,8 +82,9 @@ export const POST: APIRoute = async ({ request }) => {
       reference_id: pin.id,
       metadata: {
         comment_preview: body.commentContent.slice(0, 120),
-        cover_title:  body.coverTitle ?? null,
-        cover_artist: body.coverArtist ?? null,
+        cover_title:     body.coverTitle ?? null,
+        cover_artist:    body.coverArtist ?? null,
+        cover_page_slug: body.pageSlug ?? null,
       },
       awarded_at: pin.pinned_at,
     }).select('id').maybeSingle(); // ignore conflict (unique constraint)

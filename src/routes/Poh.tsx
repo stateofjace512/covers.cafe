@@ -392,28 +392,44 @@ export default function Poh() {
         /* Cover art thumb in top-right corner */
         .poh-cover-corner {
           position: absolute;
-          top: 12px;
-          right: 12px;
-          width: 48px;
-          height: 48px;
+          top: 10px;
+          right: 10px;
+          width: 72px;
+          height: 72px;
           border-radius: 2px;
           overflow: hidden;
           box-shadow:
-            0 2px 6px rgba(0,0,0,0.35),
+            0 2px 8px rgba(0,0,0,0.4),
             0 0 0 1px rgba(100,60,20,0.4);
           flex-shrink: 0;
         }
 
         .poh-cover-corner--link {
           cursor: pointer;
-          transition: box-shadow 0.15s, opacity 0.15s;
+        }
+
+        .poh-cover-corner--link::after {
+          content: '↗';
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0,0,0,0.5);
+          color: #fff;
+          font-size: 20px;
+          opacity: 0;
+          transition: opacity 0.15s;
+        }
+
+        .poh-cover-corner--link:hover::after {
+          opacity: 1;
         }
 
         .poh-cover-corner--link:hover {
-          opacity: 0.85;
           box-shadow:
-            0 3px 10px rgba(0,0,0,0.5),
-            0 0 0 2px rgba(140,90,20,0.7);
+            0 4px 14px rgba(0,0,0,0.55),
+            0 0 0 2px rgba(180,120,20,0.8);
         }
 
         .poh-cover-thumb {
@@ -431,7 +447,7 @@ export default function Poh() {
           font-family: Georgia, 'Times New Roman', serif;
           font-style: italic;
           word-break: break-word;
-          padding-right: ${/* space for cover corner */ ''}60px;
+          padding-right: ${/* space for cover corner */ ''}86px;
           flex: 1;
           position: relative;
         }

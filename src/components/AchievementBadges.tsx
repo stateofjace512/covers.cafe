@@ -11,6 +11,7 @@ type Achievement = {
     cover_artist?: string | null;
     week_start?: string | null;
     cover_id?: string | null;
+    cover_page_slug?: string | null;
     comment_preview?: string | null;
   } | null;
   awarded_at: string;
@@ -91,7 +92,11 @@ export default function AchievementBadges({ userId }: Props) {
                     </span>
                   )}
                   {(a.metadata?.cover_title || a.metadata?.cover_artist) && (
-                    <span className="ach-detail">
+                    <span
+                      className="ach-detail"
+                      onClick={() => a.metadata?.cover_page_slug && navigate(`/cover/${a.metadata.cover_page_slug}`)}
+                      style={a.metadata?.cover_page_slug ? { cursor: 'pointer' } : undefined}
+                    >
                       on {a.metadata.cover_title ?? ''}{a.metadata.cover_artist ? ` · ${a.metadata.cover_artist}` : ''}
                     </span>
                   )}
