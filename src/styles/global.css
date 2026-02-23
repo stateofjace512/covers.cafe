@@ -71,6 +71,8 @@
   --header-h: 58px;
   --sidebar-w: 230px;
   --cover-grid-min-width: 160px;
+  --sidebar-nav-underlay: url('/themes/themelight/sidebar-nav_light-mode.jpg');
+  --sidebar-nav-underlay-mask: rgba(255, 222, 197, 0.4);
 
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(60, 20, 0, 0.25);
@@ -134,6 +136,8 @@
   /* Skeuomorphic tint colours */
   --skeu-card-tint: rgba(58, 44, 32, 0.52);
   --skeu-hero-tint: rgba(56, 37, 22, 0.62);
+  --sidebar-nav-underlay: url('/themes/themedark/sidebar-nav_dark-mode.jpg');
+  --sidebar-nav-underlay-mask: rgba(47, 36, 26, 0.4);
 }
 
 
@@ -144,6 +148,7 @@
   --skeu-theme-btn: none;
   --skeu-card-tint: rgba(0, 0, 0, 0);
   --skeu-hero-tint: rgba(0, 0, 0, 0);
+  --sidebar-nav-underlay: none;
 }
 
 /* ---------- Reset & Base ---------- */
@@ -257,6 +262,9 @@ a:hover {
   overflow-y: auto;
   background-color: var(--sidebar-bg);
   background-image:
+    /* Sidebar nav underlay at 60% image opacity */
+    linear-gradient(0deg, var(--sidebar-nav-underlay-mask), var(--sidebar-nav-underlay-mask)),
+    var(--sidebar-nav-underlay),
     /* Wood-grain vertical streaks */
     repeating-linear-gradient(
       90deg,
