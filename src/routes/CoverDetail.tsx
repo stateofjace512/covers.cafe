@@ -113,14 +113,16 @@ export default function CoverDetail() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // Scroll panel into view whenever it opens (delay lets React paint the panel first)
+  // Scroll panel into view whenever it opens.
+  // Also depends on `loading` so it retries after the cover finishes loading
+  // (the ?panel=collection flow sets activePanel before the cover is in the DOM).
   useEffect(() => {
-    if (!activePanel) return;
+    if (loading || !activePanel) return;
     const id = setTimeout(() => {
       panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 30);
+    }, 50);
     return () => clearTimeout(id);
-  }, [activePanel]);
+  }, [activePanel, loading]);
 
   useEffect(() => {
     if (!showSizeMenu) return;
