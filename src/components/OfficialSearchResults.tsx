@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import LoadingIcon from './LoadingIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { slugifyArtist } from '../lib/coverRoutes';
+import { searchOfficialAssets, type OfficialUpsertRow } from '../lib/officialSearch';
 
 interface OfficialCoverRow {
   artist_name: string | null;
@@ -15,44 +16,9 @@ interface OfficialCoverRow {
   cover_public_id?: number | null;
 }
 
-interface OfficialUpsertRow extends OfficialCoverRow {
-  country: string;
-  search_artist: string;
-  search_album: string | null;
-  tags: string[];
-  source_payload: Record<string, unknown>;
-}
-
-interface ItunesAlbumResult {
-  artistName?: string;
-  releaseDate?: string;
-  artworkUrl100?: string;
-  collectionName?: string;
-  [key: string]: unknown;
-}
-
 const PAGE_SIZE = 24;
 const COUNTRY = 'us';
 
-function getFullResAppleCover(smallUrl: string | undefined): string | undefined {
-  if (!smallUrl || !smallUrl.includes('mzstatic.com')) return smallUrl;
-  let full = smallUrl
-    .replace(/https:\/\/is\d-ssl\.mzstatic\.com\/image\/thumb\//, 'https://a1.mzstatic.com/r40/')
-    .replace(/https:\/\/is\d-ssl\.mzstatic\.com\/image\//, 'https://a1.mzstatic.com/r40/');
-  full = full.replace(/\/\d+x\d+(bb|w|cc|sr)?\.(jpg|webp|png|tif)$/, '');
-  if (full === smallUrl) full = smallUrl.replace(/100x100bb|60x60bb/, '1400x1400bb');
-  return full;
-}
-
-function getImageDimensions(url: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.src = url;
-    img.onload = () => resolve(`${img.naturalWidth}x${img.naturalHeight}`);
-    img.onerror = () => resolve(null);
-    setTimeout(() => { if (!img.complete) resolve(null); }, 8000);
-  });
-}
 
 function coverPath(publicId: number | null | undefined, artist: string | null, album: string | null): string | null {
   if (!publicId) return null;
@@ -124,29 +90,7 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
   const fetchFromItunes = useCallback(async () => {
     const q = searchQuery.trim();
     if (!q) return [] as OfficialUpsertRow[];
-    const term = encodeURIComponent(q);
-    const res = await fetch(`https://itunes.apple.com/search?term=${term}&entity=album&country=${COUNTRY}&limit=20`);
-    if (!res.ok) return [] as OfficialUpsertRow[];
-    const payload = await res.json() as { results?: ItunesAlbumResult[] };
-    const rows = await Promise.all((payload.results ?? []).map(async (item) => {
-      const small = item.artworkUrl100;
-      if (!small) return null;
-      const albumCoverUrl = getFullResAppleCover(small);
-      if (!albumCoverUrl) return null;
-      return {
-        artist_name: item.artistName ?? null,
-        album_title: item.collectionName ?? null,
-        release_year: item.releaseDate ? Number(item.releaseDate.slice(0, 4)) : null,
-        album_cover_url: albumCoverUrl,
-        pixel_dimensions: await getImageDimensions(albumCoverUrl),
-        country: COUNTRY,
-        search_artist: q,
-        search_album: null,
-        tags: ['official'],
-        source_payload: item,
-      };
-    }));
-    return rows.filter((row): row is OfficialUpsertRow => Boolean(row));
+    return searchOfficialAssets(q, '', ['us', 'au', 'mx', 'jp']);
   }, [searchQuery]);
 
   useEffect(() => {
