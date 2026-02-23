@@ -49,12 +49,12 @@ export default function SiteFooter() {
           content: '';
           position: absolute;
           top: 50%; left: 50%;
-          width: 200%; height: 200%;
+          width: 100vw; height: 100vw;
           transform: translate(-50%, -50%) rotate(90deg);
           background-image:
             linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
             var(--skeu-card);
-          background-size: cover;
+          background-size: 100% 100%;
           background-position: center;
           pointer-events: none;
           z-index: 0;

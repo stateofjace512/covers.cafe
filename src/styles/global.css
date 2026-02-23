@@ -349,14 +349,46 @@ a:hover {
 }
 
 .btn-ghost {
-  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 100%),
+    linear-gradient(rgba(115,73,42,0.55), rgba(115,73,42,0.55)),
+    var(--skeu-theme-btn);
+  background-size: 100% 50%, 100% 100%, cover;
+  background-position: top, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
   color: var(--header-text);
   border-color: rgba(255,255,255,0.2);
 }
 
 .btn-ghost:hover {
-  background: linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.1) 100%);
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.08) 100%),
+    linear-gradient(rgba(115,73,42,0.45), rgba(115,73,42,0.45)),
+    var(--skeu-theme-btn);
+  background-size: 100% 50%, 100% 100%, cover;
+  background-position: top, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
   color: var(--header-text);
+}
+
+[data-theme="dark"] .btn-ghost {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 100%),
+    linear-gradient(rgba(56,37,22,0.55), rgba(56,37,22,0.55)),
+    var(--skeu-theme-btn);
+  background-size: 100% 50%, 100% 100%, cover;
+  background-position: top, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+}
+
+[data-theme="dark"] .btn-ghost:hover {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.05) 100%),
+    linear-gradient(rgba(56,37,22,0.4), rgba(56,37,22,0.4)),
+    var(--skeu-theme-btn);
+  background-size: 100% 50%, 100% 100%, cover;
+  background-position: top, center, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
 }
 
 /* ---------- Badges ---------- */
@@ -457,7 +489,9 @@ h1, h2, h3, h4, h5, h6 {
     linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
     var(--skeu-card);
   background-size: 100% 100%, 100% 100%;
-  background-position: center, center;
+  background-position: 0 0, 0 0;
+  background-repeat: no-repeat, no-repeat;
+  background-attachment: local, local;
 }
 
 .album-card-title {

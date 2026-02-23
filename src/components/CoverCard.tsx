@@ -48,7 +48,7 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
 
   return (
     <div
-      className="album-card cover-card"
+      className={`album-card cover-card${cover.is_acotw ? ' cover-card--acotw' : ''}`}
       onClick={() => (onClick ? onClick() : navigate(getCoverPath(cover)))}
       onMouseLeave={() => setConfirmDelete(false)}
       draggable
@@ -142,6 +142,15 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
 
       <style>{`
         .cover-card { cursor: pointer; }
+        .cover-card--acotw {
+          background-image:
+            linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
+            var(--skeu-card);
+          background-size: 100% 100%, 100% 100%;
+          background-position: 0 0, 0 0;
+          background-repeat: no-repeat, no-repeat;
+          border-color: rgba(184,134,11,0.5);
+        }
         .cover-card-img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.2s ease; }
         .cover-card-img--loaded { opacity: 1; }
         .cover-card-shimmer {
