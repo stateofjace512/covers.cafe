@@ -13,6 +13,15 @@ import MonitorIcon from '../components/MonitorIcon';
 import LogoutIcon from '../components/LogoutIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  applyUserPreferencesToDocument,
+  getCoverGridMinWidthPreference,
+  getNoThemeImagesPreference,
+  getPreferModalOverPagePreference,
+  setCoverGridMinWidthPreference,
+  setNoThemeImagesPreference,
+  setPreferModalOverPagePreference,
+} from '../lib/userPreferences';
 
 interface SessionInfo {
   id: string;
@@ -454,13 +463,29 @@ function ActiveSessionsPanel({ onDone }: { onDone: () => void }) {
 export default function Settings() {
   const { user, signOut, openAuthModal } = useAuth();
   const [activeForm, setActiveForm] = useState<ActiveForm>(null);
-
+  const [noThemeImages, setNoThemeImages] = useState<boolean>(() => getNoThemeImagesPreference());
+  const [coverGridMinWidth, setCoverGridMinWidth] = useState<number>(() => getCoverGridMinWidthPreference());
+  const [preferModalOverPage, setPreferModalOverPage] = useState<boolean>(() => getPreferModalOverPagePreference());
 
   const setTheme = (theme: 'light' | 'dark') => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
     window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: theme }));
   };
+
+  useEffect(() => {
+    setNoThemeImagesPreference(noThemeImages);
+    applyUserPreferencesToDocument();
+  }, [noThemeImages]);
+
+  useEffect(() => {
+    setCoverGridMinWidthPreference(coverGridMinWidth);
+    applyUserPreferencesToDocument();
+  }, [coverGridMinWidth]);
+
+  useEffect(() => {
+    setPreferModalOverPagePreference(preferModalOverPage);
+  }, [preferModalOverPage]);
 
   const currentTheme = typeof document !== 'undefined'
     ? (document.documentElement.getAttribute('data-theme') ?? 'light')
@@ -475,6 +500,71 @@ export default function Settings() {
         {/* ── Appearance ─────────────────────────────────────── */}
         <section className="card settings-section">
           <h2 className="settings-section-title">Appearance</h2>
+          <div className="settings-row">
+            <div className="settings-row-info">
+              <span className="settings-row-label">No theme images</span>
+              <span className="settings-row-desc">Use flat colors and remove textured theme image layers.</span>
+            </div>
+            <div className="settings-row-control">
+              <button
+                type="button"
+                className={`settings-icon-toggle${noThemeImages ? ' settings-icon-toggle--active' : ''}`}
+                onClick={() => setNoThemeImages((prev) => !prev)}
+                aria-pressed={noThemeImages}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" className="toggle-icon" aria-hidden="true">
+                  <g className="icon-off">
+                    <path d="M30.48 2.28h-1.53V0.76H3.05v1.52H1.53v1.53H0v7.62h1.53v1.52h1.52v1.52h25.9v-1.52h1.53v-1.52H32V3.81h-1.52ZM12.19 9.9h-1.52v1.53H9.15v1.52H4.57v-1.52H3.05V9.9H1.53V5.33h1.52V3.81h1.52V2.28h4.58v1.53h1.52v1.52h1.52Z"/>
+                    <path d="M9.15 5.33h1.52v3.05H9.15Z"/>
+                    <path d="M7.62 3.81h1.53v1.52H7.62Z"/>
+                  </g>
+                  <g className="icon-on">
+                    <path d="M30.48 20.57H32v7.62h-1.52Z"/>
+                    <path d="M25.91 20.57h1.52v1.52h-1.52Z"/>
+                    <path d="M18.29 20.57h1.52v7.62h-1.52Z"/>
+                    <path d="M28.95 28.19h1.53v1.52h-1.53Z"/>
+                    <path d="M28.95 19.04h1.53v1.53h-1.53Z"/>
+                    <path d="M27.43 22.09h1.52v3.05h-1.52Z"/>
+                    <path d="m21.34 29.71 0 -1.52 -1.53 0 0 1.52 -16.76 0 0 1.53 25.9 0 0 -1.53 -7.61 0z"/>
+                    <path d="m19.81 19.04 0 1.53 1.53 0 0 -1.53 7.61 0 0 -1.52 -25.9 0 0 1.52 16.76 0z"/>
+                    <path d="M1.53 28.19h1.52v1.52H1.53Z"/>
+                    <path d="M1.53 19.04h1.52v1.53H1.53Z"/>
+                    <path d="M0 20.57h1.53v7.62H0Z"/>
+                  </g>
+                </svg>
+                <span>{noThemeImages ? 'Yes' : 'No'}</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="settings-row">
+            <div className="settings-row-info">
+              <span className="settings-row-label">Cover columns</span>
+              <span className="settings-row-desc">Choose between larger covers with fewer columns or denser grids.</span>
+            </div>
+            <div className="settings-row-control">
+              <select className="settings-select" value={coverGridMinWidth} onChange={(e) => setCoverGridMinWidth(Number.parseInt(e.target.value, 10))}>
+                <option value={135}>More columns</option>
+                <option value={160}>Balanced</option>
+                <option value={210}>Fewer columns (larger covers)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="settings-row">
+            <div className="settings-row-info">
+              <span className="settings-row-label">Prefer modal over page</span>
+              <span className="settings-row-desc">Open covers in a modal instead of navigating to the full cover page.</span>
+            </div>
+            <div className="settings-row-control">
+              <button className={`btn${preferModalOverPage ? ' btn-primary' : ' btn-secondary'}`} onClick={() => setPreferModalOverPage((prev) => !prev)}>
+                {preferModalOverPage ? 'Yes' : 'No'}
+              </button>
+            </div>
+          </div>
+
+          <div className="settings-divider" />
+
           <div className="settings-row">
             <div className="settings-row-info">
               <span className="settings-row-label">Theme</span>
@@ -664,6 +754,38 @@ export default function Settings() {
         .settings-inline-form {
           display: flex; flex-direction: column; gap: 10px;
         }
+        .settings-select {
+          min-width: 220px;
+          padding: 6px 10px;
+          border-radius: 4px;
+          border: 1px solid var(--body-card-border);
+          background: var(--body-card-bg);
+          color: var(--body-text);
+          font-size: 18px;
+          box-shadow: var(--shadow-sm);
+        }
+        .settings-icon-toggle {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 5px 9px;
+          border-radius: 6px;
+          border: 1px solid var(--body-card-border);
+          background: var(--body-card-bg);
+          color: var(--body-text);
+          cursor: pointer;
+          box-shadow: var(--shadow-sm);
+        }
+        .toggle-icon { display: block; width: 24px; height: 24px; }
+        .toggle-icon g {
+          transform-origin: 16px 16px;
+          transition: transform 0.2s ease, opacity 0.2s ease;
+          fill: currentColor;
+        }
+        .settings-icon-toggle .icon-off { opacity: 0.2; transform: translateY(-1px) scale(0.95); }
+        .settings-icon-toggle .icon-on { opacity: 1; transform: translateY(0) scale(1); }
+        .settings-icon-toggle--active .icon-off { opacity: 1; transform: translateY(0) scale(1); }
+        .settings-icon-toggle--active .icon-on { opacity: 0.2; transform: translateY(1px) scale(0.95); }
         .settings-input {
           width: 100%; padding: 8px 12px; border-radius: 4px;
           border: 1px solid var(--body-card-border);

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AppShell from './components/AppShell';
 import AuthModal from './components/AuthModal';
+import { applyUserPreferencesToDocument } from './lib/userPreferences';
 
 // Route pages
 import Gallery from './routes/Gallery';
@@ -34,6 +35,10 @@ function AppContent() {
     isBanned: false,
     reason: null,
   });
+
+  useEffect(() => {
+    applyUserPreferencesToDocument();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
