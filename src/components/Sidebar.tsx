@@ -1,34 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { User, UserRound } from 'lucide-react';
+import { ArrowUpFromLine, ArrowDownToLine, User, Star, Image, Cog, UserRound, Shield, Info, Trophy, Music } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getAvatarSrc } from '../lib/media';
 import { supabase } from '../lib/supabase';
 import CastleIcon from './CastleIcon';
-import GalleryIcon from './GalleryIcon';
-import TrophyIcon from './TrophyIcon';
-import ArtistsIcon from './ArtistsIcon';
-import FavoritesIcon from './FavoritesIcon';
-import UploadDownloadIcon from './UploadDownloadIcon';
-import GearIcon from './GearIcon';
-import AboutIcon from './AboutIcon';
-import ShieldIcon from './ShieldIcon';
 
 const NAV = [
-  { section: 'Discover', label: 'Gallery',   icon: <GalleryIcon size={18} />,        path: '/' },
-  {                       label: 'ACOTW',     icon: <TrophyIcon size={18} />,         path: '/acotw' },
-  {                       label: 'POH',       icon: <CastleIcon size={18} />,         path: '/poh' },
-  {                       label: 'Artists',   icon: <ArtistsIcon size={18} />,        path: '/artists' },
-  {                       label: 'Users',     icon: <UserRound size={18} />,          path: '/users' },
-  {                       label: 'Favorites', icon: <FavoritesIcon size={18} />,      path: '/favorites' },
-  { section: 'Account',  label: 'Upload',    icon: <UploadDownloadIcon size={18} />, path: '/upload' },
-  {                       label: 'Downloads', icon: <UploadDownloadIcon size={18} />, path: '/downloads' },
-  {                       label: 'Profile',   icon: <User size={18} />,               path: '/profile' },
-  { section: 'More',     label: 'Settings',  icon: <GearIcon size={18} />,           path: '/settings' },
-  {                       label: 'About',     icon: <AboutIcon size={18} />,          path: '/about' },
+  { section: 'Discover', label: 'Gallery',   icon: <Image size={18} />,           path: '/' },
+  {                       label: 'ACOTW',     icon: <Trophy size={18} />,           path: '/acotw' },
+  {                       label: 'POH',       icon: <CastleIcon size={18} />,       path: '/poh' },
+  {                       label: 'Artists',   icon: <Music size={18} />,            path: '/artists' },
+  {                       label: 'Users',     icon: <UserRound size={18} />,        path: '/users' },
+  {                       label: 'Favorites', icon: <Star size={18} />,             path: '/favorites' },
+  { section: 'Account',  label: 'Upload',    icon: <ArrowUpFromLine size={18} />,  path: '/upload' },
+  {                       label: 'Downloads', icon: <ArrowDownToLine size={18} />,  path: '/downloads' },
+  {                       label: 'Profile',   icon: <User size={18} />,             path: '/profile' },
+  { section: 'More',     label: 'Settings',  icon: <Cog size={18} />,              path: '/settings' },
+  {                       label: 'About',     icon: <Info size={18} />,             path: '/about' },
 ] as const;
 
-const OPERATOR_NAV = { label: 'CMS', icon: <ShieldIcon size={18} />, path: '/cms' } as const;
+const OPERATOR_NAV = { label: 'CMS', icon: <Shield size={18} />, path: '/cms' } as const;
 
 type SidebarProps = {
   isMobileNavOpen: boolean;
