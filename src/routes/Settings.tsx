@@ -631,7 +631,20 @@ export default function Settings() {
 
       <style>{`
         .settings-layout { display: flex; flex-direction: column; gap: 20px; max-width: 600px; }
-        .settings-section { padding: 20px 22px; }
+        .settings-section {
+          padding: 20px 22px;
+          background-image: var(--skeu-hero);
+          background-size: cover; background-position: center;
+          position: relative; overflow: hidden;
+          isolation: isolate;
+        }
+        .settings-section::before {
+          content: ''; position: absolute; inset: 0;
+          background-color: var(--body-card-bg);
+          opacity: 0.58;
+          pointer-events: none;
+          z-index: -1;
+        }
         .settings-section-title {
           font-size: 21px; color: var(--body-text);
           margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--body-border);
@@ -648,11 +661,12 @@ export default function Settings() {
         .settings-row-desc { font-size: 18px; color: var(--body-text-muted); line-height: 1.5; }
         .settings-row-control { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .settings-divider { height: 1px; background: var(--body-border); margin: 14px 0; }
-        /* Danger section */
+        /* Danger section: remove texture, restore red tint */
         .settings-danger-section {
           border-color: rgba(200, 50, 30, 0.25);
           background: rgba(200, 50, 30, 0.03);
         }
+        .settings-danger-section::before { display: none; }
         [data-theme="dark"] .settings-danger-section { background: rgba(200, 50, 30, 0.06); }
         .settings-danger-title { color: #c83220 !important; }
 

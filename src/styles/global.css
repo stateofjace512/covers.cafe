@@ -58,6 +58,7 @@
   --skeu-hero: url('/themes/themelight/hero-banner_light-mode.jpg');
   --skeu-card: url('/themes/themelight/album-card-info_light-mode.jpg');
   --skeu-btn: url('/themes/themelight/btn btn-primary_light-mode.jpg');
+  --skeu-theme-btn: url('/themes/themelight/btn btn-ghost header-theme-btn_light-mode.jpg');
 
   /* Fonts */
   --font-body: 'BodyFont', Arial, Helvetica, sans-serif;
@@ -125,6 +126,7 @@
   --skeu-hero: url('/themes/themedark/hero-banner_dark-mode.jpg');
   --skeu-card: url('/themes/themedark/album-card-info_dark-mode.jpg');
   --skeu-btn: url('/themes/themedark/btn btn-primary_dark-mode.jpg');
+  --skeu-theme-btn: url('/themes/themedark/btn btn-ghost header-theme-btn_dark-mode.jpg');
 }
 
 /* ---------- Reset & Base ---------- */
@@ -322,19 +324,6 @@ a:hover {
   color: var(--accent-text);
 }
 
-.btn-primary::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: var(--skeu-btn);
-  background-size: cover;
-  background-position: center;
-  mix-blend-mode: overlay;
-  opacity: 0.38;
-  pointer-events: none;
-  border-radius: 4px;
-}
-
 .btn-primary:hover {
   background: linear-gradient(180deg, #f08040 0%, var(--accent-light) 55%, var(--accent) 100%);
   color: var(--accent-text);
@@ -416,14 +405,28 @@ h1, h2, h3, h4, h5, h6 {
 .album-card-cover {
   width: 100%;
   aspect-ratio: 1;
-  background: linear-gradient(135deg, var(--sidebar-bg-dark) 0%, var(--header-bg) 100%);
+  background-image: var(--skeu-card);
+  background-size: cover;
+  background-position: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.3);
   font-size: 48px;
   position: relative;
   overflow: hidden;
+  isolation: isolate;
+}
+
+/* Dark gradient tint preserves the original dark feel for the cover area */
+.album-card-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--sidebar-bg-dark) 0%, var(--header-bg) 100%);
+  opacity: 0.62;
+  pointer-events: none;
+  z-index: -1;
 }
 
 .album-card-cover::after {
@@ -439,7 +442,7 @@ h1, h2, h3, h4, h5, h6 {
   position: relative;
   overflow: hidden;
   background-image: var(--skeu-card);
-  background-size: 100% auto;
+  background-size: cover;
   background-position: center var(--card-skeu-y, 0%);
 }
 

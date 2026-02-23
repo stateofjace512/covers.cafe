@@ -74,20 +74,21 @@ export default function Gallery() {
 
       <style>{`
         .hero-banner {
-          background: linear-gradient(135deg, var(--header-bg) 0%, var(--sidebar-bg-dark) 60%, var(--header-bg-dark) 100%);
-          border: 1px solid var(--body-card-border); border-radius: 8px;
-          padding: 32px 32px 16px; margin-bottom: 32px; 
-          box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.12);
-          position: relative; overflow: hidden;
-        }
-        .hero-banner::before {
-          content: ''; position: absolute; inset: 0;
           background-image: var(--skeu-hero);
           background-size: cover;
           background-position: center;
-          mix-blend-mode: overlay;
-          opacity: 0.35;
+          border: 1px solid var(--body-card-border); border-radius: 8px;
+          padding: 32px 32px 16px; margin-bottom: 32px;
+          box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.12);
+          position: relative; overflow: hidden;
+          isolation: isolate;
+        }
+        .hero-banner::before {
+          content: ''; position: absolute; inset: 0;
+          background: linear-gradient(135deg, var(--header-bg) 0%, var(--sidebar-bg-dark) 60%, var(--header-bg-dark) 100%);
+          opacity: 0.62;
           pointer-events: none;
+          z-index: -1;
         }
         .hero-content { position: relative; z-index: 1; max-width: 620px; }
         .hero-title {

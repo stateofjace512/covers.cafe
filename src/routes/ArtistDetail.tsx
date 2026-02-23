@@ -231,6 +231,17 @@ export default function ArtistDetail() {
         .artist-detail-header {
           display: flex; align-items: flex-start; gap: 20px;
           padding: 24px;
+          background-image: var(--skeu-hero);
+          background-size: cover; background-position: center;
+          position: relative; overflow: hidden;
+          isolation: isolate;
+        }
+        .artist-detail-header::before {
+          content: ''; position: absolute; inset: 0;
+          background-color: var(--body-card-bg);
+          opacity: 0.58;
+          pointer-events: none;
+          z-index: -1;
         }
         .artist-detail-avatar {
           width: 80px; height: 80px; border-radius: 50%; flex-shrink: 0;
