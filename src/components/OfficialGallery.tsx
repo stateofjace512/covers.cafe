@@ -68,7 +68,7 @@ export default function OfficialGallery() {
     if (!normalizedArtist) { setCovers([]); setHasMore(false); return [] as OfficialCoverRow[]; }
     const from = pageNumber * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
-    let query = supabase.from('covers_cafe_official_covers').select('artist_name, album_title, release_year, album_cover_url, pixel_dimensions, cover_public_id').eq('country', country).ilike('search_artist', `%${normalizedArtist}%`).order('created_at', { ascending: false }).range(from, to);
+    let query = supabase.from('covers_cafe_official_covers').select('artist_name, album_title, release_year, album_cover_url, pixel_dimensions, cover_public_id').in('country', [country, country.toUpperCase()]).ilike('search_artist', `%${normalizedArtist}%`).order('created_at', { ascending: false }).range(from, to);
     if (normalizedAlbum) query = query.ilike('search_album', `%${normalizedAlbum}%`);
     const { data } = await query;
     let rows = (data as OfficialCoverRow[] | null) ?? [];

@@ -66,7 +66,7 @@ async function searchOneCountry(artist: string, album: string, country: string):
           release_year: item.releaseDate ? Number(item.releaseDate.slice(0, 4)) : null,
           album_cover_url,
           pixel_dimensions: null,
-          country: country.toUpperCase(),
+          country: country.toLowerCase(),
           search_artist: artist,
           search_album: album || null,
           tags: ['official'],
