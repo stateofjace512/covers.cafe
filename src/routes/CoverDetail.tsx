@@ -60,6 +60,8 @@ export default function CoverDetail() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const panelRef = useRef<HTMLDivElement>(null);
+
   const publicId = useMemo(() => (slug ? getCoverPublicIdFromSlug(slug) : null), [slug]);
 
   useEffect(() => {
@@ -110,6 +112,13 @@ export default function CoverDetail() {
     if (panel === 'collection') void openCollectionPanel();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  // Scroll panel into view whenever it opens
+  useEffect(() => {
+    if (activePanel && panelRef.current) {
+      panelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [activePanel]);
 
   useEffect(() => {
     if (!showSizeMenu) return;
@@ -363,6 +372,7 @@ export default function CoverDetail() {
       </div>
 
       {/* Inline panels */}
+      <div ref={panelRef} />
       {activePanel === 'collection' && (
         <div className="cover-panel">
           <h3 className="cover-panel-title"><FolderPlus size={14} /> Add to Collection</h3>
