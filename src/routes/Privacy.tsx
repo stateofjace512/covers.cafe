@@ -1,9 +1,9 @@
-import { Shield } from 'lucide-react';
+import ShieldIcon from '../components/ShieldIcon';
 
 export default function Privacy() {
   return (
     <div className="legal-page">
-      <h1 className="section-title"><Shield size={22} /> Privacy Policy</h1>
+      <h1 className="section-title"><ShieldIcon size={22} /> Privacy Policy</h1>
       <p className="legal-updated">Last updated: February 2026</p>
 
       <div className="legal-body">

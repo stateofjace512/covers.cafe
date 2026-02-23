@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Music } from 'lucide-react';
+import MusicIcon from '../components/MusicIcon';
 import { supabase } from '../lib/supabase';
 import { getCoverImageSrc } from '../lib/media';
 import { slugifyArtist } from '../lib/coverRoutes';
@@ -35,7 +35,7 @@ function ArtistCardImg({ artist }: { artist: ArtistEntry }) {
         />
       ) : (
         <div className="music-artist-img-placeholder">
-          <Music size={28} style={{ opacity: 0.3 }} />
+          <MusicIcon size={28} style={{ opacity: 0.3 }} />
         </div>
       )}
     </div>
@@ -85,7 +85,7 @@ export default function MusicArtists() {
   return (
     <div>
       <h1 className="section-title">
-        <Music size={22} />
+        <MusicIcon size={22} />
         Artists
       </h1>
 

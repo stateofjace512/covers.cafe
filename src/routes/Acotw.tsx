@@ -1,5 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Trophy, Star, Loader, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import TrophyIcon from '../components/TrophyIcon';
+import FavoritesIcon from '../components/FavoritesIcon';
+import LoadingIcon from '../components/LoadingIcon';
+import ClockIcon from '../components/ClockIcon';
+import ChevronDownIcon from '../components/ChevronDownIcon';
+import ChevronUpIcon from '../components/ChevronUpIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { getCoverImageSrc } from '../lib/media';
 import type { Cover } from '../lib/types';
@@ -67,7 +72,7 @@ export default function Acotw() {
   return (
     <div className="acotw-page">
       <div className="acotw-header">
-        <div className="acotw-header-icon"><Trophy size={28} /></div>
+        <div className="acotw-header-icon"><TrophyIcon size={28} /></div>
         <div>
           <h1 className="acotw-title">Album Cover Of The Week</h1>
           <p className="acotw-subtitle">
@@ -81,24 +86,24 @@ export default function Acotw() {
       </div>
 
       {loading ? (
-        <div className="acotw-loading"><Loader size={24} className="acotw-spinner" /><span>Loading poll…</span></div>
+        <div className="acotw-loading"><LoadingIcon size={24} className="acotw-spinner" /><span>Loading poll…</span></div>
       ) : !poll || nominees.length === 0 ? (
         <div className="acotw-empty">
-          <Star size={40} style={{ opacity: 0.3 }} />
+          <FavoritesIcon size={40} style={{ opacity: 0.3 }} />
           <p>No poll yet — favorite some covers to fuel next week's nominees!</p>
         </div>
       ) : (
         <>
           {/* Vote progress bar */}
           <div className="acotw-meta">
-            <span className="acotw-vote-total"><Star size={13} />{totalVotes} vote{totalVotes !== 1 ? 's' : ''} cast</span>
+            <span className="acotw-vote-total"><FavoritesIcon size={13} />{totalVotes} vote{totalVotes !== 1 ? 's' : ''} cast</span>
             {!isClosed && !hasVoted && !user && (
               <button className="btn btn-primary acotw-signin-btn" onClick={() => openAuthModal('login')}>
                 Sign in to vote
               </button>
             )}
             {!isClosed && hasVoted && (
-              <span className="acotw-voted-label"><Clock size={13} />You voted — results reveal Sunday night</span>
+              <span className="acotw-voted-label"><ClockIcon size={13} />You voted — results reveal Sunday night</span>
             )}
           </div>
 
@@ -108,7 +113,7 @@ export default function Acotw() {
             if (!winner) return null;
             return (
               <div className="acotw-winner-banner">
-                <div className="acotw-winner-badge"><Trophy size={16} /> This Week's Winner</div>
+                <div className="acotw-winner-badge"><TrophyIcon size={16} /> This Week's Winner</div>
                 <div className="acotw-winner-cover-wrap">
                   <img src={getCoverImageSrc(winner.cover) ?? ''} alt={winner.cover.title} className="acotw-winner-img" />
                 </div>
@@ -137,7 +142,7 @@ export default function Acotw() {
                     {getCoverImageSrc(n.cover) && (
                       <img src={getCoverImageSrc(n.cover)!} alt={n.cover.title} className="acotw-card-img" loading="lazy" />
                     )}
-                    {isWinner && <div className="acotw-card-winner-overlay"><Trophy size={20} /></div>}
+                    {isWinner && <div className="acotw-card-winner-overlay"><TrophyIcon size={20} /></div>}
                   </div>
                   <div className="acotw-card-body">
                     <div className="acotw-card-title" title={n.cover.title}>{n.cover.title}</div>
@@ -158,10 +163,10 @@ export default function Acotw() {
                         disabled={Boolean(voting)}
                       >
                         {voting === n.cover.id
-                          ? <Loader size={13} className="acotw-spinner" />
+                          ? <LoadingIcon size={13} className="acotw-spinner" />
                           : isMyVote
-                          ? <><Star size={13} fill="currentColor" /> Voted</>
-                          : <><Star size={13} /> Vote</>}
+                          ? <><FavoritesIcon size={13} /> Voted</>
+                          : <><FavoritesIcon size={13} /> Vote</>}
                       </button>
                     )}
 
@@ -179,15 +184,15 @@ export default function Acotw() {
       {/* ── Archive ─────────────────────────────────────────────────────── */}
       <div className="acotw-archive-section">
         <button className="acotw-archive-toggle" onClick={() => setShowArchive((v) => !v)}>
-          <Trophy size={15} />
+          <TrophyIcon size={15} />
           Past Winners
-          {showArchive ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+          {showArchive ? <ChevronUpIcon size={15} /> : <ChevronDownIcon size={15} />}
           {history.length > 0 && <span className="acotw-archive-count">{history.length}</span>}
         </button>
 
         {showArchive && (
           historyLoading ? (
-            <div className="acotw-loading" style={{ padding: '20px 0' }}><Loader size={20} className="acotw-spinner" /></div>
+            <div className="acotw-loading" style={{ padding: '20px 0' }}><LoadingIcon size={20} className="acotw-spinner" /></div>
           ) : history.length === 0 ? (
             <p className="acotw-archive-empty">No past winners yet.</p>
           ) : (
@@ -205,7 +210,7 @@ export default function Acotw() {
                         <div className="acotw-archive-artist">{entry.cover.artist}</div>
                       </>
                     )}
-                    <div className="acotw-archive-votes"><Star size={10} /> {entry.total_votes} votes</div>
+                    <div className="acotw-archive-votes"><FavoritesIcon size={10} /> {entry.total_votes} votes</div>
                   </div>
                 </div>
               ))}

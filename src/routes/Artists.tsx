@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserRound } from 'lucide-react';
+import UserIcon from '../components/UserIcon';
 import { supabase } from '../lib/supabase';
 import { getAvatarSrc } from '../lib/media';
 import { useAuth } from '../contexts/AuthContext';
@@ -49,7 +49,7 @@ export default function Artists() {
   return (
     <div>
       <h1 className="section-title">
-        <UserRound size={22} />
+        <UserIcon size={22} />
         Users
       </h1>
 
@@ -82,7 +82,7 @@ export default function Artists() {
                 <div className="artist-avatar">
                   {avatarSrc
                     ? <img src={avatarSrc} alt={artist.display_name ?? artist.username} className="artist-avatar-img" loading="lazy" />
-                    : <UserRound size={28} style={{ opacity: 0.35 }} />
+                    : <UserIcon size={28} style={{ opacity: 0.35 }} />
                   }
                 </div>
                 <div className="artist-info">

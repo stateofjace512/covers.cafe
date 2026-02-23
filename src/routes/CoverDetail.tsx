@@ -1,9 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import {
-  Loader, Star, ArrowDownToLine, ArrowLeft, User, Calendar, Tag,
-  Flag, FolderPlus, Trash2, Pencil, ChevronDown,
-} from 'lucide-react';
+import LoadingIcon from '../components/LoadingIcon';
+import FavoritesIcon from '../components/FavoritesIcon';
+import DownloadIcon from '../components/DownloadIcon';
+import BackIcon from '../components/BackIcon';
+import UserIcon from '../components/UserIcon';
+import CalendarIcon from '../components/CalendarIcon';
+import TagIcon from '../components/TagIcon';
+import FlagIcon from '../components/FlagIcon';
+import FolderIcon from '../components/FolderIcon';
+import TrashIcon from '../components/TrashIcon';
+import PencilIcon from '../components/PencilIcon';
+import ChevronDownIcon from '../components/ChevronDownIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
@@ -262,7 +270,7 @@ export default function CoverDetail() {
     navigate(-1);
   };
 
-  if (loading) return <p className="text-muted"><Loader size={16} className="cover-spinner" /> Loading cover…</p>;
+  if (loading) return <p className="text-muted"><LoadingIcon size={16} className="cover-spinner" /> Loading cover…</p>;
   if (!cover) return <p className="text-muted">Cover not found.</p>;
 
   const isOwner = user?.id === cover.user_id;
@@ -270,7 +278,7 @@ export default function CoverDetail() {
   return (
     <div className="cover-page">
       <button className="btn btn-secondary cover-page-back" onClick={() => navigate(-1)}>
-        <ArrowLeft size={14} /> Back
+        <BackIcon size={14} /> Back
       </button>
 
       {/* Image */}
@@ -282,13 +290,13 @@ export default function CoverDetail() {
         />
         <div className="cover-board-actions">
           <button className={`btn cover-fav-btn${isFavorited ? ' cover-fav-btn--active' : ''}`} onClick={toggleFavorite}>
-            <Star size={14} fill={isFavorited ? 'currentColor' : 'none'} />
+            <FavoritesIcon size={14} />
             {isFavorited ? 'Favorited' : 'Favorite'}
           </button>
 
           <div className="cover-download-group" ref={downloadBtnRef}>
             <button className="btn btn-primary cover-dl-btn" onClick={() => download()} disabled={downloading}>
-              <ArrowDownToLine size={14} />
+              <DownloadIcon size={14} />
               {downloading ? 'Downloading…' : 'Download'}
             </button>
             <button
@@ -297,7 +305,7 @@ export default function CoverDetail() {
               disabled={downloading}
               title="More sizes"
             >
-              <ChevronDown size={13} />
+              <ChevronDownIcon size={13} />
             </button>
             {showSizeMenu && (
               <div className="cover-size-menu">
@@ -326,21 +334,21 @@ export default function CoverDetail() {
             className="cover-page-uploader"
             onClick={() => navigate(`/users/${cover.profiles!.username}`)}
           >
-            <User size={12} /> @{cover.profiles.username}
+            <UserIcon size={12} /> @{cover.profiles.username}
           </button>
         )}
 
         {(cover.year || (cover.favorite_count ?? 0) > 0 || (cover.download_count ?? 0) > 0) && (
           <div className="cover-meta-chips">
-            {cover.year && <span className="cover-meta-chip"><Calendar size={11} /> {cover.year}</span>}
-            {(cover.favorite_count ?? 0) > 0 && <span className="cover-meta-chip"><Star size={11} /> {cover.favorite_count}</span>}
-            {(cover.download_count ?? 0) > 0 && <span className="cover-meta-chip"><ArrowDownToLine size={11} /> {cover.download_count}</span>}
+            {cover.year && <span className="cover-meta-chip"><CalendarIcon size={11} /> {cover.year}</span>}
+            {(cover.favorite_count ?? 0) > 0 && <span className="cover-meta-chip"><FavoritesIcon size={11} /> {cover.favorite_count}</span>}
+            {(cover.download_count ?? 0) > 0 && <span className="cover-meta-chip"><DownloadIcon size={11} /> {cover.download_count}</span>}
           </div>
         )}
 
         {cover.tags && cover.tags.length > 0 && (
           <div className="cover-tags">
-            <Tag size={12} className="cover-tags-icon" />
+            <TagIcon size={12} className="cover-tags-icon" />
             {cover.tags.map((tag) => (
               <button key={tag} className="cover-tag" onClick={() => navigate(`/?q=${encodeURIComponent(tag)}`)}>
                 {tag}
@@ -353,15 +361,15 @@ export default function CoverDetail() {
       {/* Secondary actions */}
       <div className="cover-secondary-actions">
         <button className="btn cover-action-sm" onClick={() => void openCollectionPanel()}>
-          <FolderPlus size={13} /> Add to Collection
+          <FolderIcon size={13} /> Add to Collection
         </button>
         <button className="btn cover-action-sm" onClick={() => { setReportDone(false); setActivePanel(activePanel === 'report' ? null : 'report'); }}>
-          <Flag size={13} /> Report
+          <FlagIcon size={13} /> Report
         </button>
         {isOwner && (
           <>
             <button className="btn cover-action-sm" onClick={openEditPanel}>
-              <Pencil size={13} /> Edit
+              <PencilIcon size={13} /> Edit
             </button>
             <button
               className={`btn cover-action-sm cover-delete-btn${deleteConfirm ? ' cover-delete-btn--confirm' : ''}`}
@@ -369,7 +377,7 @@ export default function CoverDetail() {
               disabled={deleting}
               onMouseLeave={() => setDeleteConfirm(false)}
             >
-              <Trash2 size={13} /> {deleting ? 'Deleting…' : deleteConfirm ? 'Confirm?' : 'Delete'}
+              <TrashIcon size={13} /> {deleting ? 'Deleting…' : deleteConfirm ? 'Confirm?' : 'Delete'}
             </button>
           </>
         )}
@@ -379,7 +387,7 @@ export default function CoverDetail() {
       <div ref={panelRef} className="cover-panels-anchor">
       {activePanel === 'collection' && (
         <div className="cover-panel">
-          <h3 className="cover-panel-title"><FolderPlus size={14} /> Add to Collection</h3>
+          <h3 className="cover-panel-title"><FolderIcon size={14} /> Add to Collection</h3>
           {collectionsLoading ? (
             <p className="cover-panel-muted">Loading collections…</p>
           ) : (
@@ -409,7 +417,7 @@ export default function CoverDetail() {
 
       {activePanel === 'report' && (
         <div className="cover-panel">
-          <h3 className="cover-panel-title"><Flag size={14} /> Report Cover</h3>
+          <h3 className="cover-panel-title"><FlagIcon size={14} /> Report Cover</h3>
           {reportDone ? (
             <>
               <p className="cover-panel-muted">Thanks — your report has been submitted.</p>
@@ -436,7 +444,7 @@ export default function CoverDetail() {
 
       {activePanel === 'edit' && (
         <div className="cover-panel">
-          <h3 className="cover-panel-title"><Pencil size={14} /> Edit Cover</h3>
+          <h3 className="cover-panel-title"><PencilIcon size={14} /> Edit Cover</h3>
           <div className="cover-panel-form">
             <label className="cover-panel-label">Title</label>
             <input className="cover-panel-input" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />

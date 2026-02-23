@@ -1,9 +1,9 @@
-import { FileText } from 'lucide-react';
+import FileTextIcon from '../components/FileTextIcon';
 
 export default function Terms() {
   return (
     <div className="legal-page">
-      <h1 className="section-title"><FileText size={22} /> Terms of Service</h1>
+      <h1 className="section-title"><FileTextIcon size={22} /> Terms of Service</h1>
       <p className="legal-updated">Last updated: February 2026</p>
 
       <div className="legal-body">

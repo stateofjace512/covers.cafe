@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { MessageCircle, Heart, Flag, Loader, Trash2, Pencil, Check, X, Pin } from 'lucide-react';
+import CommentIcon from './CommentIcon';
+import HeartIcon from './HeartIcon';
+import FlagIcon from './FlagIcon';
+import LoadingIcon from './LoadingIcon';
+import TrashIcon from './TrashIcon';
+import PencilIcon from './PencilIcon';
+import CheckIcon from './CheckIcon';
+import XIcon from './XIcon';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getClientIdentity } from '../lib/comments/identityTracking.client';
@@ -258,7 +265,7 @@ export default function CoverComments({ coverId, cover }: Props) {
   return (
     <section className="cc-section">
       <h3 className="cc-heading">
-        <MessageCircle size={15} />
+        <CommentIcon size={15} />
         Comments
         {comments.length > 0 && <span className="cc-count">{comments.length}</span>}
       </h3>
@@ -288,7 +295,7 @@ export default function CoverComments({ coverId, cover }: Props) {
             onClick={submitComment}
             disabled={!user || submitting || !content.trim()}
           >
-            {submitting ? <><Loader size={13} className="upload-spinner" /> Posting…</> : 'Post'}
+            {submitting ? <><LoadingIcon size={13} className="upload-spinner" /> Posting…</> : 'Post'}
           </button>
         </div>
       </div>
@@ -297,7 +304,7 @@ export default function CoverComments({ coverId, cover }: Props) {
 
       {/* Comment list */}
       {loading ? (
-        <p className="cc-empty"><Loader size={14} className="upload-spinner" /> Loading comments…</p>
+        <p className="cc-empty"><LoadingIcon size={14} className="upload-spinner" /> Loading comments…</p>
       ) : comments.length === 0 ? (
         <p className="cc-empty">No comments yet — be the first!</p>
       ) : (
@@ -327,9 +334,9 @@ export default function CoverComments({ coverId, cover }: Props) {
                   />
                   <div className="cc-actions">
                     <button className="cc-action" onClick={() => saveEdit(comment.id)} disabled={editSaving || !editContent.trim()}>
-                      <Check size={12} /> {editSaving ? 'Saving…' : 'Save'}
+                      <CheckIcon size={12} /> {editSaving ? 'Saving…' : 'Save'}
                     </button>
-                    <button className="cc-action" onClick={cancelEdit}><X size={12} /> Cancel</button>
+                    <button className="cc-action" onClick={cancelEdit}><XIcon size={12} /> Cancel</button>
                   </div>
                 </div>
               ) : (
@@ -345,19 +352,19 @@ export default function CoverComments({ coverId, cover }: Props) {
                       className={`cc-action${likedIds.has(comment.id) ? ' cc-action--liked' : ''}`}
                       onClick={() => toggleLike(comment.id)}
                     >
-                      <Heart size={12} fill={likedIds.has(comment.id) ? 'currentColor' : 'none'} />
+                      <HeartIcon size={12} />
                       {comment.like_count ?? 0}
                     </button>
                     <button className="cc-action" onClick={() => reportComment(comment.id)}>
-                      <Flag size={12} /> Report
+                      <FlagIcon size={12} /> Report
                     </button>
                     {currentAuthorName && comment.author_username === currentAuthorName && (
                       <>
                         <button className="cc-action" onClick={() => startEdit(comment)}>
-                          <Pencil size={12} /> Edit
+                          <PencilIcon size={12} /> Edit
                         </button>
                         <button className="cc-action cc-action--delete" onClick={() => deleteComment(comment.id)}>
-                          <Trash2 size={12} /> Delete
+                          <TrashIcon size={12} /> Delete
                         </button>
                       </>
                     )}
@@ -374,7 +381,7 @@ export default function CoverComments({ coverId, cover }: Props) {
                           title="Induct to the Pin of Heuristics"
                         >
                           {pinningId === comment.id
-                            ? <Loader size={11} className="upload-spinner" />
+                            ? <LoadingIcon size={11} className="upload-spinner" />
                             : <CastleIcon size={11} />
                           }
                           POH

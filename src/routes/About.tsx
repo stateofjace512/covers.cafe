@@ -1,10 +1,10 @@
-import { Info } from 'lucide-react';
+import AboutIcon from '../components/AboutIcon';
 import CoffeeCupIcon from '../components/CoffeeCupIcon';
 
 export default function About() {
   return (
     <div className="legal-page about-page">
-      <h1 className="section-title"><Info size={22} /> About covers.cafe</h1>
+      <h1 className="section-title"><AboutIcon size={22} /> About covers.cafe</h1>
 
       <div className="legal-body">
         <p className="about-lede">

@@ -1,6 +1,18 @@
 import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader, FolderPlus, ChevronDown, Pencil, Clock } from 'lucide-react';
+import XIcon from './XIcon';
+import FavoritesIcon from './FavoritesIcon';
+import DownloadIcon from './DownloadIcon';
+import UserIcon from './UserIcon';
+import CalendarIcon from './CalendarIcon';
+import TagIcon from './TagIcon';
+import TrashIcon from './TrashIcon';
+import FlagIcon from './FlagIcon';
+import LoadingIcon from './LoadingIcon';
+import FolderIcon from './FolderIcon';
+import ChevronDownIcon from './ChevronDownIcon';
+import PencilIcon from './PencilIcon';
+import ClockIcon from './ClockIcon';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -324,7 +336,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-box cover-modal" role="dialog" aria-modal="true">
         <button className="cover-modal-close" onClick={onClose} aria-label="Close">
-          <X size={18} />
+          <XIcon size={18} />
         </button>
 
         <div className="cover-modal-inner">
@@ -349,12 +361,12 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                 <div className="cover-modal-meta">
                   {cover.year && (
                     <div className="cover-meta-row">
-                      <Calendar size={13} />
+                      <CalendarIcon size={13} />
                       <span>{cover.year}</span>
                     </div>
                   )}
                   <div className="cover-meta-row">
-                    <User size={13} />
+                    <UserIcon size={13} />
                     <span>
                       Uploaded by{' '}
                       {cover.profiles?.username ? (
@@ -371,7 +383,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                   </div>
                   {cover.created_at && (
                     <div className="cover-meta-row">
-                      <Clock size={13} />
+                      <ClockIcon size={13} />
                       <span
                         title={new Date(cover.created_at).toLocaleString('en-US', {
                           year: 'numeric', month: 'long', day: 'numeric',
@@ -386,7 +398,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                   )}
                   {cover.tags && cover.tags.length > 0 && (
                     <div className="cover-meta-row cover-meta-tags">
-                      <Tag size={13} />
+                      <TagIcon size={13} />
                       <div className="cover-tags-list">
                         {cover.tags.map((tag) => (
                           <button
@@ -400,7 +412,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     </div>
                   )}
                   <div className="cover-meta-row">
-                    <ArrowDownToLine size={13} />
+                    <DownloadIcon size={13} />
                     <span>{cover.download_count} download{cover.download_count !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
@@ -410,7 +422,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     className={`btn cover-modal-fav-btn${isFavorited ? ' cover-modal-fav-btn--active' : ''}`}
                     onClick={handleFavorite}
                   >
-                    <Star size={15} fill={isFavorited ? 'currentColor' : 'none'} />
+                    <FavoritesIcon size={15} />
                     {isFavorited ? 'Favorited' : 'Favorite'}
                   </button>
                   <div className="cover-download-wrap" ref={downloadMenuRef}>
@@ -419,7 +431,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                       onClick={() => handleDownload()}
                       disabled={downloading}
                     >
-                      <Download size={15} />
+                      <DownloadIcon size={15} />
                       {downloading ? 'Downloading…' : 'Download'}
                     </button>
                     <button
@@ -432,7 +444,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                       disabled={downloading}
                       title="More download sizes"
                     >
-                      <ChevronDown size={14} />
+                      <ChevronDownIcon size={14} />
                     </button>
 
                   </div>
@@ -440,12 +452,12 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
 
                 <div className="cover-modal-secondary-actions">
                   <button className="btn cover-modal-collection-btn" onClick={openCollectionPanel}>
-                    <FolderPlus size={14} />
+                    <FolderIcon size={14} />
                     Add to Collection
                   </button>
                   {isOwner && (
                     <button className="btn cover-modal-edit-btn" onClick={openEditPanel}>
-                      <Pencil size={14} />
+                      <PencilIcon size={14} />
                       Edit
                     </button>
                   )}
@@ -455,7 +467,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                       onClick={handleDelete}
                       disabled={deleting}
                     >
-                      <Trash2 size={14} />
+                      <TrashIcon size={14} />
                       {deleting ? 'Deleting…' : deleteConfirm ? 'Confirm Delete' : 'Delete'}
                     </button>
                   )}
@@ -463,7 +475,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     className="btn cover-modal-report-btn"
                     onClick={() => setPanelMode('report')}
                   >
-                    <Flag size={14} />
+                    <FlagIcon size={14} />
                     Report
                   </button>
                 </div>
@@ -505,7 +517,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     </div>
                     <div className="cover-report-actions">
                       <button className="btn btn-primary" onClick={handleReport} disabled={reporting}>
-                        {reporting ? <><Loader size={13} className="upload-spinner" /> Submitting…</> : 'Submit Report'}
+                        {reporting ? <><LoadingIcon size={13} className="upload-spinner" /> Submitting…</> : 'Submit Report'}
                       </button>
                       <button className="btn btn-secondary" onClick={() => setPanelMode('details')}>Back</button>
                     </div>
@@ -618,7 +630,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                 )}
                 <div className="cover-report-actions">
                   <button className="btn btn-primary" onClick={saveEdit} disabled={editSaving}>
-                    {editSaving ? <><Loader size={13} className="upload-spinner" /> Saving…</> : 'Save Changes'}
+                    {editSaving ? <><LoadingIcon size={13} className="upload-spinner" /> Saving…</> : 'Save Changes'}
                   </button>
                   <button className="btn btn-secondary" onClick={() => setPanelMode('details')}>Cancel</button>
                 </div>

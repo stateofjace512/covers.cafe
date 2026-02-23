@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Image, ArrowUpFromLine, Star, Trophy, Sparkles } from 'lucide-react';
+import GalleryIcon from '../components/GalleryIcon';
+import UploadDownloadIcon from '../components/UploadDownloadIcon';
+import FavoritesIcon from '../components/FavoritesIcon';
+import TrophyIcon from '../components/TrophyIcon';
+import DiamondIcon from '../components/DiamondIcon';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
 import CoffeeCupIcon from '../components/CoffeeCupIcon';
@@ -8,9 +12,9 @@ import CoffeeCupIcon from '../components/CoffeeCupIcon';
 export type GalleryTab = 'new' | 'top_rated' | 'acotw';
 
 const TABS: { id: GalleryTab; label: string; icon: React.ReactNode; title: string }[] = [
-  { id: 'new',       label: 'New',       icon: <Sparkles size={13} />, title: 'Recent Covers' },
-  { id: 'top_rated', label: 'Top Rated', icon: <Star size={13} />,     title: 'Top Rated' },
-  { id: 'acotw',     label: 'ACOTW',     icon: <Trophy size={13} />,   title: 'Album Cover Of The Week' },
+  { id: 'new',       label: 'New',       icon: <DiamondIcon size={13} />,    title: 'Recent Covers' },
+  { id: 'top_rated', label: 'Top Rated', icon: <FavoritesIcon size={13} />, title: 'Top Rated' },
+  { id: 'acotw',     label: 'ACOTW',     icon: <TrophyIcon size={13} />,    title: 'Album Cover Of The Week' },
 ];
 
 export default function Gallery() {
@@ -34,12 +38,12 @@ export default function Gallery() {
             <div className="hero-actions">
               {user ? (
                 <a href="/upload" className="btn btn-primary" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/upload'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
-                  <ArrowUpFromLine size={15} />
+                  <UploadDownloadIcon size={15} />
                   Upload a Cover
                 </a>
               ) : (
                 <button className="btn btn-primary" onClick={() => openAuthModal('register')}>
-                  <ArrowUpFromLine size={15} />
+                  <UploadDownloadIcon size={15} />
                   Join &amp; Upload
                 </button>
               )}
@@ -62,7 +66,7 @@ export default function Gallery() {
 
       <section>
         <h2 className="section-title">
-          <Image size={20} />
+          <GalleryIcon size={20} />
           {searchQuery ? `Results for "${searchQuery}"` : activeTitle}
         </h2>
         <GalleryGrid filter="all" tab={searchQuery ? 'new' : activeTab} />

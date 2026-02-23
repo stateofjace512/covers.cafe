@@ -1,4 +1,4 @@
-import { Star } from 'lucide-react';
+import FavoritesIcon from '../components/FavoritesIcon';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
 
@@ -8,16 +8,16 @@ export default function Favorites() {
   return (
     <div>
       <h1 className="section-title">
-        <Star size={22} />
+        <FavoritesIcon size={22} />
         Favorites
       </h1>
       {user ? (
         <GalleryGrid filter="favorites" />
       ) : (
         <div className="empty-state card">
-          <Star size={48} style={{ opacity: 0.25, marginBottom: 14 }} />
+          <FavoritesIcon size={48} style={{ opacity: 0.25, marginBottom: 14 }} />
           <h2 className="empty-title">Sign in to see your favorites</h2>
-          <p className="empty-body">Star album covers from the gallery to save them here.</p>
+          <p className="empty-body">FavoritesIcon album covers from the gallery to save them here.</p>
           <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
             <button className="btn btn-primary" onClick={() => openAuthModal('login')}>Sign In</button>
             <button className="btn btn-secondary" onClick={() => openAuthModal('register')}>Create Account</button>

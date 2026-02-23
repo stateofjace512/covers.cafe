@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Loader } from 'lucide-react';
+import LoadingIcon from './LoadingIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { checkRateLimit } from '../lib/rateLimit';
@@ -238,7 +238,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
   if (loading) {
     return (
       <div className="gallery-loading">
-        <Loader size={28} className="gallery-spinner" />
+        <LoadingIcon size={28} className="gallery-spinner" />
         <span>Loading covers…</span>
       </div>
     );
@@ -327,7 +327,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
                 disabled={loadingMore}
               >
                 {loadingMore
-                  ? <><Loader size={14} className="gallery-spinner" /> Loading…</>
+                  ? <><LoadingIcon size={14} className="gallery-spinner" /> Loading…</>
                   : 'Load more'}
               </button>
             </div>

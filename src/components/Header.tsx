@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, LogOut, Menu, X } from 'lucide-react';
+import SearchIcon from './SearchIcon';
+import LogoutIcon from './LogoutIcon';
+import MenuIcon from './MenuIcon';
+import XIcon from './XIcon';
 import MoonIcon from './MoonIcon';
 import SunIcon from './SunIcon';
 import UserIcon from './UserIcon';
@@ -47,11 +50,11 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
         aria-expanded={isMobileNavOpen}
         aria-controls="main-sidebar"
       >
-        {isMobileNavOpen ? <X size={16} /> : <Menu size={16} />}
+        {isMobileNavOpen ? <XIcon size={16} /> : <MenuIcon size={16} />}
       </button>
           <span className="header-logo-text">covers<span className="header-logo-dot">.</span>cafe</span>
       <form className="header-search-wrap" onSubmit={handleSearch}>
-        <Search size={14} className="header-search-icon" />
+        <SearchIcon size={14} className="header-search-icon" />
         <input
           type="search"
           className="header-search"
@@ -83,7 +86,7 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
               </span>
             </button>
             <button className="btn btn-ghost header-signout-btn" onClick={() => signOut()} title="Sign out">
-              <LogOut size={15} />
+              <LogoutIcon size={15} />
             </button>
           </div>
         ) : (

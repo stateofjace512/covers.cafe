@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { Star, Download, User, Trash2, Trophy, Lock } from 'lucide-react';
+import FavoritesIcon from './FavoritesIcon';
+import DownloadIcon from './DownloadIcon';
+import UserIcon from './UserIcon';
+import TrashIcon from './TrashIcon';
+import TrophyIcon from './TrophyIcon';
+import LockIcon from './LockIcon';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -79,10 +84,10 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
             onClick={(e) => { e.stopPropagation(); onToggleFavorite(cover.id); }}
             title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
           >
-            <Star size={15} fill={isFavorited ? 'currentColor' : 'none'} />
+            <FavoritesIcon size={15} />
           </button>
           <button className="cover-card-action-btn" title="Download" onClick={(e) => e.stopPropagation()}>
-            <Download size={15} />
+            <DownloadIcon size={15} />
           </button>
           {isOwner && (
             <button
@@ -91,7 +96,7 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
               title={confirmDelete ? 'Click again to confirm delete' : 'Delete this cover'}
               disabled={deleting}
             >
-              <Trash2 size={15} />
+              <TrashIcon size={15} />
             </button>
           )}
         </div>
@@ -103,20 +108,20 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
         <div className="cover-card-meta">
           {cover.is_acotw && (
             <span className="cover-card-acotw" title="Album Cover Of The Week">
-              <Trophy size={9} />
+              <TrophyIcon size={9} />
               ACOTW
             </span>
           )}
           {cover.is_private && (
             <span className="cover-card-private" title="Only visible to you">
-              <Lock size={9} />
+              <LockIcon size={9} />
               Private
             </span>
           )}
           {cover.year && <span className="cover-card-year">{cover.year}</span>}
           {(cover.favorite_count ?? 0) > 0 && (
             <span className="cover-card-fav-count" title={`${cover.favorite_count} favorite${cover.favorite_count === 1 ? '' : 's'}`}>
-              <Star size={9} />
+              <FavoritesIcon size={9} />
               {cover.favorite_count}
             </span>
           )}
@@ -126,11 +131,11 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
               onClick={(e) => { e.stopPropagation(); navigate(`/users/${cover.profiles!.username}`); }}
               title={`View ${cover.profiles.username}'s profile`}
             >
-              <User size={10} />
+              <UserIcon size={10} />
               {cover.profiles.username}
             </button>
           ) : (
-            <span className="cover-card-uploader"><User size={10} />unknown</span>
+            <span className="cover-card-uploader"><UserIcon size={10} />unknown</span>
           )}
         </div>
       </div>

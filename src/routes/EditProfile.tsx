@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserRoundCog, Loader, CheckCircle, Upload } from 'lucide-react';
+import UserIcon from '../components/UserIcon';
+import LoadingIcon from '../components/LoadingIcon';
+import CheckCircleIcon from '../components/CheckCircleIcon';
+import UploadDownloadIcon from '../components/UploadDownloadIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -178,7 +181,7 @@ export default function EditProfile() {
   if (!user) {
     return (
       <div>
-        <h1 className="section-title"><UserRoundCog size={22} /> Edit Profile</h1>
+        <h1 className="section-title"><UserIcon size={22} /> Edit Profile</h1>
         <div className="card" style={{ maxWidth: 400, padding: 32, textAlign: 'center' }}>
           <p className="text-muted">Sign in to edit your profile.</p>
           <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => openAuthModal('login')}>Sign In</button>
@@ -192,7 +195,7 @@ export default function EditProfile() {
 
   return (
     <div>
-      <h1 className="section-title"><UserRoundCog size={22} /> Edit Profile</h1>
+      <h1 className="section-title"><UserIcon size={22} /> Edit Profile</h1>
       <form onSubmit={handleSave} className="edit-form card">
 
         {/* Username */}
@@ -286,7 +289,7 @@ export default function EditProfile() {
             if (!picked) return;
             setAvatarPreview(URL.createObjectURL(picked));
           }} />
-          <button type="button" className="btn btn-secondary" onClick={() => avatarInputRef.current?.click()}><Upload size={14} /> Upload image</button>
+          <button type="button" className="btn btn-secondary" onClick={() => avatarInputRef.current?.click()}><UploadDownloadIcon size={14} /> Upload image</button>
           {avatarPreview && (
             <>
               <div className="avatar-crop-preview">
@@ -304,7 +307,7 @@ export default function EditProfile() {
 
         <div className="edit-actions">
           <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? <><Loader size={14} className="upload-spinner" /> Saving…</> : saved ? <><CheckCircle size={14} /> Saved!</> : 'Save Changes'}
+            {saving ? <><LoadingIcon size={14} className="upload-spinner" /> Saving…</> : saved ? <><CheckCircleIcon size={14} /> Saved!</> : 'Save Changes'}
           </button>
           <button type="button" className="btn btn-secondary" onClick={() => navigate('/profile')}>Cancel</button>
         </div>

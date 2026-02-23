@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader } from 'lucide-react';
+import LoadingIcon from '../components/LoadingIcon';
 import CastleIcon from '../components/CastleIcon';
 
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
@@ -72,7 +72,7 @@ export default function Poh() {
       {/* ── Pins ─────────────────────────────────────────────────── */}
       {loading ? (
         <div className="poh-loading">
-          <Loader size={22} className="poh-spinner" />
+          <LoadingIcon size={22} className="poh-spinner" />
           <span>Preparing the hall…</span>
         </div>
       ) : pins.length === 0 ? (

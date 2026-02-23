@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell, Star, MessageCircle, X } from 'lucide-react';
+import BellIcon from './BellIcon';
+import BellSleepIcon from './BellSleepIcon';
+import FavoritesIcon from './FavoritesIcon';
+import CommentIcon from './CommentIcon';
+import XIcon from './XIcon';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -131,7 +135,7 @@ export default function NotificationBell() {
         title="Notifications"
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} new)` : ''}`}
       >
-        <Bell size={16} style={unreadCount > 0 ? { color: '#d4a020' } : undefined} />
+        {unreadCount > 0 ? <BellIcon size={16} style={{ color: '#d4a020' }} /> : <BellSleepIcon size={16} />}
         {unreadCount > 0 && (
           <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
         )}
@@ -147,7 +151,7 @@ export default function NotificationBell() {
               )}
             </span>
             <button className="notif-close-btn" onClick={() => setOpen(false)} aria-label="Close">
-              <X size={14} />
+              <XIcon size={14} />
             </button>
           </div>
 
@@ -163,7 +167,7 @@ export default function NotificationBell() {
                   <div key={n.id} className={`notif-item${isNew ? ' notif-item--new' : ''}`}>
                     <span className="notif-num">{idx + 1}</span>
                     <span className={`notif-icon ${(n.type === 'favorite' || n.type === 'comment_like') ? 'notif-icon--fav' : 'notif-icon--cmt'}`}>
-                      {(n.type === 'favorite' || n.type === 'comment_like') ? <Star size={12} fill="currentColor" /> : <MessageCircle size={12} />}
+                      {(n.type === 'favorite' || n.type === 'comment_like') ? <FavoritesIcon size={12} /> : <CommentIcon size={12} />}
                     </span>
                     <div className="notif-body">
                       <p className="notif-text">
@@ -202,7 +206,7 @@ export default function NotificationBell() {
                       title="Dismiss"
                       aria-label="Dismiss notification"
                     >
-                      <X size={11} />
+                      <XIcon size={11} />
                     </button>
                   </div>
                 );

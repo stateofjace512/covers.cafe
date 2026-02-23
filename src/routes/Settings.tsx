@@ -1,5 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Cog, Moon, Sun, Lock, Mail, Trash2, AlertTriangle, CheckCircle, Loader, ShieldCheck, MonitorSmartphone, LogOut } from 'lucide-react';
+import GearIcon from '../components/GearIcon';
+import MoonIcon from '../components/MoonIcon';
+import SunIcon from '../components/SunIcon';
+import LockIcon from '../components/LockIcon';
+import EmailIcon from '../components/EmailIcon';
+import TrashIcon from '../components/TrashIcon';
+import AlertTriangleIcon from '../components/AlertTriangleIcon';
+import CheckCircleIcon from '../components/CheckCircleIcon';
+import LoadingIcon from '../components/LoadingIcon';
+import ShieldIcon from '../components/ShieldIcon';
+import MonitorIcon from '../components/MonitorIcon';
+import LogoutIcon from '../components/LogoutIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -56,7 +67,7 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
 
   if (success) return (
     <div className="settings-inline-success">
-      <CheckCircle size={15} /> Password updated.
+      <CheckCircleIcon size={15} /> Password updated.
     </div>
   );
 
@@ -68,10 +79,10 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
         value={next} onChange={(e) => setNext(e.target.value)} autoComplete="new-password" minLength={6} required />
       <input className="settings-input" type="password" placeholder="Confirm new password"
         value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" required />
-      {error && <div className="settings-inline-error"><AlertTriangle size={13} /> {error}</div>}
+      {error && <div className="settings-inline-error"><AlertTriangleIcon size={13} /> {error}</div>}
       <div className="settings-inline-actions">
         <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? <><Loader size={13} className="settings-spinner" /> Saving…</> : 'Update Password'}
+          {loading ? <><LoadingIcon size={13} className="settings-spinner" /> Saving…</> : 'Update Password'}
         </button>
         <button type="button" className="btn btn-secondary" onClick={onDone} disabled={loading}>Cancel</button>
       </div>
@@ -156,23 +167,23 @@ function ChangeEmailForm({ onDone }: { onDone: () => void }) {
 
   if (success) return (
     <div className="settings-inline-success">
-      <CheckCircle size={15} /> Email updated. You may need to sign in again.
+      <CheckCircleIcon size={15} /> Email updated. You may need to sign in again.
     </div>
   );
 
   if (step === 'verify') return (
     <form className="settings-inline-form" onSubmit={handleVerify}>
       <div className="settings-inline-hint">
-        <ShieldCheck size={14} />
+        <ShieldIcon size={14} />
         A 6-digit code was sent to <strong>{newEmail}</strong>. Enter it below to confirm the change.
       </div>
       <input className="settings-input settings-code-input" type="text" placeholder="000000"
         value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
         inputMode="numeric" autoComplete="one-time-code" maxLength={6} required />
-      {error && <div className="settings-inline-error"><AlertTriangle size={13} /> {error}</div>}
+      {error && <div className="settings-inline-error"><AlertTriangleIcon size={13} /> {error}</div>}
       <div className="settings-inline-actions">
         <button type="submit" className="btn btn-primary" disabled={loading || code.length !== 6}>
-          {loading ? <><Loader size={13} className="settings-spinner" /> Verifying…</> : 'Confirm Change'}
+          {loading ? <><LoadingIcon size={13} className="settings-spinner" /> Verifying…</> : 'Confirm Change'}
         </button>
         <button type="button" className="btn btn-secondary" onClick={onDone} disabled={loading}>Cancel</button>
       </div>
@@ -187,10 +198,10 @@ function ChangeEmailForm({ onDone }: { onDone: () => void }) {
       <input className="settings-input" type="email" placeholder="New email address"
         value={newEmail} onChange={(e) => setNewEmail(e.target.value)}
         autoComplete="email" required />
-      {error && <div className="settings-inline-error"><AlertTriangle size={13} /> {error}</div>}
+      {error && <div className="settings-inline-error"><AlertTriangleIcon size={13} /> {error}</div>}
       <div className="settings-inline-actions">
         <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? <><Loader size={13} className="settings-spinner" /> Sending code…</> : 'Send Verification Code'}
+          {loading ? <><LoadingIcon size={13} className="settings-spinner" /> Sending code…</> : 'Send Verification Code'}
         </button>
         <button type="button" className="btn btn-secondary" onClick={onDone} disabled={loading}>Cancel</button>
       </div>
@@ -248,7 +259,7 @@ function DeleteAccountForm({ onDone }: { onDone: () => void }) {
   return (
     <form className="settings-inline-form" onSubmit={handleDelete}>
       <div className="settings-delete-warning">
-        <AlertTriangle size={15} />
+        <AlertTriangleIcon size={15} />
         <span>
           This will permanently delete your account and <strong>all covers you've uploaded</strong>.
           This cannot be undone.
@@ -259,10 +270,10 @@ function DeleteAccountForm({ onDone }: { onDone: () => void }) {
         autoComplete="current-password" required />
       <input className="settings-input" type="text" placeholder='Type "delete my account" to confirm'
         value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
-      {error && <div className="settings-inline-error"><AlertTriangle size={13} /> {error}</div>}
+      {error && <div className="settings-inline-error"><AlertTriangleIcon size={13} /> {error}</div>}
       <div className="settings-inline-actions">
         <button type="submit" className="btn btn-danger" disabled={loading}>
-          {loading ? <><Loader size={13} className="settings-spinner" /> Deleting…</> : 'Delete My Account'}
+          {loading ? <><LoadingIcon size={13} className="settings-spinner" /> Deleting…</> : 'Delete My Account'}
         </button>
         <button type="button" className="btn btn-secondary" onClick={onDone} disabled={loading}>Cancel</button>
       </div>
@@ -372,12 +383,12 @@ function ActiveSessionsPanel({ onDone }: { onDone: () => void }) {
     <div className="sessions-panel">
       {loading && (
         <div className="sessions-loading">
-          <Loader size={14} className="settings-spinner" /> Loading sessions…
+          <LoadingIcon size={14} className="settings-spinner" /> Loading sessions…
         </div>
       )}
       {error && (
         <div className="settings-inline-error">
-          <AlertTriangle size={13} /> {error}
+          <AlertTriangleIcon size={13} /> {error}
         </div>
       )}
       {!loading && !error && sessions.length === 0 && (
@@ -389,7 +400,7 @@ function ActiveSessionsPanel({ onDone }: { onDone: () => void }) {
             <li key={s.id} className={`sessions-item${s.isCurrent ? ' sessions-item--current' : ''}`}>
               <div className="sessions-item-info">
                 <span className="sessions-item-label">
-                  <MonitorSmartphone size={13} />
+                  <MonitorIcon size={13} />
                   {s.isCurrent ? <span className="sessions-current-badge">This device</span> : 'Other device'}
                 </span>
                 <span className="sessions-item-meta">
@@ -405,8 +416,8 @@ function ActiveSessionsPanel({ onDone }: { onDone: () => void }) {
                   disabled={signingOutId === s.id || signingOutAll}
                 >
                   {signingOutId === s.id
-                    ? <><Loader size={12} className="settings-spinner" /> Signing out…</>
-                    : <><LogOut size={12} /> Sign Out</>}
+                    ? <><LoadingIcon size={12} className="settings-spinner" /> Signing out…</>
+                    : <><LogoutIcon size={12} /> Sign Out</>}
                 </button>
               )}
             </li>
@@ -415,7 +426,7 @@ function ActiveSessionsPanel({ onDone }: { onDone: () => void }) {
       )}
       {msg && (
         <div className={`settings-session-msg${msg.ok ? ' settings-session-msg--ok' : ' settings-session-msg--err'}`}>
-          {msg.ok ? <CheckCircle size={13} /> : <AlertTriangle size={13} />}
+          {msg.ok ? <CheckCircleIcon size={13} /> : <AlertTriangleIcon size={13} />}
           {msg.text}
         </div>
       )}
@@ -427,8 +438,8 @@ function ActiveSessionsPanel({ onDone }: { onDone: () => void }) {
             disabled={signingOutAll || signingOutId !== null}
           >
             {signingOutAll
-              ? <><Loader size={13} className="settings-spinner" /> Signing out all…</>
-              : <><LogOut size={13} /> Sign Out All Others</>}
+              ? <><LoadingIcon size={13} className="settings-spinner" /> Signing out all…</>
+              : <><LogoutIcon size={13} /> Sign Out All Others</>}
           </button>
         )}
         <button type="button" className="btn btn-secondary" onClick={onDone}>Done</button>
@@ -457,7 +468,7 @@ export default function Settings() {
 
   return (
     <div>
-      <h1 className="section-title"><Cog size={22} /> Settings</h1>
+      <h1 className="section-title"><GearIcon size={22} /> Settings</h1>
 
       <div className="settings-layout">
 
@@ -471,10 +482,10 @@ export default function Settings() {
             </div>
             <div className="settings-row-control">
               <button className={`btn${currentTheme === 'light' ? ' btn-primary' : ' btn-secondary'}`} onClick={() => setTheme('light')}>
-                <Sun size={14} /> Light
+                <SunIcon size={14} /> Light
               </button>
               <button className={`btn${currentTheme === 'dark' ? ' btn-primary' : ' btn-secondary'}`} onClick={() => setTheme('dark')}>
-                <Moon size={14} /> Dark
+                <MoonIcon size={14} /> Dark
               </button>
             </div>
           </div>
@@ -514,7 +525,7 @@ export default function Settings() {
             {/* Change Password */}
             <div className="settings-row settings-row--expandable">
               <div className="settings-row-info">
-                <span className="settings-row-label"><Lock size={13} /> Password</span>
+                <span className="settings-row-label"><LockIcon size={13} /> Password</span>
                 <span className="settings-row-desc">Update your sign-in password.</span>
               </div>
               {activeForm !== 'password' && (
@@ -537,7 +548,7 @@ export default function Settings() {
             {/* Change Email */}
             <div className="settings-row settings-row--expandable">
               <div className="settings-row-info">
-                <span className="settings-row-label"><Mail size={13} /> Email address</span>
+                <span className="settings-row-label"><EmailIcon size={13} /> Email address</span>
                 <span className="settings-row-desc">{user.email}</span>
               </div>
               {activeForm !== 'email' && (
@@ -560,7 +571,7 @@ export default function Settings() {
             {/* Sessions */}
             <div className="settings-row settings-row--expandable">
               <div className="settings-row-info">
-                <span className="settings-row-label"><MonitorSmartphone size={13} /> Active Sessions</span>
+                <span className="settings-row-label"><MonitorIcon size={13} /> Active Sessions</span>
                 <span className="settings-row-desc">
                   View and manage all devices currently signed in to your account.
                 </span>
@@ -588,7 +599,7 @@ export default function Settings() {
         {user && (
           <section className="card settings-section settings-danger-section">
             <h2 className="settings-section-title settings-danger-title">
-              <Trash2 size={15} /> Danger Zone
+              <TrashIcon size={15} /> Danger Zone
             </h2>
 
             <div className="settings-row settings-row--expandable">

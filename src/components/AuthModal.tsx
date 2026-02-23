@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react';
-import { X, Mail, Lock, User, AlertCircle, Loader, ShieldCheck } from 'lucide-react';
+import XIcon from './XIcon';
+import EmailIcon from './EmailIcon';
+import LockIcon from './LockIcon';
+import UserIcon from './UserIcon';
+import AlertCircleIcon from './AlertCircleIcon';
+import LoadingIcon from './LoadingIcon';
+import ShieldIcon from './ShieldIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -294,7 +300,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
           )}
           {step !== 'verify' && (
             <button className="modal-close-btn" onClick={onClose} aria-label="Close">
-              <X size={18} />
+              <XIcon size={18} />
             </button>
           )}
         </div>
@@ -309,12 +315,12 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
             /* OTP verification step */
             <form onSubmit={handleVerify} className="auth-form">
               <div className="auth-verify-info">
-                <ShieldCheck size={32} className="auth-verify-icon" />
+                <ShieldIcon size={32} className="auth-verify-icon" />
                 <p>We sent a 6-digit code to <strong>{email}</strong>. Enter it below to verify your account.</p>
               </div>
               <div className="auth-field">
                 <label className="auth-label">
-                  <ShieldCheck size={13} /> Verification Code
+                  <ShieldIcon size={13} /> Verification Code
                 </label>
                 <input
                   type="text"
@@ -331,7 +337,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
 
               {error && (
                 <div className="auth-error">
-                  <AlertCircle size={14} /> {error}
+                  <AlertCircleIcon size={14} /> {error}
                 </div>
               )}
               {success && (
@@ -342,7 +348,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
 
               <button type="submit" className="btn btn-primary auth-submit-btn" disabled={loading || code.length !== 6}>
                 {loading ? (
-                  <><Loader size={14} className="auth-spinner" /> Verifying…</>
+                  <><LoadingIcon size={14} className="auth-spinner" /> Verifying…</>
                 ) : (
                   'Verify'
                 )}
@@ -361,7 +367,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
               {tab === 'register' && (
                 <div className="auth-field">
                   <label className="auth-label">
-                    <User size={13} /> Username
+                    <UserIcon size={13} /> Username
                   </label>
                   <input
                     type="text"
@@ -376,7 +382,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
               )}
               <div className="auth-field">
                 <label className="auth-label">
-                  <Mail size={13} /> Email
+                  <EmailIcon size={13} /> Email
                 </label>
                 <input
                   type="email"
@@ -390,7 +396,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
               </div>
               <div className="auth-field">
                 <label className="auth-label">
-                  <Lock size={13} /> Password
+                  <LockIcon size={13} /> Password
                 </label>
                 <input
                   type="password"
@@ -406,13 +412,13 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
 
               {error && (
                 <div className="auth-error">
-                  <AlertCircle size={14} /> {error}
+                  <AlertCircleIcon size={14} /> {error}
                 </div>
               )}
 
               <button type="submit" className="btn btn-primary auth-submit-btn" disabled={loading}>
                 {loading ? (
-                  <><Loader size={14} className="auth-spinner" /> {tab === 'login' ? 'Signing in…' : 'Creating account…'}</>
+                  <><LoadingIcon size={14} className="auth-spinner" /> {tab === 'login' ? 'Signing in…' : 'Creating account…'}</>
                 ) : (
                   tab === 'login' ? 'Sign In' : 'Create Account'
                 )}

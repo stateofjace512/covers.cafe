@@ -1,6 +1,12 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, X, Loader, AlertCircle, CheckCircle, Plus, Trash2 } from 'lucide-react';
+import UploadDownloadIcon from './UploadDownloadIcon';
+import XIcon from './XIcon';
+import LoadingIcon from './LoadingIcon';
+import AlertCircleIcon from './AlertCircleIcon';
+import CheckCircleIcon from './CheckCircleIcon';
+import PlusIcon from './PlusIcon';
+import TrashIcon from './TrashIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { computePhash, isDuplicate } from '../lib/phash';
@@ -502,7 +508,7 @@ export default function UploadForm() {
   if (!user) {
     return (
       <div className="upload-gate card">
-        <Upload size={40} style={{ opacity: 0.3, marginBottom: 12 }} />
+        <UploadDownloadIcon size={40} style={{ opacity: 0.3, marginBottom: 12 }} />
         <h2 className="upload-gate-title">Sign in to Upload</h2>
         <p className="upload-gate-body">Create a free account to share your album cover art with the community.</p>
         <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
@@ -516,7 +522,7 @@ export default function UploadForm() {
   if (success) {
     return (
       <div className="upload-success card">
-        <CheckCircle size={40} style={{ color: 'var(--accent)', marginBottom: 12 }} />
+        <CheckCircleIcon size={40} style={{ color: 'var(--accent)', marginBottom: 12 }} />
         <h2 className="upload-gate-title">Cover Uploaded!</h2>
         <p className="upload-gate-body">Redirecting to gallery…</p>
       </div>
@@ -528,7 +534,7 @@ export default function UploadForm() {
     const errCount = bulkItems.filter((it) => it.status === 'error').length;
     return (
       <div className="upload-success card">
-        <CheckCircle size={40} style={{ color: 'var(--accent)', marginBottom: 12 }} />
+        <CheckCircleIcon size={40} style={{ color: 'var(--accent)', marginBottom: 12 }} />
         <h2 className="upload-gate-title">Bulk Upload Complete</h2>
         <p className="upload-gate-body">
           {successCount} cover{successCount !== 1 ? 's' : ''} uploaded{errCount > 0 ? `, ${errCount} failed` : ''}.
@@ -599,12 +605,12 @@ export default function UploadForm() {
                   onClick={(e) => { e.stopPropagation(); setFile(null); setPreview(null); }}
                   title="Remove"
                 >
-                  <X size={14} />
+                  <XIcon size={14} />
                 </button>
               </div>
             ) : (
               <div className="upload-drop-inner">
-                <Upload size={40} style={{ opacity: 0.4, marginBottom: 10 }} />
+                <UploadDownloadIcon size={40} style={{ opacity: 0.4, marginBottom: 10 }} />
                 <p className="upload-drop-label">Drag &amp; drop your cover art here</p>
                 <span className="btn btn-primary" style={{ marginTop: 8, pointerEvents: 'none' }}>Browse Files</span>
               </div>
@@ -665,13 +671,13 @@ export default function UploadForm() {
                 />
                 {tagSuggestion && <div className="autocomplete-hint">↹ Tab to complete: {tagSuggestion}</div>}
               </div>
-              <div className="tag-list">{tags.map((tag) => <button key={tag} type="button" className="tag-chip" onClick={() => removeTag(tag)}>{tag} <X size={12} /></button>)}</div>
+              <div className="tag-list">{tags.map((tag) => <button key={tag} type="button" className="tag-chip" onClick={() => removeTag(tag)}>{tag} <XIcon size={12} /></button>)}</div>
               <p className="form-hint">Type a word with a comma and press Enter to spend tags fast.</p>
             </div>
-            {error && <div className="upload-error"><AlertCircle size={14} /> {error}</div>}
+            {error && <div className="upload-error"><AlertCircleIcon size={14} /> {error}</div>}
             <div className="upload-actions">
               <button type="submit" className="btn btn-primary" disabled={uploading}>
-                {uploading ? <><Loader size={14} className="upload-spinner" /> Uploading…</> : <><Upload size={14} /> Submit Cover</>}
+                {uploading ? <><LoadingIcon size={14} className="upload-spinner" /> Uploading…</> : <><UploadDownloadIcon size={14} /> Submit Cover</>}
               </button>
               <button type="button" className="btn btn-secondary" onClick={() => navigate('/')}>Cancel</button>
             </div>
@@ -700,7 +706,7 @@ export default function UploadForm() {
                 />
                 {bulkTagSuggestion && <div className="autocomplete-hint">↹ Tab to complete: {bulkTagSuggestion}</div>}
               </div>
-              <div className="tag-list">{bulkTags.map((tag) => <button key={tag} type="button" className="tag-chip" onClick={() => removeTag(tag, true)}>{tag} <X size={12} /></button>)}</div>
+              <div className="tag-list">{bulkTags.map((tag) => <button key={tag} type="button" className="tag-chip" onClick={() => removeTag(tag, true)}>{tag} <XIcon size={12} /></button>)}</div>
             </div>
           </div>
 
@@ -720,7 +726,7 @@ export default function UploadForm() {
                 onChange={(e) => { if (e.target.files) handleBulkFiles(e.target.files); }}
               />
               <div className="upload-drop-inner">
-                <Plus size={32} style={{ opacity: 0.4 }} />
+                <PlusIcon size={32} style={{ opacity: 0.4 }} />
                 <p className="upload-drop-label">Add JPG covers</p>
                 <p className="upload-drop-hint">{bulkItems.length}/{MAX_BULK} added</p>
               </div>
@@ -731,7 +737,7 @@ export default function UploadForm() {
             <div className="collections-head">
               <strong>Collections (Folders)</strong>
               <div className="collections-plus-box" onClick={() => setCollectionHint('Name your collection and click Create.')} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); if (e.dataTransfer.files.length) { handleBulkFiles(e.dataTransfer.files); setCollectionHint('Added dropped files to queue. Now create a folder below.'); } }}>
-                <Plus size={18} />
+                <PlusIcon size={18} />
               </div>
             </div>
             <p className="form-hint">{collectionHint}</p>
@@ -792,16 +798,16 @@ export default function UploadForm() {
                       disabled={item.status === 'uploading' || item.status === 'done'}
                     />
                     {item.errorMsg && (
-                      <p className="bulk-item-error"><AlertCircle size={12} /> {item.errorMsg}</p>
+                      <p className="bulk-item-error"><AlertCircleIcon size={12} /> {item.errorMsg}</p>
                     )}
                   </div>
                   <div className="bulk-item-status">
-                    {item.status === 'uploading' && <Loader size={16} className="upload-spinner" />}
-                    {item.status === 'done' && <CheckCircle size={16} style={{ color: 'var(--accent)' }} />}
-                    {item.status === 'error' && <AlertCircle size={16} style={{ color: '#c83220' }} />}
+                    {item.status === 'uploading' && <LoadingIcon size={16} className="upload-spinner" />}
+                    {item.status === 'done' && <CheckCircleIcon size={16} style={{ color: 'var(--accent)' }} />}
+                    {item.status === 'error' && <AlertCircleIcon size={16} style={{ color: '#c83220' }} />}
                     {(item.status === 'pending' || item.status === 'error') && (
                       <button type="button" className="bulk-item-remove" onClick={() => removeBulkItem(idx)} title="Remove">
-                        <Trash2 size={14} />
+                        <TrashIcon size={14} />
                       </button>
                     )}
                   </div>
@@ -814,8 +820,8 @@ export default function UploadForm() {
             <div className="upload-actions">
               <button type="submit" className="btn btn-primary" disabled={bulkUploading}>
                 {bulkUploading
-                  ? <><Loader size={14} className="upload-spinner" /> Uploading…</>
-                  : <><Upload size={14} /> Upload {bulkItems.length} Cover{bulkItems.length !== 1 ? 's' : ''}</>
+                  ? <><LoadingIcon size={14} className="upload-spinner" /> Uploading…</>
+                  : <><UploadDownloadIcon size={14} /> Upload {bulkItems.length} Cover{bulkItems.length !== 1 ? 's' : ''}</>
                 }
               </button>
               <button type="button" className="btn btn-secondary" onClick={() => navigate('/')}>Cancel</button>

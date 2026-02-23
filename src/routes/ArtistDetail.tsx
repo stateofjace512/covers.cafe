@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { UserRound, ArrowLeft, Image, Folder, Lock } from 'lucide-react';
+import UserIcon from '../components/UserIcon';
+import BackIcon from '../components/BackIcon';
+import GalleryIcon from '../components/GalleryIcon';
+import FolderIcon from '../components/FolderIcon';
+import LockIcon from '../components/LockIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
@@ -118,7 +122,7 @@ export default function ArtistDetail() {
   if (notFound) return (
     <div>
       <button className="btn btn-secondary" style={{ marginBottom: 20 }} onClick={() => navigate('/users')}>
-        <ArrowLeft size={14} /> Back to Artists
+        <BackIcon size={14} /> Back to Artists
       </button>
       <p className="text-muted">Artist not found.</p>
     </div>
@@ -129,14 +133,14 @@ export default function ArtistDetail() {
   return (
     <div>
       <button className="btn btn-secondary artist-back-btn" onClick={() => navigate('/users')}>
-        <ArrowLeft size={14} /> All Users
+        <BackIcon size={14} /> All Users
       </button>
 
       <div className="artist-detail-header card">
         <div className="artist-detail-avatar">
           {profile && getAvatarSrc(profile)
             ? <img src={getAvatarSrc(profile)!} alt={profile.display_name ?? profile.username} className="artist-detail-avatar-img" loading="lazy" />
-            : <UserRound size={40} style={{ opacity: 0.3 }} />
+            : <UserIcon size={40} style={{ opacity: 0.3 }} />
           }
         </div>
         <div className="artist-detail-info">
@@ -169,7 +173,7 @@ export default function ArtistDetail() {
 
       <section style={{ marginTop: 24 }}>
         <h2 className="section-title">
-          <Folder size={18} />
+          <FolderIcon size={18} />
           {isOwnProfile ? 'My Collections' : 'Collections'}
         </h2>
         {collections.length === 0 ? (
@@ -195,7 +199,7 @@ export default function ArtistDetail() {
                     />
                   ) : (
                     <div className="artist-collection-thumb-empty">
-                      <Folder size={24} style={{ opacity: 0.3 }} />
+                      <FolderIcon size={24} style={{ opacity: 0.3 }} />
                     </div>
                   )}
                 </div>
@@ -203,7 +207,7 @@ export default function ArtistDetail() {
                   <div className="artist-collection-name">
                     {collection.name}
                     {!collection.is_public && (
-                      <span className="artist-collection-private"><Lock size={10} /> Private</span>
+                      <span className="artist-collection-private"><LockIcon size={10} /> Private</span>
                     )}
                   </div>
                   <div className="artist-collection-count">{collection.item_count} item{collection.item_count !== 1 ? 's' : ''}</div>
@@ -216,7 +220,7 @@ export default function ArtistDetail() {
 
       <section style={{ marginTop: 24 }}>
         <h2 className="section-title">
-          <Image size={18} />
+          <GalleryIcon size={18} />
           Covers by {profile?.username}
         </h2>
         {profile && <GalleryGrid filter="artist" artistUserId={profile.id} />}
