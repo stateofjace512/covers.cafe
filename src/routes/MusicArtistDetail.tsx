@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Music, Loader, Camera } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -80,9 +80,13 @@ function artistPhotoTransformUrl(artistName: string, bust?: number): string {
 }
 
 export default function MusicArtistDetail() {
-  const { artistName: encodedName } = useParams<{ artistName: string }>();
-  const artistName = encodedName ? decodeURIComponent(encodedName) : '';
+  const { artistName: slugParam } = useParams<{ artistName: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
+  // Prefer the original name passed as router state (set by MusicArtists navigation).
+  // Fallback: replace hyphens with spaces for a best-effort ilike lookup.
+  const artistName: string = (location.state as { originalName?: string } | null)?.originalName
+    ?? (slugParam ? decodeURIComponent(slugParam).replace(/-/g, ' ') : '');
   const { user } = useAuth();
 
   const [covers, setCovers] = useState<Cover[]>([]);
