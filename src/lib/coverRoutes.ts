@@ -7,6 +7,11 @@ function slugifyPart(value: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+/** Slug for use in /artists/:slug URLs  e.g. "Taylor Swift" → "taylor-swift" */
+export function slugifyArtist(name: string): string {
+  return slugifyPart(name);
+}
+
 export function buildCoverSlug(cover: Cover): string {
   const publicId = String(cover.public_id ?? '').padStart(6, '0');
   const artist = slugifyPart(cover.artist);

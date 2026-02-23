@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Music } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getCoverImageSrc } from '../lib/media';
+import { slugifyArtist } from '../lib/coverRoutes';
 
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
 
@@ -113,7 +114,7 @@ export default function MusicArtists() {
             <button
               key={artist.name}
               className="music-artist-card"
-              onClick={() => navigate(`/artists/${encodeURIComponent(artist.name)}`)}
+              onClick={() => navigate(`/artists/${slugifyArtist(artist.name)}`, { state: { originalName: artist.name } })}
               title={`Browse covers by ${artist.name}`}
             >
               <ArtistCardImg artist={artist} />

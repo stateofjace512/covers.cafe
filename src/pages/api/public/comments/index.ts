@@ -38,7 +38,26 @@ export const GET: APIRoute = async ({ url }) => {
     .order('created_at', { ascending: true });
 
   if (error) return json({ error: 'Failed to fetch comments' }, 500);
-  return json({ comments: data ?? [] });
+
+  // Resolve real usernames from profiles for any comment that has a user_id stored.
+  // This corrects legacy rows where author_username was set from the email prefix.
+  const rows = data ?? [];
+  const userIds = [...new Set(rows.map((c: { user_id?: string }) => c.user_id).filter(Boolean))] as string[];
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('covers_cafe_profiles')
+      .select('id, username')
+      .in('id', userIds);
+    const profileMap: Record<string, string> = {};
+    for (const p of profiles ?? []) profileMap[p.id] = p.username;
+    const resolved = rows.map((c: { user_id?: string; author_username: string }) => ({
+      ...c,
+      author_username: (c.user_id && profileMap[c.user_id]) ? profileMap[c.user_id] : c.author_username,
+    }));
+    return json({ comments: resolved });
+  }
+
+  return json({ comments: rows });
 };
 
 export const POST: APIRoute = async ({ request }) => {
@@ -114,7 +133,12 @@ export const POST: APIRoute = async ({ request }) => {
     cooldownEnd = cooldownUpdate.newEndTime;
   }
 
-  const authorUsername = auth.user.email?.split('@')[0] ?? auth.user.id.slice(0, 8);
+  const { data: authorProfile } = await supabase
+    .from('covers_cafe_profiles')
+    .select('username')
+    .eq('id', auth.user.id)
+    .single();
+  const authorUsername = authorProfile?.username ?? auth.user.email?.split('@')[0] ?? auth.user.id.slice(0, 8);
   const { data: inserted, error: insertError } = await supabase
     .from('comments')
     .insert({
