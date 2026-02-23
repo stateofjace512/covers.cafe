@@ -54,6 +54,15 @@
   --accent-dark: #8f3f0f;
   --accent-text: #fff8f0;
 
+  /* Skeuomorphic theme images */
+  --skeu-hero: url('/themes/themelight/hero-banner_light-mode.jpg');
+  --skeu-card: url('/themes/themelight/album-card-info_light-mode.jpg');
+  --skeu-btn: url('/themes/themelight/btn btn-primary_light-mode.jpg');
+  --skeu-theme-btn: url('/themes/themelight/btn btn-ghost header-theme-btn_light-mode.jpg');
+  /* Skeuomorphic tint colours (rgba so they work as CSS background layers) */
+  --skeu-card-tint: rgba(255, 243, 232, 0.32);
+  --skeu-hero-tint: rgba(115, 73, 42, 0.62);
+
   /* Fonts */
   --font-body: 'BodyFont', Arial, Helvetica, sans-serif;
   --font-header: 'HeaderFont', Arial, Helvetica, sans-serif;
@@ -115,6 +124,15 @@
   --btn-shadow: 0 3px 0 rgba(0, 0, 0, 0.5), 0 1px 4px rgba(0, 0, 0, 0.4);
   --btn-shadow-hover: 0 4px 0 rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.45);
   --btn-shadow-active: 0 1px 0 rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.35);
+
+  /* Skeuomorphic theme images */
+  --skeu-hero: url('/themes/themedark/hero-banner_dark-mode.jpg');
+  --skeu-card: url('/themes/themedark/album-card-info_dark-mode.jpg');
+  --skeu-btn: url('/themes/themedark/btn btn-primary_dark-mode.jpg');
+  --skeu-theme-btn: url('/themes/themedark/btn btn-ghost header-theme-btn_dark-mode.jpg');
+  /* Skeuomorphic tint colours */
+  --skeu-card-tint: rgba(58, 44, 32, 0.52);
+  --skeu-hero-tint: rgba(56, 37, 22, 0.62);
 }
 
 /* ---------- Reset & Base ---------- */
@@ -393,14 +411,28 @@ h1, h2, h3, h4, h5, h6 {
 .album-card-cover {
   width: 100%;
   aspect-ratio: 1;
-  background: linear-gradient(135deg, var(--sidebar-bg-dark) 0%, var(--header-bg) 100%);
+  background-image: var(--skeu-card);
+  background-size: cover;
+  background-position: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.3);
   font-size: 48px;
   position: relative;
   overflow: hidden;
+  isolation: isolate;
+}
+
+/* Dark gradient tint preserves the original dark feel for the cover area */
+.album-card-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--sidebar-bg-dark) 0%, var(--header-bg) 100%);
+  opacity: 0.62;
+  pointer-events: none;
+  z-index: -1;
 }
 
 .album-card-cover::after {
@@ -413,6 +445,11 @@ h1, h2, h3, h4, h5, h6 {
 .album-card-info {
   padding: 10px 12px;
   border-top: 1px solid var(--body-card-border);
+  background-image:
+    linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
+    var(--skeu-card);
+  background-size: 100% 100%, cover;
+  background-position: center, center;
 }
 
 .album-card-title {

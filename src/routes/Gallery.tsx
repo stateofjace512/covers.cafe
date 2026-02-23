@@ -74,20 +74,15 @@ export default function Gallery() {
 
       <style>{`
         .hero-banner {
-          background: linear-gradient(135deg, var(--header-bg) 0%, var(--sidebar-bg-dark) 60%, var(--header-bg-dark) 100%);
+          background-image:
+            linear-gradient(var(--skeu-hero-tint), var(--skeu-hero-tint)),
+            var(--skeu-hero);
+          background-size: 100% 100%, cover;
+          background-position: center, center;
           border: 1px solid var(--body-card-border); border-radius: 8px;
-          padding: 32px 32px 16px; margin-bottom: 32px; 
+          padding: 32px 32px 16px; margin-bottom: 32px;
           box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.12);
           position: relative; overflow: hidden;
-        }
-        .hero-banner::before {
-          content: ''; position: absolute; inset: 0;
-          background:
-            repeating-linear-gradient(
-              135deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px,
-              transparent 1px, transparent 20px
-            );
-          pointer-events: none;
         }
         .hero-content { position: relative; z-index: 1; max-width: 620px; }
         .hero-title {

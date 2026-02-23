@@ -114,7 +114,11 @@ export default function Artists() {
           background: var(--body-card-bg); border: 1px solid var(--body-card-border);
           border-radius: 6px;
           box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.4);
-          background-image: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 40%);
+          background-image:
+            linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
+            var(--skeu-hero);
+          background-size: 100% 100%, cover;
+          background-position: center, center;
           transition: box-shadow 0.15s, transform 0.15s;
         }
         .artist-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }

@@ -177,7 +177,7 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
         .cover-card-delete-btn { color: #c83220; }
         .cover-card-delete-btn--confirm { background: #c83220 !important; color: white !important; animation: delete-pulse 0.4s ease; }
         @keyframes delete-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-        .cover-card-meta { display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
+        .cover-card-meta { display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap; position: relative; }
         .cover-card-year { font-size: 17px; color: var(--body-text-muted); background: var(--body-border); padding: 1px 5px; border-radius: 3px; }
         .cover-card-fav-count { display: flex; align-items: center; gap: 2px; font-size: 17px; color: var(--body-text-muted); }
         .cover-card-acotw { display: inline-flex; align-items: center; gap: 3px; font-size: 16px; color: #b8860b; background: rgba(184,134,11,0.12); border: 1px solid rgba(184,134,11,0.3); padding: 1px 5px; border-radius: 3px; }

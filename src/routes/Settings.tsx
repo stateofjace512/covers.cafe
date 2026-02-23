@@ -648,7 +648,6 @@ export default function Settings() {
         .settings-row-desc { font-size: 18px; color: var(--body-text-muted); line-height: 1.5; }
         .settings-row-control { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .settings-divider { height: 1px; background: var(--body-border); margin: 14px 0; }
-        /* Danger section */
         .settings-danger-section {
           border-color: rgba(200, 50, 30, 0.25);
           background: rgba(200, 50, 30, 0.03);

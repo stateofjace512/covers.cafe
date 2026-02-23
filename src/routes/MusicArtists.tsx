@@ -160,7 +160,14 @@ export default function MusicArtists() {
         }
         .music-artist-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .music-artist-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--body-text-muted); }
-        .music-artist-info { padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; }
+        .music-artist-info {
+          padding: 10px 12px; display: flex; flex-direction: column; gap: 3px;
+          background-image:
+            linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
+            var(--skeu-card);
+          background-size: 100% 100%, cover;
+          background-position: center, center;
+        }
         .music-artist-name {
           font-size: 25px; color: var(--body-text);
           font-family: var(--font-header);

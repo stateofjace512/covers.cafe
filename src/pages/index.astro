@@ -19,6 +19,23 @@ const logoUrl = `/cover_cafe_logo.svg`;
         document.documentElement.setAttribute('data-theme', t);
       })();
     </script>
+    <!-- Prefetch skeuomorphic theme images immediately so they are ready when rendered -->
+    <script is:inline>
+      (function () {
+        var imgs = [
+          '/themes/themedark/hero-banner_dark-mode.jpg',
+          '/themes/themedark/album-card-info_dark-mode.jpg',
+          '/themes/themedark/btn btn-primary_dark-mode.jpg',
+          '/themes/themelight/hero-banner_light-mode.jpg',
+          '/themes/themelight/album-card-info_light-mode.jpg',
+          '/themes/themelight/btn btn-primary_light-mode.jpg'
+        ];
+        for (var i = 0; i < imgs.length; i++) {
+          var el = new Image();
+          el.src = imgs[i];
+        }
+      })();
+    </script>
   </head>
   <body>
     <App client:only="react" />
