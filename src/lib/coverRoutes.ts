@@ -1,6 +1,6 @@
 import type { Cover } from './types';
 
-const ARTIST_SPLIT_RE = /\s*(?:&|feat\.?|ft\.?|with|,)\s*/i;
+const ARTIST_SPLIT_RE = /\s+(?:feat\.?|ft\.?|with)\s+|\s*[&,]\s*/i;
 
 /** Split a compound artist string (e.g. "Taylor Swift & Lana Del Rey") into individual names. */
 export function parseArtists(artist: string): string[] {

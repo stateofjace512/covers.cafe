@@ -16,7 +16,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
 import { getCoverImageSrc, getCoverDownloadSrc } from '../lib/media';
-import { getCoverPath, getCoverPublicIdFromSlug, slugifyArtist } from '../lib/coverRoutes';
+import { getCoverPath, getCoverPublicIdFromSlug, parseArtists, slugifyArtist } from '../lib/coverRoutes';
 import CoverComments from '../components/CoverComments';
 
 type PanelMode = null | 'collection' | 'report' | 'edit';
@@ -326,12 +326,17 @@ export default function CoverDetail() {
       {/* Metadata */}
       <div className="cover-page-meta card">
         <h1 className="cover-page-title">{cover.title}</h1>
-        <button
-          className="cover-page-artist-link"
-          onClick={() => navigate(`/artists/${slugifyArtist(cover.artist)}`, { state: { originalName: cover.artist } })}
-        >
-          {cover.artist}
-        </button>
+        <p className="cover-page-artist-wrap">
+          {parseArtists(cover.artist).map((name, i, arr) => (
+            <span key={name}>
+              <button
+                className="cover-page-artist-link"
+                onClick={() => navigate(`/artists/${slugifyArtist(name)}`, { state: { originalName: name } })}
+              >{name}</button>
+              {i < arr.length - 1 && ' & '}
+            </span>
+          ))}
+        </p>
 
         <div className="cover-page-meta-topline">
           {cover.profiles?.username && (
@@ -531,7 +536,8 @@ export default function CoverDetail() {
         .cover-page-meta { max-width: 700px; margin: 0 auto 16px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px; }
         .cover-page-title { font-size: 24px; color: var(--body-text); margin-bottom: 2px; line-height: 1.25; }
         [data-theme="dark"] .cover-page-title { }
-        .cover-page-artist-link { font-size: 20px; color: var(--body-text-muted); background: none; border: none; cursor: pointer; padding: 0; box-shadow: none; font-family: var(--font-body); }
+        .cover-page-artist-wrap { margin: 0; padding: 0; font-size: 20px; color: var(--body-text-muted); }
+        .cover-page-artist-link { font-size: 20px; color: var(--body-text-muted); background: none; border: none; cursor: pointer; padding: 0; box-shadow: none; font-family: var(--font-body); display: inline; }
         .cover-page-artist-link:hover { color: var(--accent); text-decoration: underline; }
         .cover-page-uploader { display: inline-flex; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; font-size: 19px; color: var(--accent); padding: 0; box-shadow: none; font-family: var(--font-body); }
         .cover-page-uploader:hover { color: var(--accent-light); text-decoration: underline; }
