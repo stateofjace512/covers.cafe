@@ -100,25 +100,32 @@ export default function CoverDetail() {
   return (
     <div className="cover-page">
       <button className="btn btn-secondary" onClick={() => navigate(-1)}>Back</button>
-      <div className="cover-page-main">
-        <img src={getCoverImageSrc(cover, 1000)} alt={`${cover.title} by ${cover.artist}`} className="cover-page-image" />
-        <div>
+
+      <div className="cover-detail-board card">
+        <div className="cover-detail-media-wrap">
+          <img src={getCoverImageSrc(cover, 600)} alt={`${cover.title} by ${cover.artist}`} className="cover-page-image" />
+          <div className="cover-detail-controls">
+            <button className="btn" onClick={toggleFavorite}><Star size={14} fill={isFavorited ? 'currentColor' : 'none'} /> {isFavorited ? 'Favorited' : 'Favorite'}</button>
+            <button className="btn btn-primary" onClick={download} disabled={downloading}><ArrowDownToLine size={14} /> {downloading ? 'Downloading…' : 'Download'}</button>
+          </div>
+        </div>
+
+        <div className="cover-detail-meta">
           <h1>{cover.title}</h1>
           <p>{cover.artist}</p>
           <p className="text-muted">by {cover.profiles?.username ?? 'unknown'}</p>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn" onClick={toggleFavorite}><Star size={14} fill={isFavorited ? 'currentColor' : 'none'} /> {isFavorited ? 'Favorited' : 'Favorite'}</button>
-            <button className="btn btn-primary" onClick={download} disabled={downloading}><ArrowDownToLine size={14} /> Download</button>
-          </div>
-          <CoverComments coverId={cover.id} />
         </div>
       </div>
 
-      <section>
+      <section className="cover-detail-comments card">
+        <CoverComments coverId={cover.id} />
+      </section>
+
+      <section className="cover-detail-more card">
         <h3>More artworks for {cover.artist}</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 300px)', gap: 12 }}>
+        <div className="cover-detail-more-grid">
           {moreByArtist.map((item) => (
-            <button key={item.id} style={{ padding: 0, border: 'none', background: 'none' }} onClick={() => navigate(getCoverPath(item))}>
+            <button key={item.id} className="cover-detail-more-item" onClick={() => navigate(getCoverPath(item))}>
               <img src={getCoverImageSrc(item, 300)} alt={item.title} width={300} height={300} style={{ objectFit: 'cover', borderRadius: 8 }} />
             </button>
           ))}
