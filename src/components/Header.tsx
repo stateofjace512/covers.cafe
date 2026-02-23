@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, LogOut, User, Menu, X } from 'lucide-react';
-import MoonIcon from './MoonIcon';
-import SunIcon from './SunIcon';
+import { Moon, Sun, Search, LogOut, User, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationBell from './NotificationBell';
 
@@ -67,7 +65,7 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
           onClick={toggleTheme}
           title={dark ? 'Light mode' : 'Dark mode'}
         >
-          {dark ? <SunIcon size={16} /> : <MoonIcon size={16} />}
+          {dark ? <Sun size={16} /> : <Moon size={16} />}
           <span className="header-theme-label">{dark ? 'Light' : 'Dark'}</span>
         </button>
 
