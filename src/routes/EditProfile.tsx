@@ -51,7 +51,7 @@ export default function EditProfile() {
     const { error: storageError } = await supabase.storage.from('covers_cafe_avatars').upload(path, blob, { contentType: 'image/jpeg', upsert: true });
     if (storageError) throw new Error(storageError.message);
     const { data } = supabase.storage.from('covers_cafe_avatars').getPublicUrl(path);
-    return data.publicUrl;
+    return `${data.publicUrl}?v=${Date.now()}`;
   };
 
   const handleSave = async (e: React.FormEvent) => {
