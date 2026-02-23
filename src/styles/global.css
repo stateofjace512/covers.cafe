@@ -3,6 +3,23 @@
    2010s-inspired design: bold, textured, skeuomorphic
    ============================================================ */
 
+/* ---------- Custom Fonts ---------- */
+@font-face {
+  font-family: 'BodyFont';
+  src: url('/body-font.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'HeaderFont';
+  src: url('/header-font.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ---------- CSS Custom Properties ---------- */
 :root {
   /* Light mode colors */
@@ -36,6 +53,10 @@
   --accent-light: #e07030;
   --accent-dark: #8f3f0f;
   --accent-text: #fff8f0;
+
+  /* Fonts */
+  --font-body: 'BodyFont', Arial, Helvetica, sans-serif;
+  --font-header: 'HeaderFont', Arial, Helvetica, sans-serif;
 
   /* Spacing */
   --header-h: 58px;
@@ -104,7 +125,7 @@
 }
 
 html {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -249,7 +270,7 @@ a:hover {
   padding: 7px 16px;
   border-radius: 5px;
   border: 1px solid rgba(0, 0, 0, 0.25);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
   font-size: 13px;
   font-weight: bold;
   letter-spacing: 0.3px;
@@ -323,6 +344,11 @@ a:hover {
   box-shadow: 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
   text-shadow: 0 1px 1px rgba(0,0,0,0.3);
   border: 1px solid var(--accent-dark);
+}
+
+/* ---------- Heading font ---------- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-header);
 }
 
 /* ---------- Section headings ---------- */
@@ -414,7 +440,7 @@ input[type="search"],
 input[type="email"],
 textarea,
 select {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
   font-size: 13px;
   padding: 7px 11px;
   border-radius: 4px;
