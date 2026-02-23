@@ -20,7 +20,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       />
       <Sidebar isMobileNavOpen={isMobileNavOpen} onNavigate={() => setIsMobileNavOpen(false)} />
       {isMobileNavOpen && <button className="mobile-nav-backdrop" aria-label="Close menu" onClick={() => setIsMobileNavOpen(false)} />}
-      <main className="site-main">{children}<SiteFooter /></main>
+      <main className="site-main"><div className="site-main-content">{children}</div><SiteFooter /></main>
     </div>
   );
 }

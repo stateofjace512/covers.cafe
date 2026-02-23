@@ -21,7 +21,11 @@ export default function SiteFooter() {
 
       <style>{`
         .site-footer {
-          margin-top: 40px;
+          margin-top: auto;
+          padding-top: 40px;
+          margin-left: -32px;
+          margin-right: -32px;
+          margin-bottom: -28px;
           border-top: 2px solid var(--body-card-border);
           background: linear-gradient(180deg, var(--body-card-bg) 0%, var(--body-bg) 100%);
           background-image:
@@ -40,7 +44,7 @@ export default function SiteFooter() {
           display: flex;
           align-items: center;
           gap: 20px;
-          padding: 16px 24px;
+          padding: 16px 32px;
           flex-wrap: wrap;
           position: relative;
           overflow: hidden;
@@ -48,14 +52,13 @@ export default function SiteFooter() {
         .site-footer-inner::before {
           content: '';
           position: absolute;
-          top: 50%; left: 50%;
-          width: 100vw; height: 100vw;
-          transform: translate(-50%, -50%) rotate(90deg);
+          inset: 0;
           background-image:
             linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
             var(--skeu-card);
-          background-size: 100% 100%;
-          background-position: center;
+          background-size: 100% 100%, auto 100%;
+          background-position: center, center;
+          background-repeat: no-repeat, repeat-x;
           pointer-events: none;
           z-index: 0;
         }
@@ -116,8 +119,14 @@ export default function SiteFooter() {
           opacity: 0.7;
         }
 
+        @media (max-width: 900px) {
+          .site-footer { margin-left: -16px; margin-right: -16px; margin-bottom: -20px; }
+          .site-footer-inner { padding-left: 16px; padding-right: 16px; }
+        }
+
         @media (max-width: 640px) {
-          .site-footer-inner { justify-content: center; text-align: center; }
+          .site-footer { margin-left: -12px; margin-right: -12px; margin-bottom: -16px; }
+          .site-footer-inner { justify-content: center; text-align: center; padding-left: 12px; padding-right: 12px; }
           .site-footer-brand { align-items: center; margin-right: 0; }
         }
       `}</style>
