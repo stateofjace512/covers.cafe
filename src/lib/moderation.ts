@@ -4,7 +4,7 @@
  */
 
 const OPENAI_API_KEY = import.meta.env.OPENAI_API_KEY as string | undefined;
-const OPENAI_MODEL = 'gpt-5-nano';
+const OPENAI_MODEL = 'gpt-5-nano-2025-08-07';
 
 async function callOpenAI(prompt: string): Promise<string> {
   if (!OPENAI_API_KEY) {
