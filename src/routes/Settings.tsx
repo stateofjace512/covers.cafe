@@ -512,27 +512,29 @@ export default function Settings() {
                 onClick={() => setNoThemeImages((prev) => !prev)}
                 aria-pressed={noThemeImages}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" className="toggle-icon" aria-hidden="true">
-                  <g className="icon-off">
-                    <path d="M30.48 2.28h-1.53V0.76H3.05v1.52H1.53v1.53H0v7.62h1.53v1.52h1.52v1.52h25.9v-1.52h1.53v-1.52H32V3.81h-1.52ZM12.19 9.9h-1.52v1.53H9.15v1.52H4.57v-1.52H3.05V9.9H1.53V5.33h1.52V3.81h1.52V2.28h4.58v1.53h1.52v1.52h1.52Z"/>
-                    <path d="M9.15 5.33h1.52v3.05H9.15Z"/>
-                    <path d="M7.62 3.81h1.53v1.52H7.62Z"/>
-                  </g>
-                  <g className="icon-on">
-                    <path d="M30.48 20.57H32v7.62h-1.52Z"/>
-                    <path d="M25.91 20.57h1.52v1.52h-1.52Z"/>
-                    <path d="M18.29 20.57h1.52v7.62h-1.52Z"/>
-                    <path d="M28.95 28.19h1.53v1.52h-1.53Z"/>
-                    <path d="M28.95 19.04h1.53v1.53h-1.53Z"/>
-                    <path d="M27.43 22.09h1.52v3.05h-1.52Z"/>
-                    <path d="m21.34 29.71 0 -1.52 -1.53 0 0 1.52 -16.76 0 0 1.53 25.9 0 0 -1.53 -7.61 0z"/>
-                    <path d="m19.81 19.04 0 1.53 1.53 0 0 -1.53 7.61 0 0 -1.52 -25.9 0 0 1.52 16.76 0z"/>
-                    <path d="M1.53 28.19h1.52v1.52H1.53Z"/>
-                    <path d="M1.53 19.04h1.52v1.53H1.53Z"/>
-                    <path d="M0 20.57h1.53v7.62H0Z"/>
-                  </g>
-                </svg>
-                <span>{noThemeImages ? 'Yes' : 'No'}</span>
+                <span className="settings-icon-toggle-track" aria-hidden="true">
+                  <span className="settings-icon-toggle-strip">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 16" width="32" height="16" className="toggle-icon toggle-icon--off">
+                      <path d="M30.48 2.28h-1.53V0.76H3.05v1.52H1.53v1.53H0v7.62h1.53v1.52h1.52v1.52h25.9v-1.52h1.53v-1.52H32V3.81h-1.52ZM12.19 9.9h-1.52v1.53H9.15v1.52H4.57v-1.52H3.05V9.9H1.53V5.33h1.52V3.81h1.52V2.28h4.58v1.53h1.52v1.52h1.52Z"/>
+                      <path d="M9.15 5.33h1.52v3.05H9.15Z"/>
+                      <path d="M7.62 3.81h1.53v1.52H7.62Z"/>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 16 32 16" width="32" height="16" className="toggle-icon toggle-icon--on">
+                      <path d="M30.48 20.57H32v7.62h-1.52Z"/>
+                      <path d="M25.91 20.57h1.52v1.52h-1.52Z"/>
+                      <path d="M18.29 20.57h1.52v7.62h-1.52Z"/>
+                      <path d="M28.95 28.19h1.53v1.52h-1.53Z"/>
+                      <path d="M28.95 19.04h1.53v1.53h-1.53Z"/>
+                      <path d="M27.43 22.09h1.52v3.05h-1.52Z"/>
+                      <path d="m21.34 29.71 0 -1.52 -1.53 0 0 1.52 -16.76 0 0 1.53 25.9 0 0 -1.53 -7.61 0z"/>
+                      <path d="m19.81 19.04 0 1.53 1.53 0 0 -1.53 7.61 0 0 -1.52 -25.9 0 0 1.52 16.76 0z"/>
+                      <path d="M1.53 28.19h1.52v1.52H1.53Z"/>
+                      <path d="M1.53 19.04h1.52v1.53H1.53Z"/>
+                      <path d="M0 20.57h1.53v7.62H0Z"/>
+                    </svg>
+                  </span>
+                </span>
+                <span className="settings-icon-toggle-label">{noThemeImages ? 'Yes' : 'No'}</span>
               </button>
             </div>
           </div>
@@ -767,7 +769,9 @@ export default function Settings() {
         .settings-icon-toggle {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
+          min-width: 92px;
+          justify-content: space-between;
           padding: 5px 9px;
           border-radius: 6px;
           border: 1px solid var(--body-card-border);
@@ -776,16 +780,27 @@ export default function Settings() {
           cursor: pointer;
           box-shadow: var(--shadow-sm);
         }
-        .toggle-icon { display: block; width: 24px; height: 24px; }
-        .toggle-icon g {
-          transform-origin: 16px 16px;
-          transition: transform 0.2s ease, opacity 0.2s ease;
-          fill: currentColor;
+        .settings-icon-toggle-track {
+          width: 32px;
+          height: 16px;
+          overflow: hidden;
+          display: inline-flex;
         }
-        .settings-icon-toggle .icon-off { opacity: 0.2; transform: translateY(-1px) scale(0.95); }
-        .settings-icon-toggle .icon-on { opacity: 1; transform: translateY(0) scale(1); }
-        .settings-icon-toggle--active .icon-off { opacity: 1; transform: translateY(0) scale(1); }
-        .settings-icon-toggle--active .icon-on { opacity: 0.2; transform: translateY(1px) scale(0.95); }
+        .settings-icon-toggle-strip {
+          display: flex;
+          flex-direction: column;
+          transform: translateY(-16px);
+          transition: transform 0.22s ease;
+        }
+        .settings-icon-toggle--active .settings-icon-toggle-strip {
+          transform: translateY(0);
+        }
+        .toggle-icon { display: block; width: 32px; height: 16px; fill: currentColor; }
+        .settings-icon-toggle-label {
+          width: 2.4ch;
+          text-align: center;
+          font-variant-numeric: tabular-nums;
+        }
         .settings-input {
           width: 100%; padding: 8px 12px; border-radius: 4px;
           border: 1px solid var(--body-card-border);
