@@ -534,7 +534,7 @@ export default function CoverDetail() {
         .cover-meta-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 15px; color: var(--body-text-muted); background: var(--body-border); padding: 2px 7px; border-radius: 3px; font-weight: bold; }
         .cover-tags { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: center; }
         .cover-tags-icon { color: var(--body-text-muted); flex-shrink: 0; }
-        .cover-tag { font-size: 14px; font-weight: bold; background: var(--sidebar-bg); color: var(--sidebar-text); padding: 2px 7px; border-radius: 3px; border: 1px solid var(--sidebar-border); box-shadow: var(--shadow-sm); cursor: pointer; transition: background 0.1s, color 0.1s; }
+        .cover-tag { font-size: 18px; font-weight: bold; font-family: var(--font-header); background: var(--sidebar-bg); color: var(--sidebar-text); padding: 2px 7px; border-radius: 3px; border: 1px solid var(--sidebar-border); box-shadow: var(--shadow-sm); cursor: pointer; transition: background 0.1s, color 0.1s; }
         .cover-tag:hover { background: var(--accent); color: white; border-color: var(--accent); transform: none; box-shadow: none; }
 
         /* Panel scroll anchor — leaves room for sticky header */
@@ -573,7 +573,7 @@ export default function CoverDetail() {
         .cover-more-item { padding: 0; border: 1px solid var(--body-card-border); border-radius: 6px; background: var(--body-card-bg); box-shadow: var(--shadow-sm); overflow: hidden; cursor: pointer; transition: transform 0.12s, box-shadow 0.12s; display: flex; flex-direction: column; text-align: left; }
         .cover-more-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
         .cover-more-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
-        .cover-more-label { font-size: 15px; color: var(--body-text); padding: 6px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid var(--body-card-border); }
+        .cover-more-label { font-size: 19px; font-family: var(--font-header); color: var(--body-text); padding: 6px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid var(--body-card-border); }
 
         @media (max-width: 640px) {
           .cover-page-title { font-size: 20px; }

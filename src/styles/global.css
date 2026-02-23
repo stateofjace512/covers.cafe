@@ -242,6 +242,7 @@ a:hover {
   border-right: 2px solid var(--sidebar-border);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2), inset -1px 0 0 rgba(255, 255, 255, 0.08);
   color: var(--sidebar-text);
+  font-family: var(--font-body);
 }
 
 /* ---------- Main content ---------- */

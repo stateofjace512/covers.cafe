@@ -161,7 +161,8 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
         .sidebar-user-action:hover { color: var(--accent-light); transform: none; }
         .sidebar-nav { padding: 10px 0; flex: 1; }
         .sidebar-section-label {
-          font-size: 13px; font-weight: bold; letter-spacing: 1.2px;
+          font-size: 16px; font-weight: bold; letter-spacing: 1.2px;
+          font-family: var(--font-header);
           text-transform: uppercase; color: var(--sidebar-text-muted);
           padding: 14px 16px 4px;
           text-shadow: 0 1px 0 rgba(255,255,255,0.3);
@@ -170,7 +171,7 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
         .sidebar-nav-item {
           display: flex; align-items: center; gap: 11px;
           width: 100%; padding: 9px 16px;
-          color: var(--sidebar-text); font-size: 17px; font-weight: bold;
+          color: var(--sidebar-text); font-size: 21px; font-weight: bold; font-family: var(--font-header);
           background: none; border: none; border-left: 3px solid transparent;
           cursor: pointer; text-align: left;
           transition: background 0.12s, border-color 0.12s;

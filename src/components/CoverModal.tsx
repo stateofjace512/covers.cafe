@@ -682,7 +682,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .cover-meta-tags { align-items: flex-start; }
         .cover-tags-list { display: flex; flex-wrap: wrap; gap: 5px; }
         .cover-tag {
-          font-size: 14px; font-weight: bold;
+          font-size: 18px; font-weight: bold; font-family: var(--font-header);
           background: var(--sidebar-bg); color: var(--sidebar-text);
           padding: 2px 7px; border-radius: 3px;
           border: 1px solid var(--sidebar-border); box-shadow: var(--shadow-sm);
@@ -756,7 +756,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .cover-tag--clickable {
           cursor: pointer; background: var(--sidebar-bg); color: var(--sidebar-text);
           border: 1px solid var(--sidebar-border); padding: 2px 7px; border-radius: 3px;
-          font-size: 14px; font-weight: bold; box-shadow: var(--shadow-sm);
+          font-size: 18px; font-weight: bold; font-family: var(--font-header); box-shadow: var(--shadow-sm);
           transition: background 0.1s, color 0.1s;
         }
         .cover-tag--clickable:hover { background: var(--accent); color: white; border-color: var(--accent); transform: none; box-shadow: none; }

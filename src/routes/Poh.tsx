@@ -226,7 +226,7 @@ export default function Poh() {
         }
 
         .poh-title {
-          font-size: clamp(20px, 4vw, 32px);
+          font-size: clamp(36px, 6vw, 60px);
           font-weight: bold;
           letter-spacing: 3px;
           text-transform: uppercase;
@@ -235,7 +235,7 @@ export default function Poh() {
             0 1px 0 rgba(255,255,255,0.6),
             0 2px 4px rgba(60,20,0,0.3);
           margin: 0 0 10px;
-          font-family: Georgia, 'Times New Roman', serif;
+          font-family: var(--font-header);
         }
 
         [data-theme="dark"] .poh-title {
@@ -441,11 +441,10 @@ export default function Poh() {
 
         /* The quote */
         .poh-quote {
-          font-size: 17px;
+          font-size: 22px;
           line-height: 1.7;
           color: #2a1505;
-          font-family: Georgia, 'Times New Roman', serif;
-          font-style: italic;
+          font-family: var(--font-body);
           word-break: break-word;
           padding-right: ${/* space for cover corner */ ''}86px;
           flex: 1;
@@ -498,12 +497,12 @@ export default function Poh() {
           background: none;
           border: none;
           cursor: pointer;
-          font-size: 15px;
+          font-size: 20px;
           font-weight: bold;
           color: #8b4513;
           padding: 0;
           box-shadow: none;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-header);
           letter-spacing: 0.3px;
         }
 
@@ -522,9 +521,9 @@ export default function Poh() {
         }
 
         .poh-on {
-          font-size: 14px;
+          font-size: 18px;
           color: #7a5030;
-          font-style: italic;
+          font-family: var(--font-body);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -604,13 +603,13 @@ export default function Poh() {
         }
 
         .poh-plaque-text {
-          font-size: 14px;
+          font-size: 18px;
           font-weight: bold;
           letter-spacing: 0.8px;
           text-transform: uppercase;
           color: #3a2000;
           text-shadow: 0 1px 0 rgba(255,255,255,0.3);
-          font-family: Georgia, 'Times New Roman', serif;
+          font-family: var(--font-header);
         }
 
         [data-theme="dark"] .poh-plaque-text {
