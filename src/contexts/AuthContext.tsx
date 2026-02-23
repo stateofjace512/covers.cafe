@@ -24,6 +24,7 @@ interface AuthContextValue {
   closeAuthModal: () => void;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  updateProfilePicture: (avatarUrl: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -38,6 +39,7 @@ const AuthContext = createContext<AuthContextValue>({
   closeAuthModal: () => {},
   signOut: async () => {},
   refreshProfile: async () => {},
+  updateProfilePicture: () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -109,6 +111,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) await fetchProfile(user.id);
   }, [user, fetchProfile]);
 
+  const updateProfilePicture = useCallback((avatarUrl: string | null) => {
+    setProfile((prev) => (prev ? { ...prev, avatar_url: avatarUrl } : prev));
+  }, []);
+
   const emailVerified = profile?.email_verified ?? false;
 
   return (
@@ -125,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         closeAuthModal,
         signOut,
         refreshProfile,
+        updateProfilePicture,
       }}
     >
       {children}

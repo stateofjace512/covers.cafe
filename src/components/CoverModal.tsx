@@ -629,7 +629,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
       </div>
 
       <style>{`
-        .cover-modal { width: 100%; max-width: 780px; padding: 0; overflow: hidden; }
+        .cover-modal { width: 100%; max-width: 780px; max-height: min(92vh, 860px); padding: 0; overflow: hidden; display: flex; flex-direction: column; }
         .cover-modal-close {
           position: absolute; top: 12px; right: 12px; z-index: 10;
           display: flex; align-items: center; justify-content: center;
@@ -639,7 +639,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           padding: 0; transition: background 0.12s;
         }
         .cover-modal-close:hover { background: rgba(0,0,0,0.75); transform: none; }
-        .cover-modal-inner { display: flex; min-height: 300px; }
+        .cover-modal-inner { display: flex; min-height: 300px; flex: 1; min-height: 0; overflow: hidden; }
         .cover-modal-image-wrap {
           flex: 0 0 auto; width: 340px; max-width: 50%;
           background: #1a0e08;
@@ -784,6 +784,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .cover-comment-action { border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--sidebar-text); font-size: 11px; font-weight: bold; border-radius: 4px; padding: 3px 8px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
         .cover-comment-action:hover { background: var(--accent); color: #fff; }
         .cover-comment-action--delete { background: rgba(200,50,30,0.14); border-color: rgba(200,50,30,0.35); color: #8f2416; }
+        [data-theme="dark"] .cover-comment-action--delete { background: rgba(220,92,72,0.22); border-color: rgba(220,92,72,0.55); color: #ffb8ac; }
         .cover-comment-action--delete:hover { background: #c83220; color: #fff; }
         @media (max-width: 600px) {
           .cover-modal-inner { flex-direction: column; }

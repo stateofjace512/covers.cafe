@@ -22,7 +22,6 @@ export function getCoverDownloadSrc(cover: Pick<Cover, 'storage_path'>, size?: n
   return `/api/cover-media?${params.toString()}`;
 }
 
-export function getAvatarSrc(profile: Pick<Profile, 'id' | 'avatar_url'>): string | null {
-  if (!profile.avatar_url) return null;
-  return storageUrl('covers_cafe_avatars', `${profile.id}/avatar.jpg`);
+export function getAvatarSrc(profile: Pick<Profile, 'avatar_url'>): string | null {
+  return profile.avatar_url;
 }
