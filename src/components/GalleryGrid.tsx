@@ -372,6 +372,19 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
         .gallery-load-more-btn {
           display: flex; align-items: center; gap: 7px;
           padding: 9px 28px; font-size: 19px;
+          background-image:
+            linear-gradient(180deg, rgba(234,187,149,0.7) 0%, rgba(222,167,125,0.7) 55%, rgba(200,147,92,0.7) 100%),
+            var(--skeu-hero);
+          background-size: 100% 100%, cover;
+          background-position: center, center;
+        }
+        .gallery-load-more-btn::before { display: none; }
+        [data-theme="dark"] .gallery-load-more-btn {
+          background-image:
+            linear-gradient(180deg, rgba(126,90,71,0.7) 0%, rgba(111,78,60,0.7) 55%, rgba(90,61,46,0.7) 100%),
+            var(--skeu-hero);
+          background-size: 100% 100%, cover;
+          background-position: center, center;
         }
       `}</style>
     </>

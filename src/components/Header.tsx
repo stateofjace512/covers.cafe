@@ -142,29 +142,16 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
         .header-menu-btn { display: none; padding: 6px 8px; }
         .header-theme-btn {
           display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 18px;
-          background-image:
-            linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 100%),
-            linear-gradient(rgba(115,73,42,0.55), rgba(115,73,42,0.55)),
-            var(--skeu-theme-btn);
-          background-size: 100% 50%, 100% 100%, cover;
-          background-position: top, center, center;
-          background-repeat: no-repeat, no-repeat, no-repeat;
-        }
-        .header-theme-btn::before { display: none; }
-        [data-theme="dark"] .header-theme-btn {
-          background-image:
-            linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 100%),
-            linear-gradient(rgba(56,37,22,0.55), rgba(56,37,22,0.55)),
-            var(--skeu-theme-btn);
-          background-size: 100% 50%, 100% 100%, cover;
-          background-position: top, center, center;
-          background-repeat: no-repeat, no-repeat, no-repeat;
         }
         .header-theme-label { font-size: 18px; }
         .header-user-group { display: flex; align-items: center; gap: 4px; }
-        .header-user-btn { display: flex; align-items: center; gap: 6px; padding: 6px 10px; font-size: 18px; }
+        .header-user-btn {
+          display: flex; align-items: center; gap: 6px; padding: 6px 10px; font-size: 18px;
+        }
         .header-username { font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
-        .header-signout-btn { padding: 6px 8px; }
+        .header-signout-btn {
+          padding: 6px 8px;
+        }
         @media (max-width: 640px) {
           .site-header { gap: 8px; padding: 0 10px; }
           .header-menu-btn { display: inline-flex; }

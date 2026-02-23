@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import CastleIcon from './CastleIcon';
+import AcotwTrophyIcon from './AcotwTrophyIcon';
 
 type Achievement = {
   id: string;
-  type: 'acotw' | 'poh';
+  type: 'acotw';
   reference_id: string | null;
   metadata: {
     cover_title?: string | null;
@@ -55,7 +55,7 @@ export default function AchievementBadges({ userId }: Props) {
           if (a.type === 'acotw') {
             return (
               <div key={a.id} className="ach-badge ach-badge--acotw" title={`Album Cover of the Week · ${a.metadata?.week_start ? formatMonth(a.metadata.week_start) : ''}`}>
-                <span className="ach-icon">🏆</span>
+                <span className="ach-icon"><AcotwTrophyIcon size={25} /></span>
                 <div className="ach-info">
                   <span className="ach-label">Album Cover of the Week</span>
                   {a.metadata?.cover_title && (
@@ -76,34 +76,6 @@ export default function AchievementBadges({ userId }: Props) {
             );
           }
 
-          if (a.type === 'poh') {
-            return (
-              <div key={a.id} className="ach-badge ach-badge--poh" title="Pin of Heuristics inductee">
-                <span className="ach-icon"><CastleIcon size={22} /></span>
-                <div className="ach-info">
-                  <span className="ach-label">Pin of Heuristics</span>
-                  {a.metadata?.comment_preview && (
-                    <span
-                      className="ach-detail ach-detail--quote"
-                      onClick={() => navigate('/poh')}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      "{a.metadata.comment_preview}{a.metadata.comment_preview.length >= 120 ? '…' : ''}"
-                    </span>
-                  )}
-                  {(a.metadata?.cover_title || a.metadata?.cover_artist) && (
-                    <span
-                      className="ach-detail"
-                      onClick={() => a.metadata?.cover_page_slug && navigate(`/cover/${a.metadata.cover_page_slug}`)}
-                      style={a.metadata?.cover_page_slug ? { cursor: 'pointer' } : undefined}
-                    >
-                      on {a.metadata.cover_title ?? ''}{a.metadata.cover_artist ? ` · ${a.metadata.cover_artist}` : ''}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          }
 
           return null;
         })}
@@ -149,15 +121,6 @@ export default function AchievementBadges({ userId }: Props) {
           border-color: rgba(184,134,11,0.25);
         }
 
-        .ach-badge--poh {
-          background: linear-gradient(135deg, rgba(80,50,120,0.08) 0%, rgba(60,30,100,0.04) 100%);
-          border-color: rgba(100,60,150,0.25);
-        }
-
-        [data-theme="dark"] .ach-badge--poh {
-          background: linear-gradient(135deg, rgba(120,20,20,0.15) 0%, rgba(80,10,10,0.1) 100%);
-          border-color: rgba(160,30,30,0.3);
-        }
 
         .ach-icon {
           font-size: 25px;
@@ -186,19 +149,6 @@ export default function AchievementBadges({ userId }: Props) {
           text-overflow: ellipsis;
         }
 
-        .ach-detail--quote {
-          font-style: italic;
-          white-space: normal;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        .ach-detail--quote:hover {
-          color: var(--accent);
-          text-decoration: underline;
-        }
 
         .ach-date {
           font-size: 17px;

@@ -116,13 +116,22 @@ export default function Artists() {
           box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.4);
           background-image:
             linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
-            var(--skeu-hero);
-          background-size: 100% 100%, cover;
-          background-position: center, center;
+            var(--skeu-card);
+          background-size: 100% 100%, 100% 100%;
+          background-position: 0 0, 0 0;
+          background-repeat: no-repeat, no-repeat;
           transition: box-shadow 0.15s, transform 0.15s;
         }
+        [data-theme="dark"] .artist-card {
+          background-image:
+            linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
+            var(--skeu-card);
+          background-size: 100% 100%, 100% 100%;
+          background-position: 0 0, 0 0;
+          background-repeat: no-repeat, no-repeat;
+        }
         .artist-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
-        .artist-card--me { border-color: var(--accent); box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 0 2px rgba(192,90,26,0.18); }
+        .artist-card--me { border-color: var(--accent); box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 0 2px var(--accent); }
         .artist-avatar {
           width: 64px; height: 64px; border-radius: 50%;
           background: linear-gradient(145deg, var(--sidebar-bg-light), var(--sidebar-bg-dark));

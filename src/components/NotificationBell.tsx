@@ -218,7 +218,9 @@ export default function NotificationBell() {
 
       <style>{`
         .notif-wrap { position: relative; }
-        .notif-bell-btn { position: relative; padding: 6px 8px; }
+        .notif-bell-btn {
+          position: relative; padding: 6px 8px;
+        }
         .notif-badge {
           position: absolute; top: 2px; right: 2px;
           background: #e03020; color: white;
