@@ -113,11 +113,13 @@ export default function CoverDetail() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // Scroll panel into view whenever it opens
+  // Scroll panel into view whenever it opens (delay lets React paint the panel first)
   useEffect(() => {
-    if (activePanel && panelRef.current) {
-      panelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    if (!activePanel) return;
+    const id = setTimeout(() => {
+      panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 30);
+    return () => clearTimeout(id);
   }, [activePanel]);
 
   useEffect(() => {
@@ -372,7 +374,7 @@ export default function CoverDetail() {
       </div>
 
       {/* Inline panels */}
-      <div ref={panelRef} />
+      <div ref={panelRef}>
       {activePanel === 'collection' && (
         <div className="cover-panel">
           <h3 className="cover-panel-title"><FolderPlus size={14} /> Add to Collection</h3>
@@ -457,6 +459,7 @@ export default function CoverDetail() {
           </div>
         </div>
       )}
+      </div>
 
       {/* Comments */}
       <div className="cover-page-comments-wrap">
