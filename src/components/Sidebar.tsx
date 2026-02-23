@@ -4,10 +4,12 @@ import { ArrowUpFromLine, ArrowDownToLine, User, Star, Image, Cog, UserRound, Sh
 import { useAuth } from '../contexts/AuthContext';
 import { getAvatarSrc } from '../lib/media';
 import { supabase } from '../lib/supabase';
+import CastleIcon from './CastleIcon';
 
 const NAV = [
   { section: 'Discover', label: 'Gallery',   icon: <Image size={18} />,           path: '/' },
   {                       label: 'ACOTW',     icon: <Trophy size={18} />,           path: '/acotw' },
+  {                       label: 'POH',       icon: <CastleIcon size={18} />,       path: '/poh' },
   {                       label: 'Artists',   icon: <Music size={18} />,            path: '/artists' },
   {                       label: 'Users',     icon: <UserRound size={18} />,        path: '/users' },
   {                       label: 'Favorites', icon: <Star size={18} />,             path: '/favorites' },

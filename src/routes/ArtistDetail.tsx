@@ -4,6 +4,7 @@ import { UserRound, ArrowLeft, Image, Folder, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
+import AchievementBadges from '../components/AchievementBadges';
 import type { Profile } from '../lib/types';
 import { getAvatarSrc, getCoverImageSrc } from '../lib/media';
 
@@ -163,6 +164,8 @@ export default function ArtistDetail() {
         </div>
       </div>
 
+      {/* Achievements */}
+      {profile && <AchievementBadges userId={profile.id} />}
 
       <section style={{ marginTop: 24 }}>
         <h2 className="section-title">

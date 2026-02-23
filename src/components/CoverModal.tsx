@@ -468,7 +468,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                   </button>
                 </div>
 
-                <CoverComments coverId={cover.id} />
+                <CoverComments coverId={cover.id} cover={cover} />
               </>
             )}
 
