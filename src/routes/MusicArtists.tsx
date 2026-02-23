@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import MusicIcon from '../components/MusicIcon';
 import { supabase } from '../lib/supabase';
 import { getCoverImageSrc } from '../lib/media';
-import { slugifyArtist } from '../lib/coverRoutes';
+import { slugifyArtist, parseArtists } from '../lib/coverRoutes';
 
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
 
@@ -58,16 +58,18 @@ export default function MusicArtists() {
 
       const map = new Map<string, ArtistEntry>();
       for (const row of data ?? []) {
-        const key = row.artist?.trim();
-        if (!key) continue;
-        if (!map.has(key)) {
-          map.set(key, {
-            name: key,
-            coverCount: 0,
-            sampleCover: { storage_path: row.storage_path, image_url: row.image_url },
-          });
+        const names = parseArtists(row.artist?.trim() ?? '');
+        for (const name of names) {
+          if (!name) continue;
+          if (!map.has(name)) {
+            map.set(name, {
+              name,
+              coverCount: 0,
+              sampleCover: { storage_path: row.storage_path, image_url: row.image_url },
+            });
+          }
+          map.get(name)!.coverCount++;
         }
-        map.get(key)!.coverCount++;
       }
 
       const sorted = Array.from(map.values()).sort((a, b) => b.coverCount - a.coverCount);

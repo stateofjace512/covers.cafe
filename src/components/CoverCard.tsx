@@ -10,7 +10,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
 import { getCoverImageSrc } from '../lib/media';
-import { getCoverPath } from '../lib/coverRoutes';
+import { getCoverPath, parseArtists, slugifyArtist } from '../lib/coverRoutes';
 
 interface Props {
   cover: Cover;
@@ -104,7 +104,17 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
 
       <div className="album-card-info">
         <div className="album-card-title" title={cover.title}>{cover.title}</div>
-        <div className="album-card-artist" title={cover.artist}>{cover.artist}</div>
+        <div className="album-card-artist" title={cover.artist}>
+          {parseArtists(cover.artist).map((name, i, arr) => (
+            <span key={name}>
+              <button
+                className="cover-card-artist-link"
+                onClick={(e) => { e.stopPropagation(); navigate(`/artists/${slugifyArtist(name)}`, { state: { originalName: name } }); }}
+              >{name}</button>
+              {i < arr.length - 1 && ' & '}
+            </span>
+          ))}
+        </div>
         <div className="cover-card-meta">
           {cover.is_acotw && (
             <span className="cover-card-acotw" title="Album Cover Of The Week">
@@ -191,6 +201,10 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
         .cover-card-fav-count { display: flex; align-items: center; gap: 2px; font-size: 17px; color: var(--body-text-muted); }
         .cover-card-acotw { display: inline-flex; align-items: center; gap: 3px; font-size: 16px; color: #b8860b; background: rgba(184,134,11,0.12); border: 1px solid rgba(184,134,11,0.3); padding: 1px 5px; border-radius: 3px; }
         .cover-card-private { display: inline-flex; align-items: center; gap: 3px; font-size: 16px; color: #7a6a8a; background: rgba(120,100,140,0.12); border: 1px solid rgba(120,100,140,0.3); padding: 1px 5px; border-radius: 3px; }
+        /* display:inline is critical — button defaults to inline-block which breaks
+           text-overflow:ellipsis on the parent .album-card-artist container */
+        .cover-card-artist-link { display: inline; background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; font-size: inherit; color: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: transparent; transition: text-decoration-color 0.15s; }
+        .cover-card-artist-link:hover { text-decoration-color: currentColor; transform: none; box-shadow: none; }
         .cover-card-uploader { display: flex; align-items: center; gap: 3px; font-size: 17px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         .cover-card-uploader--link { background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; }
         .cover-card-uploader--link:hover { color: var(--accent); transform: none; box-shadow: none; }

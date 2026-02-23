@@ -50,6 +50,42 @@ interface UploadCollection {
 
 const normalizeTags = (values: string[]) => Array.from(new Set(values.map((v) => v.trim().toLowerCase()).filter(Boolean)));
 
+function levenshtein(a: string, b: string): number {
+  const prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  const curr = new Array(b.length + 1).fill(0);
+  for (let i = 1; i <= a.length; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      curr[j] = a[i - 1] === b[j - 1]
+        ? prev[j - 1]
+        : 1 + Math.min(prev[j - 1], prev[j], curr[j - 1]);
+    }
+    prev.splice(0, b.length + 1, ...curr);
+  }
+  return prev[b.length];
+}
+
+function getFuzzyMatches(value: string, options: string[], maxResults = 2): string[] {
+  const typed = value.trim().toLowerCase();
+  if (typed.length < 3) return [];
+  if (options.some((o) => o.toLowerCase() === typed)) return [];
+  if (options.some((o) => o.toLowerCase().startsWith(typed))) return [];
+  const maxDist = typed.length <= 5 ? 2 : typed.length <= 10 ? 3 : 4;
+  return options
+    .map((o) => ({ o, dist: levenshtein(typed, o.toLowerCase()) }))
+    .filter(({ dist }) => dist <= maxDist)
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, maxResults)
+    .map(({ o }) => o);
+}
+
+const ARTIST_SPLIT_RE = /\s*(?:&|feat\.?|ft\.?|with|,)\s*/i;
+
+function detectArtistSplit(value: string): string[] {
+  const parts = value.split(ARTIST_SPLIT_RE).map((p) => p.trim()).filter(Boolean);
+  return parts.length >= 2 ? parts : [];
+}
+
 type ValidationResult =
   | { ok: true }
   | { ok: false; error: string }
@@ -145,6 +181,8 @@ export default function UploadForm() {
   const [knownCovers, setKnownCovers] = useState<KnownCover[]>([]);
   const [collectionHint, setCollectionHint] = useState('Drag cover cards into a folder below.');
   const [bulkUploading, setBulkUploading] = useState(false);
+  // null = no pending confirmation; 'single'/'bulk' = waiting on split-artist confirm
+  const [splitConfirmPending, setSplitConfirmPending] = useState<'single' | 'bulk' | null>(null);
   const [bulkDone, setBulkDone] = useState(false);
   const bulkInputRef = useRef<HTMLInputElement>(null);
 
@@ -215,6 +253,11 @@ export default function UploadForm() {
     [knownCovers],
   );
 
+
+  const artistFuzzyMatches = useMemo(() => getFuzzyMatches(artist, knownArtists), [artist, knownArtists]);
+  const tagFuzzyMatches = useMemo(() => getFuzzyMatches(tagInput, knownTags), [tagInput, knownTags]);
+  const bulkTagFuzzyMatches = useMemo(() => getFuzzyMatches(bulkTagInput, knownTags), [bulkTagInput, knownTags]);
+  const artistSplitParts = useMemo(() => detectArtistSplit(artist), [artist]);
 
   const getInlineSuggestion = (value: string, options: string[]) => {
     const typed = value.trim();
@@ -303,23 +346,16 @@ export default function UploadForm() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) { openAuthModal('login'); return; }
-    if (!file) { setError('Please select a cover image.'); return; }
-    if (!title.trim() || !artist.trim()) { setError('Title and artist are required.'); return; }
-
+  const doSingleUpload = async () => {
+    if (!user || !file) return;
     if (!checkRateLimit('upload', UPLOAD_RATE_MAX, UPLOAD_RATE_WINDOW)) {
       const { retryAfterMs } = getRateLimitState('upload');
       const waitSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
       setError(`You're uploading too fast. Please wait ${waitSeconds}s before trying again.`);
       return;
     }
-
-
     setUploading(true);
     setError(null);
-
     try {
       const phash = await computePhash(file);
       if (phash && await isDuplicate(phash, supabase)) {
@@ -327,17 +363,13 @@ export default function UploadForm() {
         setUploading(false);
         return;
       }
-
       const fileName = `${user.id}/${crypto.randomUUID()}.jpg`;
       const { error: storageErr } = await supabase.storage
         .from('covers_cafe_covers')
         .upload(fileName, file, { contentType: 'image/jpeg', upsert: false });
-
       if (storageErr) throw new Error(storageErr.message);
-
       const { data: urlData } = supabase.storage.from('covers_cafe_covers').getPublicUrl(fileName);
       const tagsArray = normalizeTags([...tags, tagInput]);
-
       const { error: insertErr } = await supabase.from('covers_cafe_covers').insert({
         user_id: user.id,
         title: title.trim(),
@@ -349,23 +381,31 @@ export default function UploadForm() {
         phash: phash || null,
         is_public: true,
       });
-
       if (insertErr) throw new Error(insertErr.message);
-
-      // Generate 500px thumbnail in the background (non-blocking)
       fetch('/api/generate-thumbnail', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ storage_path: fileName }),
       }).catch(() => {/* thumbnail generation is best-effort */});
-
       setSuccess(true);
       setTimeout(() => navigate('/'), 1800);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
     }
-
     setUploading(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) { openAuthModal('login'); return; }
+    if (!file) { setError('Please select a cover image.'); return; }
+    if (!title.trim() || !artist.trim()) { setError('Title and artist are required.'); return; }
+    // Gate: ask about multiple artists before committing
+    if (artistSplitParts.length >= 2) {
+      setSplitConfirmPending('single');
+      return;
+    }
+    await doSingleUpload();
   };
 
   const handleBulkFiles = async (files: FileList | File[]) => {
@@ -412,21 +452,8 @@ export default function UploadForm() {
     });
   };
 
-  const handleBulkSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) { openAuthModal('login'); return; }
-    if (!bulkItems.length) return;
-
-    const hasInvalid = bulkItems.some((it) => !it.title.trim() || !it.artist.trim());
-    if (hasInvalid) {
-      setBulkItems((prev) => prev.map((it) =>
-        !it.title.trim() || !it.artist.trim()
-          ? { ...it, status: 'error', errorMsg: 'Title and artist required' }
-          : it
-      ));
-      return;
-    }
-
+  const doBulkUpload = async () => {
+    if (!user) return;
     if (!checkRateLimit('upload', UPLOAD_RATE_MAX, UPLOAD_RATE_WINDOW)) {
       const { retryAfterMs } = getRateLimitState('upload');
       const waitSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
@@ -435,7 +462,6 @@ export default function UploadForm() {
       })));
       return;
     }
-
     setBulkUploading(true);
     const tagsArray = normalizeTags([...bulkTags, bulkTagInput]);
 
@@ -493,7 +519,27 @@ export default function UploadForm() {
     setBulkDone(true);
   };
 
-
+  const handleBulkSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) { openAuthModal('login'); return; }
+    if (!bulkItems.length) return;
+    const hasInvalid = bulkItems.some((it) => !it.title.trim() || !it.artist.trim());
+    if (hasInvalid) {
+      setBulkItems((prev) => prev.map((it) =>
+        !it.title.trim() || !it.artist.trim()
+          ? { ...it, status: 'error', errorMsg: 'Title and artist required' }
+          : it
+      ));
+      return;
+    }
+    // Gate: ask about multiple artists before committing
+    const hasMultiArtist = bulkItems.some((it) => it.status === 'pending' && detectArtistSplit(it.artist).length >= 2);
+    if (hasMultiArtist) {
+      setSplitConfirmPending('bulk');
+      return;
+    }
+    await doBulkUpload();
+  };
 
   const completeIfSuggested = (
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -558,6 +604,32 @@ export default function UploadForm() {
           secondaryLabel="Cancel"
           onSecondary={handleResizeCancel}
           onClose={handleResizeCancel}
+        />
+      )}
+      {splitConfirmPending && (
+        <InfoModal
+          emoji="🎤"
+          title="Multiple artists detected"
+          body={
+            splitConfirmPending === 'single'
+              ? <>
+                  {artistSplitParts.map((p) => <span key={p} className="fuzzy-hint-tag" style={{ marginRight: 4 }}>{p}</span>)}
+                  <br /><br />
+                  Each artist will link to their own page. If this is a group or duo, tap Edit and retype the name without a separator.
+                </>
+              : <>
+                  One or more of your uploads has multiple artists. Each artist will link to their own page. If any are groups or duos, tap Edit and retype those names without a separator.
+                </>
+          }
+          primaryLabel="Yes, separate them"
+          onPrimary={() => {
+            setSplitConfirmPending(null);
+            if (splitConfirmPending === 'single') void doSingleUpload();
+            else void doBulkUpload();
+          }}
+          secondaryLabel="Edit"
+          onSecondary={() => setSplitConfirmPending(null)}
+          onClose={() => setSplitConfirmPending(null)}
         />
       )}
       <div className="upload-mode-toggle">
@@ -647,6 +719,24 @@ export default function UploadForm() {
                   required
                 />
                 {artistSuggestion && <div className="autocomplete-hint">↹ Tab to complete: {artistSuggestion}</div>}
+                {!artistSuggestion && artistFuzzyMatches.length > 0 && (
+                  <div className="fuzzy-hint">
+                    Did you mean{' '}
+                    {artistFuzzyMatches.map((m, i) => (
+                      <span key={m}>
+                        <button type="button" className="fuzzy-hint-btn" onClick={() => setArtist(m)}>{m}</button>
+                        {i < artistFuzzyMatches.length - 1 ? ' or ' : '?'}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {artistSplitParts.length >= 2 && (
+                  <div className="fuzzy-hint fuzzy-hint--split">
+                    Multiple artists detected:{' '}
+                    {artistSplitParts.map((p) => <span key={p} className="fuzzy-hint-tag">{p}</span>)}
+                    {' '}— each will link to their own artist page.
+                  </div>
+                )}
               </div>
             </div>
             <div className="upload-row-short">
@@ -670,6 +760,17 @@ export default function UploadForm() {
                   }}
                 />
                 {tagSuggestion && <div className="autocomplete-hint">↹ Tab to complete: {tagSuggestion}</div>}
+                {!tagSuggestion && tagFuzzyMatches.length > 0 && (
+                  <div className="fuzzy-hint">
+                    Did you mean{' '}
+                    {tagFuzzyMatches.map((m, i) => (
+                      <span key={m}>
+                        <button type="button" className="fuzzy-hint-btn" onClick={() => setTagInput(m)}>{m}</button>
+                        {i < tagFuzzyMatches.length - 1 ? ' or ' : '?'}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="tag-list">{tags.map((tag) => <button key={tag} type="button" className="tag-chip" onClick={() => removeTag(tag)}>{tag} <XIcon size={12} /></button>)}</div>
               <p className="form-hint">Type a word with a comma and press Enter to spend tags fast.</p>
@@ -705,6 +806,17 @@ export default function UploadForm() {
                   }}
                 />
                 {bulkTagSuggestion && <div className="autocomplete-hint">↹ Tab to complete: {bulkTagSuggestion}</div>}
+                {!bulkTagSuggestion && bulkTagFuzzyMatches.length > 0 && (
+                  <div className="fuzzy-hint">
+                    Did you mean{' '}
+                    {bulkTagFuzzyMatches.map((m, i) => (
+                      <span key={m}>
+                        <button type="button" className="fuzzy-hint-btn" onClick={() => setBulkTagInput(m)}>{m}</button>
+                        {i < bulkTagFuzzyMatches.length - 1 ? ' or ' : '?'}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="tag-list">{bulkTags.map((tag) => <button key={tag} type="button" className="tag-chip" onClick={() => removeTag(tag, true)}>{tag} <XIcon size={12} /></button>)}</div>
             </div>
@@ -771,7 +883,10 @@ export default function UploadForm() {
 
           {bulkItems.length > 0 && (
             <div className="bulk-list">
-              {bulkItems.map((item, idx) => (
+              {bulkItems.map((item, idx) => {
+                const bulkArtistFuzzy = item.artist.trim().length >= 3 ? getFuzzyMatches(item.artist, knownArtists) : [];
+                const bulkArtistSplit = detectArtistSplit(item.artist);
+                return (
                 <div
                   key={idx}
                   className={`bulk-item${item.status === 'error' ? ' bulk-item--error' : item.status === 'done' ? ' bulk-item--done' : ''}`}
@@ -797,6 +912,24 @@ export default function UploadForm() {
                       onChange={(e) => updateBulkItem(idx, { artist: e.target.value })}
                       disabled={item.status === 'uploading' || item.status === 'done'}
                     />
+                    {bulkArtistFuzzy.length > 0 && item.status === 'pending' && (
+                      <div className="fuzzy-hint" style={{ width: '100%' }}>
+                        Did you mean{' '}
+                        {bulkArtistFuzzy.map((m, i) => (
+                          <span key={m}>
+                            <button type="button" className="fuzzy-hint-btn" onClick={() => updateBulkItem(idx, { artist: m })}>{m}</button>
+                            {i < bulkArtistFuzzy.length - 1 ? ' or ' : '?'}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {bulkArtistSplit.length >= 2 && item.status === 'pending' && (
+                      <div className="fuzzy-hint fuzzy-hint--split" style={{ width: '100%' }}>
+                        Multiple artists:{' '}
+                        {bulkArtistSplit.map((p) => <span key={p} className="fuzzy-hint-tag">{p}</span>)}
+                        {' '}— each will link to their own artist page.
+                      </div>
+                    )}
                     {item.errorMsg && (
                       <p className="bulk-item-error"><AlertCircleIcon size={12} /> {item.errorMsg}</p>
                     )}
@@ -812,7 +945,8 @@ export default function UploadForm() {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -937,6 +1071,26 @@ export default function UploadForm() {
           color: #c83220; cursor: pointer; padding: 0;
         }
         .bulk-item-remove:hover { background: rgba(200,50,30,0.2); transform: none; box-shadow: none; }
+        .fuzzy-hint {
+          font-size: 17px; color: var(--body-text-muted);
+          display: flex; flex-wrap: wrap; align-items: center; gap: 3px;
+        }
+        .fuzzy-hint--split {
+          background: rgba(192,90,26,0.08); border: 1px solid rgba(192,90,26,0.25);
+          border-radius: 4px; padding: 4px 8px; color: var(--body-text);
+        }
+        .fuzzy-hint-btn {
+          background: none; border: none; padding: 0;
+          color: var(--accent); font-size: 17px; cursor: pointer;
+          font-family: var(--font-body); text-decoration: underline;
+          text-underline-offset: 2px;
+        }
+        .fuzzy-hint-btn:hover { opacity: 0.75; transform: none; box-shadow: none; }
+        .fuzzy-hint-tag {
+          display: inline-block; background: var(--sidebar-bg);
+          border: 1px solid var(--body-card-border); border-radius: 4px;
+          padding: 1px 6px; font-size: 16px; margin: 0 2px;
+        }
       `}</style>
     </div>
   );
