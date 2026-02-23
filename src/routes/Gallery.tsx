@@ -8,13 +8,15 @@ import DiamondIcon from '../components/DiamondIcon';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
 import CoffeeCupIcon from '../components/CoffeeCupIcon';
+import OfficialGallery from '../components/OfficialGallery';
 
-export type GalleryTab = 'new' | 'top_rated' | 'acotw';
+export type GalleryTab = 'new' | 'top_rated' | 'acotw' | 'official';
 
 const TABS: { id: GalleryTab; label: string; icon: React.ReactNode; title: string }[] = [
   { id: 'new',       label: 'New',       icon: <DiamondIcon size={13} />,    title: 'Recent Covers' },
   { id: 'top_rated', label: 'Top Rated', icon: <FavoritesIcon size={13} />, title: 'Top Rated' },
   { id: 'acotw',     label: 'ACOTW',     icon: <TrophyIcon size={13} />,    title: 'Album Cover Of The Week' },
+  { id: 'official',  label: 'Official',  icon: <GalleryIcon size={13} />,   title: 'Official Covers' },
 ];
 
 export default function Gallery() {
@@ -69,7 +71,11 @@ export default function Gallery() {
           <GalleryIcon size={20} />
           {searchQuery ? `Results for "${searchQuery}"` : activeTitle}
         </h2>
-        <GalleryGrid filter="all" tab={searchQuery ? 'new' : activeTab} />
+        {activeTab === 'official' && !searchQuery ? (
+          <OfficialGallery />
+        ) : (
+          <GalleryGrid filter="all" tab={searchQuery ? 'new' : activeTab} />
+        )}
       </section>
 
       <style>{`
