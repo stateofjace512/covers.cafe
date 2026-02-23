@@ -50,6 +50,42 @@ interface UploadCollection {
 
 const normalizeTags = (values: string[]) => Array.from(new Set(values.map((v) => v.trim().toLowerCase()).filter(Boolean)));
 
+function levenshtein(a: string, b: string): number {
+  const prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  const curr = new Array(b.length + 1).fill(0);
+  for (let i = 1; i <= a.length; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      curr[j] = a[i - 1] === b[j - 1]
+        ? prev[j - 1]
+        : 1 + Math.min(prev[j - 1], prev[j], curr[j - 1]);
+    }
+    prev.splice(0, b.length + 1, ...curr);
+  }
+  return prev[b.length];
+}
+
+function getFuzzyMatches(value: string, options: string[], maxResults = 2): string[] {
+  const typed = value.trim().toLowerCase();
+  if (typed.length < 3) return [];
+  if (options.some((o) => o.toLowerCase() === typed)) return [];
+  if (options.some((o) => o.toLowerCase().startsWith(typed))) return [];
+  const maxDist = typed.length <= 5 ? 2 : typed.length <= 10 ? 3 : 4;
+  return options
+    .map((o) => ({ o, dist: levenshtein(typed, o.toLowerCase()) }))
+    .filter(({ dist }) => dist <= maxDist)
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, maxResults)
+    .map(({ o }) => o);
+}
+
+const ARTIST_SPLIT_RE = /\s*(?:&|feat\.?|ft\.?|with|,)\s*/i;
+
+function detectArtistSplit(value: string): string[] {
+  const parts = value.split(ARTIST_SPLIT_RE).map((p) => p.trim()).filter(Boolean);
+  return parts.length >= 2 ? parts : [];
+}
+
 type ValidationResult =
   | { ok: true }
   | { ok: false; error: string }
@@ -215,6 +251,11 @@ export default function UploadForm() {
     [knownCovers],
   );
 
+
+  const artistFuzzyMatches = useMemo(() => getFuzzyMatches(artist, knownArtists), [artist, knownArtists]);
+  const tagFuzzyMatches = useMemo(() => getFuzzyMatches(tagInput, knownTags), [tagInput, knownTags]);
+  const bulkTagFuzzyMatches = useMemo(() => getFuzzyMatches(bulkTagInput, knownTags), [bulkTagInput, knownTags]);
+  const artistSplitParts = useMemo(() => detectArtistSplit(artist), [artist]);
 
   const getInlineSuggestion = (value: string, options: string[]) => {
     const typed = value.trim();
@@ -647,6 +688,24 @@ export default function UploadForm() {
                   required
                 />
                 {artistSuggestion && <div className="autocomplete-hint">↹ Tab to complete: {artistSuggestion}</div>}
+                {!artistSuggestion && artistFuzzyMatches.length > 0 && (
+                  <div className="fuzzy-hint">
+                    Did you mean{' '}
+                    {artistFuzzyMatches.map((m, i) => (
+                      <span key={m}>
+                        <button type="button" className="fuzzy-hint-btn" onClick={() => setArtist(m)}>{m}</button>
+                        {i < artistFuzzyMatches.length - 1 ? ' or ' : '?'}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {artistSplitParts.length >= 2 && (
+                  <div className="fuzzy-hint fuzzy-hint--split">
+                    Multiple artists detected:{' '}
+                    {artistSplitParts.map((p) => <span key={p} className="fuzzy-hint-tag">{p}</span>)}
+                    {' '}— save each as a separate upload?
+                  </div>
+                )}
               </div>
             </div>
             <div className="upload-row-short">
@@ -670,6 +729,17 @@ export default function UploadForm() {
                   }}
                 />
                 {tagSuggestion && <div className="autocomplete-hint">↹ Tab to complete: {tagSuggestion}</div>}
+                {!tagSuggestion && tagFuzzyMatches.length > 0 && (
+                  <div className="fuzzy-hint">
+                    Did you mean{' '}
+                    {tagFuzzyMatches.map((m, i) => (
+                      <span key={m}>
+                        <button type="button" className="fuzzy-hint-btn" onClick={() => setTagInput(m)}>{m}</button>
+                        {i < tagFuzzyMatches.length - 1 ? ' or ' : '?'}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="tag-list">{tags.map((tag) => <button key={tag} type="button" className="tag-chip" onClick={() => removeTag(tag)}>{tag} <XIcon size={12} /></button>)}</div>
               <p className="form-hint">Type a word with a comma and press Enter to spend tags fast.</p>
@@ -705,6 +775,17 @@ export default function UploadForm() {
                   }}
                 />
                 {bulkTagSuggestion && <div className="autocomplete-hint">↹ Tab to complete: {bulkTagSuggestion}</div>}
+                {!bulkTagSuggestion && bulkTagFuzzyMatches.length > 0 && (
+                  <div className="fuzzy-hint">
+                    Did you mean{' '}
+                    {bulkTagFuzzyMatches.map((m, i) => (
+                      <span key={m}>
+                        <button type="button" className="fuzzy-hint-btn" onClick={() => setBulkTagInput(m)}>{m}</button>
+                        {i < bulkTagFuzzyMatches.length - 1 ? ' or ' : '?'}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="tag-list">{bulkTags.map((tag) => <button key={tag} type="button" className="tag-chip" onClick={() => removeTag(tag, true)}>{tag} <XIcon size={12} /></button>)}</div>
             </div>
@@ -771,7 +852,10 @@ export default function UploadForm() {
 
           {bulkItems.length > 0 && (
             <div className="bulk-list">
-              {bulkItems.map((item, idx) => (
+              {bulkItems.map((item, idx) => {
+                const bulkArtistFuzzy = item.artist.trim().length >= 3 ? getFuzzyMatches(item.artist, knownArtists) : [];
+                const bulkArtistSplit = detectArtistSplit(item.artist);
+                return (
                 <div
                   key={idx}
                   className={`bulk-item${item.status === 'error' ? ' bulk-item--error' : item.status === 'done' ? ' bulk-item--done' : ''}`}
@@ -797,6 +881,24 @@ export default function UploadForm() {
                       onChange={(e) => updateBulkItem(idx, { artist: e.target.value })}
                       disabled={item.status === 'uploading' || item.status === 'done'}
                     />
+                    {bulkArtistFuzzy.length > 0 && item.status === 'pending' && (
+                      <div className="fuzzy-hint" style={{ width: '100%' }}>
+                        Did you mean{' '}
+                        {bulkArtistFuzzy.map((m, i) => (
+                          <span key={m}>
+                            <button type="button" className="fuzzy-hint-btn" onClick={() => updateBulkItem(idx, { artist: m })}>{m}</button>
+                            {i < bulkArtistFuzzy.length - 1 ? ' or ' : '?'}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {bulkArtistSplit.length >= 2 && item.status === 'pending' && (
+                      <div className="fuzzy-hint fuzzy-hint--split" style={{ width: '100%' }}>
+                        Multiple artists:{' '}
+                        {bulkArtistSplit.map((p) => <span key={p} className="fuzzy-hint-tag">{p}</span>)}
+                        {' '}— save each as a separate upload?
+                      </div>
+                    )}
                     {item.errorMsg && (
                       <p className="bulk-item-error"><AlertCircleIcon size={12} /> {item.errorMsg}</p>
                     )}
@@ -812,7 +914,8 @@ export default function UploadForm() {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -937,6 +1040,26 @@ export default function UploadForm() {
           color: #c83220; cursor: pointer; padding: 0;
         }
         .bulk-item-remove:hover { background: rgba(200,50,30,0.2); transform: none; box-shadow: none; }
+        .fuzzy-hint {
+          font-size: 17px; color: var(--body-text-muted);
+          display: flex; flex-wrap: wrap; align-items: center; gap: 3px;
+        }
+        .fuzzy-hint--split {
+          background: rgba(192,90,26,0.08); border: 1px solid rgba(192,90,26,0.25);
+          border-radius: 4px; padding: 4px 8px; color: var(--body-text);
+        }
+        .fuzzy-hint-btn {
+          background: none; border: none; padding: 0;
+          color: var(--accent); font-size: 17px; cursor: pointer;
+          font-family: var(--font-body); text-decoration: underline;
+          text-underline-offset: 2px;
+        }
+        .fuzzy-hint-btn:hover { opacity: 0.75; transform: none; box-shadow: none; }
+        .fuzzy-hint-tag {
+          display: inline-block; background: var(--sidebar-bg);
+          border: 1px solid var(--body-card-border); border-radius: 4px;
+          padding: 1px 6px; font-size: 16px; margin: 0 2px;
+        }
       `}</style>
     </div>
   );
