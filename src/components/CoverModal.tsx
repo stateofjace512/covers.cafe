@@ -668,20 +668,20 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         }
         .cover-modal-titles { border-bottom: 1px solid var(--body-border); padding-bottom: 14px; }
         .cover-modal-title {
-          font-size: 25px; font-weight: bold; color: var(--body-text); line-height: 1.2; margin-bottom: 6px;
+          font-size: 25px; color: var(--body-text); line-height: 1.2; margin-bottom: 6px;
         }
         [data-theme="dark"] .cover-modal-title { }
-        .cover-modal-artist { font-size: 19px; color: var(--body-text-muted); font-weight: bold; }
+        .cover-modal-artist { font-size: 19px; color: var(--body-text-muted); }
         .cover-modal-meta { display: flex; flex-direction: column; gap: 8px; flex: 1; }
         .cover-meta-row { display: flex; align-items: flex-start; gap: 8px; font-size: 19px; color: var(--body-text-muted); }
         .cover-meta-row svg { flex-shrink: 0; margin-top: 1px; }
         .cover-meta-date { cursor: help; border-bottom: 1px dashed var(--body-card-border); }
-        .cover-meta-user-link { font-weight: bold; color: var(--body-text); background: none; border: none; padding: 0; cursor: pointer; font-size: 19px; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; }
+        .cover-meta-user-link { color: var(--body-text); background: none; border: none; padding: 0; cursor: pointer; font-size: 19px; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; }
         .cover-meta-user-link:hover { color: var(--accent); transform: none; box-shadow: none; }
         .cover-meta-tags { align-items: flex-start; }
         .cover-tags-list { display: flex; flex-wrap: wrap; gap: 5px; }
         .cover-tag {
-          font-size: 21px; font-weight: bold; font-family: var(--font-header);
+          font-size: 21px; font-family: var(--font-header);
           background: var(--sidebar-bg); color: var(--sidebar-text);
           padding: 2px 7px; border-radius: 3px;
           border: 1px solid var(--sidebar-border); box-shadow: var(--shadow-sm);
@@ -725,7 +725,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         }
         .cover-modal-report-btn:hover { background: var(--sidebar-bg); color: var(--body-text); transform: none; box-shadow: none; }
         .cover-report-panel, .cover-collection-panel { display: flex; flex-direction: column; gap: 14px; }
-        .cover-report-title { font-size: 19px; font-weight: bold; color: var(--body-text); }
+        .cover-report-title { font-size: 19px; color: var(--body-text); }
         .cover-report-done { font-size: 20px; color: var(--body-text-muted); line-height: 1.5; }
         .cover-report-textarea { resize: none; min-height: 72px; }
         .cover-report-actions { display: flex; gap: 8px; }
@@ -737,11 +737,11 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           color: var(--body-text-muted);
           background: var(--sidebar-bg);
         }
-        .collection-status { font-size: 18px; font-weight: bold; padding: 6px 10px; border-radius: 4px; }
+        .collection-status { font-size: 18px; padding: 6px 10px; border-radius: 4px; }
         .collection-status--error { color: #c0392b; background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.25); }
         .collection-status--ok { color: #1e7e34; background: rgba(30,126,52,0.08); border: 1px solid rgba(30,126,52,0.25); }
         .form-row { display: flex; flex-direction: column; gap: 5px; }
-        .form-label { font-size: 19px; font-weight: bold; color: var(--body-text); }
+        .form-label { font-size: 19px; color: var(--body-text); }
         .form-hint { font-size: 17px; color: var(--body-text-muted); font-weight: normal; }
         .form-input {
           width: 100%; padding: 8px 12px;
@@ -755,7 +755,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .cover-tag--clickable {
           cursor: pointer; background: var(--sidebar-bg); color: var(--sidebar-text);
           border: 1px solid var(--sidebar-border); padding: 2px 7px; border-radius: 3px;
-          font-size: 21px; font-weight: bold; font-family: var(--font-header); box-shadow: var(--shadow-sm);
+          font-size: 21px; font-family: var(--font-header); box-shadow: var(--shadow-sm);
           transition: background 0.1s, color 0.1s;
         }
         .cover-tag--clickable:hover { background: var(--accent); color: white; border-color: var(--accent); transform: none; box-shadow: none; }
@@ -772,7 +772,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           display: flex; flex-direction: column; min-width: 130px; overflow: hidden;
         }
         .cover-download-option {
-          padding: 8px 14px; text-align: left; font-size: 19px; font-weight: bold;
+          padding: 8px 14px; text-align: left; font-size: 19px;
           background: none; border: none; color: var(--body-text); cursor: pointer;
           box-shadow: none;
         }
@@ -786,13 +786,13 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .cover-comment-item { border: 1px solid var(--body-card-border); border-radius: 6px; background: rgba(255,255,255,0.25); padding: 8px 10px; }
         .cover-comment-top { display: flex; justify-content: space-between; gap: 10px; font-size: 17px; color: #2f1b0d; margin-bottom: 4px; }
         .cover-comment-top strong, .cover-comment-top span { color: #2f1b0d; }
-        .cover-comment-author { font-weight: bold; color: #2f1b0d; background: none; border: none; padding: 0; cursor: pointer; font-size: 17px; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; }
+        .cover-comment-author { color: #2f1b0d; background: none; border: none; padding: 0; cursor: pointer; font-size: 17px; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; }
         .cover-comment-author:hover { color: var(--accent); transform: none; box-shadow: none; }
         .cover-comment-body { white-space: pre-wrap; font-size: 19px; margin-bottom: 7px; }
         .cover-comment-edited { font-size: 17px; color: #6f4a30; margin-bottom: 7px; font-style: italic; }
         .cover-comment-edit-wrap { display: flex; flex-direction: column; gap: 8px; }
         .cover-comment-actions { display: flex; gap: 8px; }
-        .cover-comment-action { border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--sidebar-text); font-size: 17px; font-weight: bold; border-radius: 4px; padding: 3px 8px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+        .cover-comment-action { border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--sidebar-text); font-size: 17px; border-radius: 4px; padding: 3px 8px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
         .cover-comment-action:hover { background: var(--accent); color: #fff; }
         .cover-comment-action--delete { background: rgba(200,50,30,0.14); border-color: rgba(200,50,30,0.35); color: #8f2416; }
         [data-theme="dark"] .cover-comment-action--delete { background: rgba(220,92,72,0.22); border-color: rgba(220,92,72,0.55); color: #ffb8ac; }

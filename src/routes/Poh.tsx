@@ -227,7 +227,6 @@ export default function Poh() {
 
         .poh-title {
           font-size: clamp(36px, 6vw, 60px);
-          font-weight: bold;
           letter-spacing: 3px;
           text-transform: uppercase;
           color: #3a2008;
@@ -492,7 +491,6 @@ export default function Poh() {
           border: none;
           cursor: pointer;
           font-size: 23px;
-          font-weight: bold;
           color: #8b4513;
           padding: 0;
           box-shadow: none;
@@ -598,7 +596,6 @@ export default function Poh() {
 
         .poh-plaque-text {
           font-size: 21px;
-          font-weight: bold;
           letter-spacing: 0.8px;
           text-transform: uppercase;
           color: #3a2000;

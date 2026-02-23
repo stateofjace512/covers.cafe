@@ -38,7 +38,6 @@ export default function NotFound() {
         }
         .not-found-code {
           font-size: 72px;
-          font-weight: bold;
           color: var(--body-text);
           line-height: 1;
           margin: 0 0 10px;
@@ -47,7 +46,6 @@ export default function NotFound() {
         [data-theme="dark"] .not-found-code { }
         .not-found-headline {
           font-size: 21px;
-          font-weight: bold;
           color: var(--body-text);
           margin: 0 0 10px;
         }
@@ -63,7 +61,6 @@ export default function NotFound() {
           gap: 8px;
           padding: 10px 24px;
           font-size: 20px;
-          font-weight: bold;
         }
       `}</style>
     </div>

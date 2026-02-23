@@ -53,7 +53,6 @@ export default function SiteFooter() {
 
         .site-footer-logo {
           font-size: 21px;
-          font-weight: bold;
           color: var(--body-text);
           letter-spacing: 0.5px;
         }

@@ -90,7 +90,6 @@ export default function InfoModal({
         }
         .info-modal-title {
           font-size: 25px;
-          font-weight: bold;
           color: var(--body-text);
           margin: 0;
         }

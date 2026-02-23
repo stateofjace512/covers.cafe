@@ -276,12 +276,12 @@ export default function CollectionDetail() {
         .col-back-btn { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; }
         .col-detail-header { padding: 20px 24px; margin-bottom: 4px; }
         .col-detail-name {
-          font-size: 25px; font-weight: bold; color: var(--body-text);
+          font-size: 25px; color: var(--body-text);
           display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
         }
         [data-theme="dark"] .col-detail-name { }
         .col-detail-private {
-          font-size: 17px; font-weight: bold;
+          font-size: 17px;
           background: var(--sidebar-bg); color: var(--body-text-muted);
           padding: 2px 8px; border-radius: 10px;
           border: 1px solid var(--body-card-border);
@@ -296,7 +296,7 @@ export default function CollectionDetail() {
         .col-detail-count { font-size: 19px; color: var(--body-text-muted); margin-top: 6px; }
         .col-edit-form { display: flex; flex-direction: column; gap: 10px; }
         .col-edit-name-input {
-          font-size: 23px; font-weight: bold; color: var(--body-text);
+          font-size: 23px; color: var(--body-text);
           background: var(--body-card-bg); border: 1px solid var(--accent);
           border-radius: 4px; padding: 6px 10px; outline: none;
           box-shadow: 0 0 0 2px rgba(192,90,26,0.2);
@@ -317,7 +317,7 @@ export default function CollectionDetail() {
         .col-set-cover-btn {
           position: absolute; bottom: 6px; left: 6px;
           display: flex; align-items: center; gap: 4px;
-          font-size: 16px; font-weight: bold;
+          font-size: 16px;
           padding: 3px 7px; border-radius: 3px;
           background: rgba(10,5,2,0.75); color: rgba(255,255,255,0.7);
           border: 1px solid rgba(255,255,255,0.15);
@@ -332,7 +332,7 @@ export default function CollectionDetail() {
         }
         .col-set-cover-btn:hover { transform: none; box-shadow: none; }
         .col-edit-cover-section { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--body-card-border); }
-        .col-edit-cover-label { font-size: 17px; font-weight: bold; color: var(--body-text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .col-edit-cover-label { font-size: 17px; color: var(--body-text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
         .col-edit-cover-grid { display: flex; flex-wrap: wrap; gap: 6px; }
         .col-edit-cover-thumb {
           width: 56px; height: 56px; border-radius: 4px; overflow: hidden;

@@ -73,7 +73,6 @@ export default function About() {
         .legal-body p { font-size: 20px; color: var(--body-text); line-height: 1.75; margin: 0 0 14px; }
         .about-lede {
           font-size: 19px !important;
-          font-weight: bold;
           line-height: 1.6 !important;
           margin-bottom: 20px !important;
         }
@@ -89,7 +88,7 @@ export default function About() {
           gap: 8px;
         }
         .about-meta-row { display: flex; align-items: center; gap: 12px; font-size: 19px; }
-        .about-meta-key { font-weight: bold; color: var(--body-text-muted); min-width: 70px; }
+        .about-meta-key { color: var(--body-text-muted); min-width: 70px; }
         .about-meta-val { color: var(--body-text); }
         .about-meta-link { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
         .about-meta-link:hover { color: var(--accent-light); }

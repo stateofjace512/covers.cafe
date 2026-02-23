@@ -113,7 +113,7 @@ export default function Privacy() {
         .legal-body ul { padding-left: 20px; }
         .legal-body li { margin-bottom: 6px; }
         .legal-body h2 {
-          font-size: 19px; font-weight: bold; color: var(--body-text);
+          font-size: 19px; color: var(--body-text);
           margin: 24px 0 10px;
           padding-bottom: 6px; border-bottom: 1px solid var(--body-card-border);
         }

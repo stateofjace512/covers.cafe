@@ -41,7 +41,7 @@ export default function RateLimitModal({ action, onClose }: Props) {
         }
         .rate-limit-emoji { line-height: 0; margin-bottom: 4px; }
         .rate-limit-title {
-          font-size: 25px; font-weight: bold; color: var(--body-text);
+          font-size: 25px; color: var(--body-text);
         }
         [data-theme="dark"] .rate-limit-title { }
         .rate-limit-body { font-size: 21px; color: var(--body-text-muted); line-height: 1.5; }

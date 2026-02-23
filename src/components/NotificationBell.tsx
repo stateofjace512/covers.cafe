@@ -222,7 +222,7 @@ export default function NotificationBell() {
         .notif-badge {
           position: absolute; top: 2px; right: 2px;
           background: #e03020; color: white;
-          font-size: 15px; font-weight: bold;
+          font-size: 15px;
           border-radius: 8px; padding: 1px 4px;
           min-width: 14px; text-align: center; line-height: 1.4;
           border: 1.5px solid var(--header-bg);
@@ -246,11 +246,11 @@ export default function NotificationBell() {
           flex-shrink: 0;
         }
         .notif-panel-title {
-          font-size: 19px; font-weight: bold; color: var(--body-text);
+          font-size: 19px; color: var(--body-text);
           display: flex; align-items: center; gap: 7px;
         }
         .notif-panel-count {
-          font-size: 17px; font-weight: bold;
+          font-size: 17px;
           background: var(--accent); color: white;
           border-radius: 10px; padding: 1px 6px; line-height: 1.5;
         }
@@ -273,7 +273,7 @@ export default function NotificationBell() {
         .notif-item--new { background: rgba(192,90,26,0.06); }
         .notif-item--new:hover { background: rgba(192,90,26,0.1); }
         .notif-num {
-          font-size: 15px; font-weight: bold; color: var(--body-text-muted);
+          font-size: 15px; color: var(--body-text-muted);
           min-width: 16px; text-align: right; margin-top: 3px; flex-shrink: 0;
           opacity: 0.5;
         }
@@ -283,7 +283,7 @@ export default function NotificationBell() {
         .notif-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
         .notif-text { font-size: 18px; color: var(--body-text); line-height: 1.4; margin: 0; }
         .notif-user-link {
-          font-weight: bold; color: var(--body-text);
+          color: var(--body-text);
           background: none; border: none; padding: 0; cursor: pointer;
           font-size: 18px; box-shadow: none; font-family: inherit;
           text-decoration: underline; text-underline-offset: 2px;

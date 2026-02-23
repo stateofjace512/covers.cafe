@@ -243,12 +243,12 @@ export default function ArtistDetail() {
         .artist-detail-avatar-img { width: 100%; height: 100%; object-fit: cover; }
         .artist-detail-info { display: flex; flex-direction: column; gap: 5px; }
         .artist-detail-name {
-          font-size: 25px; font-weight: bold; color: var(--body-text);
+          font-size: 25px; color: var(--body-text);
           display: flex; align-items: center; gap: 10px;
         }
         [data-theme="dark"] .artist-detail-name { }
         .artist-detail-you {
-          font-size: 17px; font-weight: bold; background: var(--accent);
+          font-size: 17px; background: var(--accent);
           color: white; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.3px;
         }
         .artist-detail-username { font-size: 19px; color: var(--body-text-muted); }
@@ -263,8 +263,8 @@ export default function ArtistDetail() {
         .artist-collection-thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .artist-collection-thumb-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--body-text-muted); }
         .artist-collection-info { padding: 10px 12px; }
-        .artist-collection-name { font-size: 19px; font-weight: bold; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-        .artist-collection-private { font-size: 16px; font-weight: bold; color: var(--body-text-muted); background: var(--body-border); padding: 1px 6px; border-radius: 8px; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+        .artist-collection-name { font-size: 19px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .artist-collection-private { font-size: 16px; color: var(--body-text-muted); background: var(--body-border); padding: 1px 6px; border-radius: 8px; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
         .artist-collection-count { font-size: 18px; color: var(--body-text-muted); margin-top: 3px; }
       `}</style>
     </div>

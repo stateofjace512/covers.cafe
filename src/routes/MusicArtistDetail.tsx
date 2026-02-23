@@ -410,7 +410,7 @@ export default function MusicArtistDetail() {
         .ma-photo-upload-btn:hover { transform: none; box-shadow: none; background: var(--accent); }
         .ma-header-info { display: flex; flex-direction: column; gap: 6px; }
         .ma-artist-name {
-          font-size: 28px; font-weight: bold; color: #fff; margin: 0; line-height: 1.1;
+          font-size: 28px; color: #fff; margin: 0; line-height: 1.1;
         }
         .ma-cover-count { font-size: 20px; color: rgba(255,255,255,0.65); margin: 0; }
         .ma-upload-error { font-size: 18px; color: #f87171; margin: 0; }

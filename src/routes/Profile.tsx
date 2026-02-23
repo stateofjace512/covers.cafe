@@ -23,7 +23,7 @@ export default function Profile() {
             <button className="btn btn-secondary" onClick={() => openAuthModal('register')}>Create Account</button>
           </div>
         </div>
-        <style>{` .empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 60px 40px; max-width: 440px; } .empty-title { font-size: 23px; font-weight: bold; color: var(--body-text); margin-bottom: 10px; } .empty-body { font-size: 20px; color: var(--body-text-muted); line-height: 1.6; } `}</style>
+        <style>{` .empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 60px 40px; max-width: 440px; } .empty-title { font-size: 23px; color: var(--body-text); margin-bottom: 10px; } .empty-body { font-size: 20px; color: var(--body-text-muted); line-height: 1.6; } `}</style>
       </div>
     );
   }
@@ -72,7 +72,7 @@ export default function Profile() {
         .profile-avatar-img { width: 100%; height: 100%; object-fit: cover; }
         .profile-info { flex: 1; min-width: 0; }
         .profile-name {
-          font-size: 25px; font-weight: bold; color: var(--body-text);
+          font-size: 25px; color: var(--body-text);
         }
         [data-theme="dark"] .profile-name { }
         .profile-username { font-size: 19px; color: var(--body-text-muted); margin-top: 2px; }

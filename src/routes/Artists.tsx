@@ -129,9 +129,9 @@ export default function Artists() {
         }
         .artist-avatar-img { width: 100%; height: 100%; object-fit: cover; }
         .artist-info { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-        .artist-name { font-size: 20px; font-weight: bold; color: var(--body-text); display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: center; }
+        .artist-name { font-size: 20px; color: var(--body-text); display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: center; }
         [data-theme="dark"] .artist-name { }
-        .artist-you-badge { font-size: 16px; font-weight: bold; background: var(--accent); color: white; padding: 1px 6px; border-radius: 8px; letter-spacing: 0.3px; }
+        .artist-you-badge { font-size: 16px; background: var(--accent); color: white; padding: 1px 6px; border-radius: 8px; letter-spacing: 0.3px; }
         .artist-count { font-size: 17px; color: var(--body-text-muted); }
       `}</style>
     </div>

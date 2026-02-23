@@ -136,7 +136,7 @@ export default function MusicArtists() {
           font-family: var(--font-body); transition: border-color 0.15s, box-shadow 0.15s;
         }
         .music-artist-search:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
-        .music-artist-count-label { font-size: 18px; color: var(--body-text-muted); font-weight: bold; }
+        .music-artist-count-label { font-size: 18px; color: var(--body-text-muted); }
         .music-artist-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -162,7 +162,7 @@ export default function MusicArtists() {
         .music-artist-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--body-text-muted); }
         .music-artist-info { padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; }
         .music-artist-name {
-          font-size: 25px; font-weight: bold; color: var(--body-text);
+          font-size: 25px; color: var(--body-text);
           font-family: var(--font-header);
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }

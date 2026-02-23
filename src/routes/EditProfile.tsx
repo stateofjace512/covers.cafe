@@ -317,7 +317,7 @@ export default function EditProfile() {
         .edit-form { max-width: 520px; display: flex; flex-direction: column; gap: 16px; }
         .form-row { display: flex; flex-direction: column; gap: 5px; }
         .form-label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-        .form-label { font-size: 19px; font-weight: bold; color: var(--body-text); }
+        .form-label { font-size: 19px; color: var(--body-text); }
         [data-theme="dark"] .form-label { }
         .form-hint { font-size: 17px; color: var(--body-text-muted); margin: 0; }
         .form-change-limit {

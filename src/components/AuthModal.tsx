@@ -454,7 +454,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
         }
         .auth-tabs { display: flex; gap: 0; }
         .auth-tab {
-          padding: 14px 18px; font-size: 20px; font-weight: bold;
+          padding: 14px 18px; font-size: 20px;
           background: none; border: none; border-bottom: 3px solid transparent;
           cursor: pointer; color: var(--body-text-muted); margin-bottom: -1px;
           transition: color 0.12s, border-color 0.12s; box-shadow: none;
@@ -475,7 +475,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
         .auth-field { display: flex; flex-direction: column; gap: 5px; }
         .auth-label {
           display: flex; align-items: center; gap: 5px;
-          font-size: 18px; font-weight: bold; color: var(--body-text-muted);
+          font-size: 18px; color: var(--body-text-muted);
           text-transform: uppercase; letter-spacing: 0.5px;
         }
         .auth-input {
@@ -497,7 +497,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
         }
         .auth-code-input {
           font-size: 24px; letter-spacing: 6px; text-align: center;
-          padding: 12px; font-weight: bold;
+          padding: 12px;
         }
         .auth-verify-info {
           display: flex; flex-direction: column; align-items: center; gap: 10px;
@@ -519,7 +519,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
           padding: 14px; border-radius: 4px; text-align: center;
           background: rgba(40, 160, 80, 0.1);
           border: 1px solid rgba(40, 160, 80, 0.3);
-          color: #1a7a40; font-size: 20px; font-weight: bold;
+          color: #1a7a40; font-size: 20px;
           margin-bottom: 16px;
         }
         .auth-submit-btn {
@@ -534,7 +534,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
           font-size: 19px; color: var(--body-text-muted);
         }
         .auth-switch-btn {
-          background: none; border: none; color: var(--accent); font-weight: bold;
+          background: none; border: none; color: var(--accent);
           cursor: pointer; font-size: 19px; padding: 0; box-shadow: none;
           font-family: var(--font-body);
         }

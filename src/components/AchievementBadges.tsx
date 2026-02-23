@@ -118,7 +118,6 @@ export default function AchievementBadges({ userId }: Props) {
 
         .ach-heading {
           font-size: 19px;
-          font-weight: bold;
           text-transform: uppercase;
           letter-spacing: 0.8px;
           color: var(--body-text-muted);
@@ -176,7 +175,6 @@ export default function AchievementBadges({ userId }: Props) {
 
         .ach-label {
           font-size: 19px;
-          font-weight: bold;
           color: var(--body-text);
         }
 

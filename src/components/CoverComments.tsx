@@ -412,7 +412,6 @@ export default function CoverComments({ coverId, cover }: Props) {
 
         .cc-heading {
           font-size: 19px;
-          font-weight: bold;
           color: var(--body-text);
           display: flex;
           align-items: center;
@@ -426,7 +425,6 @@ export default function CoverComments({ coverId, cover }: Props) {
           background: var(--accent);
           color: var(--accent-text);
           font-size: 17px;
-          font-weight: bold;
           padding: 1px 7px;
           border-radius: 10px;
           box-shadow: 0 1px 2px rgba(0,0,0,0.25);
@@ -530,7 +528,6 @@ export default function CoverComments({ coverId, cover }: Props) {
           border: none;
           cursor: pointer;
           font-size: 19px;
-          font-weight: bold;
           color: var(--accent);
           padding: 0;
           box-shadow: none;

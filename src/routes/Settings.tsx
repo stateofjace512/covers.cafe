@@ -633,7 +633,7 @@ export default function Settings() {
         .settings-layout { display: flex; flex-direction: column; gap: 20px; max-width: 600px; }
         .settings-section { padding: 20px 22px; }
         .settings-section-title {
-          font-size: 21px; font-weight: bold; color: var(--body-text);
+          font-size: 21px; color: var(--body-text);
           margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--body-border);
           display: flex; align-items: center; gap: 6px;
         }
@@ -642,7 +642,7 @@ export default function Settings() {
         .settings-row--expandable { padding-bottom: 4px; }
         .settings-row-info { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 180px; }
         .settings-row-label {
-          font-size: 19px; font-weight: bold; color: var(--body-text);
+          font-size: 19px; color: var(--body-text);
           display: flex; align-items: center; gap: 5px;
         }
         .settings-row-desc { font-size: 18px; color: var(--body-text-muted); line-height: 1.5; }
@@ -679,7 +679,7 @@ export default function Settings() {
           box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2);
         }
         .settings-code-input {
-          font-size: 25px; letter-spacing: 6px; text-align: center; font-weight: bold; padding: 10px;
+          font-size: 25px; letter-spacing: 6px; text-align: center; padding: 10px;
         }
         .settings-inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .settings-inline-error {
@@ -689,7 +689,7 @@ export default function Settings() {
         }
         .settings-inline-success {
           display: flex; align-items: center; gap: 6px;
-          padding: 9px 12px; border-radius: 4px; font-size: 19px; font-weight: bold;
+          padding: 9px 12px; border-radius: 4px; font-size: 19px;
           background: rgba(40,160,80,0.1); border: 1px solid rgba(40,160,80,0.3); color: #1a7a40;
         }
         .settings-inline-hint {
@@ -729,12 +729,12 @@ export default function Settings() {
         [data-theme="dark"] .sessions-item--current { background: rgba(192,90,26,0.08); }
         .sessions-item-info { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
         .sessions-item-label {
-          font-size: 18px; font-weight: bold; color: var(--body-text);
+          font-size: 18px; color: var(--body-text);
           display: flex; align-items: center; gap: 5px;
         }
         .sessions-current-badge {
           display: inline-flex; align-items: center;
-          padding: 1px 6px; border-radius: 10px; font-size: 17px; font-weight: bold;
+          padding: 1px 6px; border-radius: 10px; font-size: 17px;
           background: var(--accent); color: #fff;
         }
         .sessions-item-meta { font-size: 17px; color: var(--body-text-muted); }

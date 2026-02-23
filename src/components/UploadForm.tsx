@@ -835,7 +835,7 @@ export default function UploadForm() {
         .upload-page { display: flex; flex-direction: column; gap: 16px; max-width: 700px; }
         .upload-mode-toggle { display: flex; gap: 0; border: 1px solid var(--body-card-border); border-radius: 5px; overflow: hidden; width: fit-content; }
         .upload-mode-btn {
-          padding: 8px 18px; font-size: 19px; font-weight: bold;
+          padding: 8px 18px; font-size: 19px;
           background: var(--body-card-bg); color: var(--body-text-muted);
           border: none; cursor: pointer; box-shadow: none;
           transition: background 0.12s, color 0.12s;
@@ -853,7 +853,7 @@ export default function UploadForm() {
           display: flex; flex-direction: column; align-items: center;
           text-align: center; padding: 50px 40px; max-width: 400px;
         }
-        .upload-gate-title { font-size: 23px; font-weight: bold; color: var(--body-text); margin-bottom: 8px; }
+        .upload-gate-title { font-size: 23px; color: var(--body-text); margin-bottom: 8px; }
         .upload-gate-body { font-size: 20px; color: var(--body-text-muted); line-height: 1.6; }
         .upload-drop-zone {
           border: 3px dashed var(--body-card-border); border-radius: 6px;
@@ -869,7 +869,7 @@ export default function UploadForm() {
         .upload-drop-zone--has-file { border-style: solid; cursor: default; min-height: 300px; }
         .bulk-drop-zone { min-height: 100px; }
         .upload-drop-inner { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 24px; color: var(--body-text); }
-        .upload-drop-label { font-size: 19px; font-weight: bold; color: var(--body-text); }
+        .upload-drop-label { font-size: 19px; color: var(--body-text); }
         .upload-drop-hint { font-size: 18px; color: var(--body-text-muted); }
         .upload-preview-wrap { position: relative; width: 100%; padding: 16px; display: flex; justify-content: center; }
         .upload-preview-img { max-height: 300px; max-width: 100%; object-fit: contain; border-radius: 4px; box-shadow: var(--shadow-md); }
@@ -885,7 +885,7 @@ export default function UploadForm() {
         .upload-row-short { display: flex; }
         .upload-row-short .form-input { max-width: 120px; }
         .form-row { display: flex; flex-direction: column; gap: 5px; }
-        .form-label { font-size: 19px; font-weight: bold; color: var(--body-text); }
+        .form-label { font-size: 19px; color: var(--body-text); }
         [data-theme="dark"] .form-label { }
         .form-input {
           width: 100%; padding: 8px 12px;

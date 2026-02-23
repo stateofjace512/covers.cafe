@@ -91,14 +91,14 @@ export default function Gallery() {
         }
         .hero-content { position: relative; z-index: 1; max-width: 620px; }
         .hero-title {
-          font-size: 32px; font-weight: bold; color: #fff8f0; margin-bottom: 10px; letter-spacing: -0.5px;
+          font-size: 32px; color: #fff8f0; margin-bottom: 10px; letter-spacing: -0.5px;
         }
         .hero-subtitle {
           font-size: 21px; color: rgba(255,248,240,0.82);
           margin-bottom: 14px; line-height: 1.6;
         }
         .hero-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
-        .hero-pill { font-size: 17px; font-weight: bold; letter-spacing: 0.3px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: rgba(255,248,240,0.95); text-transform: uppercase; }
+        .hero-pill { font-size: 17px; letter-spacing: 0.3px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: rgba(255,248,240,0.95); text-transform: uppercase; }
         .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
         .hero-tab-strip {
           position: relative; z-index: 1;
@@ -110,7 +110,7 @@ export default function Gallery() {
           display: inline-flex; align-items: center; gap: 6px;
           padding: 7px 16px 9px;
           border: none; border-radius: 6px 6px 6px 6px;
-          font-size: 18px; font-weight: bold; font-family: inherit;
+          font-size: 18px; font-family: inherit;
           cursor: pointer;
           background: transparent;
           color: rgba(255,248,240,0.55);
