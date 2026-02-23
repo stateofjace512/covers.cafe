@@ -5,9 +5,9 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { checkRateLimit } from '../lib/rateLimit';
 import CoverCard from './CoverCard';
-import CoverModal from './CoverModal';
 import RateLimitModal from './RateLimitModal';
 import type { Cover } from '../lib/types';
+import { getCoverPath } from '../lib/coverRoutes';
 import type { GalleryTab } from '../routes/Gallery';
 
 type SortOption = 'newest' | 'oldest' | 'most_downloaded' | 'most_favorited' | 'title_az' | 'artist_az';
@@ -31,17 +31,14 @@ const PAGE_SIZE = 24;
 
 export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId }: Props) {
   const { user } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') ?? '';
-  const openParam = searchParams.get('open');
 
   const [covers, setCovers] = useState<Cover[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
-  const [selectedCover, setSelectedCover] = useState<Cover | null>(null);
-  const [openCollectionPanel, setOpenCollectionPanel] = useState(false);
   const [isDraggingCover, setIsDraggingCover] = useState(false);
   const navigate = useNavigate();
   const [sort, setSort] = useState<SortOption>('newest');
@@ -50,7 +47,6 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
   const favIdsRef = useRef<string[]>([]);
   const loadingMoreRef = useRef(false);
   const currentPageRef = useRef(0);
-  const handledOpenRef = useRef<string | null>(null);
 
   // When tab changes, reset sort to a sensible default
   useEffect(() => {
@@ -212,26 +208,6 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
     return () => window.removeEventListener('dragend', onDragEnd);
   }, []);
 
-  // Auto-open a cover when ?open=coverId is present (e.g., from notification links)
-  useEffect(() => {
-    if (!openParam || loading || handledOpenRef.current === openParam) return;
-    handledOpenRef.current = openParam;
-    // Clear the param from the URL without a navigation entry
-    setSearchParams((prev) => { const n = new URLSearchParams(prev); n.delete('open'); return n; }, { replace: true });
-    const found = covers.find((c) => c.id === openParam);
-    if (found) {
-      setSelectedCover(found);
-    } else {
-      supabase
-        .from('covers_cafe_covers')
-        .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
-        .eq('id', openParam)
-        .single()
-        .then(({ data }) => { if (data) setSelectedCover(data as Cover); });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openParam, loading]);
-
   const handleToggleFavorite = async (coverId: string) => {
     if (!user) return;
     if (!checkRateLimit('favorite', 8, 5000)) {
@@ -257,12 +233,6 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
 
   const handleCoverDeleted = (coverId: string) => {
     setCovers((prev) => prev.filter((c) => c.id !== coverId));
-    if (selectedCover?.id === coverId) setSelectedCover(null);
-  };
-
-  const handleCoverUpdated = (updated: Cover) => {
-    setCovers((prev) => prev.map((c) => c.id === updated.id ? updated : c));
-    setSelectedCover(updated);
   };
 
   if (loading) {
@@ -300,8 +270,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
             const coverId = e.dataTransfer.getData('text/cover-id');
             const dropped = covers.find((c) => c.id === coverId);
             if (dropped) {
-              setSelectedCover(dropped);
-              setOpenCollectionPanel(true);
+              navigate(`${getCoverPath(dropped)}?panel=collection`);
             }
             setIsDraggingCover(false);
           }}
@@ -344,7 +313,6 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
                 cover={cover}
                 isFavorited={favoritedIds.has(cover.id)}
                 onToggleFavorite={handleToggleFavorite}
-                onClick={() => { setSelectedCover(cover); setOpenCollectionPanel(false); }}
                 onDeleted={handleCoverDeleted}
                 onDragForCollection={() => setIsDraggingCover(true)}
               />
@@ -365,18 +333,6 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
             </div>
           )}
         </>
-      )}
-
-      {selectedCover && (
-        <CoverModal
-          cover={selectedCover}
-          isFavorited={favoritedIds.has(selectedCover.id)}
-          onToggleFavorite={handleToggleFavorite}
-          onClose={() => setSelectedCover(null)}
-          onDeleted={handleCoverDeleted}
-          onUpdated={handleCoverUpdated}
-          initialPanelMode={openCollectionPanel ? 'collection' : 'details'}
-        />
       )}
 
       {rateLimited && (
