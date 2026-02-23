@@ -152,7 +152,6 @@ export default function Acotw() {
                     {(hasVoted || isClosed) && (
                       <div className="acotw-bar-wrap" title={`${pct}%`}>
                         <div className="acotw-bar" style={{ width: `${pct}%` }} />
-                        <span className="acotw-bar-pct">{pct}%</span>
                       </div>
                     )}
 
@@ -305,10 +304,17 @@ export default function Acotw() {
 
         .acotw-bar-wrap { position: relative; height: 6px; background: var(--body-border); border-radius: 3px; overflow: hidden; }
         .acotw-bar { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s ease; }
-        .acotw-bar-pct { position: absolute; right: 0; top: -14px; font-size: 16px; color: var(--body-text-muted); }
-
         .acotw-vote-btn { width: 100%; justify-content: center; font-size: 18px; padding: 5px 10px; gap: 5px; }
-        .acotw-vote-btn--active { background: var(--accent) !important; color: white !important; border-color: var(--accent-dark) !important; }
+        .acotw-vote-btn--active {
+          background-image:
+            linear-gradient(180deg, rgba(224,112,48,0.75) 0%, rgba(192,90,26,0.75) 55%, rgba(143,63,15,0.75) 100%),
+            var(--skeu-btn) !important;
+          background-size: 100% 100%, cover !important;
+          background-position: center, center !important;
+          color: var(--accent-text) !important;
+          border-color: var(--accent-dark) !important;
+        }
+        .acotw-vote-btn--active::before { display: none; }
 
         /* Archive */
         .acotw-archive-section { border-top: 1px solid var(--body-card-border); padding-top: 20px; }
