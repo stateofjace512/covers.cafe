@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import GalleryIcon from '../components/GalleryIcon';
 import UploadDownloadIcon from '../components/UploadDownloadIcon';
 import FavoritesIcon from '../components/FavoritesIcon';
@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
 import CoffeeCupIcon from '../components/CoffeeCupIcon';
 import OfficialGallery from '../components/OfficialGallery';
+import OfficialSearchResults from '../components/OfficialSearchResults';
 
 export type GalleryTab = 'new' | 'top_rated' | 'acotw' | 'official';
 
@@ -22,7 +23,9 @@ const TABS: { id: GalleryTab; label: string; icon: React.ReactNode; title: strin
 export default function Gallery() {
   const { user, openAuthModal } = useAuth();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const searchQuery = searchParams.get('q');
+  const searchSource = searchParams.get('source') === 'official' ? 'official' : 'fan';
   const [activeTab, setActiveTab] = useState<GalleryTab>('new');
 
   const activeTitle = TABS.find((t) => t.id === activeTab)?.title ?? 'Recent Covers';
@@ -71,8 +74,40 @@ export default function Gallery() {
           <GalleryIcon size={20} />
           {searchQuery ? `Results for "${searchQuery}"` : activeTitle}
         </h2>
-        {activeTab === 'official' && !searchQuery ? (
+
+        {searchQuery && (
+          <div className="search-source-toggle" role="tablist" aria-label="Search source">
+            <button
+              role="tab"
+              aria-selected={searchSource === 'fan'}
+              className={`search-source-btn${searchSource === 'fan' ? ' search-source-btn--active' : ''}`}
+              onClick={() => {
+                const params = new URLSearchParams(searchParams);
+                params.delete('source');
+                navigate(`/?${params.toString()}`);
+              }}
+            >
+              Fan Art
+            </button>
+            <button
+              role="tab"
+              aria-selected={searchSource === 'official'}
+              className={`search-source-btn${searchSource === 'official' ? ' search-source-btn--active' : ''}`}
+              onClick={() => {
+                const params = new URLSearchParams(searchParams);
+                params.set('source', 'official');
+                navigate(`/?${params.toString()}`);
+              }}
+            >
+              Official
+            </button>
+          </div>
+        )}
+
+        {!searchQuery && activeTab === 'official' ? (
           <OfficialGallery />
+        ) : searchQuery && searchSource === 'official' ? (
+          <OfficialSearchResults searchQuery={searchQuery} />
         ) : (
           <GalleryGrid filter="all" tab={searchQuery ? 'new' : activeTab} />
         )}
@@ -171,6 +206,32 @@ export default function Gallery() {
           background-size: 100% 50%, 100% 100%, cover;
           background-position: top, center, center;
           background-repeat: no-repeat, no-repeat, no-repeat;
+        }
+
+        .search-source-toggle {
+          display: inline-flex;
+          gap: 6px;
+          margin-bottom: 14px;
+          border: 1px solid var(--body-card-border);
+          border-radius: 8px;
+          padding: 4px;
+          background: var(--body-card-bg);
+        }
+        .search-source-btn {
+          border: 1px solid transparent;
+          border-radius: 6px;
+          background: transparent;
+          color: var(--body-text-muted);
+          padding: 6px 12px;
+          font-size: 16px;
+          font-family: var(--font-body);
+          cursor: pointer;
+        }
+        .search-source-btn--active {
+          color: var(--body-text);
+          border-color: var(--body-card-border);
+          background: var(--sidebar-bg);
+          box-shadow: var(--shadow-sm);
         }
       `}</style>
     </div>
