@@ -17,6 +17,7 @@ export interface Cover {
   user_id: string;
   title: string;
   artist: string;
+  artists: string[];
   year: number | null;
   tags: string[];
   storage_path: string;
