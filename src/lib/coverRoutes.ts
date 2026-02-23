@@ -34,7 +34,7 @@ export function getCoverPath(cover: Cover): string {
 }
 
 export function getCoverPublicIdFromSlug(slug: string): number | null {
-  const match = slug.match(/^(\d{6})-/);
+  const match = slug.match(/^(\d{6,})-/);
   if (!match) return null;
   return Number(match[1]);
 }
