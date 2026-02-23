@@ -108,10 +108,16 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
         setHasMore(withLinks.length === PAGE_SIZE);
         setLoading(false);
       }
-      await supabase.from('covers_cafe_official_covers').upsert(fetchedRows, { onConflict: 'country,artist_name,album_title,album_cover_url' });
+      const { error: cacheUpsertError } = await supabase
+        .from('covers_cafe_official_covers')
+        .upsert(fetchedRows, { onConflict: 'country,artist_name,album_title,album_cover_url' });
+
       if (!cancelled) {
         if (fetchedRows.length === 0 && cachedRows.length === 0) setLoading(false);
-        await loadCachedPage(0);
+        // Prevent "pop in then disappear": only overwrite with cache when write succeeded.
+        if (!cacheUpsertError) {
+          await loadCachedPage(0);
+        }
       }
     };
     run();

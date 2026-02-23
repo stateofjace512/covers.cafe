@@ -96,8 +96,14 @@ export default function OfficialGallery() {
       setHasMore(withLinks.length === PAGE_SIZE);
       setLoading(false);
     }
-    await supabase.from('covers_cafe_official_covers').upsert(fetchedRows, { onConflict: 'country,artist_name,album_title,album_cover_url' });
-    await loadCachedPage(0);
+    const { error: cacheUpsertError } = await supabase
+      .from('covers_cafe_official_covers')
+      .upsert(fetchedRows, { onConflict: 'country,artist_name,album_title,album_cover_url' });
+
+    // Prevent "pop in then disappear": only overwrite with cache when write succeeded.
+    if (!cacheUpsertError) {
+      await loadCachedPage(0);
+    }
     if (cachedRows.length === 0 && fetchedRows.length === 0) setLoading(false);
   }, [fetchFromItunes, hydrateCoverLinks, loadCachedPage, normalizedArtist, persistAsCovers]);
 
