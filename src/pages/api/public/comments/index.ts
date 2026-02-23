@@ -38,7 +38,26 @@ export const GET: APIRoute = async ({ url }) => {
     .order('created_at', { ascending: true });
 
   if (error) return json({ error: 'Failed to fetch comments' }, 500);
-  return json({ comments: data ?? [] });
+
+  // Resolve real usernames from profiles for any comment that has a user_id stored.
+  // This corrects legacy rows where author_username was set from the email prefix.
+  const rows = data ?? [];
+  const userIds = [...new Set(rows.map((c: { user_id?: string }) => c.user_id).filter(Boolean))] as string[];
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('covers_cafe_profiles')
+      .select('id, username')
+      .in('id', userIds);
+    const profileMap: Record<string, string> = {};
+    for (const p of profiles ?? []) profileMap[p.id] = p.username;
+    const resolved = rows.map((c: { user_id?: string; author_username: string }) => ({
+      ...c,
+      author_username: (c.user_id && profileMap[c.user_id]) ? profileMap[c.user_id] : c.author_username,
+    }));
+    return json({ comments: resolved });
+  }
+
+  return json({ comments: rows });
 };
 
 export const POST: APIRoute = async ({ request }) => {
@@ -132,6 +151,7 @@ export const POST: APIRoute = async ({ request }) => {
       session_id: identity.sessionId,
       local_storage_id: identity.localStorageId,
       user_agent_hash: identity.userAgentHash,
+      user_id: auth.user.id,
       author_username: authorUsername,
       abuse_score: abuseScore.total,
       is_shadow_banned: banDecision.shouldShadowBan,

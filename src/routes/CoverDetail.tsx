@@ -103,7 +103,7 @@ export default function CoverDetail() {
         <ArrowLeft size={14} /> Back
       </button>
 
-      {/* Board: image + controls */}
+      {/* Image + controls */}
       <div className="cover-board">
         <img
           src={getCoverImageSrc(cover, 1200)}
@@ -176,28 +176,13 @@ export default function CoverDetail() {
           margin-bottom: 22px;
         }
 
-        /* ── Board ── */
+        /* ── Image + controls ── */
         .cover-board {
-          max-width: 660px;
-          margin: 0 auto 20px;
-          background: var(--body-card-bg);
-          background-image:
-            linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 45%),
-            repeating-linear-gradient(
-              90deg,
-              transparent 0px,
-              transparent 22px,
-              rgba(100,50,10,0.03) 22px,
-              rgba(100,50,10,0.03) 24px
-            );
-          border: 2px solid var(--body-card-border);
-          border-radius: 10px;
-          box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.5);
-          padding: 18px;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 16px;
+          gap: 14px;
+          margin: 0 auto 20px;
         }
 
         .cover-board-image {
@@ -206,7 +191,7 @@ export default function CoverDetail() {
           aspect-ratio: 1 / 1;
           object-fit: cover;
           border-radius: 6px;
-          box-shadow: var(--shadow-md), 0 0 0 1px rgba(0,0,0,0.12);
+          box-shadow: var(--shadow-md);
           display: block;
         }
 
