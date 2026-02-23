@@ -181,6 +181,8 @@ export default function UploadForm() {
   const [knownCovers, setKnownCovers] = useState<KnownCover[]>([]);
   const [collectionHint, setCollectionHint] = useState('Drag cover cards into a folder below.');
   const [bulkUploading, setBulkUploading] = useState(false);
+  // null = no pending confirmation; 'single'/'bulk' = waiting on split-artist confirm
+  const [splitConfirmPending, setSplitConfirmPending] = useState<'single' | 'bulk' | null>(null);
   const [bulkDone, setBulkDone] = useState(false);
   const bulkInputRef = useRef<HTMLInputElement>(null);
 
@@ -344,23 +346,16 @@ export default function UploadForm() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) { openAuthModal('login'); return; }
-    if (!file) { setError('Please select a cover image.'); return; }
-    if (!title.trim() || !artist.trim()) { setError('Title and artist are required.'); return; }
-
+  const doSingleUpload = async () => {
+    if (!user || !file) return;
     if (!checkRateLimit('upload', UPLOAD_RATE_MAX, UPLOAD_RATE_WINDOW)) {
       const { retryAfterMs } = getRateLimitState('upload');
       const waitSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
       setError(`You're uploading too fast. Please wait ${waitSeconds}s before trying again.`);
       return;
     }
-
-
     setUploading(true);
     setError(null);
-
     try {
       const phash = await computePhash(file);
       if (phash && await isDuplicate(phash, supabase)) {
@@ -368,17 +363,13 @@ export default function UploadForm() {
         setUploading(false);
         return;
       }
-
       const fileName = `${user.id}/${crypto.randomUUID()}.jpg`;
       const { error: storageErr } = await supabase.storage
         .from('covers_cafe_covers')
         .upload(fileName, file, { contentType: 'image/jpeg', upsert: false });
-
       if (storageErr) throw new Error(storageErr.message);
-
       const { data: urlData } = supabase.storage.from('covers_cafe_covers').getPublicUrl(fileName);
       const tagsArray = normalizeTags([...tags, tagInput]);
-
       const { error: insertErr } = await supabase.from('covers_cafe_covers').insert({
         user_id: user.id,
         title: title.trim(),
@@ -390,23 +381,31 @@ export default function UploadForm() {
         phash: phash || null,
         is_public: true,
       });
-
       if (insertErr) throw new Error(insertErr.message);
-
-      // Generate 500px thumbnail in the background (non-blocking)
       fetch('/api/generate-thumbnail', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ storage_path: fileName }),
       }).catch(() => {/* thumbnail generation is best-effort */});
-
       setSuccess(true);
       setTimeout(() => navigate('/'), 1800);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
     }
-
     setUploading(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) { openAuthModal('login'); return; }
+    if (!file) { setError('Please select a cover image.'); return; }
+    if (!title.trim() || !artist.trim()) { setError('Title and artist are required.'); return; }
+    // Gate: ask about multiple artists before committing
+    if (artistSplitParts.length >= 2) {
+      setSplitConfirmPending('single');
+      return;
+    }
+    await doSingleUpload();
   };
 
   const handleBulkFiles = async (files: FileList | File[]) => {
@@ -453,21 +452,8 @@ export default function UploadForm() {
     });
   };
 
-  const handleBulkSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) { openAuthModal('login'); return; }
-    if (!bulkItems.length) return;
-
-    const hasInvalid = bulkItems.some((it) => !it.title.trim() || !it.artist.trim());
-    if (hasInvalid) {
-      setBulkItems((prev) => prev.map((it) =>
-        !it.title.trim() || !it.artist.trim()
-          ? { ...it, status: 'error', errorMsg: 'Title and artist required' }
-          : it
-      ));
-      return;
-    }
-
+  const doBulkUpload = async () => {
+    if (!user) return;
     if (!checkRateLimit('upload', UPLOAD_RATE_MAX, UPLOAD_RATE_WINDOW)) {
       const { retryAfterMs } = getRateLimitState('upload');
       const waitSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
@@ -476,7 +462,6 @@ export default function UploadForm() {
       })));
       return;
     }
-
     setBulkUploading(true);
     const tagsArray = normalizeTags([...bulkTags, bulkTagInput]);
 
@@ -534,7 +519,27 @@ export default function UploadForm() {
     setBulkDone(true);
   };
 
-
+  const handleBulkSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) { openAuthModal('login'); return; }
+    if (!bulkItems.length) return;
+    const hasInvalid = bulkItems.some((it) => !it.title.trim() || !it.artist.trim());
+    if (hasInvalid) {
+      setBulkItems((prev) => prev.map((it) =>
+        !it.title.trim() || !it.artist.trim()
+          ? { ...it, status: 'error', errorMsg: 'Title and artist required' }
+          : it
+      ));
+      return;
+    }
+    // Gate: ask about multiple artists before committing
+    const hasMultiArtist = bulkItems.some((it) => it.status === 'pending' && detectArtistSplit(it.artist).length >= 2);
+    if (hasMultiArtist) {
+      setSplitConfirmPending('bulk');
+      return;
+    }
+    await doBulkUpload();
+  };
 
   const completeIfSuggested = (
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -599,6 +604,32 @@ export default function UploadForm() {
           secondaryLabel="Cancel"
           onSecondary={handleResizeCancel}
           onClose={handleResizeCancel}
+        />
+      )}
+      {splitConfirmPending && (
+        <InfoModal
+          emoji="🎤"
+          title="Multiple artists detected"
+          body={
+            splitConfirmPending === 'single'
+              ? <>
+                  {artistSplitParts.map((p) => <span key={p} className="fuzzy-hint-tag" style={{ marginRight: 4 }}>{p}</span>)}
+                  <br /><br />
+                  Each artist will link to their own page. If this is a group or duo, tap Edit and retype the name without a separator.
+                </>
+              : <>
+                  One or more of your uploads has multiple artists. Each artist will link to their own page. If any are groups or duos, tap Edit and retype those names without a separator.
+                </>
+          }
+          primaryLabel="Yes, separate them"
+          onPrimary={() => {
+            setSplitConfirmPending(null);
+            if (splitConfirmPending === 'single') void doSingleUpload();
+            else void doBulkUpload();
+          }}
+          secondaryLabel="Edit"
+          onSecondary={() => setSplitConfirmPending(null)}
+          onClose={() => setSplitConfirmPending(null)}
         />
       )}
       <div className="upload-mode-toggle">

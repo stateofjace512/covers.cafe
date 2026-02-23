@@ -52,16 +52,13 @@ export default function MusicArtists() {
     (async () => {
       const { data } = await supabase
         .from('covers_cafe_covers')
-        .select('artist, artists, id, storage_path, image_url, favorite_count')
+        .select('artist, id, storage_path, image_url, favorite_count')
         .eq('is_public', true)
         .order('favorite_count', { ascending: false });
 
       const map = new Map<string, ArtistEntry>();
       for (const row of data ?? []) {
-        // Use the DB-computed artists[] array; fall back to client-side parse for
-        // rows that pre-date the migration and haven't been backfilled yet.
-        const names: string[] = (row.artists?.length ? row.artists : null)
-          ?? parseArtists(row.artist?.trim() ?? '');
+        const names = parseArtists(row.artist?.trim() ?? '');
         for (const name of names) {
           if (!name) continue;
           if (!map.has(name)) {

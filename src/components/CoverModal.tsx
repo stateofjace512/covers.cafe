@@ -683,7 +683,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         }
         [data-theme="dark"] .cover-modal-title { }
         .cover-modal-artist { font-size: 19px; color: var(--body-text-muted); }
-        .cover-modal-artist-link { background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; font-size: inherit; color: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: transparent; transition: text-decoration-color 0.15s, color 0.15s; }
+        .cover-modal-artist-link { display: inline; background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; font-size: inherit; color: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: transparent; transition: text-decoration-color 0.15s, color 0.15s; }
         .cover-modal-artist-link:hover { color: var(--accent); text-decoration-color: currentColor; transform: none; box-shadow: none; }
         .cover-modal-meta { display: flex; flex-direction: column; gap: 8px; flex: 1; }
         .cover-meta-row { display: flex; align-items: flex-start; gap: 8px; font-size: 19px; color: var(--body-text-muted); }
