@@ -11,6 +11,8 @@ import CoverCard from '../components/CoverCard';
 import CoverModal from '../components/CoverModal';
 import InfoModal from '../components/InfoModal';
 import type { Cover } from '../lib/types';
+import { getPreferModalOverPagePreference } from '../lib/userPreferences';
+import { getCoverPath } from '../lib/coverRoutes';
 
 const PAGE_SIZE = 24;
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
@@ -189,6 +191,14 @@ export default function MusicArtistDetail() {
     if (headerCover) setAvatarSrc(getCoverImageSrc(headerCover, 200));
   };
 
+  const handleCoverClick = (cover: Cover) => {
+    if (getPreferModalOverPagePreference()) {
+      setSelectedCover(cover);
+      return;
+    }
+    navigate(getCoverPath(cover));
+  };
+
   const uploadArtistPhoto = async (file: File) => {
     if (!user || !artistName) return;
     setUploading(true);
@@ -334,7 +344,7 @@ export default function MusicArtistDetail() {
                 cover={cover}
                 isFavorited={favoritedIds.has(cover.id)}
                 onToggleFavorite={handleToggleFavorite}
-                onClick={() => setSelectedCover(cover)}
+                onClick={() => handleCoverClick(cover)}
                 onDeleted={(id) => setCovers((prev) => prev.filter((c) => c.id !== id))}
               />
             ))}

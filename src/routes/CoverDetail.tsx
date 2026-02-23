@@ -86,7 +86,7 @@ export default function CoverDetail() {
       if (!data) { setCover(null); setLoading(false); return; }
       const c = data as Cover;
       setCover(c);
-      document.title = `${c.artist} - ${c.title} | covers.cafe`;
+      document.title = `${c.artist} | ${c.title} | covers.cafe`;
 
       const { data: more } = await supabase
         .from('covers_cafe_covers')
@@ -274,6 +274,9 @@ export default function CoverDetail() {
   if (!cover) return <p className="text-muted">Cover not found.</p>;
 
   const isOwner = user?.id === cover.user_id;
+  const createdAt = cover.created_at ? new Date(cover.created_at) : null;
+  const createdLabel = createdAt ? createdAt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+  const createdFullLabel = createdAt ? createdAt.toString() : '';
 
   return (
     <div className="cover-page">
@@ -321,7 +324,7 @@ export default function CoverDetail() {
       </div>
 
       {/* Metadata */}
-      <div className="cover-page-meta">
+      <div className="cover-page-meta card">
         <h1 className="cover-page-title">{cover.title}</h1>
         <button
           className="cover-page-artist-link"
@@ -329,22 +332,24 @@ export default function CoverDetail() {
         >
           {cover.artist}
         </button>
-        {cover.profiles?.username && (
-          <button
-            className="cover-page-uploader"
-            onClick={() => navigate(`/users/${cover.profiles!.username}`)}
-          >
-            <UserIcon size={12} /> @{cover.profiles.username}
-          </button>
-        )}
 
-        {(cover.year || (cover.favorite_count ?? 0) > 0 || (cover.download_count ?? 0) > 0) && (
-          <div className="cover-meta-chips">
-            {cover.year && <span className="cover-meta-chip"><CalendarIcon size={11} /> {cover.year}</span>}
-            {(cover.favorite_count ?? 0) > 0 && <span className="cover-meta-chip"><FavoritesIcon size={11} /> {cover.favorite_count}</span>}
-            {(cover.download_count ?? 0) > 0 && <span className="cover-meta-chip"><DownloadIcon size={11} /> {cover.download_count}</span>}
-          </div>
-        )}
+        <div className="cover-page-meta-topline">
+          {cover.profiles?.username && (
+            <button
+              className="cover-page-uploader"
+              onClick={() => navigate(`/users/${cover.profiles!.username}`)}
+            >
+              <UserIcon size={12} /> @{cover.profiles.username}
+            </button>
+          )}
+          {cover.year && <span className="cover-meta-chip"><CalendarIcon size={11} /> {cover.year}</span>}
+        </div>
+
+        <div className="cover-meta-stats">
+          {createdAt && <span className="cover-meta-chip" title={createdFullLabel}><CalendarIcon size={11} /> {createdLabel}</span>}
+          <span className="cover-meta-chip"><FavoritesIcon size={11} /> {cover.favorite_count ?? 0} favorite{(cover.favorite_count ?? 0) === 1 ? '' : 's'}</span>
+          <span className="cover-meta-chip"><DownloadIcon size={11} /> {cover.download_count ?? 0} download{(cover.download_count ?? 0) === 1 ? '' : 's'}</span>
+        </div>
 
         {cover.tags && cover.tags.length > 0 && (
           <div className="cover-tags">
@@ -523,15 +528,17 @@ export default function CoverDetail() {
         .cover-size-option:hover { background: var(--accent); color: white; transform: none; }
 
         /* Metadata */
-        .cover-page-meta { max-width: 560px; margin: 0 auto 14px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .cover-page-meta { max-width: 700px; margin: 0 auto 16px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px; }
         .cover-page-title { font-size: 24px; color: var(--body-text); margin-bottom: 2px; line-height: 1.25; }
         [data-theme="dark"] .cover-page-title { }
         .cover-page-artist-link { font-size: 20px; color: var(--body-text-muted); background: none; border: none; cursor: pointer; padding: 0; box-shadow: none; font-family: var(--font-body); }
         .cover-page-artist-link:hover { color: var(--accent); text-decoration: underline; }
         .cover-page-uploader { display: inline-flex; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; font-size: 19px; color: var(--accent); padding: 0; box-shadow: none; font-family: var(--font-body); }
         .cover-page-uploader:hover { color: var(--accent-light); text-decoration: underline; }
+        .cover-page-meta-topline { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .cover-meta-stats { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
         .cover-meta-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
-        .cover-meta-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 18px; color: var(--body-text-muted); background: var(--body-border); padding: 2px 7px; border-radius: 3px; }
+        .cover-meta-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 18px; color: var(--body-text-muted); background: var(--body-border); padding: 3px 8px; border-radius: 999px; }
         .cover-tags { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: center; }
         .cover-tags-icon { color: var(--body-text-muted); flex-shrink: 0; }
         .cover-tag { font-size: 21px; font-family: var(--font-header); background: var(--sidebar-bg); color: var(--sidebar-text); padding: 2px 7px; border-radius: 3px; border: 1px solid var(--sidebar-border); box-shadow: var(--shadow-sm); cursor: pointer; transition: background 0.1s, color 0.1s; }
@@ -569,7 +576,7 @@ export default function CoverDetail() {
         .cover-more-section { margin-top: 36px; padding-top: 28px; border-top: 2px solid var(--body-border); }
         .cover-more-heading { font-size: 21px; color: var(--body-text); margin-bottom: 16px; }
         [data-theme="dark"] .cover-more-heading { }
-        .cover-more-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+        .cover-more-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--cover-grid-min-width), 1fr)); gap: 10px; }
         .cover-more-item { padding: 0; border: 1px solid var(--body-card-border); border-radius: 6px; background: var(--body-card-bg); box-shadow: var(--shadow-sm); overflow: hidden; cursor: pointer; transition: transform 0.12s, box-shadow 0.12s; display: flex; flex-direction: column; text-align: left; }
         .cover-more-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
         .cover-more-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
@@ -577,7 +584,7 @@ export default function CoverDetail() {
 
         @media (max-width: 640px) {
           .cover-page-title { font-size: 23px; }
-          .cover-more-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+          .cover-more-grid { grid-template-columns: repeat(auto-fill, minmax(max(120px, calc(var(--cover-grid-min-width) - 30px)), 1fr)); gap: 8px; }
         }
       `}</style>
     </div>

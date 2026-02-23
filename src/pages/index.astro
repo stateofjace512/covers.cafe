@@ -16,12 +16,18 @@ const logoUrl = `/cover_cafe_logo.svg`;
     <script is:inline>
       (function () {
         var t = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        var noThemeImages = localStorage.getItem('pref_no_theme_images') === '1';
+        var gridMinWidth = parseInt(localStorage.getItem('pref_cover_grid_min_width') || '160', 10);
+        if (!isFinite(gridMinWidth)) gridMinWidth = 160;
         document.documentElement.setAttribute('data-theme', t);
+        document.documentElement.setAttribute('data-no-theme-images', noThemeImages ? 'true' : 'false');
+        document.documentElement.style.setProperty('--cover-grid-min-width', gridMinWidth + 'px');
       })();
     </script>
     <!-- Prefetch skeuomorphic theme images immediately so they are ready when rendered -->
     <script is:inline>
       (function () {
+        if (localStorage.getItem('pref_no_theme_images') === '1') return;
         var imgs = [
           '/themes/themedark/hero-banner_dark-mode.jpg',
           '/themes/themedark/album-card-info_dark-mode.jpg',

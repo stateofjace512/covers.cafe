@@ -70,6 +70,7 @@
   /* Spacing */
   --header-h: 58px;
   --sidebar-w: 230px;
+  --cover-grid-min-width: 160px;
 
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(60, 20, 0, 0.25);
@@ -133,6 +134,16 @@
   /* Skeuomorphic tint colours */
   --skeu-card-tint: rgba(58, 44, 32, 0.52);
   --skeu-hero-tint: rgba(56, 37, 22, 0.62);
+}
+
+
+[data-no-theme-images="true"] {
+  --skeu-hero: none;
+  --skeu-card: none;
+  --skeu-btn: none;
+  --skeu-theme-btn: none;
+  --skeu-card-tint: rgba(0, 0, 0, 0);
+  --skeu-hero-tint: rgba(0, 0, 0, 0);
 }
 
 /* ---------- Reset & Base ---------- */
@@ -400,7 +411,7 @@ h1, h2, h3, h4, h5, h6 {
 /* ---------- Album grid ---------- */
 .album-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--cover-grid-min-width), 1fr));
   gap: 18px;
 }
 

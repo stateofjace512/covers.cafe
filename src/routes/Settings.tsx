@@ -13,6 +13,15 @@ import MonitorIcon from '../components/MonitorIcon';
 import LogoutIcon from '../components/LogoutIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  applyUserPreferencesToDocument,
+  getCoverGridMinWidthPreference,
+  getNoThemeImagesPreference,
+  getPreferModalOverPagePreference,
+  setCoverGridMinWidthPreference,
+  setNoThemeImagesPreference,
+  setPreferModalOverPagePreference,
+} from '../lib/userPreferences';
 
 interface SessionInfo {
   id: string;
@@ -454,13 +463,29 @@ function ActiveSessionsPanel({ onDone }: { onDone: () => void }) {
 export default function Settings() {
   const { user, signOut, openAuthModal } = useAuth();
   const [activeForm, setActiveForm] = useState<ActiveForm>(null);
-
+  const [noThemeImages, setNoThemeImages] = useState<boolean>(() => getNoThemeImagesPreference());
+  const [coverGridMinWidth, setCoverGridMinWidth] = useState<number>(() => getCoverGridMinWidthPreference());
+  const [preferModalOverPage, setPreferModalOverPage] = useState<boolean>(() => getPreferModalOverPagePreference());
 
   const setTheme = (theme: 'light' | 'dark') => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
     window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: theme }));
   };
+
+  useEffect(() => {
+    setNoThemeImagesPreference(noThemeImages);
+    applyUserPreferencesToDocument();
+  }, [noThemeImages]);
+
+  useEffect(() => {
+    setCoverGridMinWidthPreference(coverGridMinWidth);
+    applyUserPreferencesToDocument();
+  }, [coverGridMinWidth]);
+
+  useEffect(() => {
+    setPreferModalOverPagePreference(preferModalOverPage);
+  }, [preferModalOverPage]);
 
   const currentTheme = typeof document !== 'undefined'
     ? (document.documentElement.getAttribute('data-theme') ?? 'light')
@@ -475,6 +500,63 @@ export default function Settings() {
         {/* ── Appearance ─────────────────────────────────────── */}
         <section className="card settings-section">
           <h2 className="settings-section-title">Appearance</h2>
+          <div className="settings-row">
+            <div className="settings-row-info">
+              <span className="settings-row-label">No theme images</span>
+              <span className="settings-row-desc">Use flat colors and remove textured theme image layers.</span>
+            </div>
+            <div className="settings-row-control">
+              <div className="settings-pixel-toggle-wrap">
+                <button
+                  type="button"
+                  className="settings-icon-toggle"
+                  role="switch"
+                  aria-checked={noThemeImages}
+                  aria-label="No theme images"
+                  onClick={() => setNoThemeImages((prev) => !prev)}
+                >
+                  <svg width="40" height="20" viewBox="0 0 32 16" className="toggle-icon" aria-hidden="true">
+                    <rect x="1" y="1" width="30" height="14" fill="none" stroke="currentColor" strokeWidth="2" />
+                    <rect x="3" y="3" width="26" height="10" fill="currentColor" opacity="0.15" />
+                    <g className={`toggle-knob${noThemeImages ? ' toggle-knob--on' : ''}`}>
+                      <rect x="3" y="3" width="10" height="10" fill="currentColor" />
+                      <rect x="5" y="5" width="2" height="2" fill="currentColor" opacity="0.35" />
+                    </g>
+                  </svg>
+                </button>
+                <span className="settings-icon-toggle-label">{noThemeImages ? 'Yes' : 'No'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="settings-row">
+            <div className="settings-row-info">
+              <span className="settings-row-label">Cover columns</span>
+              <span className="settings-row-desc">Choose between larger covers with fewer columns or denser grids.</span>
+            </div>
+            <div className="settings-row-control">
+              <select className="settings-select" value={coverGridMinWidth} onChange={(e) => setCoverGridMinWidth(Number.parseInt(e.target.value, 10))}>
+                <option value={135}>More columns</option>
+                <option value={160}>Balanced</option>
+                <option value={210}>Fewer columns (larger covers)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="settings-row">
+            <div className="settings-row-info">
+              <span className="settings-row-label">Prefer modal over page</span>
+              <span className="settings-row-desc">Open covers in a modal instead of navigating to the full cover page.</span>
+            </div>
+            <div className="settings-row-control">
+              <button className={`btn${preferModalOverPage ? ' btn-primary' : ' btn-secondary'}`} onClick={() => setPreferModalOverPage((prev) => !prev)}>
+                {preferModalOverPage ? 'Yes' : 'No'}
+              </button>
+            </div>
+          </div>
+
+          <div className="settings-divider" />
+
           <div className="settings-row">
             <div className="settings-row-info">
               <span className="settings-row-label">Theme</span>
@@ -663,6 +745,47 @@ export default function Settings() {
         }
         .settings-inline-form {
           display: flex; flex-direction: column; gap: 10px;
+        }
+        .settings-select {
+          min-width: 220px;
+          padding: 6px 10px;
+          border-radius: 4px;
+          border: 1px solid var(--body-card-border);
+          background: var(--body-card-bg);
+          color: var(--body-text);
+          font-size: 18px;
+          box-shadow: var(--shadow-sm);
+        }
+        .settings-pixel-toggle-wrap {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          min-width: 100px;
+        }
+        .settings-icon-toggle {
+          appearance: none;
+          border: 0;
+          background: transparent;
+          padding: 0;
+          margin: 0;
+          cursor: pointer;
+          line-height: 0;
+          color: var(--body-text);
+          box-shadow: none;
+        }
+        .settings-icon-toggle:hover { transform: none; box-shadow: none; }
+        .toggle-icon { display: block; width: 40px; height: 20px; }
+        .toggle-knob {
+          transform: translateX(0px);
+          transition: transform 160ms ease;
+          transform-origin: 0 0;
+        }
+        .toggle-knob--on {
+          transform: translateX(16px);
+        }
+        .settings-icon-toggle-label {
+          min-width: 2.6ch;
+          text-align: center;
         }
         .settings-input {
           width: 100%; padding: 8px 12px; border-radius: 4px;

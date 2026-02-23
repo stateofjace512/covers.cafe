@@ -5,9 +5,11 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { checkRateLimit } from '../lib/rateLimit';
 import CoverCard from './CoverCard';
+import CoverModal from './CoverModal';
 import RateLimitModal from './RateLimitModal';
 import type { Cover } from '../lib/types';
 import { getCoverPath } from '../lib/coverRoutes';
+import { getPreferModalOverPagePreference } from '../lib/userPreferences';
 import type { GalleryTab } from '../routes/Gallery';
 
 type SortOption = 'newest' | 'oldest' | 'most_downloaded' | 'most_favorited' | 'title_az' | 'artist_az';
@@ -43,6 +45,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
   const navigate = useNavigate();
   const [sort, setSort] = useState<SortOption>('newest');
   const [rateLimited, setRateLimited] = useState(false);
+  const [selectedCover, setSelectedCover] = useState<Cover | null>(null);
 
   const favIdsRef = useRef<string[]>([]);
   const loadingMoreRef = useRef(false);
@@ -315,6 +318,13 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
                 onToggleFavorite={handleToggleFavorite}
                 onDeleted={handleCoverDeleted}
                 onDragForCollection={() => setIsDraggingCover(true)}
+                onClick={() => {
+                  if (getPreferModalOverPagePreference()) {
+                    setSelectedCover(cover);
+                    return;
+                  }
+                  navigate(getCoverPath(cover));
+                }}
               />
             ))}
           </div>
@@ -333,6 +343,23 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
             </div>
           )}
         </>
+      )}
+
+      {selectedCover && (
+        <CoverModal
+          cover={selectedCover}
+          isFavorited={favoritedIds.has(selectedCover.id)}
+          onToggleFavorite={handleToggleFavorite}
+          onClose={() => setSelectedCover(null)}
+          onDeleted={(id) => {
+            handleCoverDeleted(id);
+            setSelectedCover(null);
+          }}
+          onUpdated={(updated) => {
+            setCovers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+            setSelectedCover(updated);
+          }}
+        />
       )}
 
       {rateLimited && (

@@ -276,7 +276,7 @@ export default function Acotw() {
         /* Nominees grid */
         .acotw-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(var(--cover-grid-min-width), 1fr));
           gap: 14px;
         }
         .acotw-card {
