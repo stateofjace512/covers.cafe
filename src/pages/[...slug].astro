@@ -1,7 +1,69 @@
 ---
 import '../styles/global.css';
 import App from '../App';
+import { getSupabaseServer } from './api/_supabase';
+import { getCoverPublicIdFromSlug } from '../lib/coverRoutes';
+
 const logoUrl = `/cover_cafe_logo.svg`;
+
+// ── Server-side SEO for cover pages ──────────────────────────────────────────
+const slug = Astro.params.slug ?? '';
+const isCoverPage = /^cover\//.test(slug);
+
+interface CoverMeta {
+  title: string;
+  artist: string;
+  year: number | null;
+  imageUrl: string;
+}
+
+let coverMeta: CoverMeta | null = null;
+
+if (isCoverPage) {
+  const coverSlug = slug.replace(/^cover\//, '');
+  const publicId = getCoverPublicIdFromSlug(coverSlug);
+
+  if (publicId !== null) {
+    const supabase = getSupabaseServer();
+    if (supabase) {
+      const { data } = await supabase
+        .from('covers_cafe_covers')
+        .select('title, artist, year, storage_path, image_url')
+        .eq('public_id', publicId)
+        .eq('is_public', true)
+        .eq('is_private', false)
+        .single();
+
+      if (data) {
+        const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL as string;
+        const imageUrl = data.storage_path
+          ? `${supabaseUrl}/storage/v1/render/image/public/covers_cafe_covers/${data.storage_path}?width=600&height=600&resize=cover&quality=85`
+          : (data.image_url as string);
+
+        coverMeta = {
+          title: data.title as string,
+          artist: data.artist as string,
+          year: (data.year as number | null) ?? null,
+          imageUrl,
+        };
+      }
+    }
+  }
+}
+
+// ── Build final meta values ───────────────────────────────────────────────────
+const yearSuffix = coverMeta?.year ? ` (${coverMeta.year})` : '';
+
+const pageTitle = coverMeta
+  ? `${coverMeta.title} by ${coverMeta.artist}${yearSuffix} - Album Cover Art | covers.cafe`
+  : 'covers.cafe';
+
+const pageDescription = coverMeta
+  ? `Download and view the ${coverMeta.title} album cover art by ${coverMeta.artist}${yearSuffix}. Discover and download high-quality album artwork on covers.cafe.`
+  : 'Upload and discover album cover art at covers.cafe';
+
+const ogImage = coverMeta?.imageUrl ?? null;
+const canonicalUrl = new URL(Astro.url.pathname, Astro.url.origin).href;
 ---
 
 <!doctype html>
@@ -9,9 +71,30 @@ const logoUrl = `/cover_cafe_logo.svg`;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Upload and discover album cover art at covers.cafe" />
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="canonical" href={canonicalUrl} />
     <link rel="icon" type="image/svg+xml" href={logoUrl} />
-    <title>covers.cafe</title>
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="covers.cafe" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    {ogImage && <meta property="og:image:width" content="600" />}
+    {ogImage && <meta property="og:image:height" content="600" />}
+    {ogImage && <meta property="og:image:alt" content={coverMeta ? `${coverMeta.title} by ${coverMeta.artist} album cover art` : 'Album cover art'} />}
+
+    <!-- Twitter / X Card -->
+    <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={pageDescription} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
+    {ogImage && <meta name="twitter:image:alt" content={coverMeta ? `${coverMeta.title} by ${coverMeta.artist} album cover art` : 'Album cover art'} />}
+
     <!-- Prevent flash of wrong theme -->
     <script is:inline>
       (function () {
