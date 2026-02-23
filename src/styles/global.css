@@ -589,6 +589,7 @@ textarea {
 
 .site-main-content {
   flex: 1 1 auto;
+  padding-bottom: 1rem;
 }
 
 .mobile-nav-backdrop {
