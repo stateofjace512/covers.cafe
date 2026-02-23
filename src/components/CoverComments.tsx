@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getClientIdentity } from '../lib/comments/identityTracking.client';
 import { supabase } from '../lib/supabase';
+import CastleIcon from './CastleIcon';
 import type { Cover } from '../lib/types';
 
 interface CommentRow {
@@ -363,9 +364,9 @@ export default function CoverComments({ coverId, cover }: Props) {
                     {isOperator && (
                       pinnedIds.has(comment.id) ? (
                         <span className="cc-action cc-action--pinned" title="Inducted to the Pin of Heuristics">
-                          🏟️ POH
+                          <CastleIcon size={12} /> POH
                         </span>
-                      ) : (
+                      ) : (comment.like_count ?? 0) >= 3 ? (
                         <button
                           className="cc-action cc-action--pin"
                           onClick={() => pinComment(comment)}
@@ -374,10 +375,17 @@ export default function CoverComments({ coverId, cover }: Props) {
                         >
                           {pinningId === comment.id
                             ? <Loader size={11} className="upload-spinner" />
-                            : <Pin size={11} />
+                            : <CastleIcon size={11} />
                           }
                           POH
                         </button>
+                      ) : (
+                        <span
+                          className="cc-action cc-action--pin cc-action--pin-locked"
+                          title={`Needs ${3 - (comment.like_count ?? 0)} more like${3 - (comment.like_count ?? 0) === 1 ? '' : 's'} to be eligible`}
+                        >
+                          <CastleIcon size={11} /> POH
+                        </span>
                       )
                     )}
                   </div>
@@ -615,6 +623,19 @@ export default function CoverComments({ coverId, cover }: Props) {
           background: rgba(184, 134, 11, 0.1);
           color: #9a6e08;
           border-color: #b8860b;
+        }
+
+        .cc-action--pin-locked {
+          opacity: 0.35;
+          cursor: not-allowed;
+          pointer-events: auto;
+        }
+
+        .cc-action--pin-locked:hover {
+          background: none;
+          color: #b8860b;
+          border-color: rgba(184, 134, 11, 0.4);
+          transform: none;
         }
 
         .cc-action--pinned {

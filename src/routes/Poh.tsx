@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader } from 'lucide-react';
+import CastleIcon from '../components/CastleIcon';
 
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
 
@@ -29,6 +30,7 @@ type PohPin = {
   cover_artist: string | null;
   cover_storage_path: string | null;
   cover_image_url: string | null;
+  page_slug: string | null;
   pinned_at: string;
 };
 
@@ -56,7 +58,9 @@ export default function Poh() {
       <div className="poh-header">
         <div className="poh-header-arch" aria-hidden="true" />
         <div className="poh-header-content">
-          <span className="poh-stadium-icon" aria-label="stadium">🏟️</span>
+          <span className="poh-stadium-icon" aria-label="castle">
+            <CastleIcon size={36} />
+          </span>
           <h1 className="poh-title">THE PIN OF HEURISTICS</h1>
           <p className="poh-subtitle">
             Comments inducted by communal heuristic consensus — preserved in perpetuity.
@@ -73,7 +77,7 @@ export default function Poh() {
         </div>
       ) : pins.length === 0 ? (
         <div className="poh-empty">
-          <span className="poh-empty-icon">🏟️</span>
+          <span className="poh-empty-icon"><CastleIcon size={48} /></span>
           <p>The hall awaits its first inductee.</p>
           <p className="poh-empty-sub">Outstanding comments will be enshrined here by the operators.</p>
         </div>
@@ -89,7 +93,11 @@ export default function Poh() {
 
                     {/* Cover art thumbnail in corner */}
                     {thumb && (
-                      <div className="poh-cover-corner">
+                      <div
+                        className={`poh-cover-corner${pin.page_slug ? ' poh-cover-corner--link' : ''}`}
+                        onClick={pin.page_slug ? () => navigate(`/cover/${pin.page_slug}`) : undefined}
+                        title={pin.page_slug ? `View ${pin.cover_title ?? 'cover'}` : undefined}
+                      >
                         <img
                           src={thumb}
                           alt={pin.cover_title ?? 'album cover'}
@@ -108,7 +116,9 @@ export default function Poh() {
 
                     {/* Attribution */}
                     <div className="poh-attribution">
-                      <span className="poh-reaction">🏟️</span>
+                      <span className="poh-reaction">
+                        <CastleIcon size={16} />
+                      </span>
                       <button
                         className="poh-author"
                         onClick={() => navigate(`/users/${pin.author_username}`)}
@@ -116,10 +126,20 @@ export default function Poh() {
                         @{pin.author_username}
                       </button>
                       {(pin.cover_title || pin.cover_artist) && (
-                        <span className="poh-on">
-                          on{' '}
-                          <em>{pin.cover_title ?? ''}{pin.cover_artist ? ` · ${pin.cover_artist}` : ''}</em>
-                        </span>
+                        pin.page_slug ? (
+                          <button
+                            className="poh-on poh-on--link"
+                            onClick={() => navigate(`/cover/${pin.page_slug}`)}
+                          >
+                            on{' '}
+                            <em>{pin.cover_title ?? ''}{pin.cover_artist ? ` · ${pin.cover_artist}` : ''}</em>
+                          </button>
+                        ) : (
+                          <span className="poh-on">
+                            on{' '}
+                            <em>{pin.cover_title ?? ''}{pin.cover_artist ? ` · ${pin.cover_artist}` : ''}</em>
+                          </span>
+                        )
                       )}
                     </div>
                   </div>
@@ -281,7 +301,7 @@ export default function Poh() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0;
+          gap: 6px;
         }
 
         /* The outer wooden frame */
@@ -382,6 +402,18 @@ export default function Poh() {
             0 2px 6px rgba(0,0,0,0.35),
             0 0 0 1px rgba(100,60,20,0.4);
           flex-shrink: 0;
+        }
+
+        .poh-cover-corner--link {
+          cursor: pointer;
+          transition: box-shadow 0.15s, opacity 0.15s;
+        }
+
+        .poh-cover-corner--link:hover {
+          opacity: 0.85;
+          box-shadow:
+            0 3px 10px rgba(0,0,0,0.5),
+            0 0 0 2px rgba(140,90,20,0.7);
         }
 
         .poh-cover-thumb {
@@ -487,14 +519,32 @@ export default function Poh() {
           color: #806050;
         }
 
+        .poh-on--link {
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 0;
+          box-shadow: none;
+          text-align: left;
+        }
+
+        .poh-on--link:hover {
+          color: #c05a1a;
+          text-decoration: underline;
+          transform: none;
+        }
+
+        [data-theme="dark"] .poh-on--link:hover {
+          color: #e08050;
+        }
+
         /* ── The plaque ──────────────────────────────────────────────── */
         .poh-plaque {
           width: 85%;
           background:
             linear-gradient(180deg, #c8a840 0%, #b89030 40%, #a87820 100%);
           border: 1px solid #906010;
-          border-top: none;
-          border-radius: 0 0 4px 4px;
+          border-radius: 4px;
           padding: 8px 16px 10px;
           text-align: center;
           box-shadow:

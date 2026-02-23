@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import CastleIcon from './CastleIcon';
 
 type Achievement = {
   id: string;
@@ -77,7 +78,7 @@ export default function AchievementBadges({ userId }: Props) {
           if (a.type === 'poh') {
             return (
               <div key={a.id} className="ach-badge ach-badge--poh" title="Pin of Heuristics inductee">
-                <span className="ach-icon">🏟️</span>
+                <span className="ach-icon"><CastleIcon size={22} /></span>
                 <div className="ach-info">
                   <span className="ach-label">Pin of Heuristics</span>
                   {a.metadata?.comment_preview && (
