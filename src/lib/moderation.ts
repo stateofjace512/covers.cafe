@@ -19,7 +19,7 @@ async function callOpenAI(prompt: string): Promise<string> {
     },
     body: JSON.stringify({
       model: OPENAI_MODEL,
-      max_completion_tokens: 10,
+      max_completion_tokens: 50,
       messages: [{ role: 'user', content: prompt }],
     }),
   });
@@ -86,9 +86,9 @@ When in doubt, approve. Respond with exactly one word: true or false. No explana
     if (result === false) {
       return { ok: false, reason: 'This username is not allowed. Please choose a different one.' };
     }
-    // Unexpected response — fail open and log
+    // Unexpected/empty response — fail closed for usernames
     console.warn('[moderation] Unexpected username response:', raw);
-    return { ok: true };
+    return { ok: false, reason: 'Unable to validate username. Please try a different one.' };
   } catch (err) {
     console.error('[moderation] Username check error:', err);
     throw new Error('Moderation service is temporarily unavailable. Please try again in a moment.');
@@ -132,8 +132,9 @@ When in doubt, approve. Respond with exactly one word: true or false. No explana
         reason: 'This display name is not allowed. Please choose a different one.',
       };
     }
+    // Unexpected/empty response — fail closed for display names
     console.warn('[moderation] Unexpected display name response:', raw);
-    return { ok: true };
+    return { ok: false, reason: 'Unable to validate display name. Please try a different one.' };
   } catch (err) {
     console.error('[moderation] Display name check error:', err);
     throw new Error('Moderation service is temporarily unavailable. Please try again in a moment.');
