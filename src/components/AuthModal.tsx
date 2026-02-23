@@ -153,15 +153,17 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
     setLoading(true);
 
     if (isNewRegistration) {
-      // Complete-registration path: create account now that email is verified
-      let json: { ok: boolean; message?: string };
+      // Complete-registration path: create account now that email is verified.
+      // The server also signs in and returns session tokens so we never have to
+      // call signInWithPassword on the client (avoids "Invalid login credentials" race).
+      let json: { ok: boolean; message?: string; session?: { access_token: string; refresh_token: string } | null };
       try {
         const res = await fetch('/api/account/complete-registration', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, email, password, code }),
         });
-        json = await res.json() as { ok: boolean; message?: string };
+        json = await res.json() as typeof json;
       } catch {
         setError('Network error. Please check your connection and try again.');
         setLoading(false);
@@ -174,10 +176,15 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
         return;
       }
 
-      // Account created and verified — sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) {
-        setError('Account created but sign-in failed. Please sign in manually.');
+      if (json.session) {
+        // Server signed us in — just set the session directly
+        await supabase.auth.setSession({
+          access_token: json.session.access_token,
+          refresh_token: json.session.refresh_token,
+        });
+      } else {
+        // Fallback: server couldn't sign in (rare), ask the user to sign in manually
+        setSuccess('Account created! Please sign in with your credentials.');
         setStep('form');
         setTab('login');
         setLoading(false);

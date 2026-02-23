@@ -4,6 +4,7 @@
  * the account. The email is only stored in auth.users after verification passes.
  */
 import type { APIRoute } from 'astro';
+import { createClient } from '@supabase/supabase-js';
 import { getSupabaseServer } from '../_supabase';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -102,9 +103,32 @@ export const POST: APIRoute = async ({ request }) => {
     .update({ email_verified: true })
     .eq('id', created.user.id);
 
-  // Account created with a verified email. Client will call signInWithPassword next.
+  // Sign in server-side using the anon key (same as the client would) and return the
+  // session tokens. This avoids any race condition or credential mismatch that can occur
+  // when the client tries to signInWithPassword immediately after admin createUser.
+  const anonClient = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_PUBLIC_KEY,
+  );
+  const { data: signInData, error: signInError } = await anonClient.auth.signInWithPassword({ email, password });
+
+  if (signInError || !signInData.session) {
+    console.error('[complete-registration] sign-in after create failed:', signInError?.message);
+    // Account exists and is verified — client can sign in manually
+    return new Response(
+      JSON.stringify({ ok: true, session: null }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
   return new Response(
-    JSON.stringify({ ok: true }),
+    JSON.stringify({
+      ok: true,
+      session: {
+        access_token: signInData.session.access_token,
+        refresh_token: signInData.session.refresh_token,
+      },
+    }),
     { status: 200, headers: { 'Content-Type': 'application/json' } },
   );
 };
