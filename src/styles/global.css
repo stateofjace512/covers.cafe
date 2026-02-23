@@ -281,6 +281,11 @@ a:hover {
     linear-gradient(180deg, var(--sidebar-bg-light) 0%, var(--sidebar-bg) 30%, var(--sidebar-bg-dark) 100%),
     /* Noise */
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  background-size: auto, cover, auto, auto, auto;
+  background-position: 0 0, center top, 0 0, 0 0, 0 0;
+  background-repeat: repeat, repeat-y, repeat, no-repeat, repeat;
+  /* Make sidebar textures (including the new underlay) scroll with the sidebar content */
+  background-attachment: local, local, local, local, local;
   border-right: 2px solid var(--sidebar-border);
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2), inset -1px 0 0 rgba(255, 255, 255, 0.08);
   color: var(--sidebar-text);
