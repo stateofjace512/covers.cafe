@@ -218,7 +218,26 @@ export default function NotificationBell() {
 
       <style>{`
         .notif-wrap { position: relative; }
-        .notif-bell-btn { position: relative; padding: 6px 8px; }
+        .notif-bell-btn {
+          position: relative; padding: 6px 8px;
+          background-image:
+            linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 100%),
+            linear-gradient(rgba(115,73,42,0.55), rgba(115,73,42,0.55)),
+            var(--skeu-theme-btn);
+          background-size: 100% 50%, 100% 100%, cover;
+          background-position: top, center, center;
+          background-repeat: no-repeat, no-repeat, no-repeat;
+        }
+        .notif-bell-btn::before { display: none; }
+        [data-theme="dark"] .notif-bell-btn {
+          background-image:
+            linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 100%),
+            linear-gradient(rgba(56,37,22,0.55), rgba(56,37,22,0.55)),
+            var(--skeu-theme-btn);
+          background-size: 100% 50%, 100% 100%, cover;
+          background-position: top, center, center;
+          background-repeat: no-repeat, no-repeat, no-repeat;
+        }
         .notif-badge {
           position: absolute; top: 2px; right: 2px;
           background: #e03020; color: white;

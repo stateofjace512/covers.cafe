@@ -165,7 +165,7 @@ export default function MusicArtists() {
           background-image:
             linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
             var(--skeu-card);
-          background-size: 100% 100%, cover;
+          background-size: 100% 100%, 100% 100%;
           background-position: center, center;
         }
         .music-artist-name {

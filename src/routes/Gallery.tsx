@@ -104,19 +104,67 @@ export default function Gallery() {
         .hero-tab {
           display: inline-flex; align-items: center; gap: 6px;
           padding: 7px 16px 9px;
-          border: none; border-radius: 6px 6px 6px 6px;
+          border: none; border-radius: 6px;
           font-size: 18px; font-family: inherit;
           cursor: pointer;
-          background: transparent;
           color: rgba(255,248,240,0.55);
           transition: color 0.15s, background 0.15s;
           position: relative; bottom: 0;
+          background-image:
+            linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%),
+            linear-gradient(rgba(115,73,42,0.6), rgba(115,73,42,0.6)),
+            var(--skeu-theme-btn);
+          background-size: 100% 50%, 100% 100%, cover;
+          background-position: top, center, center;
+          background-repeat: no-repeat, no-repeat, no-repeat;
         }
-        .hero-tab:hover { color: rgba(255,248,240,0.9); background: rgba(255,255,255,0.08); }
+        [data-theme="dark"] .hero-tab {
+          background-image:
+            linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%),
+            linear-gradient(rgba(56,37,22,0.6), rgba(56,37,22,0.6)),
+            var(--skeu-theme-btn);
+          background-size: 100% 50%, 100% 100%, cover;
+          background-position: top, center, center;
+          background-repeat: no-repeat, no-repeat, no-repeat;
+        }
+        .hero-tab:hover {
+          color: rgba(255,248,240,0.9);
+          background-image:
+            linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 100%),
+            linear-gradient(rgba(115,73,42,0.5), rgba(115,73,42,0.5)),
+            var(--skeu-theme-btn);
+          background-size: 100% 50%, 100% 100%, cover;
+          background-position: top, center, center;
+          background-repeat: no-repeat, no-repeat, no-repeat;
+        }
+        [data-theme="dark"] .hero-tab:hover {
+          background-image:
+            linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 100%),
+            linear-gradient(rgba(56,37,22,0.45), rgba(56,37,22,0.45)),
+            var(--skeu-theme-btn);
+          background-size: 100% 50%, 100% 100%, cover;
+          background-position: top, center, center;
+          background-repeat: no-repeat, no-repeat, no-repeat;
+        }
         .hero-tab--active {
           color: #fff8f0;
-          background: rgba(255,255,255,0.12);
+          background-image:
+            linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 100%),
+            linear-gradient(rgba(115,73,42,0.4), rgba(115,73,42,0.4)),
+            var(--skeu-theme-btn);
+          background-size: 100% 50%, 100% 100%, cover;
+          background-position: top, center, center;
+          background-repeat: no-repeat, no-repeat, no-repeat;
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+        [data-theme="dark"] .hero-tab--active {
+          background-image:
+            linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.03) 100%),
+            linear-gradient(rgba(56,37,22,0.35), rgba(56,37,22,0.35)),
+            var(--skeu-theme-btn);
+          background-size: 100% 50%, 100% 100%, cover;
+          background-position: top, center, center;
+          background-repeat: no-repeat, no-repeat, no-repeat;
         }
       `}</style>
     </div>

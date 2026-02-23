@@ -42,6 +42,26 @@ export default function SiteFooter() {
           gap: 20px;
           padding: 16px 24px;
           flex-wrap: wrap;
+          position: relative;
+          overflow: hidden;
+        }
+        .site-footer-inner::before {
+          content: '';
+          position: absolute;
+          top: 50%; left: 50%;
+          width: 200%; height: 200%;
+          transform: translate(-50%, -50%) rotate(90deg);
+          background-image:
+            linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
+            var(--skeu-card);
+          background-size: cover;
+          background-position: center;
+          pointer-events: none;
+          z-index: 0;
+        }
+        .site-footer-inner > * {
+          position: relative;
+          z-index: 1;
         }
 
         .site-footer-brand {
