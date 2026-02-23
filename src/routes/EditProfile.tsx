@@ -5,13 +5,14 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function EditProfile() {
-  const { user, profile, refreshProfile, openAuthModal } = useAuth();
+  const { user, profile, refreshProfile, openAuthModal, updateProfilePicture } = useAuth();
   const navigate = useNavigate();
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [website, setWebsite] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -56,7 +57,7 @@ export default function EditProfile() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    setSaving(true); setError(null);
+    setSaving(true); setError(null); setSaveMessage(null);
     const avatarUrl = await uploadAvatar();
     const updates: Record<string, string | null> = {
       display_name: displayName.trim() || null,
@@ -71,9 +72,12 @@ export default function EditProfile() {
       .eq('id', user.id);
     if (err) {
       setError(err.message);
+      setSaveMessage(null);
     } else {
+      if (avatarUrl) updateProfilePicture(avatarUrl);
       await refreshProfile();
       setSaved(true);
+      setSaveMessage(avatarUrl ? 'Profile saved. Your new profile picture is now live.' : 'Profile saved successfully.');
       setTimeout(() => setSaved(false), 2000);
     }
     setSaving(false);
@@ -134,6 +138,7 @@ export default function EditProfile() {
         </div>
 
         {error && <div className="edit-error">{error}</div>}
+        {saveMessage && <div className="edit-success">{saveMessage}</div>}
 
         <div className="edit-actions">
           <button type="submit" className="btn btn-primary" disabled={saving}>
@@ -162,6 +167,7 @@ export default function EditProfile() {
         .form-input:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
         .form-input:disabled { opacity: 0.55; cursor: not-allowed; }
         .edit-error { padding: 8px 10px; border-radius: 4px; background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3); color: #c83220; font-size: 13px; }
+        .edit-success { padding: 8px 10px; border-radius: 4px; background: rgba(30,126,52,0.1); border: 1px solid rgba(30,126,52,0.35); color: #1e7e34; font-size: 13px; }
         .edit-actions { display: flex; gap: 10px; padding-top: 4px; }
         .upload-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
