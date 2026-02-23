@@ -1,21 +1,18 @@
 /**
  * POST /api/account/register
- * Server-side registration endpoint. Replaces the direct client-side
- * supabase.auth.signUp() call so that username moderation and uniqueness
- * checks are enforced server-side and cannot be bypassed.
- *
- * Flow:
- *  1. Validate username format
- *  2. Check username is not already taken
- *  3. Run AI moderation on username (Anthropic Claude)
- *  4. Create the auth user via the admin API (email_confirm: true — we use
- *     our own OTP flow, not Supabase's confirmation email)
- *  5. Return { ok: true } so the client can call signInWithPassword to get a session
+ * Step 1 of registration. Validates the username and sends an OTP to the
+ * provided email — but does NOT create the account yet. The account is only
+ * created after the user proves they own the email in complete-registration.ts.
  */
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from '../_supabase';
 import { moderateUsername } from '../../../lib/moderation';
 import { checkRateLimit } from '../../../lib/rateLimit';
+import { sendMail, codeEmailHtml, codeEmailText } from '../_mailer';
+
+function generateCode(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   const ip = clientAddress ?? 'unknown';
@@ -40,9 +37,15 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const password = body.password ?? '';
 
   // ── Basic validation ─────────────────────────────────────────────────────
-  if (!email || !password) {
+  if (!email || !email.includes('@')) {
     return new Response(
-      JSON.stringify({ ok: false, message: 'Email and password are required.' }),
+      JSON.stringify({ ok: false, message: 'A valid email is required.' }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+  if (!password || password.length < 6) {
+    return new Response(
+      JSON.stringify({ ok: false, message: 'Password must be at least 6 characters.' }),
       { status: 200, headers: { 'Content-Type': 'application/json' } },
     );
   }
@@ -74,33 +77,25 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } },
     );
   }
-  if (password.length < 6) {
-    return new Response(
-      JSON.stringify({ ok: false, message: 'Password must be at least 6 characters.' }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
-  }
 
   const sb = getSupabaseServer();
-  if (!sb) {
-    return new Response('Server misconfigured', { status: 503 });
-  }
+  if (!sb) return new Response('Server misconfigured', { status: 503 });
 
-  // ── Uniqueness check ─────────────────────────────────────────────────────
-  const { data: existing } = await sb
+  // ── Username uniqueness ──────────────────────────────────────────────────
+  const { data: existingUsername } = await sb
     .from('covers_cafe_profiles')
     .select('id')
     .eq('username', username)
     .maybeSingle();
 
-  if (existing) {
+  if (existingUsername) {
     return new Response(
       JSON.stringify({ ok: false, field: 'username', message: 'That username is already taken.' }),
       { status: 200, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
-  // ── AI moderation (server-side — cannot be bypassed) ────────────────────
+  // ── AI moderation ────────────────────────────────────────────────────────
   try {
     const modResult = await moderateUsername(username);
     if (!modResult.ok) {
@@ -110,36 +105,64 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       );
     }
   } catch (err) {
-    // If moderation is down, block registration rather than letting it slip through
     return new Response(
       JSON.stringify({
         ok: false,
-        message: err instanceof Error ? err.message : 'Moderation service unavailable. Please try again in a moment.',
+        message: err instanceof Error ? err.message : 'Moderation service unavailable. Please try again.',
       }),
       { status: 503, headers: { 'Content-Type': 'application/json' } },
     );
   }
 
-  // ── Create the user via admin API ────────────────────────────────────────
-  // email_confirm: true — we use our own OTP flow, not Supabase's email link.
-  const { data: created, error: createError } = await sb.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { username },
-  });
+  // ── Send OTP to the email (account not created yet) ──────────────────────
+  // 90-second cooldown to prevent spam
+  const cooloffCutoff = new Date(Date.now() - 90 * 1000).toISOString();
+  const now = new Date().toISOString();
 
-  if (createError) {
-    // Surface useful messages (e.g. "User already registered")
-    const msg = createError.message ?? 'Registration failed.';
-    return new Response(
-      JSON.stringify({ ok: false, message: msg }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
+  const { data: recentCode } = await sb
+    .from('covers_cafe_verification_codes')
+    .select('id')
+    .eq('email', email)
+    .eq('used', false)
+    .gt('expires_at', now)
+    .gt('created_at', cooloffCutoff)
+    .limit(1)
+    .maybeSingle();
+
+  if (!recentCode) {
+    const code = generateCode();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+    const { error: insertError } = await sb
+      .from('covers_cafe_verification_codes')
+      .insert({ email, code, expires_at: expiresAt });
+
+    if (insertError) {
+      console.error('[register] OTP insert error:', insertError.message);
+      return new Response(
+        JSON.stringify({ ok: false, message: 'Failed to create verification code.' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+
+    const mailResult = await sendMail({
+      to: email,
+      subject: 'Verify your covers.cafe email',
+      text: codeEmailText(code, 'create your account'),
+      html: codeEmailHtml(code, 'create your account'),
+    });
+
+    if (!mailResult.ok) {
+      console.error('[register] mail error:', mailResult.error);
+      return new Response(
+        JSON.stringify({ ok: false, message: 'Failed to send verification email. Please check the address and try again.' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
   }
 
   return new Response(
-    JSON.stringify({ ok: true, userId: created.user.id }),
+    JSON.stringify({ ok: true }),
     { status: 200, headers: { 'Content-Type': 'application/json' } },
   );
 };
