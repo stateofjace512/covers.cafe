@@ -20,7 +20,6 @@ async function callOpenAI(prompt: string): Promise<string> {
     body: JSON.stringify({
       model: OPENAI_MODEL,
       max_completion_tokens: 10,
-      temperature: 0,
       messages: [{ role: 'user', content: prompt }],
     }),
   });
