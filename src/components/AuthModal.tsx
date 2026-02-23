@@ -98,8 +98,29 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
     setError(null);
     if (!username.trim()) { setError('Username is required.'); return; }
     if (username.length < 3) { setError('Username must be at least 3 characters.'); return; }
+    if (username.length > 30) { setError('Username must be 30 characters or fewer.'); return; }
     if (!/^[a-z0-9_]+$/.test(username)) { setError('Username: lowercase letters, numbers, and underscores only.'); return; }
     setLoading(true);
+
+    // AI moderation check before creating the account
+    try {
+      const modRes = await fetch('/api/account/check-username', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim() }),
+      });
+      if (modRes.ok) {
+        const modJson = await modRes.json() as { ok: boolean; reason?: string };
+        if (!modJson.ok) {
+          setError(modJson.reason ?? 'This username is not allowed. Please choose a different one.');
+          setLoading(false);
+          return;
+        }
+      }
+      // If moderation endpoint is unreachable, fall through and allow registration
+    } catch {
+      // Network error — don't block registration
+    }
 
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,

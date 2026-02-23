@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 export default function EditProfile() {
   const { user, profile, refreshProfile, openAuthModal, updateProfilePicture } = useAuth();
   const navigate = useNavigate();
+  const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [website, setWebsite] = useState('');
@@ -14,6 +15,11 @@ export default function EditProfile() {
   const [saved, setSaved] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<{ field: string; message: string } | null>(null);
+
+  // Remaining-changes counters derived from the profile change-log columns
+  const [usernameChangesRemaining, setUsernameChangesRemaining] = useState<number | null>(null);
+  const [displayNameChangesRemaining, setDisplayNameChangesRemaining] = useState<number | null>(null);
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarZoom, setAvatarZoom] = useState(1);
@@ -21,9 +27,28 @@ export default function EditProfile() {
 
   useEffect(() => {
     if (profile) {
+      setUsername(profile.username ?? '');
       setDisplayName(profile.display_name ?? '');
       setBio(profile.bio ?? '');
       setWebsite(profile.website ?? '');
+
+      const now = Date.now();
+      const usernameWindowMs = 14 * 24 * 60 * 60 * 1000;
+      const displayNameWindowMs = 30 * 24 * 60 * 60 * 1000;
+
+      const rawUsernameLog = (profile as unknown as Record<string, unknown>).username_change_log;
+      const usernameLog: string[] = Array.isArray(rawUsernameLog) ? rawUsernameLog : [];
+      const recentUsernameChanges = usernameLog.filter(
+        (ts) => now - new Date(ts).getTime() < usernameWindowMs,
+      );
+      setUsernameChangesRemaining(Math.max(0, 2 - recentUsernameChanges.length));
+
+      const rawDisplayLog = (profile as unknown as Record<string, unknown>).display_name_change_log;
+      const displayLog: string[] = Array.isArray(rawDisplayLog) ? rawDisplayLog : [];
+      const recentDisplayChanges = displayLog.filter(
+        (ts) => now - new Date(ts).getTime() < displayNameWindowMs,
+      );
+      setDisplayNameChangesRemaining(Math.max(0, 5 - recentDisplayChanges.length));
     }
   }, [profile]);
 
@@ -57,29 +82,96 @@ export default function EditProfile() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    setSaving(true); setError(null); setSaveMessage(null);
-    const avatarUrl = await uploadAvatar();
-    const updates: Record<string, string | null> = {
+    setSaving(true);
+    setError(null);
+    setFieldError(null);
+    setSaveMessage(null);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setError('Session expired. Please sign in again.');
+      setSaving(false);
+      return;
+    }
+
+    // ── Step 1: handle username change ────────────────────────────────────
+    const trimmedUsername = username.trim().toLowerCase();
+    if (trimmedUsername !== (profile?.username ?? '')) {
+      const res = await fetch('/api/account/update-username', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ username: trimmedUsername }),
+      });
+      const json = await res.json() as { ok: boolean; message?: string; remaining?: number };
+      if (!json.ok) {
+        setFieldError({ field: 'username', message: json.message ?? 'Username change failed.' });
+        setSaving(false);
+        return;
+      }
+      if (json.remaining !== undefined) {
+        setUsernameChangesRemaining(json.remaining);
+      }
+    }
+
+    // ── Step 2: upload avatar if a new one was selected ───────────────────
+    let avatarUrl: string | null = null;
+    try {
+      avatarUrl = await uploadAvatar();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Avatar upload failed.');
+      setSaving(false);
+      return;
+    }
+
+    // ── Step 3: update display_name, bio, website (+ optional avatar_url) ─
+    const body: Record<string, string | null> = {
       display_name: displayName.trim() || null,
       bio: bio.trim() || null,
       website: website.trim() || null,
     };
-    if (avatarUrl) updates.avatar_url = avatarUrl;
+    if (avatarUrl) body.avatar_url = avatarUrl;
 
-    const { error: err } = await supabase
-      .from('covers_cafe_profiles')
-      .update(updates)
-      .eq('id', user.id);
-    if (err) {
-      setError(err.message);
-      setSaveMessage(null);
-    } else {
-      if (avatarUrl) updateProfilePicture(avatarUrl);
-      await refreshProfile();
-      setSaved(true);
-      setSaveMessage(avatarUrl ? 'Profile saved. Your new profile picture is now live.' : 'Profile saved successfully.');
-      setTimeout(() => setSaved(false), 2000);
+    const profileRes = await fetch('/api/account/update-profile', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const profileJson = await profileRes.json() as {
+      ok: boolean;
+      message?: string;
+      field?: string;
+      displayNameRemaining?: number;
+    };
+
+    if (!profileJson.ok) {
+      if (profileJson.field) {
+        setFieldError({ field: profileJson.field, message: profileJson.message ?? 'Update failed.' });
+      } else {
+        setError(profileJson.message ?? 'Failed to save profile.');
+      }
+      setSaving(false);
+      return;
     }
+
+    if (profileJson.displayNameRemaining !== undefined) {
+      setDisplayNameChangesRemaining(profileJson.displayNameRemaining);
+    }
+
+    if (avatarUrl) updateProfilePicture(avatarUrl);
+    await refreshProfile();
+    setSaved(true);
+    setSaveMessage(
+      avatarUrl
+        ? 'Profile saved. Your new profile picture is now live.'
+        : 'Profile saved successfully.',
+    );
+    setTimeout(() => setSaved(false), 2000);
     setSaving(false);
   };
 
@@ -95,28 +187,98 @@ export default function EditProfile() {
     );
   }
 
+  const usernameExhausted = usernameChangesRemaining === 0 && username === (profile?.username ?? '');
+  const displayNameExhausted = displayNameChangesRemaining === 0 && displayName === (profile?.display_name ?? '');
+
   return (
     <div>
       <h1 className="section-title"><UserRoundCog size={22} /> Edit Profile</h1>
       <form onSubmit={handleSave} className="edit-form card">
+
+        {/* Username */}
         <div className="form-row">
-          <label className="form-label">Display Name</label>
-          <input type="text" className="form-input" placeholder="Your display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+          <div className="form-label-row">
+            <label className="form-label">Username</label>
+            {usernameChangesRemaining !== null && (
+              <span className={`form-change-limit${usernameChangesRemaining === 0 ? ' form-change-limit--exhausted' : ''}`}>
+                {usernameChangesRemaining === 0
+                  ? 'No changes left (14-day window)'
+                  : `${usernameChangesRemaining} change${usernameChangesRemaining !== 1 ? 's' : ''} left / 14 days`}
+              </span>
+            )}
+          </div>
+          <input
+            type="text"
+            className={`form-input${fieldError?.field === 'username' ? ' form-input--error' : ''}`}
+            placeholder="yourname"
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''));
+              if (fieldError?.field === 'username') setFieldError(null);
+            }}
+            disabled={usernameExhausted}
+            maxLength={30}
+          />
+          {fieldError?.field === 'username' && (
+            <span className="form-field-error">{fieldError.message}</span>
+          )}
+          <span className="form-hint">Lowercase letters, numbers, and underscores only.</span>
         </div>
+
+        {/* Display Name */}
         <div className="form-row">
-          <label className="form-label">Username <span className="form-readonly">(read-only)</span></label>
-          <input type="text" className="form-input" value={profile?.username ?? ''} disabled />
+          <div className="form-label-row">
+            <label className="form-label">Display Name</label>
+            {displayNameChangesRemaining !== null && (
+              <span className={`form-change-limit${displayNameChangesRemaining === 0 ? ' form-change-limit--exhausted' : ''}`}>
+                {displayNameChangesRemaining === 0
+                  ? 'No changes left (30-day window)'
+                  : `${displayNameChangesRemaining} change${displayNameChangesRemaining !== 1 ? 's' : ''} left / 30 days`}
+              </span>
+            )}
+          </div>
+          <input
+            type="text"
+            className={`form-input${fieldError?.field === 'display_name' ? ' form-input--error' : ''}`}
+            placeholder="Your display name"
+            value={displayName}
+            onChange={(e) => {
+              setDisplayName(e.target.value);
+              if (fieldError?.field === 'display_name') setFieldError(null);
+            }}
+            disabled={displayNameExhausted}
+            maxLength={50}
+          />
+          {fieldError?.field === 'display_name' && (
+            <span className="form-field-error">{fieldError.message}</span>
+          )}
         </div>
+
+        {/* Bio */}
         <div className="form-row">
           <label className="form-label">Bio</label>
           <textarea className="form-input" rows={4} placeholder="Tell the community about yourself…" value={bio} onChange={(e) => setBio(e.target.value)} />
         </div>
+
+        {/* Website */}
         <div className="form-row">
           <label className="form-label">Website</label>
-          <input type="url" className="form-input" placeholder="https://yoursite.com" value={website} onChange={(e) => setWebsite(e.target.value)} />
+          <input
+            type="url"
+            className={`form-input${fieldError?.field === 'website' ? ' form-input--error' : ''}`}
+            placeholder="https://yoursite.com"
+            value={website}
+            onChange={(e) => {
+              setWebsite(e.target.value);
+              if (fieldError?.field === 'website') setFieldError(null);
+            }}
+          />
+          {fieldError?.field === 'website' && (
+            <span className="form-field-error">{fieldError.message}</span>
+          )}
         </div>
 
-
+        {/* Profile Picture */}
         <div className="form-row">
           <label className="form-label">Profile Picture</label>
           <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => {
@@ -151,9 +313,22 @@ export default function EditProfile() {
       <style>{`
         .edit-form { max-width: 520px; display: flex; flex-direction: column; gap: 16px; }
         .form-row { display: flex; flex-direction: column; gap: 5px; }
+        .form-label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
         .form-label { font-size: 13px; font-weight: bold; color: var(--body-text); text-shadow: 0 1px 0 rgba(255,255,255,0.4); }
         [data-theme="dark"] .form-label { text-shadow: none; }
-        .form-readonly { font-weight: normal; color: var(--body-text-muted); font-size: 11px; }
+        .form-hint { font-size: 11px; color: var(--body-text-muted); margin: 0; }
+        .form-change-limit {
+          font-size: 11px; color: var(--body-text-muted); white-space: nowrap;
+          background: rgba(0,0,0,0.05); border-radius: 10px; padding: 2px 7px;
+        }
+        .form-change-limit--exhausted {
+          color: #c83220;
+          background: rgba(200,50,30,0.08);
+          border: 1px solid rgba(200,50,30,0.2);
+        }
+        [data-theme="dark"] .form-change-limit { background: rgba(255,255,255,0.06); }
+        [data-theme="dark"] .form-change-limit--exhausted { background: rgba(200,50,30,0.12); }
+        .form-field-error { font-size: 12px; color: #c83220; }
         .avatar-crop-preview { width: 180px; height: 180px; border-radius: 8px; overflow: hidden; border: 1px solid var(--body-card-border); background: var(--sidebar-bg); }
         .avatar-crop-preview img { width: 100%; height: 100%; object-fit: cover; transform-origin: center; }
 
@@ -166,6 +341,7 @@ export default function EditProfile() {
         }
         .form-input:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
         .form-input:disabled { opacity: 0.55; cursor: not-allowed; }
+        .form-input--error { border-color: rgba(200,50,30,0.6) !important; }
         .edit-error { padding: 8px 10px; border-radius: 4px; background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3); color: #c83220; font-size: 13px; }
         .edit-success { padding: 8px 10px; border-radius: 4px; background: rgba(30,126,52,0.1); border: 1px solid rgba(30,126,52,0.35); color: #1e7e34; font-size: 13px; }
         .edit-actions { display: flex; gap: 10px; padding-top: 4px; }
