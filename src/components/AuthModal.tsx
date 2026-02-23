@@ -21,6 +21,8 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  // Track whether we just created a new account so "start over" can delete it
+  const [isNewRegistration, setIsNewRegistration] = useState(false);
 
   // When opened directly at the verify step (e.g. reload with unverified session),
   // pull the email from the live session and send a fresh code automatically.
@@ -98,36 +100,51 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
     setError(null);
     if (!username.trim()) { setError('Username is required.'); return; }
     if (username.length < 3) { setError('Username must be at least 3 characters.'); return; }
+    if (username.length > 30) { setError('Username must be 30 characters or fewer.'); return; }
     if (!/^[a-z0-9_]+$/.test(username)) { setError('Username: lowercase letters, numbers, and underscores only.'); return; }
     setLoading(true);
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { username: username.trim() } },
-    });
-
-    if (signUpError) {
-      setError(signUpError.message);
+    // Server validates username and sends OTP — account is NOT created yet.
+    // The email is only stored after the user proves ownership in the verify step.
+    let registerJson: { ok: boolean; message?: string; field?: string };
+    try {
+      const registerRes = await fetch('/api/account/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), email, password }),
+      });
+      registerJson = await registerRes.json() as { ok: boolean; message?: string; field?: string };
+    } catch {
+      setError('Network error. Please check your connection and try again.');
       setLoading(false);
       return;
     }
 
-    if (!data.session) {
-      // Supabase email confirmation is still enabled — user must confirm the Supabase
-      // link first, then on their next login they'll go through our OTP step.
-      setSuccess('Account created! Check your email for a confirmation link. After confirming, sign in — you\'ll then verify with a 6-digit code.');
+    if (!registerJson.ok) {
+      setError(registerJson.message ?? 'Registration failed. Please try again.');
       setLoading(false);
       return;
     }
 
-    // Session returned (Supabase email confirmation disabled) — send our OTP now
-    const token = data.session.access_token;
-    const sent = await sendVerificationCode(token, email);
-    if (sent) {
-      setStep('verify');
-    }
+    // OTP sent — show the verify step. No account exists yet.
+    setIsNewRegistration(true);
+    setStep('verify');
     setLoading(false);
+  };
+
+  // "Wrong email / start over"
+  // - New registration: no account exists yet, just reset the form.
+  // - Existing user login: sign out and return to the sign-in form.
+  const handleStartOver = async () => {
+    setError(null);
+    if (!isNewRegistration) {
+      await supabase.auth.signOut();
+    }
+    setStep('form');
+    setCode('');
+    setError(null);
+    setSuccess(null);
+    setIsNewRegistration(false);
   };
 
   const handleVerify = async (e: React.FormEvent) => {
@@ -135,7 +152,52 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
     setError(null);
     setLoading(true);
 
-    // Get current session token
+    if (isNewRegistration) {
+      // Complete-registration path: create account now that email is verified.
+      // The server also signs in and returns session tokens so we never have to
+      // call signInWithPassword on the client (avoids "Invalid login credentials" race).
+      let json: { ok: boolean; message?: string; session?: { access_token: string; refresh_token: string } | null };
+      try {
+        const res = await fetch('/api/account/complete-registration', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password, code }),
+        });
+        json = await res.json() as typeof json;
+      } catch {
+        setError('Network error. Please check your connection and try again.');
+        setLoading(false);
+        return;
+      }
+
+      if (!json.ok) {
+        setError(json.message ?? 'Verification failed. Try again.');
+        setLoading(false);
+        return;
+      }
+
+      if (json.session) {
+        // Server signed us in — just set the session directly
+        await supabase.auth.setSession({
+          access_token: json.session.access_token,
+          refresh_token: json.session.refresh_token,
+        });
+      } else {
+        // Fallback: server couldn't sign in (rare), ask the user to sign in manually
+        setSuccess('Account created! Please sign in with your credentials.');
+        setStep('form');
+        setTab('login');
+        setLoading(false);
+        return;
+      }
+
+      await refreshProfile();
+      closeAuthModal();
+      setLoading(false);
+      return;
+    }
+
+    // Existing-user login verification path (unchanged)
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       setError('Session expired. Please sign in again.');
@@ -173,7 +235,6 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
       return;
     }
 
-    // Refresh profile so emailVerified updates in context
     await refreshProfile();
     closeAuthModal();
     setLoading(false);
@@ -181,6 +242,25 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
 
   const handleResend = async () => {
     setError(null);
+    if (isNewRegistration) {
+      // No session yet — resend by hitting the register endpoint again (respects 90s cooldown)
+      try {
+        const res = await fetch('/api/account/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password }),
+        });
+        const json = await res.json() as { ok: boolean; message?: string };
+        if (json.ok) {
+          setSuccess('A new code has been sent to your email.');
+        } else {
+          setError(json.message ?? 'Could not resend code. Please try again.');
+        }
+      } catch {
+        setError('Network error. Please check your connection and try again.');
+      }
+      return;
+    }
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setError('Session expired. Please sign in again.'); return; }
     const sent = await sendVerificationCode(session.access_token, email);
@@ -188,7 +268,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
   };
 
   return (
-    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay" onClick={(e) => { if (step !== 'verify' && e.target === e.currentTarget) onClose(); }}>
       <div className="modal-box auth-modal" role="dialog" aria-modal="true">
         {/* Header */}
         <div className="modal-header">
@@ -212,9 +292,11 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
               <span className="auth-tab auth-tab--active">Verify Email</span>
             </div>
           )}
-          <button className="modal-close-btn" onClick={onClose} aria-label="Close">
-            <X size={18} />
-          </button>
+          {step !== 'verify' && (
+            <button className="modal-close-btn" onClick={onClose} aria-label="Close">
+              <X size={18} />
+            </button>
+          )}
         </div>
 
         {/* Body */}
@@ -268,6 +350,10 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
 
               <button type="button" className="auth-switch-btn" style={{ marginTop: 8 }} onClick={handleResend}>
                 Didn't receive it? Resend code
+              </button>
+
+              <button type="button" className="auth-switch-btn auth-back-btn" onClick={handleStartOver} disabled={loading}>
+                {isNewRegistration ? 'Wrong email? Start over' : 'Wrong account? Sign out'}
               </button>
             </form>
           ) : (
@@ -413,6 +499,9 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
           padding: 8px 0 4px;
         }
         .auth-verify-icon { color: var(--accent); }
+        .auth-back-btn { margin-top: 4px; opacity: 0.6; font-size: 12px; }
+        .auth-back-btn:hover { opacity: 1; }
+        .auth-back-btn:disabled { cursor: not-allowed; opacity: 0.35; }
         .auth-error {
           display: flex; align-items: center; gap: 6px;
           padding: 8px 10px; border-radius: 4px;
