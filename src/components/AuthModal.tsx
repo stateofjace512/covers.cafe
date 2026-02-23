@@ -209,7 +209,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
   };
 
   return (
-    <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay" onClick={(e) => { if (step !== 'verify' && e.target === e.currentTarget) onClose(); }}>
       <div className="modal-box auth-modal" role="dialog" aria-modal="true">
         {/* Header */}
         <div className="modal-header">
@@ -233,9 +233,11 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
               <span className="auth-tab auth-tab--active">Verify Email</span>
             </div>
           )}
-          <button className="modal-close-btn" onClick={onClose} aria-label="Close">
-            <X size={18} />
-          </button>
+          {step !== 'verify' && (
+            <button className="modal-close-btn" onClick={onClose} aria-label="Close">
+              <X size={18} />
+            </button>
+          )}
         </div>
 
         {/* Body */}
