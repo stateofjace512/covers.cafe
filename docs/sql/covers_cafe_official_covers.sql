@@ -15,10 +15,19 @@ create table if not exists public.covers_cafe_official_covers (
   search_album text,
   tags text[] not null default array['official'],
   source_payload jsonb,
+  cover_id uuid references public.covers_cafe_covers(id) on delete set null,
+  cover_public_id bigint,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint covers_cafe_official_covers_tag_official check ('official' = any(tags))
 );
+
+
+alter table public.covers_cafe_official_covers
+  add column if not exists cover_id uuid references public.covers_cafe_covers(id) on delete set null;
+
+alter table public.covers_cafe_official_covers
+  add column if not exists cover_public_id bigint;
 
 create unique index if not exists covers_cafe_official_covers_identity_idx
   on public.covers_cafe_official_covers (country, artist_name, album_title, album_cover_url);
@@ -28,6 +37,9 @@ create index if not exists covers_cafe_official_covers_search_artist_idx
 
 create index if not exists covers_cafe_official_covers_search_album_idx
   on public.covers_cafe_official_covers (search_album);
+
+create index if not exists covers_cafe_official_covers_cover_public_id_idx
+  on public.covers_cafe_official_covers (cover_public_id);
 
 create or replace function public.covers_cafe_official_covers_set_updated_at()
 returns trigger

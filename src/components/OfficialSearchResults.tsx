@@ -75,7 +75,7 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
     const to = from + PAGE_SIZE - 1;
     const { data } = await supabase
       .from('covers_cafe_official_covers')
-      .select('artist_name, album_title, release_year, album_cover_url, pixel_dimensions')
+      .select('artist_name, album_title, release_year, album_cover_url, pixel_dimensions, cover_public_id')
       .eq('country', COUNTRY)
       .or(`search_artist.ilike.%${q}%,search_album.ilike.%${q}%,artist_name.ilike.%${q}%,album_title.ilike.%${q}%`)
       .order('created_at', { ascending: false })

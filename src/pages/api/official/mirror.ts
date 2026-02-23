@@ -74,6 +74,15 @@ export const POST: APIRoute = async ({ request }) => {
     .eq('is_public', true);
   if (mirroredError) return new Response(mirroredError.message, { status: 500 });
 
+  const mirroredRows = (mirrored ?? []) as Array<{ id: string; public_id: number | null; image_url: string }>;
+
+  for (const row of mirroredRows) {
+    await sb
+      .from('covers_cafe_official_covers')
+      .update({ cover_id: row.id, cover_public_id: row.public_id })
+      .eq('album_cover_url', row.image_url);
+  }
+
   return new Response(JSON.stringify({ data: mirrored ?? [] }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
