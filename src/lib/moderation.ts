@@ -1,38 +1,37 @@
 /**
- * AI-powered content moderation using Anthropic Claude.
+ * AI-powered content moderation using OpenAI.
  * Used to screen usernames, display names, and website links on profile changes.
  */
 
-const ANTHROPIC_API_KEY = import.meta.env.ANTHROPIC_API_KEY as string | undefined;
-const ANTHROPIC_MODEL = 'claude-3-haiku-20240307';
-const ANTHROPIC_VERSION = '2023-06-01';
+const OPENAI_API_KEY = import.meta.env.OPENAI_API_KEY as string | undefined;
+const OPENAI_MODEL = 'gpt-4o-mini';
 
-async function callClaude(prompt: string): Promise<string> {
-  if (!ANTHROPIC_API_KEY) {
+async function callOpenAI(prompt: string): Promise<string> {
+  if (!OPENAI_API_KEY) {
     throw new Error('Moderation service is temporarily unavailable.');
   }
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': ANTHROPIC_VERSION,
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: ANTHROPIC_MODEL,
+      model: OPENAI_MODEL,
       max_tokens: 10,
+      temperature: 0,
       messages: [{ role: 'user', content: prompt }],
     }),
   });
 
   if (!response.ok) {
     const text = await response.text().catch(() => '');
-    throw new Error(`Anthropic API error ${response.status}: ${text}`);
+    throw new Error(`OpenAI API error ${response.status}: ${text}`);
   }
 
-  const data = await response.json() as { content?: { text?: string }[] };
-  return data.content?.[0]?.text?.trim() ?? '';
+  const data = await response.json() as { choices?: { message?: { content?: string } }[] };
+  return data.choices?.[0]?.message?.content?.trim() ?? '';
 }
 
 function parseBool(raw: string): boolean | null {
@@ -82,7 +81,7 @@ APPROVE (respond "true") if the username is a generic name, nickname, music-rela
 When in doubt, approve. Respond with exactly one word: true or false. No explanation, no punctuation.`;
 
   try {
-    const raw = await callClaude(prompt);
+    const raw = await callOpenAI(prompt);
     const result = parseBool(raw);
     if (result === true) return { ok: true };
     if (result === false) {
@@ -125,7 +124,7 @@ APPROVE (respond "true") if the name is a personal name, nickname, music-related
 When in doubt, approve. Respond with exactly one word: true or false. No explanation, no punctuation.`;
 
   try {
-    const raw = await callClaude(prompt);
+    const raw = await callOpenAI(prompt);
     const result = parseBool(raw);
     if (result === true) return { ok: true };
     if (result === false) {
@@ -172,7 +171,7 @@ APPROVE (respond "true") if the site is:
 Respond with exactly one word: true or false. No explanation, no punctuation.`;
 
   try {
-    const raw = await callClaude(prompt);
+    const raw = await callOpenAI(prompt);
     const result = parseBool(raw);
     if (result === true) return { ok: true };
     if (result === false) {
