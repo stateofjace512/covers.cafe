@@ -376,7 +376,7 @@ export default function CoverDetail() {
       </div>
 
       {/* Inline panels */}
-      <div ref={panelRef}>
+      <div ref={panelRef} className="cover-panels-anchor">
       {activePanel === 'collection' && (
         <div className="cover-panel">
           <h3 className="cover-panel-title"><FolderPlus size={14} /> Add to Collection</h3>
@@ -528,6 +528,9 @@ export default function CoverDetail() {
         .cover-tags-icon { color: var(--body-text-muted); flex-shrink: 0; }
         .cover-tag { font-size: 11px; font-weight: bold; background: var(--sidebar-bg); color: var(--sidebar-text); padding: 2px 7px; border-radius: 3px; border: 1px solid var(--sidebar-border); box-shadow: var(--shadow-sm); cursor: pointer; transition: background 0.1s, color 0.1s; }
         .cover-tag:hover { background: var(--accent); color: white; border-color: var(--accent); transform: none; box-shadow: none; }
+
+        /* Panel scroll anchor — leaves room for sticky header */
+        .cover-panels-anchor { scroll-margin-top: calc(var(--header-h) + 16px); }
 
         /* Secondary actions */
         .cover-secondary-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
