@@ -25,8 +25,6 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
   const { user } = useAuth();
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
-  // Derive a stable pseudo-random vertical offset (0–80%) from the cover ID for the skeuomorphic card texture
-  const cardSkeuY = (parseInt(cover.id.replace(/-/g, '').slice(-6), 16) % 81) + '%';
   const [imgLoaded, setImgLoaded] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -104,7 +102,7 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
         </div>
       </div>
 
-      <div className="album-card-info" style={{ '--card-skeu-y': cardSkeuY } as React.CSSProperties}>
+      <div className="album-card-info">
         <div className="album-card-title" title={cover.title}>{cover.title}</div>
         <div className="album-card-artist" title={cover.artist}>{cover.artist}</div>
         <div className="cover-card-meta">

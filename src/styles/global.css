@@ -60,7 +60,7 @@
   --skeu-btn: url('/themes/themelight/btn btn-primary_light-mode.jpg');
   --skeu-theme-btn: url('/themes/themelight/btn btn-ghost header-theme-btn_light-mode.jpg');
   /* Skeuomorphic tint colours (rgba so they work as CSS background layers) */
-  --skeu-card-tint: rgba(255, 243, 232, 0.52);
+  --skeu-card-tint: rgba(255, 243, 232, 0.32);
   --skeu-hero-tint: rgba(115, 73, 42, 0.62);
 
   /* Fonts */
@@ -449,7 +449,7 @@ h1, h2, h3, h4, h5, h6 {
     linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
     var(--skeu-card);
   background-size: 100% 100%, cover;
-  background-position: center, center var(--card-skeu-y, 0%);
+  background-position: center, center;
 }
 
 .album-card-title {
