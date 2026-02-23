@@ -1,10 +1,46 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { slugifyArtist } from '../lib/coverRoutes';
 
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
 
 function coverThumbUrl(storagePath: string) {
   return `${SUPABASE_URL}/storage/v1/render/image/public/covers_cafe_covers/${storagePath}?width=80&height=80&resize=cover&quality=70`;
+}
+
+// ── iTunes helpers ──────────────────────────────────────────────────────────
+
+function getFullResAppleCover(smallUrl: string): string {
+  if (!smallUrl || !smallUrl.includes('mzstatic.com')) return smallUrl;
+  let full = smallUrl
+    .replace(/https:\/\/is\d+-ssl\.mzstatic\.com\/image\/thumb\//, 'https://a1.mzstatic.com/r40/')
+    .replace(/https:\/\/is\d+-ssl\.mzstatic\.com\/image\//, 'https://a1.mzstatic.com/r40/');
+  full = full.replace(/\/\d+x\d+(bb|w|cc|sr)?\.(jpg|webp|png|tif)$/, '');
+  if (full === smallUrl) {
+    full = smallUrl.replace(/100x100bb|60x60bb/, '1400x1400bb');
+  }
+  return full;
+}
+
+interface ItunesResult {
+  artist_name: string;
+  artist_slug: string;
+  album_title: string;
+  release_year: string | null;
+  album_cover_url: string;
+  pixel_dimensions: string | null;
+  country: string;
+}
+
+interface SavedOfficialCover {
+  id: string;
+  artist_name: string;
+  artist_slug: string;
+  album_title: string;
+  release_year: string | null;
+  album_cover_url: string;
+  pixel_dimensions: string | null;
+  country: string;
 }
 
 type Report = {
@@ -89,6 +125,19 @@ export default function Cms() {
 
   // Legal operations
   const [removeTag, setRemoveTag] = useState('');
+
+  // Official covers
+  const [itunesArtist, setItunesArtist] = useState('');
+  const [itunesAlbum, setItunesAlbum] = useState('');
+  const [itunesCountry, setItunesCountry] = useState('us');
+  const [itunesResults, setItunesResults] = useState<ItunesResult[]>([]);
+  const [itunesSelected, setItunesSelected] = useState<Set<number>>(new Set());
+  const [itunesSearching, setItunesSearching] = useState(false);
+  const [itunesSaving, setItunesSaving] = useState(false);
+  const [savedCovers, setSavedCovers] = useState<SavedOfficialCover[]>([]);
+  const [savedCoversArtistFilter, setSavedCoversArtistFilter] = useState('');
+  const [loadingSaved, setLoadingSaved] = useState(false);
+  const savedCoversLoadedRef = useRef(false);
 
   const token = session?.access_token;
 
@@ -279,6 +328,92 @@ export default function Cms() {
       setRemoveTag('');
     }
     await loadDashboard();
+    setBusyId(null);
+  }
+
+  // ── Official covers ────────────────────────────────────────────────────────
+
+  async function loadSavedOfficialCovers() {
+    setLoadingSaved(true);
+    const res = await fetch('/api/official-covers');
+    if (res.ok) {
+      const data = await res.json() as { covers: SavedOfficialCover[] };
+      setSavedCovers(data.covers ?? []);
+    }
+    setLoadingSaved(false);
+  }
+
+  async function searchItunes() {
+    const artist = itunesArtist.trim();
+    if (!artist) return;
+    setItunesSearching(true);
+    setItunesResults([]);
+    setItunesSelected(new Set());
+    try {
+      const term = encodeURIComponent(`${artist} ${itunesAlbum}`.trim());
+      const url = `https://itunes.apple.com/search?term=${term}&entity=album&country=${itunesCountry}&limit=25`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('iTunes fetch failed');
+      const { results } = await res.json() as { results: Array<{ artworkUrl100?: string; artistName?: string; collectionName?: string; releaseDate?: string }> };
+
+      const items: ItunesResult[] = [];
+      for (const item of results) {
+        const small = item.artworkUrl100;
+        if (!small) continue;
+        items.push({
+          artist_name: (item.artistName ?? artist).trim(),
+          artist_slug: slugifyArtist((item.artistName ?? artist).trim()),
+          album_title: (item.collectionName ?? '').trim(),
+          release_year: item.releaseDate?.slice(0, 4) ?? null,
+          album_cover_url: getFullResAppleCover(small),
+          pixel_dimensions: null,
+          country: itunesCountry,
+        });
+      }
+      setItunesResults(items);
+      setItunesSelected(new Set(items.map((_, i) => i)));
+    } catch {
+      setError('iTunes search failed. Try again.');
+    }
+    setItunesSearching(false);
+  }
+
+  async function saveSelectedOfficialCovers() {
+    if (!token || itunesSelected.size === 0) return;
+    setItunesSaving(true);
+    setError(null);
+    const covers = [...itunesSelected].map((i) => itunesResults[i]).filter(Boolean);
+    const res = await fetch('/api/cms/save-official-covers', {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ covers }),
+    });
+    if (!res.ok) {
+      setError('Could not save official covers.');
+    } else {
+      const payload = await res.json() as { saved?: number };
+      flash(`Saved ${payload.saved ?? covers.length} official cover(s).`);
+      setItunesResults([]);
+      setItunesSelected(new Set());
+      await loadSavedOfficialCovers();
+    }
+    setItunesSaving(false);
+  }
+
+  async function deleteOfficialCover(id: string) {
+    if (!token) return;
+    setBusyId(`official-del-${id}`);
+    setError(null);
+    const res = await fetch('/api/cms/delete-official-cover', {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ id }),
+    });
+    if (!res.ok) setError('Could not delete official cover.');
+    else {
+      flash('Official cover deleted.');
+      setSavedCovers((prev) => prev.filter((c) => c.id !== id));
+    }
     setBusyId(null);
   }
 
@@ -596,6 +731,167 @@ export default function Cms() {
         )}
       </section>
 
+      {/* ── Official covers ────────────────────────────────────────────── */}
+      <section className="surface cms-section">
+        <h2 className="cms-h2">Official covers</h2>
+        <p className="cms-desc">Search Apple Music / iTunes and save official album artwork to the Official section.</p>
+
+        {/* iTunes search */}
+        <div className="cms-itunes-row">
+          <input
+            className="form-input"
+            placeholder="Artist (required)"
+            value={itunesArtist}
+            onChange={(e) => setItunesArtist(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') searchItunes(); }}
+            style={{ flex: '2 1 160px' }}
+          />
+          <input
+            className="form-input"
+            placeholder="Album (optional)"
+            value={itunesAlbum}
+            onChange={(e) => setItunesAlbum(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') searchItunes(); }}
+            style={{ flex: '2 1 160px' }}
+          />
+          <select
+            className="form-input cms-select"
+            value={itunesCountry}
+            onChange={(e) => setItunesCountry(e.target.value)}
+            style={{ flex: '0 0 auto' }}
+          >
+            <option value="us">US</option>
+            <option value="gb">UK</option>
+            <option value="jp">Japan</option>
+            <option value="ca">Canada</option>
+            <option value="au">Australia</option>
+          </select>
+          <button
+            className="btn btn-primary"
+            onClick={searchItunes}
+            disabled={itunesSearching || !itunesArtist.trim()}
+          >
+            {itunesSearching ? 'Searching…' : 'Search iTunes'}
+          </button>
+        </div>
+
+        {itunesResults.length > 0 && (
+          <>
+            <div className="cms-itunes-controls">
+              <span className="cms-count">{itunesResults.length} result{itunesResults.length !== 1 ? 's' : ''}</span>
+              <button
+                className="btn"
+                style={{ fontSize: 17, padding: '3px 10px' }}
+                onClick={() => setItunesSelected(new Set(itunesResults.map((_, i) => i)))}
+              >
+                Select all
+              </button>
+              <button
+                className="btn"
+                style={{ fontSize: 17, padding: '3px 10px' }}
+                onClick={() => setItunesSelected(new Set())}
+              >
+                Deselect all
+              </button>
+              <button
+                className="btn btn-primary"
+                disabled={itunesSaving || itunesSelected.size === 0}
+                onClick={saveSelectedOfficialCovers}
+              >
+                {itunesSaving ? 'Saving…' : `Save ${itunesSelected.size} selected`}
+              </button>
+            </div>
+
+            <div className="cms-itunes-grid">
+              {itunesResults.map((item, i) => (
+                <button
+                  key={i}
+                  className={`cms-itunes-card${itunesSelected.has(i) ? ' cms-itunes-card--selected' : ''}`}
+                  onClick={() => setItunesSelected((prev) => {
+                    const next = new Set(prev);
+                    next.has(i) ? next.delete(i) : next.add(i);
+                    return next;
+                  })}
+                  title={`${item.album_title}${item.release_year ? ` (${item.release_year})` : ''}`}
+                >
+                  <div className="cms-itunes-img-wrap">
+                    <img src={item.album_cover_url} alt={item.album_title} className="cms-itunes-img" loading="lazy" />
+                    {itunesSelected.has(i) && <div className="cms-itunes-check">✓</div>}
+                  </div>
+                  <div className="cms-itunes-meta">
+                    <span className="cms-itunes-title">{item.album_title}</span>
+                    <span className="cms-itunes-artist">{item.artist_name}{item.release_year ? ` · ${item.release_year}` : ''}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Saved official covers */}
+        <div className="cms-section-header" style={{ marginTop: 24, marginBottom: 8 }}>
+          <h3 className="cms-h2" style={{ fontSize: 19, margin: 0 }}>Saved official covers</h3>
+          <button
+            className="btn"
+            style={{ fontSize: 17, padding: '3px 10px' }}
+            onClick={() => { savedCoversLoadedRef.current = true; loadSavedOfficialCovers(); }}
+            disabled={loadingSaved}
+          >
+            {loadingSaved ? 'Loading…' : savedCoversLoadedRef.current ? 'Refresh' : 'Load'}
+          </button>
+        </div>
+
+        {savedCoversLoadedRef.current && (
+          <>
+            <input
+              className="form-input"
+              placeholder="Filter by artist or album…"
+              value={savedCoversArtistFilter}
+              onChange={(e) => setSavedCoversArtistFilter(e.target.value)}
+              style={{ marginBottom: 10 }}
+            />
+            {loadingSaved ? (
+              <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>Loading…</p>
+            ) : savedCovers.length === 0 ? (
+              <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>No official covers saved yet.</p>
+            ) : (
+              <div className="cms-covers-list">
+                {savedCovers
+                  .filter((c) => {
+                    const q = savedCoversArtistFilter.trim().toLowerCase();
+                    if (!q) return true;
+                    return c.artist_name.toLowerCase().includes(q) || c.album_title.toLowerCase().includes(q);
+                  })
+                  .map((cover) => (
+                    <div key={cover.id} className="cms-cover-row">
+                      <img
+                        src={cover.album_cover_url}
+                        alt={cover.album_title}
+                        className="cms-cover-thumb"
+                        loading="lazy"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                      <div className="cms-cover-meta">
+                        <strong>{cover.album_title}</strong>
+                        <span>{cover.artist_name}{cover.release_year ? ` · ${cover.release_year}` : ''}</span>
+                      </div>
+                      <div className="cms-actions cms-actions--inline">
+                        <button
+                          className="btn cms-btn-danger"
+                          disabled={busyId === `official-del-${cover.id}`}
+                          onClick={() => deleteOfficialCover(cover.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
       {/* ── Legal operations ───────────────────────────────────────────── */}
       <section className="surface cms-section">
         <h2 className="cms-h2">Legal operations</h2>
@@ -681,6 +977,43 @@ export default function Cms() {
         }
         .cms-btn-danger:hover { background: linear-gradient(180deg, #e85040 0%, #c03828 100%); transform: translateY(-1px); }
         .cms-btn-danger:active { transform: translateY(0); }
+
+        /* Official covers / iTunes */
+        .cms-itunes-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .cms-itunes-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .cms-itunes-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+          gap: 10px;
+          margin-bottom: 6px;
+        }
+        .cms-itunes-card {
+          display: flex; flex-direction: column; gap: 0;
+          cursor: pointer; text-align: left; width: 100%; padding: 0;
+          background: var(--body-card-bg); border: 2px solid var(--body-card-border);
+          border-radius: 6px; overflow: hidden;
+          transition: border-color 0.12s, box-shadow 0.12s;
+        }
+        .cms-itunes-card:hover { border-color: var(--accent); }
+        .cms-itunes-card--selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(192,90,26,0.25); }
+        .cms-itunes-img-wrap {
+          position: relative; width: 100%; aspect-ratio: 1;
+          background: var(--sidebar-bg); overflow: hidden;
+        }
+        .cms-itunes-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .cms-itunes-check {
+          position: absolute; top: 5px; right: 5px;
+          width: 22px; height: 22px; border-radius: 50%;
+          background: var(--accent); color: #fff;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 13px; font-weight: bold;
+        }
+        .cms-itunes-meta { padding: 7px 9px; display: flex; flex-direction: column; gap: 2px; }
+        .cms-itunes-title {
+          font-size: 18px; color: var(--body-text);
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .cms-itunes-artist { font-size: 16px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       `}</style>
     </div>
   );

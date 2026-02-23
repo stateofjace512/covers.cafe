@@ -24,6 +24,7 @@ import Terms from './routes/Terms';
 import About from './routes/About';
 import Cms from './routes/Cms';
 import Acotw from './routes/Acotw';
+import Official from './routes/Official';
 import NotFound from './routes/NotFound';
 import CoverDetail from './routes/CoverDetail';
 
@@ -140,6 +141,10 @@ function getSeoForPath(pathname: string): SeoPayload {
     title: 'Album Cover of the Week | covers.cafe',
     description: 'See weekly featured picks and vote results for Album Cover of the Week on covers.cafe.',
   };
+  if (pathname === '/official') return {
+    title: 'Official Covers | covers.cafe',
+    description: 'Browse official album artwork sourced from Apple Music and iTunes, organised by artist on covers.cafe.',
+  };
   if (pathname === '/cms') return {
     title: 'CMS | covers.cafe',
     description: 'Admin and moderation tools for managing covers.cafe content and reports.',
@@ -252,6 +257,7 @@ function AppContent() {
           <Route path="/terms" element={<Terms />} />
           <Route path="/about" element={<About />} />
           <Route path="/acotw" element={<Acotw />} />
+          <Route path="/official" element={<Official />} />
           <Route path="/cms" element={<Cms />} />
           <Route path="/cover/:slug" element={<CoverDetail />} />
           <Route path="*" element={<NotFound />} />

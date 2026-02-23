@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabase';
 import GalleryIcon from './GalleryIcon';
 import TrophyIcon from './TrophyIcon';
 import ArtistsIcon from './ArtistsIcon';
+import DiscIcon from './DiscIcon';
 import FavoritesIcon from './FavoritesIcon';
 import UploadDownloadIcon from './UploadDownloadIcon';
 import GearIcon from './GearIcon';
@@ -17,6 +18,7 @@ import ShieldIcon from './ShieldIcon';
 const NAV = [
   { section: 'Discover', label: 'Gallery',   icon: <GalleryIcon size={18} />,        path: '/' },
   {                       label: 'ACOTW',     icon: <TrophyIcon size={18} />,         path: '/acotw' },
+  {                       label: 'Official',  icon: <DiscIcon size={18} />,           path: '/official' },
   {                       label: 'Artists',   icon: <ArtistsIcon size={18} />,        path: '/artists' },
   {                       label: 'Users',     icon: <UsersIcon size={18} />,          path: '/users' },
   {                       label: 'Favorites', icon: <FavoritesIcon size={18} />,      path: '/favorites' },
