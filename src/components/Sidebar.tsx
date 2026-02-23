@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { User, UserRound } from 'lucide-react';
+import { UserRound } from 'lucide-react';
+import UserIcon from './UserIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { getAvatarSrc } from '../lib/media';
 import { supabase } from '../lib/supabase';
@@ -23,7 +24,7 @@ const NAV = [
   {                       label: 'Favorites', icon: <FavoritesIcon size={18} />,      path: '/favorites' },
   { section: 'Account',  label: 'Upload',    icon: <UploadDownloadIcon size={18} />, path: '/upload' },
   {                       label: 'Downloads', icon: <UploadDownloadIcon size={18} />, path: '/downloads' },
-  {                       label: 'Profile',   icon: <User size={18} />,               path: '/profile' },
+  {                       label: 'Profile',   icon: <UserIcon size={18} />,            path: '/profile' },
   { section: 'More',     label: 'Settings',  icon: <GearIcon size={18} />,           path: '/settings' },
   {                       label: 'About',     icon: <AboutIcon size={18} />,          path: '/about' },
 ] as const;
@@ -74,7 +75,7 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
         <div className="sidebar-avatar">
           {profile && getAvatarSrc(profile)
             ? <img src={getAvatarSrc(profile)!} alt="avatar" className="sidebar-avatar-img" />
-            : <User size={26} />
+            : <UserIcon size={26} />
           }
         </div>
         <div className="sidebar-user-info">

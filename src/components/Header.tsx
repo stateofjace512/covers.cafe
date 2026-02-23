@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, LogOut, User, Menu, X } from 'lucide-react';
+import { Search, LogOut, Menu, X } from 'lucide-react';
 import MoonIcon from './MoonIcon';
 import SunIcon from './SunIcon';
+import UserIcon from './UserIcon';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationBell from './NotificationBell';
 
@@ -76,7 +77,7 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
         {user ? (
           <div className="header-user-group">
             <button className="btn btn-ghost header-user-btn" onClick={() => navigate('/profile')}>
-              <User size={15} />
+              <UserIcon size={15} />
               <span className="header-username">
                 {profile?.display_name ?? profile?.username ?? user.email?.split('@')[0]}
               </span>
