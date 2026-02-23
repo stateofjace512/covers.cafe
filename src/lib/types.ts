@@ -12,6 +12,8 @@ export interface Profile {
 
 export interface Cover {
   id: string;
+  public_id?: number;
+  page_slug?: string;
   user_id: string;
   title: string;
   artist: string;

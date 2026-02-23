@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import SiteFooter from './SiteFooter';
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
@@ -19,7 +20,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       />
       <Sidebar isMobileNavOpen={isMobileNavOpen} onNavigate={() => setIsMobileNavOpen(false)} />
       {isMobileNavOpen && <button className="mobile-nav-backdrop" aria-label="Close menu" onClick={() => setIsMobileNavOpen(false)} />}
-      <main className="site-main">{children}</main>
+      <main className="site-main">{children}<SiteFooter /></main>
     </div>
   );
 }

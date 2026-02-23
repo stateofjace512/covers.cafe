@@ -117,18 +117,6 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="sidebar-footer">
-        <span className="sidebar-footer-text">covers.cafe</span>
-        <div className="sidebar-footer-links">
-          <button className="sidebar-footer-link" onClick={() => { navigate('/privacy'); onNavigate(); }}>Privacy</button>
-          <span className="sidebar-footer-sep">·</span>
-          <button className="sidebar-footer-link" onClick={() => { navigate('/terms'); onNavigate(); }}>Terms</button>
-          <span className="sidebar-footer-sep">·</span>
-          <button className="sidebar-footer-link" onClick={() => { navigate('/about'); onNavigate(); }}>About</button>
-        </div>
-      </div>
-
       <style>{`
         .sidebar-user-panel {
           display: flex; align-items: center; gap: 12px;
@@ -197,24 +185,6 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
           width: 6px; height: 6px; border-radius: 50%;
           background: #f0a060; box-shadow: 0 0 6px rgba(240,160,96,0.6); flex-shrink: 0;
         }
-        .sidebar-footer {
-          border-top: 1px solid var(--sidebar-border); padding: 10px 16px;
-          display: flex; align-items: center; justify-content: space-between;
-          /* Solid base color prevents scrolled nav items from bleeding through */
-          background-color: var(--sidebar-bg);
-          background-image: linear-gradient(0deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0) 100%);
-          position: sticky; bottom: 0;
-          z-index: 1;
-        }
-        .sidebar-footer-text { font-size: 11px; font-weight: bold; color: var(--sidebar-text-muted); letter-spacing: 0.3px; }
-        .sidebar-footer-links { display: flex; align-items: center; gap: 5px; }
-        .sidebar-footer-link {
-          font-size: 10px; color: var(--sidebar-text-muted); background: none;
-          border: none; cursor: pointer; padding: 0; box-shadow: none;
-          text-decoration: underline; text-underline-offset: 2px;
-        }
-        .sidebar-footer-link:hover { color: var(--accent); transform: none; box-shadow: none; }
-        .sidebar-footer-sep { font-size: 10px; color: var(--sidebar-text-muted); }
       `}</style>
     </aside>
   );

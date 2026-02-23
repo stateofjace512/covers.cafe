@@ -5,12 +5,13 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
 import { getCoverImageSrc } from '../lib/media';
+import { getCoverPath } from '../lib/coverRoutes';
 
 interface Props {
   cover: Cover;
   isFavorited: boolean;
   onToggleFavorite: (coverId: string) => void;
-  onClick: () => void;
+  onClick?: () => void;
   onDeleted?: (coverId: string) => void;
   onDragForCollection?: (cover: Cover) => void;
 }
@@ -43,7 +44,7 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
   return (
     <div
       className="album-card cover-card"
-      onClick={onClick}
+      onClick={() => (onClick ? onClick() : navigate(getCoverPath(cover)))}
       onMouseLeave={() => setConfirmDelete(false)}
       draggable
       onDragStart={(e) => {
