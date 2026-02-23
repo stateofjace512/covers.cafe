@@ -22,22 +22,9 @@ export default function SiteFooter() {
       <style>{`
         .site-footer {
           margin-top: auto;
-          padding-top: 40px;
           margin-left: -32px;
           margin-right: -32px;
           margin-bottom: -28px;
-          border-top: 2px solid var(--body-card-border);
-          background: linear-gradient(180deg, var(--body-card-bg) 0%, var(--body-bg) 100%);
-          background-image:
-            linear-gradient(180deg, var(--body-card-bg) 0%, var(--body-bg) 100%),
-            repeating-linear-gradient(
-              90deg,
-              transparent 0px,
-              transparent 18px,
-              rgba(100,50,10,0.03) 18px,
-              rgba(100,50,10,0.03) 20px
-            );
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
         }
 
         .site-footer-inner {
