@@ -465,7 +465,7 @@ export default function CoverDetail() {
 
       {/* Comments */}
       <div className="cover-page-comments-wrap">
-        <CoverComments coverId={cover.id} />
+        <CoverComments coverId={cover.id} cover={cover} />
       </div>
 
       {/* More by artist */}

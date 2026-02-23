@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { User, UserRoundCog } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
+import AchievementBadges from '../components/AchievementBadges';
 import { getAvatarSrc } from '../lib/media';
 
 export default function Profile() {
@@ -46,6 +47,9 @@ export default function Profile() {
             <UserRoundCog size={14} /> Edit Profile
           </button>
         </div>
+
+        {/* Achievements */}
+        <AchievementBadges userId={user.id} />
       </div>
 
       <section style={{ marginTop: 28 }}>

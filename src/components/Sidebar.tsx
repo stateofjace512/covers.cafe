@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 const NAV = [
   { section: 'Discover', label: 'Gallery',   icon: <Image size={18} />,           path: '/' },
   {                       label: 'ACOTW',     icon: <Trophy size={18} />,           path: '/acotw' },
+  {                       label: 'POH',       icon: <span style={{ fontSize: 16, lineHeight: 1 }}>🏟️</span>, path: '/poh' },
   {                       label: 'Artists',   icon: <Music size={18} />,            path: '/artists' },
   {                       label: 'Users',     icon: <UserRound size={18} />,        path: '/users' },
   {                       label: 'Favorites', icon: <Star size={18} />,             path: '/favorites' },
