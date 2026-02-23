@@ -452,7 +452,7 @@ export default function CoverComments({ coverId, cover }: Props) {
           outline: none;
           box-shadow: none;
           resize: none;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-body);
           line-height: 1.5;
         }
 
@@ -476,7 +476,7 @@ export default function CoverComments({ coverId, cover }: Props) {
           cursor: pointer;
           padding: 0;
           box-shadow: none;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-body);
           margin-right: auto;
         }
 
@@ -535,7 +535,7 @@ export default function CoverComments({ coverId, cover }: Props) {
           color: var(--accent);
           padding: 0;
           box-shadow: none;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-body);
           letter-spacing: 0.2px;
         }
 
@@ -595,7 +595,7 @@ export default function CoverComments({ coverId, cover }: Props) {
           font-size: 11px;
           color: var(--body-text-muted);
           cursor: pointer;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-body);
           box-shadow: none;
           transition: background 0.1s, color 0.1s;
         }

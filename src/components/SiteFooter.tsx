@@ -79,7 +79,7 @@ export default function SiteFooter() {
           border-radius: 4px;
           color: var(--body-text-muted);
           font-size: 12px;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-body);
           cursor: pointer;
           padding: 4px 10px;
           box-shadow: none;

@@ -748,7 +748,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           width: 100%; padding: 8px 12px;
           border-radius: 4px; border: 1px solid var(--body-card-border);
           background: var(--body-card-bg); color: var(--body-text); font-size: 13px;
-          box-shadow: var(--shadow-inset-sm); outline: none; font-family: Arial, Helvetica, sans-serif;
+          box-shadow: var(--shadow-inset-sm); outline: none; font-family: var(--font-body);
         }
         .form-input:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
         .upload-spinner { animation: spin 0.8s linear infinite; }

@@ -519,16 +519,16 @@ export default function CoverDetail() {
           border-radius: 4px; box-shadow: var(--shadow-md);
           display: flex; flex-direction: column; min-width: 120px; overflow: hidden;
         }
-        .cover-size-option { padding: 8px 14px; text-align: left; font-size: 13px; font-weight: bold; background: none; border: none; color: var(--body-text); cursor: pointer; box-shadow: none; font-family: Arial, Helvetica, sans-serif; }
+        .cover-size-option { padding: 8px 14px; text-align: left; font-size: 13px; font-weight: bold; background: none; border: none; color: var(--body-text); cursor: pointer; box-shadow: none; font-family: var(--font-body); }
         .cover-size-option:hover { background: var(--accent); color: white; transform: none; }
 
         /* Metadata */
         .cover-page-meta { max-width: 560px; margin: 0 auto 14px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
         .cover-page-title { font-size: 24px; font-weight: bold; color: var(--body-text); text-shadow: 0 1px 0 rgba(255,255,255,0.45); margin-bottom: 2px; line-height: 1.25; }
         [data-theme="dark"] .cover-page-title { text-shadow: none; }
-        .cover-page-artist-link { font-size: 17px; font-weight: bold; color: var(--body-text-muted); background: none; border: none; cursor: pointer; padding: 0; box-shadow: none; font-family: Arial, Helvetica, sans-serif; }
+        .cover-page-artist-link { font-size: 17px; font-weight: bold; color: var(--body-text-muted); background: none; border: none; cursor: pointer; padding: 0; box-shadow: none; font-family: var(--font-body); }
         .cover-page-artist-link:hover { color: var(--accent); text-decoration: underline; }
-        .cover-page-uploader { display: inline-flex; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; font-size: 13px; color: var(--accent); padding: 0; box-shadow: none; font-family: Arial, Helvetica, sans-serif; font-weight: bold; }
+        .cover-page-uploader { display: inline-flex; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; font-size: 13px; color: var(--accent); padding: 0; box-shadow: none; font-family: var(--font-body); font-weight: bold; }
         .cover-page-uploader:hover { color: var(--accent-light); text-decoration: underline; }
         .cover-meta-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
         .cover-meta-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--body-text-muted); background: var(--body-border); padding: 2px 7px; border-radius: 3px; font-weight: bold; }
@@ -556,7 +556,7 @@ export default function CoverDetail() {
         .cover-panel-form { display: flex; flex-direction: column; gap: 8px; }
         .cover-panel-label { font-size: 13px; font-weight: bold; color: var(--body-text); }
         .cover-panel-hint { font-size: 11px; color: var(--body-text-muted); font-weight: normal; }
-        .cover-panel-input { flex: 1; min-width: 0; padding: 7px 10px; border-radius: 4px; border: 1px solid var(--body-card-border); background: var(--body-card-bg); color: var(--body-text); font-size: 13px; font-family: Arial, Helvetica, sans-serif; box-shadow: var(--shadow-inset-sm); outline: none; width: 100%; }
+        .cover-panel-input { flex: 1; min-width: 0; padding: 7px 10px; border-radius: 4px; border: 1px solid var(--body-card-border); background: var(--body-card-bg); color: var(--body-text); font-size: 13px; font-family: var(--font-body); box-shadow: var(--shadow-inset-sm); outline: none; width: 100%; }
         .cover-panel-input:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
         .cover-panel-textarea { resize: none; }
         .cover-panel-status { font-size: 12px; color: var(--body-text-muted); padding: 6px 10px; background: var(--body-border); border-radius: 4px; }

@@ -104,7 +104,7 @@ export default function Artists() {
           padding: 7px 12px; border-radius: 4px; border: 1px solid var(--body-card-border);
           background: var(--body-card-bg); color: var(--body-text); font-size: 13px;
           box-shadow: var(--shadow-inset-sm); outline: none; width: 220px;
-          font-family: Arial, Helvetica, sans-serif; transition: border-color 0.15s, box-shadow 0.15s;
+          font-family: var(--font-body); transition: border-color 0.15s, box-shadow 0.15s;
         }
         .toolbar-search:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
         .artist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }

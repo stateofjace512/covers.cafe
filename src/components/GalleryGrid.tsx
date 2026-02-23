@@ -351,7 +351,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
           border: 1px solid var(--body-card-border);
           background: var(--body-card-bg); color: var(--body-text);
           box-shadow: var(--shadow-sm); cursor: pointer; outline: none;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-body);
         }
         .gallery-sort-select:focus { border-color: var(--accent); }
 

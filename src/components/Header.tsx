@@ -115,7 +115,7 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
         }
         .header-logo-text {
           font-size: 22px; font-weight: bold; letter-spacing: -0.5px;
-          text-shadow: 0 1px 3px rgba(0,0,0,0.4); font-family: Arial, Helvetica, sans-serif;
+          text-shadow: 0 1px 3px rgba(0,0,0,0.4); font-family: var(--font-header);
         }
         .header-logo-dot { color: #f0a060; text-shadow: 0 0 8px rgba(240,160,96,0.6); }
         .header-search-wrap {

@@ -458,7 +458,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
           background: none; border: none; border-bottom: 3px solid transparent;
           cursor: pointer; color: var(--body-text-muted); margin-bottom: -1px;
           transition: color 0.12s, border-color 0.12s; box-shadow: none;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-body);
         }
         .auth-tab:hover { color: var(--body-text); transform: none; box-shadow: none; }
         .auth-tab--active { color: var(--accent); border-bottom-color: var(--accent); }
@@ -488,7 +488,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
           font-size: 14px;
           box-shadow: var(--shadow-inset-sm);
           outline: none;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-body);
           transition: border-color 0.15s, box-shadow 0.15s;
         }
         .auth-input:focus {
@@ -536,7 +536,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
         .auth-switch-btn {
           background: none; border: none; color: var(--accent); font-weight: bold;
           cursor: pointer; font-size: 13px; padding: 0; box-shadow: none;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-body);
         }
         .auth-switch-btn:hover { color: var(--accent-light); transform: none; box-shadow: none; }
       `}</style>
