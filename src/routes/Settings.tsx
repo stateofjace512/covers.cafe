@@ -506,36 +506,26 @@ export default function Settings() {
               <span className="settings-row-desc">Use flat colors and remove textured theme image layers.</span>
             </div>
             <div className="settings-row-control">
-              <button
-                type="button"
-                className={`settings-icon-toggle${noThemeImages ? ' settings-icon-toggle--active' : ''}`}
-                onClick={() => setNoThemeImages((prev) => !prev)}
-                aria-pressed={noThemeImages}
-              >
-                <span className="settings-icon-toggle-track" aria-hidden="true">
-                  <span className="settings-icon-toggle-strip">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 16" width="32" height="16" className="toggle-icon toggle-icon--off">
-                      <path d="M30.48 2.28h-1.53V0.76H3.05v1.52H1.53v1.53H0v7.62h1.53v1.52h1.52v1.52h25.9v-1.52h1.53v-1.52H32V3.81h-1.52ZM12.19 9.9h-1.52v1.53H9.15v1.52H4.57v-1.52H3.05V9.9H1.53V5.33h1.52V3.81h1.52V2.28h4.58v1.53h1.52v1.52h1.52Z"/>
-                      <path d="M9.15 5.33h1.52v3.05H9.15Z"/>
-                      <path d="M7.62 3.81h1.53v1.52H7.62Z"/>
-                    </svg>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 16 32 16" width="32" height="16" className="toggle-icon toggle-icon--on">
-                      <path d="M30.48 20.57H32v7.62h-1.52Z"/>
-                      <path d="M25.91 20.57h1.52v1.52h-1.52Z"/>
-                      <path d="M18.29 20.57h1.52v7.62h-1.52Z"/>
-                      <path d="M28.95 28.19h1.53v1.52h-1.53Z"/>
-                      <path d="M28.95 19.04h1.53v1.53h-1.53Z"/>
-                      <path d="M27.43 22.09h1.52v3.05h-1.52Z"/>
-                      <path d="m21.34 29.71 0 -1.52 -1.53 0 0 1.52 -16.76 0 0 1.53 25.9 0 0 -1.53 -7.61 0z"/>
-                      <path d="m19.81 19.04 0 1.53 1.53 0 0 -1.53 7.61 0 0 -1.52 -25.9 0 0 1.52 16.76 0z"/>
-                      <path d="M1.53 28.19h1.52v1.52H1.53Z"/>
-                      <path d="M1.53 19.04h1.52v1.53H1.53Z"/>
-                      <path d="M0 20.57h1.53v7.62H0Z"/>
-                    </svg>
-                  </span>
-                </span>
+              <div className="settings-pixel-toggle-wrap">
+                <button
+                  type="button"
+                  className="settings-icon-toggle"
+                  role="switch"
+                  aria-checked={noThemeImages}
+                  aria-label="No theme images"
+                  onClick={() => setNoThemeImages((prev) => !prev)}
+                >
+                  <svg width="40" height="20" viewBox="0 0 32 16" className="toggle-icon" aria-hidden="true">
+                    <rect x="1" y="1" width="30" height="14" fill="none" stroke="currentColor" strokeWidth="2" />
+                    <rect x="3" y="3" width="26" height="10" fill="currentColor" opacity="0.15" />
+                    <g className={`toggle-knob${noThemeImages ? ' toggle-knob--on' : ''}`}>
+                      <rect x="3" y="3" width="10" height="10" fill="currentColor" />
+                      <rect x="5" y="5" width="2" height="2" fill="currentColor" opacity="0.35" />
+                    </g>
+                  </svg>
+                </button>
                 <span className="settings-icon-toggle-label">{noThemeImages ? 'Yes' : 'No'}</span>
-              </button>
+              </div>
             </div>
           </div>
 
@@ -766,40 +756,36 @@ export default function Settings() {
           font-size: 18px;
           box-shadow: var(--shadow-sm);
         }
-        .settings-icon-toggle {
+        .settings-pixel-toggle-wrap {
           display: inline-flex;
           align-items: center;
           gap: 10px;
-          min-width: 92px;
-          justify-content: space-between;
-          padding: 5px 9px;
-          border-radius: 6px;
-          border: 1px solid var(--body-card-border);
-          background: var(--body-card-bg);
-          color: var(--body-text);
+          min-width: 100px;
+        }
+        .settings-icon-toggle {
+          appearance: none;
+          border: 0;
+          background: transparent;
+          padding: 0;
+          margin: 0;
           cursor: pointer;
-          box-shadow: var(--shadow-sm);
+          line-height: 0;
+          color: var(--body-text);
+          box-shadow: none;
         }
-        .settings-icon-toggle-track {
-          width: 32px;
-          height: 16px;
-          overflow: hidden;
-          display: inline-flex;
+        .settings-icon-toggle:hover { transform: none; box-shadow: none; }
+        .toggle-icon { display: block; width: 40px; height: 20px; }
+        .toggle-knob {
+          transform: translateX(0px);
+          transition: transform 160ms ease;
+          transform-origin: 0 0;
         }
-        .settings-icon-toggle-strip {
-          display: flex;
-          flex-direction: column;
-          transform: translateY(-16px);
-          transition: transform 0.22s ease;
+        .toggle-knob--on {
+          transform: translateX(16px);
         }
-        .settings-icon-toggle--active .settings-icon-toggle-strip {
-          transform: translateY(0);
-        }
-        .toggle-icon { display: block; width: 32px; height: 16px; fill: currentColor; }
         .settings-icon-toggle-label {
-          width: 2.4ch;
+          min-width: 2.6ch;
           text-align: center;
-          font-variant-numeric: tabular-nums;
         }
         .settings-input {
           width: 100%; padding: 8px 12px; border-radius: 4px;
