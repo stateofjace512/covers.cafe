@@ -484,7 +484,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .album-card-info {
   padding: 10px 12px;
-  min-height: 105px;
+  min-height: 130px;
   border-top: 1px solid var(--body-card-border);
   background-image:
     linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
