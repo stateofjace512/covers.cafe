@@ -151,7 +151,6 @@ export const POST: APIRoute = async ({ request }) => {
       session_id: identity.sessionId,
       local_storage_id: identity.localStorageId,
       user_agent_hash: identity.userAgentHash,
-      user_id: auth.user.id,
       author_username: authorUsername,
       abuse_score: abuseScore.total,
       is_shadow_banned: banDecision.shouldShadowBan,
