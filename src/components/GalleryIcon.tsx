@@ -3,24 +3,37 @@ interface Props {
   className?: string;
   style?: React.CSSProperties;
 }
-// GalleryIcon — pixel-art icon, fill inherits currentColor for theme support.
-// Original viewBox: 120×118.
+
 export default function GalleryIcon({ size = 18, className, style }: Props) {
-  const w = Math.round(size * (120 / 118));
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={w}
+      width={size}
       height={size}
-      viewBox="0 0 120 118"
+      viewBox="0 0 32 32"
       aria-hidden="true"
       className={className}
       style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
     >
-      <path
-        fill="currentColor"
-        d="M41 18h56v1h-56zM41 19h56v1h-56zM41 20h56v1h-56zM41 21h56v1h-56zM37 22h64v1h-64zM37 23h64v1h-64zM37 24h64v1h-64zM37 25h4v1h-4zM97 25h4v1h-4zM37 26h4v1h-4zM97 26h4v1h-4zM37 27h4v1h-4zM97 27h4v1h-4zM37 28h4v1h-4zM97 28h4v1h-4zM37 29h4v1h-4zM97 29h4v1h-4zM37 30h4v1h-4zM97 30h4v1h-4zM37 31h4v1h-4zM97 31h4v1h-4zM37 32h4v1h-4zM97 32h4v1h-4zM23 33h59v1h-59zM97 33h4v1h-4zM23 34h59v1h-59zM97 34h4v1h-4zM23 35h59v1h-59zM97 35h4v1h-4zM23 36h59v1h-59zM97 36h4v1h-4zM19 37h4v1h-4zM82 37h4v1h-4zM97 37h4v1h-4zM19 38h4v1h-4zM82 38h4v1h-4zM97 38h4v1h-4zM19 39h4v1h-4zM82 39h4v1h-4zM97 39h4v1h-4zM19 40h4v1h-4zM82 40h4v1h-4zM97 40h4v1h-4zM19 41h4v1h-4zM82 41h4v1h-4zM97 41h4v1h-4zM19 42h4v1h-4zM82 42h4v1h-4zM97 42h4v1h-4zM19 43h4v1h-4zM82 43h4v1h-4zM97 43h4v1h-4zM19 44h4v1h-4zM45 44h7v1h-7zM82 44h4v1h-4zM97 44h4v1h-4zM19 45h4v1h-4zM45 45h7v1h-7zM82 45h4v1h-4zM97 45h4v1h-4zM19 46h4v1h-4zM45 46h7v1h-7zM82 46h4v1h-4zM97 46h4v1h-4zM19 47h4v1h-4zM45 47h7v1h-7zM82 47h4v1h-4zM97 47h4v1h-4zM19 48h4v1h-4zM41 48h15v1h-15zM82 48h4v1h-4zM97 48h4v1h-4zM19 49h4v1h-4zM41 49h15v1h-15zM82 49h4v1h-4zM97 49h4v1h-4zM19 50h4v1h-4zM41 50h15v1h-15zM82 50h4v1h-4zM97 50h4v1h-4zM19 51h4v1h-4zM41 51h15v1h-15zM82 51h4v1h-4zM97 51h4v1h-4zM19 52h4v1h-4zM45 52h7v1h-7zM82 52h4v1h-4zM97 52h4v1h-4zM19 53h4v1h-4zM45 53h7v1h-7zM82 53h4v1h-4zM97 53h4v1h-4zM19 54h4v1h-4zM45 54h7v1h-7zM82 54h4v1h-4zM97 54h4v1h-4zM19 55h4v1h-4zM63 55h4v1h-4zM82 55h4v1h-4zM97 55h4v1h-4zM19 56h4v1h-4zM63 56h4v1h-4zM82 56h4v1h-4zM97 56h4v1h-4zM19 57h4v1h-4zM63 57h4v1h-4zM82 57h4v1h-4zM97 57h4v1h-4zM19 58h4v1h-4zM63 58h4v1h-4zM82 58h4v1h-4zM97 58h4v1h-4zM19 59h4v1h-4zM60 59h11v1h-11zM82 59h4v1h-4zM97 59h4v1h-4zM19 60h4v1h-4zM60 60h11v1h-11zM82 60h4v1h-4zM97 60h4v1h-4zM19 61h4v1h-4zM60 61h11v1h-11zM82 61h4v1h-4zM97 61h4v1h-4zM19 62h4v1h-4zM60 62h11v1h-11zM82 62h4v1h-4zM97 62h4v1h-4zM19 63h4v1h-4zM37 63h8v1h-8zM60 63h15v1h-15zM82 63h4v1h-4zM97 63h4v1h-4zM19 64h4v1h-4zM37 64h8v1h-8zM60 64h15v1h-15zM82 64h4v1h-4zM97 64h4v1h-4zM19 65h4v1h-4zM37 65h8v1h-8zM60 65h15v1h-15zM82 65h4v1h-4zM97 65h4v1h-4zM19 66h4v1h-4zM34 66h15v1h-15zM56 66h22v1h-22zM82 66h4v1h-4zM97 66h4v1h-4zM19 67h4v1h-4zM34 67h15v1h-15zM56 67h22v1h-22zM82 67h4v1h-4zM97 67h4v1h-4zM19 68h4v1h-4zM34 68h15v1h-15zM56 68h22v1h-22zM82 68h4v1h-4zM97 68h4v1h-4zM19 69h4v1h-4zM34 69h15v1h-15zM56 69h22v1h-22zM82 69h4v1h-4zM97 69h4v1h-4zM19 70h4v1h-4zM30 70h48v1h-48zM82 70h4v1h-4zM90 70h11v1h-11zM19 71h4v1h-4zM30 71h48v1h-48zM82 71h4v1h-4zM90 71h11v1h-11zM19 72h4v1h-4zM30 72h48v1h-48zM82 72h4v1h-4zM90 72h11v1h-11zM19 73h4v1h-4zM30 73h48v1h-48zM82 73h4v1h-4zM90 73h11v1h-11zM19 74h4v1h-4zM26 74h52v1h-52zM82 74h4v1h-4zM90 74h11v1h-11zM19 75h4v1h-4zM26 75h52v1h-52zM82 75h4v1h-4zM90 75h11v1h-11zM19 76h4v1h-4zM26 76h52v1h-52zM82 76h4v1h-4zM90 76h11v1h-11zM19 77h4v1h-4zM26 77h52v1h-52zM82 77h4v1h-4zM90 77h11v1h-11zM19 78h4v1h-4zM26 78h52v1h-52zM82 78h4v1h-4zM90 78h11v1h-11zM19 79h4v1h-4zM26 79h52v1h-52zM82 79h4v1h-4zM90 79h11v1h-11zM19 80h4v1h-4zM26 80h52v1h-52zM82 80h4v1h-4zM90 80h11v1h-11zM19 81h4v1h-4zM82 81h4v1h-4zM90 81h11v1h-11zM19 82h4v1h-4zM82 82h4v1h-4zM90 82h11v1h-11zM19 83h4v1h-4zM82 83h4v1h-4zM90 83h11v1h-11zM19 84h4v1h-4zM82 84h4v1h-4zM90 84h11v1h-11zM19 85h67v1h-67zM19 86h67v1h-67zM19 87h67v1h-67zM19 88h67v1h-67zM19 89h67v1h-67zM19 90h67v1h-67zM19 91h67v1h-67zM19 92h67v1h-67zM19 93h67v1h-67zM19 94h67v1h-67zM19 95h67v1h-67zM19 96h67v1h-67zM19 97h67v1h-67zM19 98h67v1h-67zM19 99h67v1h-67z"
-      />
+      <path fill="currentColor" d="M29.72 3.81h1.52v25.91h-1.52Z" />
+      <path fill="currentColor" d="M3.81 29.72h25.91v1.52H3.81Z" />
+      <path fill="currentColor" d="M26.67 2.29h1.52v24.38h-1.52Z" />
+      <path fill="currentColor" d="m23.62 14.48 -3.05 0 0 1.52 3.05 0 0 4.57 1.53 0 0 -15.23 -1.53 0 0 9.14z" />
+      <path fill="currentColor" d="m20.57 19.05 -1.52 0 0 1.52 -13.71 0 0 1.53 18.28 0 0 -1.53 -3.05 0 0 -1.52z" />
+      <path fill="currentColor" d="M19.05 16h1.52v1.53h-1.52Z" />
+      <path fill="currentColor" d="M17.53 17.53h1.52v1.52h-1.52Z" />
+      <path fill="currentColor" d="m17.53 12.95 3.04 0 0 -1.52 1.53 0 0 -3.05 -1.53 0 0 -1.52 -3.04 0 0 1.52 -1.53 0 0 3.05 1.53 0 0 1.52z" />
+      <path fill="currentColor" d="M16 16h1.53v1.53H16Z" />
+      <path fill="currentColor" d="M14.48 14.48H16V16h-1.52Z" />
+      <path fill="currentColor" d="M12.96 12.95h1.52v1.53h-1.52Z" />
+      <path fill="currentColor" d="M9.91 11.43h3.05v1.52H9.91Z" />
+      <path fill="currentColor" d="M8.38 12.95h1.53v1.53H8.38Z" />
+      <path fill="currentColor" d="M6.86 14.48h1.52V16H6.86Z" />
+      <path fill="currentColor" d="M5.34 3.81h18.28v1.53H5.34Z" />
+      <path fill="currentColor" d="m5.34 17.53 1.52 0 0 -1.53 -1.52 0 0 -10.66 -1.53 0 0 15.23 1.53 0 0 -3.04z" />
+      <path fill="currentColor" d="M2.29 0.76h24.38v1.53H2.29Z" />
+      <path fill="currentColor" d="M2.29 26.67h24.38v1.52H2.29Z" />
+      <path fill="currentColor" d="M0.76 2.29h1.53v24.38H0.76Z" />
     </svg>
   );
 }

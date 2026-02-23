@@ -3,24 +3,52 @@ interface Props {
   className?: string;
   style?: React.CSSProperties;
 }
-// SunIcon — pixel-art icon, fill inherits currentColor for theme support.
-// Original viewBox: 120×118.
+
 export default function SunIcon({ size = 18, className, style }: Props) {
-  const w = Math.round(size * (120 / 118));
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={w}
+      width={size}
       height={size}
-      viewBox="0 0 120 118"
+      viewBox="0 0 32 32"
       aria-hidden="true"
       className={className}
       style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
     >
-      <path
-        fill="currentColor"
-        d="M56 7h7v1h-7zM56 8h7v1h-7zM56 9h7v1h-7zM37 10h4v1h-4zM56 10h7v1h-7zM78 10h4v1h-4zM37 11h4v1h-4zM56 11h7v1h-7zM78 11h4v1h-4zM37 12h4v1h-4zM56 12h7v1h-7zM78 12h4v1h-4zM37 13h4v1h-4zM56 13h7v1h-7zM78 13h4v1h-4zM56 14h7v1h-7zM56 15h7v1h-7zM56 16h7v1h-7zM56 17h7v1h-7zM23 18h3v1h-3zM41 18h4v1h-4zM56 18h7v1h-7zM75 18h3v1h-3zM93 18h4v1h-4zM23 19h3v1h-3zM41 19h4v1h-4zM56 19h7v1h-7zM75 19h3v1h-3zM93 19h4v1h-4zM23 20h3v1h-3zM41 20h4v1h-4zM56 20h7v1h-7zM75 20h3v1h-3zM93 20h4v1h-4zM23 21h3v1h-3zM41 21h4v1h-4zM56 21h7v1h-7zM75 21h3v1h-3zM93 21h4v1h-4zM19 22h11v1h-11zM41 22h8v1h-8zM56 22h7v1h-7zM71 22h7v1h-7zM90 22h11v1h-11zM19 23h11v1h-11zM41 23h8v1h-8zM56 23h7v1h-7zM71 23h7v1h-7zM90 23h11v1h-11zM19 24h11v1h-11zM41 24h8v1h-8zM56 24h7v1h-7zM71 24h7v1h-7zM90 24h11v1h-11zM23 25h11v1h-11zM45 25h4v1h-4zM56 25h7v1h-7zM71 25h4v1h-4zM86 25h11v1h-11zM23 26h11v1h-11zM45 26h4v1h-4zM56 26h7v1h-7zM71 26h4v1h-4zM86 26h11v1h-11zM23 27h11v1h-11zM45 27h4v1h-4zM56 27h7v1h-7zM71 27h4v1h-4zM86 27h11v1h-11zM23 28h11v1h-11zM45 28h4v1h-4zM56 28h7v1h-7zM71 28h4v1h-4zM86 28h11v1h-11zM26 29h11v1h-11zM82 29h11v1h-11zM26 30h11v1h-11zM82 30h11v1h-11zM26 31h11v1h-11zM82 31h11v1h-11zM26 32h11v1h-11zM82 32h11v1h-11zM30 33h11v1h-11zM52 33h15v1h-15zM78 33h11v1h-11zM30 34h11v1h-11zM52 34h15v1h-15zM78 34h11v1h-11zM30 35h11v1h-11zM52 35h15v1h-15zM78 35h11v1h-11zM30 36h11v1h-11zM52 36h15v1h-15zM78 36h11v1h-11zM11 37h4v1h-4zM34 37h3v1h-3zM45 37h30v1h-30zM82 37h4v1h-4zM104 37h4v1h-4zM11 38h4v1h-4zM34 38h3v1h-3zM45 38h30v1h-30zM82 38h4v1h-4zM104 38h4v1h-4zM11 39h4v1h-4zM34 39h3v1h-3zM45 39h30v1h-30zM82 39h4v1h-4zM104 39h4v1h-4zM19 40h7v1h-7zM41 40h11v1h-11zM67 40h11v1h-11zM93 40h8v1h-8zM19 41h7v1h-7zM41 41h11v1h-11zM67 41h11v1h-11zM93 41h8v1h-8zM19 42h7v1h-7zM41 42h11v1h-11zM67 42h11v1h-11zM93 42h8v1h-8zM19 43h7v1h-7zM41 43h11v1h-11zM67 43h11v1h-11zM93 43h8v1h-8zM23 44h7v1h-7zM37 44h8v1h-8zM75 44h7v1h-7zM90 44h7v1h-7zM23 45h7v1h-7zM37 45h8v1h-8zM75 45h7v1h-7zM90 45h7v1h-7zM23 46h7v1h-7zM37 46h8v1h-8zM75 46h7v1h-7zM90 46h7v1h-7zM23 47h7v1h-7zM37 47h8v1h-8zM75 47h7v1h-7zM90 47h7v1h-7zM37 48h8v1h-8zM75 48h7v1h-7zM37 49h8v1h-8zM75 49h7v1h-7zM37 50h8v1h-8zM75 50h7v1h-7zM37 51h8v1h-8zM75 51h7v1h-7zM34 52h7v1h-7zM78 52h8v1h-8zM34 53h7v1h-7zM78 53h8v1h-8zM34 54h7v1h-7zM78 54h8v1h-8zM8 55h22v1h-22zM34 55h7v1h-7zM78 55h8v1h-8zM90 55h22v1h-22zM8 56h22v1h-22zM34 56h7v1h-7zM78 56h8v1h-8zM90 56h22v1h-22zM8 57h22v1h-22zM34 57h7v1h-7zM78 57h8v1h-8zM90 57h22v1h-22zM8 58h22v1h-22zM34 58h7v1h-7zM78 58h8v1h-8zM90 58h22v1h-22zM8 59h22v1h-22zM34 59h7v1h-7zM78 59h8v1h-8zM90 59h22v1h-22zM8 60h22v1h-22zM34 60h7v1h-7zM78 60h8v1h-8zM90 60h22v1h-22zM8 61h22v1h-22zM34 61h7v1h-7zM78 61h8v1h-8zM90 61h22v1h-22zM8 62h22v1h-22zM34 62h7v1h-7zM78 62h8v1h-8zM90 62h22v1h-22zM34 63h7v1h-7zM78 63h8v1h-8zM34 64h7v1h-7zM78 64h8v1h-8zM34 65h7v1h-7zM78 65h8v1h-8zM37 66h8v1h-8zM78 66h4v1h-4zM37 67h8v1h-8zM75 67h7v1h-7zM37 68h8v1h-8zM75 68h7v1h-7zM37 69h8v1h-8zM75 69h7v1h-7zM23 70h7v1h-7zM37 70h8v1h-8zM75 70h7v1h-7zM90 70h7v1h-7zM23 71h7v1h-7zM37 71h8v1h-8zM75 71h7v1h-7zM90 71h7v1h-7zM23 72h7v1h-7zM37 72h8v1h-8zM75 72h7v1h-7zM90 72h7v1h-7zM23 73h7v1h-7zM37 73h8v1h-8zM75 73h7v1h-7zM90 73h7v1h-7zM19 74h7v1h-7zM41 74h11v1h-11zM67 74h11v1h-11zM93 74h8v1h-8zM19 75h7v1h-7zM41 75h11v1h-11zM67 75h11v1h-11zM93 75h8v1h-8zM19 76h7v1h-7zM41 76h11v1h-11zM67 76h11v1h-11zM93 76h8v1h-8zM19 77h7v1h-7zM41 77h11v1h-11zM67 77h11v1h-11zM93 77h8v1h-8zM11 78h4v1h-4zM34 78h3v1h-3zM45 78h30v1h-30zM82 78h4v1h-4zM104 78h4v1h-4zM11 79h4v1h-4zM34 79h3v1h-3zM45 79h30v1h-30zM82 79h4v1h-4zM104 79h4v1h-4zM11 80h4v1h-4zM34 80h3v1h-3zM45 80h30v1h-30zM82 80h4v1h-4zM104 80h4v1h-4zM30 81h11v1h-11zM52 81h15v1h-15zM78 81h11v1h-11zM30 82h11v1h-11zM52 82h15v1h-15zM78 82h11v1h-11zM30 83h11v1h-11zM52 83h15v1h-15zM78 83h11v1h-11zM30 84h11v1h-11zM52 84h15v1h-15zM78 84h11v1h-11zM26 85h11v1h-11zM82 85h11v1h-11zM26 86h11v1h-11zM82 86h11v1h-11zM26 87h11v1h-11zM82 87h11v1h-11zM26 88h11v1h-11zM82 88h11v1h-11zM23 89h11v1h-11zM45 89h4v1h-4zM56 89h7v1h-7zM71 89h4v1h-4zM86 89h11v1h-11zM23 90h11v1h-11zM45 90h4v1h-4zM56 90h7v1h-7zM71 90h4v1h-4zM86 90h11v1h-11zM23 91h11v1h-11zM45 91h4v1h-4zM56 91h7v1h-7zM71 91h4v1h-4zM86 91h11v1h-11zM23 92h11v1h-11zM45 92h4v1h-4zM56 92h7v1h-7zM71 92h4v1h-4zM86 92h11v1h-11zM19 93h11v1h-11zM41 93h8v1h-8zM56 93h7v1h-7zM71 93h7v1h-7zM90 93h11v1h-11zM19 94h11v1h-11zM41 94h8v1h-8zM56 94h7v1h-7zM71 94h7v1h-7zM90 94h11v1h-11zM19 95h11v1h-11zM41 95h8v1h-8zM56 95h7v1h-7zM71 95h7v1h-7zM90 95h11v1h-11zM23 96h3v1h-3zM41 96h4v1h-4zM56 96h7v1h-7zM75 96h3v1h-3zM93 96h4v1h-4zM23 97h3v1h-3zM41 97h4v1h-4zM56 97h7v1h-7zM75 97h3v1h-3zM93 97h4v1h-4zM23 98h3v1h-3zM41 98h4v1h-4zM56 98h7v1h-7zM75 98h3v1h-3zM93 98h4v1h-4zM23 99h3v1h-3zM41 99h4v1h-4zM56 99h7v1h-7zM75 99h3v1h-3zM93 99h4v1h-4zM56 100h7v1h-7zM56 101h7v1h-7zM56 102h7v1h-7zM56 103h7v1h-7zM37 104h4v1h-4zM56 104h7v1h-7zM78 104h4v1h-4zM37 105h4v1h-4zM56 105h7v1h-7zM78 105h4v1h-4zM37 106h4v1h-4zM56 106h7v1h-7zM78 106h4v1h-4zM37 107h4v1h-4zM56 107h7v1h-7zM78 107h4v1h-4zM56 108h7v1h-7zM56 109h7v1h-7zM56 110h7v1h-7z"
-      />
+      <path fill="currentColor" d="M28.95 9.14H32v1.53h-3.05Z" />
+      <path fill="currentColor" d="M28.95 21.33H32v1.53h-3.05Z" />
+      <path fill="currentColor" d="M28.95 15.24H32v1.52h-3.05Z" />
+      <path fill="currentColor" d="M27.43 27.43h1.52v1.52h-1.52Z" />
+      <path fill="currentColor" d="M27.43 3.05h1.52v1.52h-1.52Z" />
+      <path fill="currentColor" d="M25.91 25.9h1.52v1.53h-1.52Z" />
+      <path fill="currentColor" d="M25.91 12.19h1.52v7.62h-1.52Z" />
+      <path fill="currentColor" d="M25.91 4.57h1.52v1.52h-1.52Z" />
+      <path fill="currentColor" d="M24.38 19.81h1.53v3.05h-1.53Z" />
+      <path fill="currentColor" d="M24.38 9.14h1.53v3.05h-1.53Z" />
+      <path fill="currentColor" d="M22.86 7.62h1.52v1.52h-1.52Z" />
+      <path fill="currentColor" d="M21.34 28.95h1.52V32h-1.52Z" />
+      <path fill="currentColor" d="m21.34 24.38 -1.53 0 0 1.52 3.05 0 0 -1.52 1.52 0 0 -1.52 -3.04 0 0 1.52z" />
+      <path fill="currentColor" d="M21.34 0h1.52v3.05h-1.52Z" />
+      <path fill="currentColor" d="M19.81 6.09h3.05v1.53h-3.05Z" />
+      <path fill="currentColor" d="M12.19 25.9h7.62v1.53h-7.62Z" />
+      <path fill="currentColor" d="M15.24 28.95h1.52V32h-1.52Z" />
+      <path fill="currentColor" d="M15.24 0h1.52v3.05h-1.52Z" />
+      <path fill="currentColor" d="M12.19 4.57h7.62v1.52h-7.62Z" />
+      <path fill="currentColor" d="m10.67 24.38 0 -1.52 -3.05 0 0 1.52 1.53 0 0 1.52 3.04 0 0 -1.52 -1.52 0z" />
+      <path fill="currentColor" d="M9.15 6.09h3.04v1.53H9.15Z" />
+      <path fill="currentColor" d="M9.15 28.95h1.52V32H9.15Z" />
+      <path fill="currentColor" d="M9.15 0h1.52v3.05H9.15Z" />
+      <path fill="currentColor" d="M7.62 7.62h1.53v1.52H7.62Z" />
+      <path fill="currentColor" d="M6.1 19.81h1.52v3.05H6.1Z" />
+      <path fill="currentColor" d="M6.1 9.14h1.52v3.05H6.1Z" />
+      <path fill="currentColor" d="M4.57 25.9H6.1v1.53H4.57Z" />
+      <path fill="currentColor" d="M4.57 12.19H6.1v7.62H4.57Z" />
+      <path fill="currentColor" d="M4.57 4.57H6.1v1.52H4.57Z" />
+      <path fill="currentColor" d="M3.05 27.43h1.52v1.52H3.05Z" />
+      <path fill="currentColor" d="M3.05 3.05h1.52v1.52H3.05Z" />
+      <path fill="currentColor" d="M0 21.33h3.05v1.53H0Z" />
+      <path fill="currentColor" d="M0 15.24h3.05v1.52H0Z" />
+      <path fill="currentColor" d="M0 9.14h3.05v1.53H0Z" />
     </svg>
   );
 }
