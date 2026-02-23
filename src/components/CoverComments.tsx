@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { MessageCircle, Heart, Flag, Loader, Trash2, Pencil, Check, X, Pin } from 'lucide-react';
+import CommentIcon from './CommentIcon';
+import HeartIcon from './HeartIcon';
+import FlagIcon from './FlagIcon';
+import LoadingIcon from './LoadingIcon';
+import TrashIcon from './TrashIcon';
+import PencilIcon from './PencilIcon';
+import CheckIcon from './CheckIcon';
+import XIcon from './XIcon';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getClientIdentity } from '../lib/comments/identityTracking.client';
@@ -258,7 +265,7 @@ export default function CoverComments({ coverId, cover }: Props) {
   return (
     <section className="cc-section">
       <h3 className="cc-heading">
-        <MessageCircle size={15} />
+        <CommentIcon size={15} />
         Comments
         {comments.length > 0 && <span className="cc-count">{comments.length}</span>}
       </h3>
@@ -288,7 +295,7 @@ export default function CoverComments({ coverId, cover }: Props) {
             onClick={submitComment}
             disabled={!user || submitting || !content.trim()}
           >
-            {submitting ? <><Loader size={13} className="upload-spinner" /> Posting…</> : 'Post'}
+            {submitting ? <><LoadingIcon size={13} className="upload-spinner" /> Posting…</> : 'Post'}
           </button>
         </div>
       </div>
@@ -297,7 +304,7 @@ export default function CoverComments({ coverId, cover }: Props) {
 
       {/* Comment list */}
       {loading ? (
-        <p className="cc-empty"><Loader size={14} className="upload-spinner" /> Loading comments…</p>
+        <p className="cc-empty"><LoadingIcon size={14} className="upload-spinner" /> Loading comments…</p>
       ) : comments.length === 0 ? (
         <p className="cc-empty">No comments yet — be the first!</p>
       ) : (
@@ -327,9 +334,9 @@ export default function CoverComments({ coverId, cover }: Props) {
                   />
                   <div className="cc-actions">
                     <button className="cc-action" onClick={() => saveEdit(comment.id)} disabled={editSaving || !editContent.trim()}>
-                      <Check size={12} /> {editSaving ? 'Saving…' : 'Save'}
+                      <CheckIcon size={12} /> {editSaving ? 'Saving…' : 'Save'}
                     </button>
-                    <button className="cc-action" onClick={cancelEdit}><X size={12} /> Cancel</button>
+                    <button className="cc-action" onClick={cancelEdit}><XIcon size={12} /> Cancel</button>
                   </div>
                 </div>
               ) : (
@@ -345,19 +352,19 @@ export default function CoverComments({ coverId, cover }: Props) {
                       className={`cc-action${likedIds.has(comment.id) ? ' cc-action--liked' : ''}`}
                       onClick={() => toggleLike(comment.id)}
                     >
-                      <Heart size={12} fill={likedIds.has(comment.id) ? 'currentColor' : 'none'} />
+                      <HeartIcon size={12} />
                       {comment.like_count ?? 0}
                     </button>
                     <button className="cc-action" onClick={() => reportComment(comment.id)}>
-                      <Flag size={12} /> Report
+                      <FlagIcon size={12} /> Report
                     </button>
                     {currentAuthorName && comment.author_username === currentAuthorName && (
                       <>
                         <button className="cc-action" onClick={() => startEdit(comment)}>
-                          <Pencil size={12} /> Edit
+                          <PencilIcon size={12} /> Edit
                         </button>
                         <button className="cc-action cc-action--delete" onClick={() => deleteComment(comment.id)}>
-                          <Trash2 size={12} /> Delete
+                          <TrashIcon size={12} /> Delete
                         </button>
                       </>
                     )}
@@ -374,7 +381,7 @@ export default function CoverComments({ coverId, cover }: Props) {
                           title="Induct to the Pin of Heuristics"
                         >
                           {pinningId === comment.id
-                            ? <Loader size={11} className="upload-spinner" />
+                            ? <LoadingIcon size={11} className="upload-spinner" />
                             : <CastleIcon size={11} />
                           }
                           POH
@@ -404,23 +411,20 @@ export default function CoverComments({ coverId, cover }: Props) {
         }
 
         .cc-heading {
-          font-size: 16px;
-          font-weight: bold;
+          font-size: 19px;
           color: var(--body-text);
           display: flex;
           align-items: center;
           gap: 7px;
           margin-bottom: 14px;
-          text-shadow: 0 1px 0 rgba(255,255,255,0.4);
         }
 
-        [data-theme="dark"] .cc-heading { text-shadow: none; }
+        [data-theme="dark"] .cc-heading { }
 
         .cc-count {
           background: var(--accent);
           color: var(--accent-text);
-          font-size: 11px;
-          font-weight: bold;
+          font-size: 17px;
           padding: 1px 7px;
           border-radius: 10px;
           box-shadow: 0 1px 2px rgba(0,0,0,0.25);
@@ -440,12 +444,12 @@ export default function CoverComments({ coverId, cover }: Props) {
           border: none;
           background: transparent;
           padding: 12px 14px;
-          font-size: 13px;
+          font-size: 19px;
           color: var(--body-text);
           outline: none;
           box-shadow: none;
           resize: none;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-body);
           line-height: 1.5;
         }
 
@@ -464,21 +468,21 @@ export default function CoverComments({ coverId, cover }: Props) {
         .cc-signin-prompt {
           background: none;
           border: none;
-          font-size: 12px;
+          font-size: 18px;
           color: var(--accent);
           cursor: pointer;
           padding: 0;
           box-shadow: none;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-body);
           margin-right: auto;
         }
 
         .cc-signin-prompt:hover { text-decoration: underline; }
 
-        .cc-post-btn { font-size: 13px; padding: 5px 14px; }
+        .cc-post-btn { font-size: 19px; padding: 5px 14px; }
 
         .cc-status {
-          font-size: 13px;
+          font-size: 19px;
           color: var(--body-text-muted);
           margin-bottom: 12px;
           padding: 8px 12px;
@@ -488,7 +492,7 @@ export default function CoverComments({ coverId, cover }: Props) {
         }
 
         .cc-empty {
-          font-size: 13px;
+          font-size: 19px;
           color: var(--body-text-muted);
           padding: 20px 0;
           display: flex;
@@ -523,25 +527,24 @@ export default function CoverComments({ coverId, cover }: Props) {
           background: none;
           border: none;
           cursor: pointer;
-          font-size: 13px;
-          font-weight: bold;
+          font-size: 19px;
           color: var(--accent);
           padding: 0;
           box-shadow: none;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-body);
           letter-spacing: 0.2px;
         }
 
         .cc-author:hover { color: var(--accent-light); text-decoration: underline; }
 
         .cc-date {
-          font-size: 11px;
+          font-size: 17px;
           color: var(--body-text-muted);
           margin-left: auto;
         }
 
         .cc-body {
-          font-size: 14px;
+          font-size: 20px;
           color: var(--body-text);
           line-height: 1.55;
           word-break: break-word;
@@ -550,7 +553,7 @@ export default function CoverComments({ coverId, cover }: Props) {
         }
 
         .cc-edited {
-          font-size: 11px;
+          font-size: 17px;
           color: var(--body-text-muted);
           font-style: italic;
           margin-bottom: 8px;
@@ -585,10 +588,10 @@ export default function CoverComments({ coverId, cover }: Props) {
           border: 1px solid var(--body-border);
           border-radius: 4px;
           padding: 3px 8px;
-          font-size: 11px;
+          font-size: 17px;
           color: var(--body-text-muted);
           cursor: pointer;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-body);
           box-shadow: none;
           transition: background 0.1s, color 0.1s;
         }
@@ -643,7 +646,7 @@ export default function CoverComments({ coverId, cover }: Props) {
           color: #b8860b;
           border-color: rgba(184, 134, 11, 0.5);
           background: rgba(184, 134, 11, 0.08);
-          font-size: 11px;
+          font-size: 17px;
         }
 
         .cc-action--pinned:hover {

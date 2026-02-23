@@ -1,0 +1,25 @@
+interface Props {
+  size?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export default function FileTextIcon({ size = 18, className, style }: Props) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+      className={className}
+      style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
+    >
+      <path fill="currentColor" d="M3.05 32h25.9V7.62h-1.52V6.1h-1.52V4.57h-1.53V3.05h-1.52V1.52h-1.53V0H3.05ZM4.57 1.52h15.24v7.62h7.62v21.34H4.57Z" />
+      <path fill="currentColor" d="m7.62 19.81 0 1.52 10.67 0 0 3.05 1.52 0 0 -3.05 3.05 0 0 3.05 1.52 0 0 -4.57 -16.76 0z" />
+      <path fill="currentColor" d="m22.86 12.19 -1.53 0 0 1.52 -1.52 0 0 1.53 1.52 0 0 1.52 1.53 0 0 -1.52 1.52 0 0 -1.53 -1.52 0 0 -1.52z" />
+      <path fill="currentColor" d="M19.81 24.38h3.05v1.52h-3.05Z" />
+      <path fill="currentColor" d="m9.14 16.76 1.53 0 0 -1.52 1.52 0 0 -1.53 -1.52 0 0 -1.52 -1.53 0 0 1.52 -1.52 0 0 1.53 1.52 0 0 1.52z" />
+    </svg>
+  );
+}

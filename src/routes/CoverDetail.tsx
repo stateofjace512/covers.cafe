@@ -1,9 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import {
-  Loader, Star, ArrowDownToLine, ArrowLeft, User, Calendar, Tag,
-  Flag, FolderPlus, Trash2, Pencil, ChevronDown,
-} from 'lucide-react';
+import LoadingIcon from '../components/LoadingIcon';
+import FavoritesIcon from '../components/FavoritesIcon';
+import DownloadIcon from '../components/DownloadIcon';
+import BackIcon from '../components/BackIcon';
+import UserIcon from '../components/UserIcon';
+import CalendarIcon from '../components/CalendarIcon';
+import TagIcon from '../components/TagIcon';
+import FlagIcon from '../components/FlagIcon';
+import FolderIcon from '../components/FolderIcon';
+import TrashIcon from '../components/TrashIcon';
+import PencilIcon from '../components/PencilIcon';
+import ChevronDownIcon from '../components/ChevronDownIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
@@ -262,7 +270,7 @@ export default function CoverDetail() {
     navigate(-1);
   };
 
-  if (loading) return <p className="text-muted"><Loader size={16} className="cover-spinner" /> Loading cover…</p>;
+  if (loading) return <p className="text-muted"><LoadingIcon size={16} className="cover-spinner" /> Loading cover…</p>;
   if (!cover) return <p className="text-muted">Cover not found.</p>;
 
   const isOwner = user?.id === cover.user_id;
@@ -270,7 +278,7 @@ export default function CoverDetail() {
   return (
     <div className="cover-page">
       <button className="btn btn-secondary cover-page-back" onClick={() => navigate(-1)}>
-        <ArrowLeft size={14} /> Back
+        <BackIcon size={14} /> Back
       </button>
 
       {/* Image */}
@@ -282,13 +290,13 @@ export default function CoverDetail() {
         />
         <div className="cover-board-actions">
           <button className={`btn cover-fav-btn${isFavorited ? ' cover-fav-btn--active' : ''}`} onClick={toggleFavorite}>
-            <Star size={14} fill={isFavorited ? 'currentColor' : 'none'} />
+            <FavoritesIcon size={14} />
             {isFavorited ? 'Favorited' : 'Favorite'}
           </button>
 
           <div className="cover-download-group" ref={downloadBtnRef}>
             <button className="btn btn-primary cover-dl-btn" onClick={() => download()} disabled={downloading}>
-              <ArrowDownToLine size={14} />
+              <DownloadIcon size={14} />
               {downloading ? 'Downloading…' : 'Download'}
             </button>
             <button
@@ -297,7 +305,7 @@ export default function CoverDetail() {
               disabled={downloading}
               title="More sizes"
             >
-              <ChevronDown size={13} />
+              <ChevronDownIcon size={13} />
             </button>
             {showSizeMenu && (
               <div className="cover-size-menu">
@@ -326,21 +334,21 @@ export default function CoverDetail() {
             className="cover-page-uploader"
             onClick={() => navigate(`/users/${cover.profiles!.username}`)}
           >
-            <User size={12} /> @{cover.profiles.username}
+            <UserIcon size={12} /> @{cover.profiles.username}
           </button>
         )}
 
         {(cover.year || (cover.favorite_count ?? 0) > 0 || (cover.download_count ?? 0) > 0) && (
           <div className="cover-meta-chips">
-            {cover.year && <span className="cover-meta-chip"><Calendar size={11} /> {cover.year}</span>}
-            {(cover.favorite_count ?? 0) > 0 && <span className="cover-meta-chip"><Star size={11} /> {cover.favorite_count}</span>}
-            {(cover.download_count ?? 0) > 0 && <span className="cover-meta-chip"><ArrowDownToLine size={11} /> {cover.download_count}</span>}
+            {cover.year && <span className="cover-meta-chip"><CalendarIcon size={11} /> {cover.year}</span>}
+            {(cover.favorite_count ?? 0) > 0 && <span className="cover-meta-chip"><FavoritesIcon size={11} /> {cover.favorite_count}</span>}
+            {(cover.download_count ?? 0) > 0 && <span className="cover-meta-chip"><DownloadIcon size={11} /> {cover.download_count}</span>}
           </div>
         )}
 
         {cover.tags && cover.tags.length > 0 && (
           <div className="cover-tags">
-            <Tag size={12} className="cover-tags-icon" />
+            <TagIcon size={12} className="cover-tags-icon" />
             {cover.tags.map((tag) => (
               <button key={tag} className="cover-tag" onClick={() => navigate(`/?q=${encodeURIComponent(tag)}`)}>
                 {tag}
@@ -353,15 +361,15 @@ export default function CoverDetail() {
       {/* Secondary actions */}
       <div className="cover-secondary-actions">
         <button className="btn cover-action-sm" onClick={() => void openCollectionPanel()}>
-          <FolderPlus size={13} /> Add to Collection
+          <FolderIcon size={13} /> Add to Collection
         </button>
         <button className="btn cover-action-sm" onClick={() => { setReportDone(false); setActivePanel(activePanel === 'report' ? null : 'report'); }}>
-          <Flag size={13} /> Report
+          <FlagIcon size={13} /> Report
         </button>
         {isOwner && (
           <>
             <button className="btn cover-action-sm" onClick={openEditPanel}>
-              <Pencil size={13} /> Edit
+              <PencilIcon size={13} /> Edit
             </button>
             <button
               className={`btn cover-action-sm cover-delete-btn${deleteConfirm ? ' cover-delete-btn--confirm' : ''}`}
@@ -369,7 +377,7 @@ export default function CoverDetail() {
               disabled={deleting}
               onMouseLeave={() => setDeleteConfirm(false)}
             >
-              <Trash2 size={13} /> {deleting ? 'Deleting…' : deleteConfirm ? 'Confirm?' : 'Delete'}
+              <TrashIcon size={13} /> {deleting ? 'Deleting…' : deleteConfirm ? 'Confirm?' : 'Delete'}
             </button>
           </>
         )}
@@ -379,7 +387,7 @@ export default function CoverDetail() {
       <div ref={panelRef} className="cover-panels-anchor">
       {activePanel === 'collection' && (
         <div className="cover-panel">
-          <h3 className="cover-panel-title"><FolderPlus size={14} /> Add to Collection</h3>
+          <h3 className="cover-panel-title"><FolderIcon size={14} /> Add to Collection</h3>
           {collectionsLoading ? (
             <p className="cover-panel-muted">Loading collections…</p>
           ) : (
@@ -409,7 +417,7 @@ export default function CoverDetail() {
 
       {activePanel === 'report' && (
         <div className="cover-panel">
-          <h3 className="cover-panel-title"><Flag size={14} /> Report Cover</h3>
+          <h3 className="cover-panel-title"><FlagIcon size={14} /> Report Cover</h3>
           {reportDone ? (
             <>
               <p className="cover-panel-muted">Thanks — your report has been submitted.</p>
@@ -436,7 +444,7 @@ export default function CoverDetail() {
 
       {activePanel === 'edit' && (
         <div className="cover-panel">
-          <h3 className="cover-panel-title"><Pencil size={14} /> Edit Cover</h3>
+          <h3 className="cover-panel-title"><PencilIcon size={14} /> Edit Cover</h3>
           <div className="cover-panel-form">
             <label className="cover-panel-label">Title</label>
             <input className="cover-panel-input" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
@@ -511,22 +519,22 @@ export default function CoverDetail() {
           border-radius: 4px; box-shadow: var(--shadow-md);
           display: flex; flex-direction: column; min-width: 120px; overflow: hidden;
         }
-        .cover-size-option { padding: 8px 14px; text-align: left; font-size: 13px; font-weight: bold; background: none; border: none; color: var(--body-text); cursor: pointer; box-shadow: none; font-family: Arial, Helvetica, sans-serif; }
+        .cover-size-option { padding: 8px 14px; text-align: left; font-size: 19px; background: none; border: none; color: var(--body-text); cursor: pointer; box-shadow: none; font-family: var(--font-body); }
         .cover-size-option:hover { background: var(--accent); color: white; transform: none; }
 
         /* Metadata */
         .cover-page-meta { max-width: 560px; margin: 0 auto 14px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        .cover-page-title { font-size: 24px; font-weight: bold; color: var(--body-text); text-shadow: 0 1px 0 rgba(255,255,255,0.45); margin-bottom: 2px; line-height: 1.25; }
-        [data-theme="dark"] .cover-page-title { text-shadow: none; }
-        .cover-page-artist-link { font-size: 17px; font-weight: bold; color: var(--body-text-muted); background: none; border: none; cursor: pointer; padding: 0; box-shadow: none; font-family: Arial, Helvetica, sans-serif; }
+        .cover-page-title { font-size: 24px; color: var(--body-text); margin-bottom: 2px; line-height: 1.25; }
+        [data-theme="dark"] .cover-page-title { }
+        .cover-page-artist-link { font-size: 20px; color: var(--body-text-muted); background: none; border: none; cursor: pointer; padding: 0; box-shadow: none; font-family: var(--font-body); }
         .cover-page-artist-link:hover { color: var(--accent); text-decoration: underline; }
-        .cover-page-uploader { display: inline-flex; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; font-size: 13px; color: var(--accent); padding: 0; box-shadow: none; font-family: Arial, Helvetica, sans-serif; font-weight: bold; }
+        .cover-page-uploader { display: inline-flex; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; font-size: 19px; color: var(--accent); padding: 0; box-shadow: none; font-family: var(--font-body); }
         .cover-page-uploader:hover { color: var(--accent-light); text-decoration: underline; }
         .cover-meta-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
-        .cover-meta-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--body-text-muted); background: var(--body-border); padding: 2px 7px; border-radius: 3px; font-weight: bold; }
+        .cover-meta-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 18px; color: var(--body-text-muted); background: var(--body-border); padding: 2px 7px; border-radius: 3px; }
         .cover-tags { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: center; }
         .cover-tags-icon { color: var(--body-text-muted); flex-shrink: 0; }
-        .cover-tag { font-size: 11px; font-weight: bold; background: var(--sidebar-bg); color: var(--sidebar-text); padding: 2px 7px; border-radius: 3px; border: 1px solid var(--sidebar-border); box-shadow: var(--shadow-sm); cursor: pointer; transition: background 0.1s, color 0.1s; }
+        .cover-tag { font-size: 21px; font-family: var(--font-header); background: var(--sidebar-bg); color: var(--sidebar-text); padding: 2px 7px; border-radius: 3px; border: 1px solid var(--sidebar-border); box-shadow: var(--shadow-sm); cursor: pointer; transition: background 0.1s, color 0.1s; }
         .cover-tag:hover { background: var(--accent); color: white; border-color: var(--accent); transform: none; box-shadow: none; }
 
         /* Panel scroll anchor — leaves room for sticky header */
@@ -534,7 +542,7 @@ export default function CoverDetail() {
 
         /* Secondary actions */
         .cover-secondary-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
-        .cover-action-sm { display: flex; align-items: center; gap: 5px; font-size: 12px; padding: 6px 12px; background: var(--sidebar-bg); border: 1px solid var(--sidebar-border); color: var(--body-text); }
+        .cover-action-sm { display: flex; align-items: center; gap: 5px; font-size: 18px; padding: 6px 12px; background: var(--sidebar-bg); border: 1px solid var(--sidebar-border); color: var(--body-text); }
         .cover-action-sm:hover { background: var(--sidebar-bg-dark); }
         .cover-delete-btn { background: rgba(200,50,30,0.1); border-color: rgba(200,50,30,0.3); color: #c83220; }
         .cover-delete-btn:hover { background: rgba(200,50,30,0.2); transform: none; box-shadow: none; }
@@ -542,16 +550,16 @@ export default function CoverDetail() {
 
         /* Panels */
         .cover-panel { max-width: 560px; margin: 0 auto 20px; background: var(--body-card-bg); border: 1px solid var(--body-card-border); border-radius: 7px; box-shadow: var(--shadow-sm); padding: 18px; display: flex; flex-direction: column; gap: 12px; }
-        .cover-panel-title { font-size: 15px; font-weight: bold; color: var(--body-text); display: flex; align-items: center; gap: 7px; }
-        .cover-panel-muted { font-size: 13px; color: var(--body-text-muted); }
+        .cover-panel-title { font-size: 21px; color: var(--body-text); display: flex; align-items: center; gap: 7px; }
+        .cover-panel-muted { font-size: 19px; color: var(--body-text-muted); }
         .cover-panel-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .cover-panel-form { display: flex; flex-direction: column; gap: 8px; }
-        .cover-panel-label { font-size: 13px; font-weight: bold; color: var(--body-text); }
-        .cover-panel-hint { font-size: 11px; color: var(--body-text-muted); font-weight: normal; }
-        .cover-panel-input { flex: 1; min-width: 0; padding: 7px 10px; border-radius: 4px; border: 1px solid var(--body-card-border); background: var(--body-card-bg); color: var(--body-text); font-size: 13px; font-family: Arial, Helvetica, sans-serif; box-shadow: var(--shadow-inset-sm); outline: none; width: 100%; }
+        .cover-panel-label { font-size: 19px; color: var(--body-text); }
+        .cover-panel-hint { font-size: 17px; color: var(--body-text-muted); font-weight: normal; }
+        .cover-panel-input { flex: 1; min-width: 0; padding: 7px 10px; border-radius: 4px; border: 1px solid var(--body-card-border); background: var(--body-card-bg); color: var(--body-text); font-size: 19px; font-family: var(--font-body); box-shadow: var(--shadow-inset-sm); outline: none; width: 100%; }
         .cover-panel-input:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
         .cover-panel-textarea { resize: none; }
-        .cover-panel-status { font-size: 12px; color: var(--body-text-muted); padding: 6px 10px; background: var(--body-border); border-radius: 4px; }
+        .cover-panel-status { font-size: 18px; color: var(--body-text-muted); padding: 6px 10px; background: var(--body-border); border-radius: 4px; }
         .cover-panel-close-btn { align-self: flex-start; }
 
         /* Comments */
@@ -559,16 +567,16 @@ export default function CoverDetail() {
 
         /* More */
         .cover-more-section { margin-top: 36px; padding-top: 28px; border-top: 2px solid var(--body-border); }
-        .cover-more-heading { font-size: 18px; font-weight: bold; color: var(--body-text); text-shadow: 0 1px 0 rgba(255,255,255,0.4); margin-bottom: 16px; }
-        [data-theme="dark"] .cover-more-heading { text-shadow: none; }
+        .cover-more-heading { font-size: 21px; color: var(--body-text); margin-bottom: 16px; }
+        [data-theme="dark"] .cover-more-heading { }
         .cover-more-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
         .cover-more-item { padding: 0; border: 1px solid var(--body-card-border); border-radius: 6px; background: var(--body-card-bg); box-shadow: var(--shadow-sm); overflow: hidden; cursor: pointer; transition: transform 0.12s, box-shadow 0.12s; display: flex; flex-direction: column; text-align: left; }
         .cover-more-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
         .cover-more-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
-        .cover-more-label { font-size: 12px; color: var(--body-text); padding: 6px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid var(--body-card-border); }
+        .cover-more-label { font-size: 22px; font-family: var(--font-header); color: var(--body-text); padding: 6px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid var(--body-card-border); }
 
         @media (max-width: 640px) {
-          .cover-page-title { font-size: 20px; }
+          .cover-page-title { font-size: 23px; }
           .cover-more-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
         }
       `}</style>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowDownToLine } from 'lucide-react';
+import DownloadIcon from '../components/DownloadIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import CoverCard from '../components/CoverCard';
@@ -50,13 +50,13 @@ export default function Downloads() {
   return (
     <div>
       <h1 className="section-title">
-        <ArrowDownToLine size={22} />
+        <DownloadIcon size={22} />
         Downloads
       </h1>
 
       {!user ? (
         <div className="empty-state card">
-          <ArrowDownToLine size={48} style={{ opacity: 0.25, marginBottom: 14 }} />
+          <DownloadIcon size={48} style={{ opacity: 0.25, marginBottom: 14 }} />
           <h2 className="empty-title">Sign in to see your downloads</h2>
           <p className="empty-body">Your download history will appear here.</p>
           <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
@@ -67,7 +67,7 @@ export default function Downloads() {
         <p className="text-muted">Loading…</p>
       ) : !covers.length ? (
         <div className="empty-state card">
-          <ArrowDownToLine size={48} style={{ opacity: 0.25, marginBottom: 14 }} />
+          <DownloadIcon size={48} style={{ opacity: 0.25, marginBottom: 14 }} />
           <h2 className="empty-title">No downloads yet</h2>
           <p className="empty-body">Download covers from the gallery and they'll appear here.</p>
         </div>
@@ -95,8 +95,8 @@ export default function Downloads() {
 
       <style>{`
         .empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 60px 40px; max-width: 440px; }
-        .empty-title { font-size: 20px; font-weight: bold; color: var(--body-text); margin-bottom: 10px; }
-        .empty-body { font-size: 14px; color: var(--body-text-muted); line-height: 1.6; }
+        .empty-title { font-size: 23px; color: var(--body-text); margin-bottom: 10px; }
+        .empty-body { font-size: 20px; color: var(--body-text-muted); line-height: 1.6; }
       `}</style>
     </div>
   );

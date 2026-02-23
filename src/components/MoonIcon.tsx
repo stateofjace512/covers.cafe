@@ -4,21 +4,42 @@ interface Props {
   style?: React.CSSProperties;
 }
 
-// MoonIcon — pixel-art icon, fill inherits currentColor for theme support.
-// Original viewBox: 120×118.
 export default function MoonIcon({ size = 18, className, style }: Props) {
-  const w = Math.round(size * (120 / 118));
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={w}
+      width={size}
       height={size}
-      viewBox="0 0 120 118"
+      viewBox="0 0 32 32"
       aria-hidden="true"
       className={className}
       style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
     >
-      <path fill="currentColor" d="M52 10h23v1H52zm0 1h23v1H52zm0 1h23v1H52zm0 1h23v1H52zm-41 1h4v1h-4zm34 0h41v1H45zm-34 1h4v1h-4zm34 0h41v1H45zm-34 1h4v1h-4zm34 0h41v1H45zm-34 1h4v1h-4zm34 0h41v1H45zm-30 1h4v1h-4zm22 0h34v1H37zm49 0h7v1h-7zm-71 1h4v1h-4zm22 0h34v1H37zm49 0h7v1h-7zm-71 1h4v1h-4zm22 0h34v1H37zm49 0h7v1h-7zm-71 1h4v1h-4zm22 0h34v1H37zm49 0h7v1h-7zm-52 1h29v1H34zm59 0h4v1h-4zm-59 1h29v1H34zm59 0h4v1h-4zm-59 1h29v1H34zm59 0h4v1h-4zm-63 1h30v1H30zm0 1h30v1H30zm0 1h30v1H30zm0 1h30v1H30zm-4 1h30v1H26zm0 1h30v1H26zm0 1h30v1H26zm0 1h30v1H26zm0 1h26v1H26zm45 0h4v1h-4zm-45 1h26v1H26zm45 0h4v1h-4zm-45 1h26v1H26zm45 0h4v1h-4zm-45 1h26v1H26zm45 0h4v1h-4zm-48 1h26v1H23zm78 0h3v1h-3zm-78 1h26v1H23zm78 0h3v1h-3zm-78 1h26v1H23zm78 0h3v1h-3zm-78 1h26v1H23zm81 0h4v1h-4zm-81 1h26v1H23zm81 0h4v1h-4zm-81 1h26v1H23zm81 0h4v1h-4zm-81 1h26v1H23zm81 0h4v1h-4zm-81 1h22v1H23zm0 1h22v1H23zm0 1h22v1H23zm0 1h22v1H23zm-4 1h26v1H19zm0 1h26v1H19zm0 1h26v1H19zm0 1h26v1H19zm0 1h26v1H19zm44 0h4v1h-4zm-44 1h26v1H19zm44 0h4v1h-4zm-44 1h26v1H19zm44 0h4v1h-4zm-44 1h26v1H19zm0 1h26v1H19zm0 1h26v1H19zm0 1h26v1H19zm0 1h26v1H19zm0 1h26v1H19zm0 1h26v1H19zm0 1h26v1H19zm0 1h26v1H19zm74 0h4v1h-4zm-74 1h26v1H19zm74 0h4v1h-4zm-74 1h26v1H19zm74 0h4v1h-4zm-74 1h30v1H19zm71 0h3v1h-3zm-71 1h30v1H19zm71 0h3v1h-3zm-71 1h30v1H19zm71 0h3v1h-3zm-71 1h30v1H19zm71 0h3v1h-3zm-67 1h26v1H23zm0 1h26v1H23zm0 1h26v1H23zm0 1h26v1H23zm0 1h29v1H23zm0 1h29v1H23zm0 1h29v1H23zm0 1h29v1H23zm-12 1h4v1h-4zm12 0h33v1H23zm-12 1h4v1h-4zm12 0h33v1H23zm-12 1h4v1h-4zm12 0h33v1H23zm3 1h34v1H26zm71 0h4v1h-4zm-71 1h34v1H26zm71 0h4v1h-4zm-71 1h34v1H26zm71 0h4v1h-4zm-71 1h34v1H26zm71 0h4v1h-4zm-67 1h37v1H30zm63 0h4v1h-4zm-63 1h37v1H30zm63 0h4v1h-4zm-63 1h37v1H30zm63 0h4v1h-4zm-63 1h37v1H30zm63 0h4v1h-4zm-59 1h41v1H34zm52 0h7v1h-7zm-52 1h41v1H34zm52 0h7v1h-7zm-52 1h41v1H34zm52 0h7v1h-7zm-52 1h41v1H34zm52 0h7v1h-7zm-49 1h52v1H37zm0 1h52v1H37zm0 1h52v1H37zm8 1h37v1H45zm0 1h37v1H45zm0 1h37v1H45zm0 1h37v1H45zm-30 1h4v1h-4zm37 0h23v1H52zm-37 1h4v1h-4zm37 0h23v1H52zm-37 1h4v1h-4zm37 0h23v1H52zm-37 1h4v1h-4zm37 0h23v1H52zm49 1h3v1h-3zm0 1h3v1h-3zm0 1h3v1h-3zm0 1h3v1h-3z"/>
+      <path fill="currentColor" d="m29.71 11.43 -1.52 0 0 1.52 -1.52 0 0 1.53 1.52 0 0 1.52 1.52 0 0 -1.52 1.53 0 0 -1.53 -1.53 0 0 -1.52z" />
+      <path fill="currentColor" d="M28.19 22.1h1.52v1.52h-1.52Z" />
+      <path fill="currentColor" d="m26.67 0.76 0 1.53 -1.53 0 0 1.52 1.53 0 0 1.52 1.52 0 0 -1.52 1.52 0 0 -1.52 -1.52 0 0 -1.53 -1.52 0z" />
+      <path fill="currentColor" d="M25.14 8.38h1.53v1.53h-1.53Z" />
+      <path fill="currentColor" d="m25.14 26.67 -1.52 0 0 1.52 -1.53 0 0 1.53 1.53 0 0 1.52 1.52 0 0 -1.52 1.53 0 0 -1.53 -1.53 0 0 -1.52z" />
+      <path fill="currentColor" d="M23.62 19.05h1.52v1.52h-1.52Z" />
+      <path fill="currentColor" d="m22.09 22.1 -9.14 0 0 1.52 7.62 0 0 1.52 1.52 0 0 -3.04z" />
+      <path fill="currentColor" d="m12.95 8.38 0 1.53 9.14 0 0 -3.05 -1.52 0 0 1.52 -7.62 0z" />
+      <path fill="currentColor" d="M17.52 25.14h3.05v1.53h-3.05Z" />
+      <path fill="currentColor" d="m19.05 19.05 0 -1.52 1.52 0 0 -1.53 -1.52 0 0 -1.52 -1.53 0 0 1.52L16 16l0 1.53 1.52 0 0 1.52 1.53 0z" />
+      <path fill="currentColor" d="M17.52 5.33h3.05v1.53h-3.05Z" />
+      <path fill="currentColor" d="M9.9 26.67h7.62v1.52H9.9Z" />
+      <path fill="currentColor" d="M11.43 20.57h1.52v1.53h-1.52Z" />
+      <path fill="currentColor" d="M11.43 9.91h1.52v1.52h-1.52Z" />
+      <path fill="currentColor" d="M9.9 3.81h7.62v1.52H9.9Z" />
+      <path fill="currentColor" d="M9.9 11.43h1.53v9.14H9.9Z" />
+      <path fill="currentColor" d="M6.86 25.14H9.9v1.53H6.86Z" />
+      <path fill="currentColor" d="M6.86 5.33H9.9v1.53H6.86Z" />
+      <path fill="currentColor" d="M5.33 23.62h1.53v1.52H5.33Z" />
+      <path fill="currentColor" d="M5.33 6.86h1.53v1.52H5.33Z" />
+      <path fill="currentColor" d="M3.81 20.57h1.52v3.05H3.81Z" />
+      <path fill="currentColor" d="M3.81 8.38h1.52v3.05H3.81Z" />
+      <path fill="currentColor" d="M2.29 29.72h1.52v1.52H2.29Z" />
+      <path fill="currentColor" d="M2.29 11.43h1.52v9.14H2.29Z" />
+      <path fill="currentColor" d="M0.76 3.81h1.53v1.52H0.76Z" />
     </svg>
   );
 }

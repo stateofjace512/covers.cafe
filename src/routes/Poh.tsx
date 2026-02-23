@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader } from 'lucide-react';
+import LoadingIcon from '../components/LoadingIcon';
 import CastleIcon from '../components/CastleIcon';
 
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
@@ -72,7 +72,7 @@ export default function Poh() {
       {/* ── Pins ─────────────────────────────────────────────────── */}
       {loading ? (
         <div className="poh-loading">
-          <Loader size={22} className="poh-spinner" />
+          <LoadingIcon size={22} className="poh-spinner" />
           <span>Preparing the hall…</span>
         </div>
       ) : pins.length === 0 ? (
@@ -226,27 +226,20 @@ export default function Poh() {
         }
 
         .poh-title {
-          font-size: clamp(20px, 4vw, 32px);
-          font-weight: bold;
+          font-size: clamp(36px, 6vw, 60px);
           letter-spacing: 3px;
           text-transform: uppercase;
           color: #3a2008;
-          text-shadow:
-            0 1px 0 rgba(255,255,255,0.6),
-            0 2px 4px rgba(60,20,0,0.3);
           margin: 0 0 10px;
-          font-family: Georgia, 'Times New Roman', serif;
+          font-family: var(--font-header);
         }
 
         [data-theme="dark"] .poh-title {
           color: #c8a070;
-          text-shadow:
-            0 1px 0 rgba(0,0,0,0.8),
-            0 0 20px rgba(200,80,40,0.4);
         }
 
         .poh-subtitle {
-          font-size: 13px;
+          font-size: 19px;
           color: #6b3d1f;
           font-style: italic;
           letter-spacing: 0.4px;
@@ -285,8 +278,8 @@ export default function Poh() {
         }
 
         .poh-empty-icon { font-size: 48px; opacity: 0.35; }
-        .poh-empty p { font-size: 15px; font-style: italic; }
-        .poh-empty-sub { font-size: 12px; opacity: 0.7; }
+        .poh-empty p { font-size: 21px; font-style: italic; }
+        .poh-empty-sub { font-size: 18px; opacity: 0.7; }
 
         /* ── Hall grid ──────────────────────────────────────────────── */
         .poh-hall {
@@ -417,7 +410,7 @@ export default function Poh() {
           justify-content: center;
           background: rgba(0,0,0,0.5);
           color: #fff;
-          font-size: 20px;
+          font-size: 23px;
           opacity: 0;
           transition: opacity 0.15s;
         }
@@ -441,11 +434,10 @@ export default function Poh() {
 
         /* The quote */
         .poh-quote {
-          font-size: 14px;
+          font-size: 25px;
           line-height: 1.7;
           color: #2a1505;
-          font-family: Georgia, 'Times New Roman', serif;
-          font-style: italic;
+          font-family: var(--font-body);
           word-break: break-word;
           padding-right: ${/* space for cover corner */ ''}86px;
           flex: 1;
@@ -490,7 +482,7 @@ export default function Poh() {
         }
 
         .poh-reaction {
-          font-size: 16px;
+          font-size: 19px;
           flex-shrink: 0;
         }
 
@@ -498,12 +490,11 @@ export default function Poh() {
           background: none;
           border: none;
           cursor: pointer;
-          font-size: 12px;
-          font-weight: bold;
+          font-size: 23px;
           color: #8b4513;
           padding: 0;
           box-shadow: none;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-header);
           letter-spacing: 0.3px;
         }
 
@@ -522,9 +513,9 @@ export default function Poh() {
         }
 
         .poh-on {
-          font-size: 11px;
+          font-size: 21px;
           color: #7a5030;
-          font-style: italic;
+          font-family: var(--font-body);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -604,22 +595,19 @@ export default function Poh() {
         }
 
         .poh-plaque-text {
-          font-size: 11px;
-          font-weight: bold;
+          font-size: 21px;
           letter-spacing: 0.8px;
           text-transform: uppercase;
           color: #3a2000;
-          text-shadow: 0 1px 0 rgba(255,255,255,0.3);
-          font-family: Georgia, 'Times New Roman', serif;
+          font-family: var(--font-header);
         }
 
         [data-theme="dark"] .poh-plaque-text {
           color: #f5c0c0;
-          text-shadow: 0 1px 0 rgba(0,0,0,0.5);
         }
 
         .poh-plaque-date {
-          font-size: 10px;
+          font-size: 16px;
           color: rgba(58,32,0,0.75);
           letter-spacing: 0.4px;
           font-style: italic;

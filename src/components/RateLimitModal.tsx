@@ -41,11 +41,10 @@ export default function RateLimitModal({ action, onClose }: Props) {
         }
         .rate-limit-emoji { line-height: 0; margin-bottom: 4px; }
         .rate-limit-title {
-          font-size: 22px; font-weight: bold; color: var(--body-text);
-          text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+          font-size: 25px; color: var(--body-text);
         }
-        [data-theme="dark"] .rate-limit-title { text-shadow: none; }
-        .rate-limit-body { font-size: 15px; color: var(--body-text-muted); line-height: 1.5; }
+        [data-theme="dark"] .rate-limit-title { }
+        .rate-limit-body { font-size: 21px; color: var(--body-text-muted); line-height: 1.5; }
       `}</style>
     </div>
   );

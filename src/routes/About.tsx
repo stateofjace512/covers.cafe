@@ -1,10 +1,10 @@
-import { Info } from 'lucide-react';
+import AboutIcon from '../components/AboutIcon';
 import CoffeeCupIcon from '../components/CoffeeCupIcon';
 
 export default function About() {
   return (
     <div className="legal-page about-page">
-      <h1 className="section-title"><Info size={22} /> About covers.cafe</h1>
+      <h1 className="section-title"><AboutIcon size={22} /> About covers.cafe</h1>
 
       <div className="legal-body">
         <p className="about-lede">
@@ -70,10 +70,9 @@ export default function About() {
       <style>{`
         .about-page { max-width: 680px; }
         .legal-body { display: flex; flex-direction: column; gap: 0; }
-        .legal-body p { font-size: 14px; color: var(--body-text); line-height: 1.75; margin: 0 0 14px; }
+        .legal-body p { font-size: 20px; color: var(--body-text); line-height: 1.75; margin: 0 0 14px; }
         .about-lede {
-          font-size: 16px !important;
-          font-weight: bold;
+          font-size: 19px !important;
           line-height: 1.6 !important;
           margin-bottom: 20px !important;
         }
@@ -88,8 +87,8 @@ export default function About() {
           flex-direction: column;
           gap: 8px;
         }
-        .about-meta-row { display: flex; align-items: center; gap: 12px; font-size: 13px; }
-        .about-meta-key { font-weight: bold; color: var(--body-text-muted); min-width: 70px; }
+        .about-meta-row { display: flex; align-items: center; gap: 12px; font-size: 19px; }
+        .about-meta-key { color: var(--body-text-muted); min-width: 70px; }
         .about-meta-val { color: var(--body-text); }
         .about-meta-link { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
         .about-meta-link:hover { color: var(--accent-light); }

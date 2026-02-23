@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { User, UserRoundCog } from 'lucide-react';
+import UserIcon from '../components/UserIcon';
+import GearIcon from '../components/GearIcon';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
 import AchievementBadges from '../components/AchievementBadges';
@@ -12,9 +13,9 @@ export default function Profile() {
   if (!user) {
     return (
       <div>
-        <h1 className="section-title"><User size={22} /> Profile</h1>
+        <h1 className="section-title"><UserIcon size={22} /> Profile</h1>
         <div className="empty-state card">
-          <User size={48} style={{ opacity: 0.25, marginBottom: 14 }} />
+          <UserIcon size={48} style={{ opacity: 0.25, marginBottom: 14 }} />
           <h2 className="empty-title">Sign in to view your profile</h2>
           <p className="empty-body">Your uploads and stats will appear here.</p>
           <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
@@ -22,7 +23,7 @@ export default function Profile() {
             <button className="btn btn-secondary" onClick={() => openAuthModal('register')}>Create Account</button>
           </div>
         </div>
-        <style>{` .empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 60px 40px; max-width: 440px; } .empty-title { font-size: 20px; font-weight: bold; color: var(--body-text); margin-bottom: 10px; } .empty-body { font-size: 14px; color: var(--body-text-muted); line-height: 1.6; } `}</style>
+        <style>{` .empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 60px 40px; max-width: 440px; } .empty-title { font-size: 23px; color: var(--body-text); margin-bottom: 10px; } .empty-body { font-size: 20px; color: var(--body-text-muted); line-height: 1.6; } `}</style>
       </div>
     );
   }
@@ -34,7 +35,7 @@ export default function Profile() {
           <div className="profile-avatar">
             {profile && getAvatarSrc(profile)
               ? <img src={getAvatarSrc(profile)!} alt="avatar" className="profile-avatar-img" />
-              : <User size={40} style={{ opacity: 0.4 }} />
+              : <UserIcon size={40} style={{ opacity: 0.4 }} />
             }
           </div>
           <div className="profile-info">
@@ -44,7 +45,7 @@ export default function Profile() {
             {profile?.website && <a href={profile.website} className="profile-website" target="_blank" rel="noopener noreferrer">{profile.website}</a>}
           </div>
           <button className="btn btn-secondary profile-edit-btn" onClick={() => navigate('/profile/edit')}>
-            <UserRoundCog size={14} /> Edit Profile
+            <GearIcon size={14} /> Edit Profile
           </button>
         </div>
 
@@ -53,7 +54,7 @@ export default function Profile() {
       </div>
 
       <section style={{ marginTop: 28 }}>
-        <h2 className="section-title"><User size={20} /> My Uploads</h2>
+        <h2 className="section-title"><UserIcon size={20} /> My Uploads</h2>
         <GalleryGrid filter="mine" />
       </section>
 
@@ -71,13 +72,12 @@ export default function Profile() {
         .profile-avatar-img { width: 100%; height: 100%; object-fit: cover; }
         .profile-info { flex: 1; min-width: 0; }
         .profile-name {
-          font-size: 22px; font-weight: bold; color: var(--body-text);
-          text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+          font-size: 25px; color: var(--body-text);
         }
-        [data-theme="dark"] .profile-name { text-shadow: none; }
-        .profile-username { font-size: 13px; color: var(--body-text-muted); margin-top: 2px; }
-        .profile-bio { font-size: 14px; color: var(--body-text); margin-top: 8px; line-height: 1.5; }
-        .profile-website { font-size: 13px; color: var(--accent); margin-top: 6px; display: block; }
+        [data-theme="dark"] .profile-name { }
+        .profile-username { font-size: 19px; color: var(--body-text-muted); margin-top: 2px; }
+        .profile-bio { font-size: 20px; color: var(--body-text); margin-top: 8px; line-height: 1.5; }
+        .profile-website { font-size: 19px; color: var(--accent); margin-top: 6px; display: block; }
         .profile-edit-btn { flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
       `}</style>
     </div>

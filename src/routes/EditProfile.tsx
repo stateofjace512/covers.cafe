@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserRoundCog, Loader, CheckCircle, Upload } from 'lucide-react';
+import UserIcon from '../components/UserIcon';
+import LoadingIcon from '../components/LoadingIcon';
+import CheckCircleIcon from '../components/CheckCircleIcon';
+import UploadDownloadIcon from '../components/UploadDownloadIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -178,7 +181,7 @@ export default function EditProfile() {
   if (!user) {
     return (
       <div>
-        <h1 className="section-title"><UserRoundCog size={22} /> Edit Profile</h1>
+        <h1 className="section-title"><UserIcon size={22} /> Edit Profile</h1>
         <div className="card" style={{ maxWidth: 400, padding: 32, textAlign: 'center' }}>
           <p className="text-muted">Sign in to edit your profile.</p>
           <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => openAuthModal('login')}>Sign In</button>
@@ -192,7 +195,7 @@ export default function EditProfile() {
 
   return (
     <div>
-      <h1 className="section-title"><UserRoundCog size={22} /> Edit Profile</h1>
+      <h1 className="section-title"><UserIcon size={22} /> Edit Profile</h1>
       <form onSubmit={handleSave} className="edit-form card">
 
         {/* Username */}
@@ -286,7 +289,7 @@ export default function EditProfile() {
             if (!picked) return;
             setAvatarPreview(URL.createObjectURL(picked));
           }} />
-          <button type="button" className="btn btn-secondary" onClick={() => avatarInputRef.current?.click()}><Upload size={14} /> Upload image</button>
+          <button type="button" className="btn btn-secondary" onClick={() => avatarInputRef.current?.click()}><UploadDownloadIcon size={14} /> Upload image</button>
           {avatarPreview && (
             <>
               <div className="avatar-crop-preview">
@@ -304,7 +307,7 @@ export default function EditProfile() {
 
         <div className="edit-actions">
           <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? <><Loader size={14} className="upload-spinner" /> Saving…</> : saved ? <><CheckCircle size={14} /> Saved!</> : 'Save Changes'}
+            {saving ? <><LoadingIcon size={14} className="upload-spinner" /> Saving…</> : saved ? <><CheckCircleIcon size={14} /> Saved!</> : 'Save Changes'}
           </button>
           <button type="button" className="btn btn-secondary" onClick={() => navigate('/profile')}>Cancel</button>
         </div>
@@ -314,11 +317,11 @@ export default function EditProfile() {
         .edit-form { max-width: 520px; display: flex; flex-direction: column; gap: 16px; }
         .form-row { display: flex; flex-direction: column; gap: 5px; }
         .form-label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-        .form-label { font-size: 13px; font-weight: bold; color: var(--body-text); text-shadow: 0 1px 0 rgba(255,255,255,0.4); }
-        [data-theme="dark"] .form-label { text-shadow: none; }
-        .form-hint { font-size: 11px; color: var(--body-text-muted); margin: 0; }
+        .form-label { font-size: 19px; color: var(--body-text); }
+        [data-theme="dark"] .form-label { }
+        .form-hint { font-size: 17px; color: var(--body-text-muted); margin: 0; }
         .form-change-limit {
-          font-size: 11px; color: var(--body-text-muted); white-space: nowrap;
+          font-size: 17px; color: var(--body-text-muted); white-space: nowrap;
           background: rgba(0,0,0,0.05); border-radius: 10px; padding: 2px 7px;
         }
         .form-change-limit--exhausted {
@@ -328,22 +331,22 @@ export default function EditProfile() {
         }
         [data-theme="dark"] .form-change-limit { background: rgba(255,255,255,0.06); }
         [data-theme="dark"] .form-change-limit--exhausted { background: rgba(200,50,30,0.12); }
-        .form-field-error { font-size: 12px; color: #c83220; }
+        .form-field-error { font-size: 18px; color: #c83220; }
         .avatar-crop-preview { width: 180px; height: 180px; border-radius: 8px; overflow: hidden; border: 1px solid var(--body-card-border); background: var(--sidebar-bg); }
         .avatar-crop-preview img { width: 100%; height: 100%; object-fit: cover; transform-origin: center; }
 
         .form-input {
           width: 100%; padding: 8px 12px; border-radius: 4px;
           border: 1px solid var(--body-card-border); background: var(--body-card-bg);
-          color: var(--body-text); font-size: 13px; font-family: Arial, Helvetica, sans-serif;
+          color: var(--body-text); font-size: 19px; font-family: var(--font-body);
           box-shadow: var(--shadow-inset-sm); outline: none;
           transition: border-color 0.15s, box-shadow 0.15s;
         }
         .form-input:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
         .form-input:disabled { opacity: 0.55; cursor: not-allowed; }
         .form-input--error { border-color: rgba(200,50,30,0.6) !important; }
-        .edit-error { padding: 8px 10px; border-radius: 4px; background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3); color: #c83220; font-size: 13px; }
-        .edit-success { padding: 8px 10px; border-radius: 4px; background: rgba(30,126,52,0.1); border: 1px solid rgba(30,126,52,0.35); color: #1e7e34; font-size: 13px; }
+        .edit-error { padding: 8px 10px; border-radius: 4px; background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3); color: #c83220; font-size: 19px; }
+        .edit-success { padding: 8px 10px; border-radius: 4px; background: rgba(30,126,52,0.1); border: 1px solid rgba(30,126,52,0.35); color: #1e7e34; font-size: 19px; }
         .edit-actions { display: flex; gap: 10px; padding-top: 4px; }
         .upload-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }

@@ -4,21 +4,53 @@ interface Props {
   style?: React.CSSProperties;
 }
 
-// ArtistsIcon — pixel-art icon, fill inherits currentColor for theme support.
-// Original viewBox: 120×118.
 export default function ArtistsIcon({ size = 18, className, style }: Props) {
-  const w = Math.round(size * (120 / 118));
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={w}
+      width={size}
       height={size}
-      viewBox="0 0 120 118"
+      viewBox="0 0 32 32"
       aria-hidden="true"
       className={className}
       style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
     >
-      <path fill="currentColor" d="M67 7h4v1h-4zm0 1h4v1h-4zm0 1h4v1h-4zm11 1h4v1h-4zm0 1h4v1h-4zm0 1h4v1h-4zm0 1h4v1h-4zm-29 1h3v1h-3zm26 0h3v1h-3zm-26 1h3v1h-3zm26 0h3v1h-3zm-26 1h3v1h-3zm26 0h3v1h-3zm-26 1h3v1h-3zm26 0h3v1h-3zm-38 5h4v1h-4zm8 0h15v1H45zm18 0h4v1h-4zm8 0h4v1h-4zm7 0h4v1h-4zm-41 1h4v1h-4zm8 0h15v1H45zm18 0h4v1h-4zm8 0h4v1h-4zm7 0h4v1h-4zm-41 1h4v1h-4zm8 0h15v1H45zm18 0h4v1h-4zm8 0h4v1h-4zm7 0h4v1h-4zm-41 1h4v1h-4zm8 0h22v1H45zm26 0h4v1h-4zm7 0h4v1h-4zm-41 1h4v1h-4zm8 0h22v1H45zm26 0h4v1h-4zm7 0h4v1h-4zm-41 1h4v1h-4zm8 0h22v1H45zm26 0h4v1h-4zm7 0h4v1h-4zm-41 1h4v1h-4zm8 0h22v1H45zm26 0h4v1h-4zm7 0h4v1h-4zm-41 1h4v1h-4zm8 0h22v1H45zm26 0h4v1h-4zm7 0h4v1h-4zm-41 1h4v1h-4zm8 0h22v1H45zm26 0h4v1h-4zm7 0h4v1h-4zm-41 1h4v1h-4zm8 0h22v1H45zm26 0h4v1h-4zm7 0h4v1h-4zm-41 1h4v1h-4zm8 0h22v1H45zm26 0h4v1h-4zm7 0h4v1h-4zm-41 1h4v1h-4zm8 0h30v1H45zm33 0h4v1h-4zm-41 1h4v1h-4zm8 0h30v1H45zm33 0h4v1h-4zm-41 1h4v1h-4zm8 0h30v1H45zm33 0h4v1h-4zm-41 1h4v1h-4zm8 0h30v1H45zm33 0h4v1h-4zm-41 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 4h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm0 1h45v1H37zm4 1h37v1H41zm0 1h37v1H41zm0 1h37v1H41zm0 1h37v1H41zm11 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm4 1h7v1h-7zm0 1h7v1h-7zm0 1h7v1h-7zm0 1h7v1h-7zm0 1h7v1h-7zm0 1h7v1h-7zm0 1h7v1h-7zm-4 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm0 1h15v1H52zm4 1h7v1h-7zm0 1h7v1h-7zm0 1h7v1h-7z"/>
+      <path fill="currentColor" d="M29.72 8.38h1.52V16h-1.52Z" />
+      <path fill="currentColor" d="M28.19 16h1.53v3.05h-1.53Z" />
+      <path fill="currentColor" d="M28.19 5.33h1.53v3.05h-1.53Z" />
+      <path fill="currentColor" d="M26.67 19.05h1.52v1.52h-1.52Z" />
+      <path fill="currentColor" d="M26.67 3.81h1.52v1.52h-1.52Z" />
+      <path fill="currentColor" d="M25.14 20.57h1.53v1.53h-1.53Z" />
+      <path fill="currentColor" d="M25.14 11.43h1.53v6.09h-1.53Z" />
+      <path fill="currentColor" d="M23.62 22.1h1.52v1.52h-1.52Z" />
+      <path fill="currentColor" d="M23.62 17.52h1.52v1.53h-1.52Z" />
+      <path fill="currentColor" d="M23.62 2.29h3.05v1.52h-3.05Z" />
+      <path fill="currentColor" d="M22.1 23.62h1.52v1.52H22.1Z" />
+      <path fill="currentColor" d="M22.1 19.05h1.52v1.52H22.1Z" />
+      <path fill="currentColor" d="M20.57 9.91h4.57v1.52h-4.57Z" />
+      <path fill="currentColor" d="M20.57 25.14h1.53v1.53h-1.53Z" />
+      <path fill="currentColor" d="M19.05 26.67h1.52v1.52h-1.52Z" />
+      <path fill="currentColor" d="M16 20.57h6.1v1.53H16Z" />
+      <path fill="currentColor" d="M19.05 11.43h1.52v1.52h-1.52Z" />
+      <path fill="currentColor" d="m19.05 8.38 3.05 0 0 -1.52 1.52 0 0 -1.53 -1.52 0 0 -1.52 -3.05 0 0 1.52 -1.52 0 0 1.53 1.52 0 0 1.52z" />
+      <path fill="currentColor" d="M17.53 28.19h1.52v1.52h-1.52Z" />
+      <path fill="currentColor" d="M17.53 12.95h1.52v1.53h-1.52Z" />
+      <path fill="currentColor" d="M16 14.48h1.53V16H16Z" />
+      <path fill="currentColor" d="M8.38 29.71h9.15v1.53H8.38Z" />
+      <path fill="currentColor" d="M14.48 16H16v4.57h-1.52Z" />
+      <path fill="currentColor" d="M12.95 0.76h10.67v1.53H12.95Z" />
+      <path fill="currentColor" d="m14.48 22.1 -3.05 0 0 1.52 -1.52 0 0 3.05 1.52 0 0 1.52 3.05 0 0 -1.52 1.52 0 0 -3.05 -1.52 0 0 -1.52z" />
+      <path fill="currentColor" d="M9.91 2.29h3.04v1.52H9.91Z" />
+      <path fill="currentColor" d="m9.91 12.95 3.04 0 0 -1.52 1.53 0 0 -3.05 -1.53 0 0 -1.52 -3.04 0 0 1.52 -1.53 0 0 3.05 1.53 0 0 1.52z" />
+      <path fill="currentColor" d="m5.34 20.57 3.04 0 0 -1.52 1.53 0 0 -3.05 -1.53 0 0 -1.52 -3.04 0 0 1.52 -1.53 0 0 3.05 1.53 0 0 1.52z" />
+      <path fill="currentColor" d="M6.86 3.81h3.05v1.52H6.86Z" />
+      <path fill="currentColor" d="M6.86 28.19h1.52v1.52H6.86Z" />
+      <path fill="currentColor" d="M3.81 26.67h3.05v1.52H3.81Z" />
+      <path fill="currentColor" d="M5.34 5.33h1.52v1.53H5.34Z" />
+      <path fill="currentColor" d="M3.81 6.86h1.53v3.05H3.81Z" />
+      <path fill="currentColor" d="M2.29 23.62h1.52v3.05H2.29Z" />
+      <path fill="currentColor" d="M2.29 9.91h1.52v3.04H2.29Z" />
+      <path fill="currentColor" d="M0.76 12.95h1.53v10.67H0.76Z" />
     </svg>
   );
 }

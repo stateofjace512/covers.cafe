@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Music, Loader, Camera } from 'lucide-react';
+import BackIcon from '../components/BackIcon';
+import MusicIcon from '../components/MusicIcon';
+import LoadingIcon from '../components/LoadingIcon';
+import CameraIcon from '../components/CameraIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getCoverImageSrc } from '../lib/media';
@@ -254,7 +257,7 @@ export default function MusicArtistDetail() {
         />
       )}
       <button className="btn btn-secondary ma-back-btn" onClick={() => navigate('/artists')}>
-        <ArrowLeft size={14} /> All Artists
+        <BackIcon size={14} /> All Artists
       </button>
 
       {/* Artist header with cover art as backdrop */}
@@ -282,7 +285,7 @@ export default function MusicArtistDetail() {
                 className="ma-avatar-img"
               />
             ) : (
-              <Music size={36} style={{ opacity: 0.4 }} />
+              <MusicIcon size={36} style={{ opacity: 0.4 }} />
             )}
             {user && (
               <button
@@ -292,8 +295,8 @@ export default function MusicArtistDetail() {
                 disabled={uploading}
               >
                 {uploading
-                  ? <Loader size={12} className="ma-spinner" />
-                  : <Camera size={12} />}
+                  ? <LoadingIcon size={12} className="ma-spinner" />
+                  : <CameraIcon size={12} />}
               </button>
             )}
             <input
@@ -318,7 +321,7 @@ export default function MusicArtistDetail() {
 
       {loading ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '40px 0', color: 'var(--body-text-muted)' }}>
-          <Loader size={22} className="ma-spinner" /> Loading covers…
+          <LoadingIcon size={22} className="ma-spinner" /> Loading covers…
         </div>
       ) : covers.length === 0 ? (
         <p className="text-muted" style={{ marginTop: 24 }}>No public covers found for "{artistName}".</p>
@@ -345,7 +348,7 @@ export default function MusicArtistDetail() {
                 onClick={handleLoadMore}
                 disabled={loadingMore}
               >
-                {loadingMore ? <><Loader size={14} className="ma-spinner" /> Loading…</> : 'Load more'}
+                {loadingMore ? <><LoadingIcon size={14} className="ma-spinner" /> Loading…</> : 'Load more'}
               </button>
             </div>
           )}
@@ -407,11 +410,10 @@ export default function MusicArtistDetail() {
         .ma-photo-upload-btn:hover { transform: none; box-shadow: none; background: var(--accent); }
         .ma-header-info { display: flex; flex-direction: column; gap: 6px; }
         .ma-artist-name {
-          font-size: 28px; font-weight: bold; color: #fff;
-          text-shadow: 0 2px 8px rgba(0,0,0,0.6); margin: 0; line-height: 1.1;
+          font-size: 28px; color: #fff; margin: 0; line-height: 1.1;
         }
-        .ma-cover-count { font-size: 14px; color: rgba(255,255,255,0.65); margin: 0; }
-        .ma-upload-error { font-size: 12px; color: #f87171; margin: 0; }
+        .ma-cover-count { font-size: 20px; color: rgba(255,255,255,0.65); margin: 0; }
+        .ma-upload-error { font-size: 18px; color: #f87171; margin: 0; }
         .ma-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>

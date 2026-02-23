@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lock, Loader, Pencil, Check, X, ImagePlus } from 'lucide-react';
+import BackIcon from '../components/BackIcon';
+import LockIcon from '../components/LockIcon';
+import LoadingIcon from '../components/LoadingIcon';
+import PencilIcon from '../components/PencilIcon';
+import CheckIcon from '../components/CheckIcon';
+import XIcon from '../components/XIcon';
+import ImagePlusIcon from '../components/ImagePlusIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getCoverImageSrc } from '../lib/media';
@@ -121,7 +127,7 @@ export default function CollectionDetail() {
   if (loading) {
     return (
       <div className="gallery-loading">
-        <Loader size={28} className="col-spinner" />
+        <LoadingIcon size={28} className="col-spinner" />
         <span>Loading collection…</span>
       </div>
     );
@@ -131,7 +137,7 @@ export default function CollectionDetail() {
     return (
       <div>
         <button className="btn btn-secondary col-back-btn" onClick={() => navigate(`/users/${username}`)}>
-          <ArrowLeft size={14} /> Back to {username}
+          <BackIcon size={14} /> Back to {username}
         </button>
         <p className="text-muted">Collection not found.</p>
       </div>
@@ -143,7 +149,7 @@ export default function CollectionDetail() {
   return (
     <div>
       <button className="btn btn-secondary col-back-btn" onClick={() => navigate(`/users/${username}`)}>
-        <ArrowLeft size={14} /> {username}
+        <BackIcon size={14} /> {username}
       </button>
 
       <div className="col-detail-header card">
@@ -166,10 +172,10 @@ export default function CollectionDetail() {
                 onClick={() => setEditPublic(false)}
               >Private</button>
               <button className="btn btn-primary col-save-btn" onClick={saveEdit} disabled={editSaving || !editName.trim()}>
-                <Check size={14} /> Save
+                <CheckIcon size={14} /> Save
               </button>
               <button className="btn btn-secondary" onClick={cancelEdit} disabled={editSaving}>
-                <X size={14} />
+                <XIcon size={14} />
               </button>
             </div>
 
@@ -191,8 +197,8 @@ export default function CollectionDetail() {
                         title={isActive ? 'Remove as cover' : cover.title}
                       >
                         <img src={getCoverImageSrc(cover, 120)} alt={cover.title} />
-                        {isActive && <div className="col-edit-cover-check"><Check size={12} /></div>}
-                        {setCoverLoading === cover.id && <div className="col-edit-cover-check"><Loader size={12} className="col-spinner" /></div>}
+                        {isActive && <div className="col-edit-cover-check"><CheckIcon size={12} /></div>}
+                        {setCoverLoading === cover.id && <div className="col-edit-cover-check"><LoadingIcon size={12} className="col-spinner" /></div>}
                       </button>
                     );
                   })}
@@ -206,12 +212,12 @@ export default function CollectionDetail() {
               {collection?.name}
               {!collection?.is_public && (
                 <span className="col-detail-private">
-                  <Lock size={12} /> Private
+                  <LockIcon size={12} /> Private
                 </span>
               )}
               {isOwner && (
                 <button className="btn col-edit-btn" onClick={startEdit} title="Edit collection">
-                  <Pencil size={13} />
+                  <PencilIcon size={13} />
                 </button>
               )}
             </h1>
@@ -241,8 +247,8 @@ export default function CollectionDetail() {
                   disabled={setCoverLoading === cover.id}
                 >
                   {setCoverLoading === cover.id
-                    ? <Loader size={11} className="col-spinner" />
-                    : <ImagePlus size={11} />
+                    ? <LoadingIcon size={11} className="col-spinner" />
+                    : <ImagePlusIcon size={11} />
                   }
                   {collection?.cover_image_id === cover.id ? 'Cover' : 'Set cover'}
                 </button>
@@ -270,13 +276,12 @@ export default function CollectionDetail() {
         .col-back-btn { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; }
         .col-detail-header { padding: 20px 24px; margin-bottom: 4px; }
         .col-detail-name {
-          font-size: 22px; font-weight: bold; color: var(--body-text);
+          font-size: 25px; color: var(--body-text);
           display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-          text-shadow: 0 1px 0 rgba(255,255,255,0.4);
         }
-        [data-theme="dark"] .col-detail-name { text-shadow: none; }
+        [data-theme="dark"] .col-detail-name { }
         .col-detail-private {
-          font-size: 11px; font-weight: bold;
+          font-size: 17px;
           background: var(--sidebar-bg); color: var(--body-text-muted);
           padding: 2px 8px; border-radius: 10px;
           border: 1px solid var(--body-card-border);
@@ -288,10 +293,10 @@ export default function CollectionDetail() {
           display: flex; align-items: center;
         }
         .col-edit-btn:hover { background: var(--sidebar-bg); color: var(--body-text); transform: none; box-shadow: none; }
-        .col-detail-count { font-size: 13px; color: var(--body-text-muted); margin-top: 6px; }
+        .col-detail-count { font-size: 19px; color: var(--body-text-muted); margin-top: 6px; }
         .col-edit-form { display: flex; flex-direction: column; gap: 10px; }
         .col-edit-name-input {
-          font-size: 20px; font-weight: bold; color: var(--body-text);
+          font-size: 23px; color: var(--body-text);
           background: var(--body-card-bg); border: 1px solid var(--accent);
           border-radius: 4px; padding: 6px 10px; outline: none;
           box-shadow: 0 0 0 2px rgba(192,90,26,0.2);
@@ -299,12 +304,12 @@ export default function CollectionDetail() {
         }
         .col-edit-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .col-visibility-btn {
-          font-size: 12px; padding: 5px 12px;
+          font-size: 18px; padding: 5px 12px;
           background: var(--sidebar-bg); border: 1px solid var(--sidebar-border); color: var(--body-text-muted);
         }
         .col-visibility-btn--active { background: var(--accent); color: white; border-color: var(--accent); }
         .col-visibility-btn:hover { transform: none; box-shadow: none; }
-        .col-save-btn { display: flex; align-items: center; gap: 5px; font-size: 12px; }
+        .col-save-btn { display: flex; align-items: center; gap: 5px; font-size: 18px; }
         .col-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .gallery-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 60px 20px; color: var(--body-text-muted); }
@@ -312,7 +317,7 @@ export default function CollectionDetail() {
         .col-set-cover-btn {
           position: absolute; bottom: 6px; left: 6px;
           display: flex; align-items: center; gap: 4px;
-          font-size: 10px; font-weight: bold;
+          font-size: 16px;
           padding: 3px 7px; border-radius: 3px;
           background: rgba(10,5,2,0.75); color: rgba(255,255,255,0.7);
           border: 1px solid rgba(255,255,255,0.15);
@@ -327,7 +332,7 @@ export default function CollectionDetail() {
         }
         .col-set-cover-btn:hover { transform: none; box-shadow: none; }
         .col-edit-cover-section { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--body-card-border); }
-        .col-edit-cover-label { font-size: 11px; font-weight: bold; color: var(--body-text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .col-edit-cover-label { font-size: 17px; color: var(--body-text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
         .col-edit-cover-grid { display: flex; flex-wrap: wrap; gap: 6px; }
         .col-edit-cover-thumb {
           width: 56px; height: 56px; border-radius: 4px; overflow: hidden;

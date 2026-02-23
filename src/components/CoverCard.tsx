@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { Star, Download, User, Trash2, Trophy, Lock } from 'lucide-react';
+import FavoritesIcon from './FavoritesIcon';
+import DownloadIcon from './DownloadIcon';
+import UserIcon from './UserIcon';
+import TrashIcon from './TrashIcon';
+import TrophyIcon from './TrophyIcon';
+import LockIcon from './LockIcon';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -79,10 +84,10 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
             onClick={(e) => { e.stopPropagation(); onToggleFavorite(cover.id); }}
             title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
           >
-            <Star size={15} fill={isFavorited ? 'currentColor' : 'none'} />
+            <FavoritesIcon size={15} />
           </button>
           <button className="cover-card-action-btn" title="Download" onClick={(e) => e.stopPropagation()}>
-            <Download size={15} />
+            <DownloadIcon size={15} />
           </button>
           {isOwner && (
             <button
@@ -91,7 +96,7 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
               title={confirmDelete ? 'Click again to confirm delete' : 'Delete this cover'}
               disabled={deleting}
             >
-              <Trash2 size={15} />
+              <TrashIcon size={15} />
             </button>
           )}
         </div>
@@ -103,20 +108,20 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
         <div className="cover-card-meta">
           {cover.is_acotw && (
             <span className="cover-card-acotw" title="Album Cover Of The Week">
-              <Trophy size={9} />
+              <TrophyIcon size={9} />
               ACOTW
             </span>
           )}
           {cover.is_private && (
             <span className="cover-card-private" title="Only visible to you">
-              <Lock size={9} />
+              <LockIcon size={9} />
               Private
             </span>
           )}
           {cover.year && <span className="cover-card-year">{cover.year}</span>}
           {(cover.favorite_count ?? 0) > 0 && (
             <span className="cover-card-fav-count" title={`${cover.favorite_count} favorite${cover.favorite_count === 1 ? '' : 's'}`}>
-              <Star size={9} />
+              <FavoritesIcon size={9} />
               {cover.favorite_count}
             </span>
           )}
@@ -126,11 +131,11 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
               onClick={(e) => { e.stopPropagation(); navigate(`/users/${cover.profiles!.username}`); }}
               title={`View ${cover.profiles.username}'s profile`}
             >
-              <User size={10} />
+              <UserIcon size={10} />
               {cover.profiles.username}
             </button>
           ) : (
-            <span className="cover-card-uploader"><User size={10} />unknown</span>
+            <span className="cover-card-uploader"><UserIcon size={10} />unknown</span>
           )}
         </div>
       </div>
@@ -173,11 +178,11 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
         .cover-card-delete-btn--confirm { background: #c83220 !important; color: white !important; animation: delete-pulse 0.4s ease; }
         @keyframes delete-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
         .cover-card-meta { display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
-        .cover-card-year { font-size: 11px; color: var(--body-text-muted); background: var(--body-border); padding: 1px 5px; border-radius: 3px; font-weight: bold; }
-        .cover-card-fav-count { display: flex; align-items: center; gap: 2px; font-size: 11px; color: var(--body-text-muted); font-weight: bold; }
-        .cover-card-acotw { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #b8860b; background: rgba(184,134,11,0.12); border: 1px solid rgba(184,134,11,0.3); padding: 1px 5px; border-radius: 3px; }
-        .cover-card-private { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: bold; color: #7a6a8a; background: rgba(120,100,140,0.12); border: 1px solid rgba(120,100,140,0.3); padding: 1px 5px; border-radius: 3px; }
-        .cover-card-uploader { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .cover-card-year { font-size: 17px; color: var(--body-text-muted); background: var(--body-border); padding: 1px 5px; border-radius: 3px; }
+        .cover-card-fav-count { display: flex; align-items: center; gap: 2px; font-size: 17px; color: var(--body-text-muted); }
+        .cover-card-acotw { display: inline-flex; align-items: center; gap: 3px; font-size: 16px; color: #b8860b; background: rgba(184,134,11,0.12); border: 1px solid rgba(184,134,11,0.3); padding: 1px 5px; border-radius: 3px; }
+        .cover-card-private { display: inline-flex; align-items: center; gap: 3px; font-size: 16px; color: #7a6a8a; background: rgba(120,100,140,0.12); border: 1px solid rgba(120,100,140,0.3); padding: 1px 5px; border-radius: 3px; }
+        .cover-card-uploader { display: flex; align-items: center; gap: 3px; font-size: 17px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         .cover-card-uploader--link { background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; }
         .cover-card-uploader--link:hover { color: var(--accent); transform: none; box-shadow: none; }
         .album-card-cover { position: relative; }

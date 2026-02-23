@@ -1,6 +1,18 @@
 import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Star, Download, User, Calendar, Tag, ArrowDownToLine, Trash2, Flag, Loader, FolderPlus, ChevronDown, Pencil, Clock } from 'lucide-react';
+import XIcon from './XIcon';
+import FavoritesIcon from './FavoritesIcon';
+import DownloadIcon from './DownloadIcon';
+import UserIcon from './UserIcon';
+import CalendarIcon from './CalendarIcon';
+import TagIcon from './TagIcon';
+import TrashIcon from './TrashIcon';
+import FlagIcon from './FlagIcon';
+import LoadingIcon from './LoadingIcon';
+import FolderIcon from './FolderIcon';
+import ChevronDownIcon from './ChevronDownIcon';
+import PencilIcon from './PencilIcon';
+import ClockIcon from './ClockIcon';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -324,7 +336,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-box cover-modal" role="dialog" aria-modal="true">
         <button className="cover-modal-close" onClick={onClose} aria-label="Close">
-          <X size={18} />
+          <XIcon size={18} />
         </button>
 
         <div className="cover-modal-inner">
@@ -349,12 +361,12 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                 <div className="cover-modal-meta">
                   {cover.year && (
                     <div className="cover-meta-row">
-                      <Calendar size={13} />
+                      <CalendarIcon size={13} />
                       <span>{cover.year}</span>
                     </div>
                   )}
                   <div className="cover-meta-row">
-                    <User size={13} />
+                    <UserIcon size={13} />
                     <span>
                       Uploaded by{' '}
                       {cover.profiles?.username ? (
@@ -371,7 +383,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                   </div>
                   {cover.created_at && (
                     <div className="cover-meta-row">
-                      <Clock size={13} />
+                      <ClockIcon size={13} />
                       <span
                         title={new Date(cover.created_at).toLocaleString('en-US', {
                           year: 'numeric', month: 'long', day: 'numeric',
@@ -386,7 +398,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                   )}
                   {cover.tags && cover.tags.length > 0 && (
                     <div className="cover-meta-row cover-meta-tags">
-                      <Tag size={13} />
+                      <TagIcon size={13} />
                       <div className="cover-tags-list">
                         {cover.tags.map((tag) => (
                           <button
@@ -400,7 +412,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     </div>
                   )}
                   <div className="cover-meta-row">
-                    <ArrowDownToLine size={13} />
+                    <DownloadIcon size={13} />
                     <span>{cover.download_count} download{cover.download_count !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
@@ -410,7 +422,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     className={`btn cover-modal-fav-btn${isFavorited ? ' cover-modal-fav-btn--active' : ''}`}
                     onClick={handleFavorite}
                   >
-                    <Star size={15} fill={isFavorited ? 'currentColor' : 'none'} />
+                    <FavoritesIcon size={15} />
                     {isFavorited ? 'Favorited' : 'Favorite'}
                   </button>
                   <div className="cover-download-wrap" ref={downloadMenuRef}>
@@ -419,7 +431,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                       onClick={() => handleDownload()}
                       disabled={downloading}
                     >
-                      <Download size={15} />
+                      <DownloadIcon size={15} />
                       {downloading ? 'Downloading…' : 'Download'}
                     </button>
                     <button
@@ -432,7 +444,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                       disabled={downloading}
                       title="More download sizes"
                     >
-                      <ChevronDown size={14} />
+                      <ChevronDownIcon size={14} />
                     </button>
 
                   </div>
@@ -440,12 +452,12 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
 
                 <div className="cover-modal-secondary-actions">
                   <button className="btn cover-modal-collection-btn" onClick={openCollectionPanel}>
-                    <FolderPlus size={14} />
+                    <FolderIcon size={14} />
                     Add to Collection
                   </button>
                   {isOwner && (
                     <button className="btn cover-modal-edit-btn" onClick={openEditPanel}>
-                      <Pencil size={14} />
+                      <PencilIcon size={14} />
                       Edit
                     </button>
                   )}
@@ -455,7 +467,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                       onClick={handleDelete}
                       disabled={deleting}
                     >
-                      <Trash2 size={14} />
+                      <TrashIcon size={14} />
                       {deleting ? 'Deleting…' : deleteConfirm ? 'Confirm Delete' : 'Delete'}
                     </button>
                   )}
@@ -463,7 +475,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     className="btn cover-modal-report-btn"
                     onClick={() => setPanelMode('report')}
                   >
-                    <Flag size={14} />
+                    <FlagIcon size={14} />
                     Report
                   </button>
                 </div>
@@ -505,7 +517,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     </div>
                     <div className="cover-report-actions">
                       <button className="btn btn-primary" onClick={handleReport} disabled={reporting}>
-                        {reporting ? <><Loader size={13} className="upload-spinner" /> Submitting…</> : 'Submit Report'}
+                        {reporting ? <><LoadingIcon size={13} className="upload-spinner" /> Submitting…</> : 'Submit Report'}
                       </button>
                       <button className="btn btn-secondary" onClick={() => setPanelMode('details')}>Back</button>
                     </div>
@@ -618,7 +630,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                 )}
                 <div className="cover-report-actions">
                   <button className="btn btn-primary" onClick={saveEdit} disabled={editSaving}>
-                    {editSaving ? <><Loader size={13} className="upload-spinner" /> Saving…</> : 'Save Changes'}
+                    {editSaving ? <><LoadingIcon size={13} className="upload-spinner" /> Saving…</> : 'Save Changes'}
                   </button>
                   <button className="btn btn-secondary" onClick={() => setPanelMode('details')}>Cancel</button>
                 </div>
@@ -656,21 +668,20 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         }
         .cover-modal-titles { border-bottom: 1px solid var(--body-border); padding-bottom: 14px; }
         .cover-modal-title {
-          font-size: 22px; font-weight: bold; color: var(--body-text);
-          text-shadow: 0 1px 0 rgba(255,255,255,0.4); line-height: 1.2; margin-bottom: 6px;
+          font-size: 25px; color: var(--body-text); line-height: 1.2; margin-bottom: 6px;
         }
-        [data-theme="dark"] .cover-modal-title { text-shadow: none; }
-        .cover-modal-artist { font-size: 16px; color: var(--body-text-muted); font-weight: bold; }
+        [data-theme="dark"] .cover-modal-title { }
+        .cover-modal-artist { font-size: 19px; color: var(--body-text-muted); }
         .cover-modal-meta { display: flex; flex-direction: column; gap: 8px; flex: 1; }
-        .cover-meta-row { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--body-text-muted); }
+        .cover-meta-row { display: flex; align-items: flex-start; gap: 8px; font-size: 19px; color: var(--body-text-muted); }
         .cover-meta-row svg { flex-shrink: 0; margin-top: 1px; }
         .cover-meta-date { cursor: help; border-bottom: 1px dashed var(--body-card-border); }
-        .cover-meta-user-link { font-weight: bold; color: var(--body-text); background: none; border: none; padding: 0; cursor: pointer; font-size: 13px; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; }
+        .cover-meta-user-link { color: var(--body-text); background: none; border: none; padding: 0; cursor: pointer; font-size: 19px; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; }
         .cover-meta-user-link:hover { color: var(--accent); transform: none; box-shadow: none; }
         .cover-meta-tags { align-items: flex-start; }
         .cover-tags-list { display: flex; flex-wrap: wrap; gap: 5px; }
         .cover-tag {
-          font-size: 11px; font-weight: bold;
+          font-size: 21px; font-family: var(--font-header);
           background: var(--sidebar-bg); color: var(--sidebar-text);
           padding: 2px 7px; border-radius: 3px;
           border: 1px solid var(--sidebar-border); box-shadow: var(--shadow-sm);
@@ -689,12 +700,12 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .cover-modal-download-btn { display: flex; align-items: center; gap: 6px; }
         .cover-modal-download-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .cover-modal-collection-btn {
-          display: flex; align-items: center; gap: 5px; font-size: 12px;
+          display: flex; align-items: center; gap: 5px; font-size: 18px;
           background: var(--sidebar-bg); border: 1px solid var(--sidebar-border); color: var(--body-text);
           padding: 6px 12px;
         }
         .cover-modal-delete-btn {
-          display: flex; align-items: center; gap: 5px; font-size: 12px;
+          display: flex; align-items: center; gap: 5px; font-size: 18px;
           background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3);
           color: #c83220; padding: 6px 12px;
         }
@@ -702,41 +713,41 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .cover-modal-delete-btn--confirm { background: #c83220 !important; color: white !important; border-color: #a02010 !important; }
         .cover-modal-delete-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .cover-modal-edit-btn {
-          display: flex; align-items: center; gap: 5px; font-size: 12px;
+          display: flex; align-items: center; gap: 5px; font-size: 18px;
           background: var(--sidebar-bg); border: 1px solid var(--sidebar-border);
           color: var(--body-text); padding: 6px 12px;
         }
         .cover-modal-edit-btn:hover { background: var(--sidebar-bg-dark); transform: none; box-shadow: none; }
         .cover-modal-report-btn {
-          display: flex; align-items: center; gap: 5px; font-size: 12px;
+          display: flex; align-items: center; gap: 5px; font-size: 18px;
           background: none; border: 1px solid var(--body-card-border);
           color: var(--body-text-muted); padding: 6px 12px;
         }
         .cover-modal-report-btn:hover { background: var(--sidebar-bg); color: var(--body-text); transform: none; box-shadow: none; }
         .cover-report-panel, .cover-collection-panel { display: flex; flex-direction: column; gap: 14px; }
-        .cover-report-title { font-size: 16px; font-weight: bold; color: var(--body-text); }
-        .cover-report-done { font-size: 14px; color: var(--body-text-muted); line-height: 1.5; }
+        .cover-report-title { font-size: 19px; color: var(--body-text); }
+        .cover-report-done { font-size: 20px; color: var(--body-text-muted); line-height: 1.5; }
         .cover-report-textarea { resize: none; min-height: 72px; }
         .cover-report-actions { display: flex; gap: 8px; }
         .collection-drop-zone {
           border: 2px dashed var(--body-card-border);
           border-radius: 6px;
           padding: 14px;
-          font-size: 12px;
+          font-size: 18px;
           color: var(--body-text-muted);
           background: var(--sidebar-bg);
         }
-        .collection-status { font-size: 12px; font-weight: bold; padding: 6px 10px; border-radius: 4px; }
+        .collection-status { font-size: 18px; padding: 6px 10px; border-radius: 4px; }
         .collection-status--error { color: #c0392b; background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.25); }
         .collection-status--ok { color: #1e7e34; background: rgba(30,126,52,0.08); border: 1px solid rgba(30,126,52,0.25); }
         .form-row { display: flex; flex-direction: column; gap: 5px; }
-        .form-label { font-size: 13px; font-weight: bold; color: var(--body-text); }
-        .form-hint { font-size: 11px; color: var(--body-text-muted); font-weight: normal; }
+        .form-label { font-size: 19px; color: var(--body-text); }
+        .form-hint { font-size: 17px; color: var(--body-text-muted); font-weight: normal; }
         .form-input {
           width: 100%; padding: 8px 12px;
           border-radius: 4px; border: 1px solid var(--body-card-border);
-          background: var(--body-card-bg); color: var(--body-text); font-size: 13px;
-          box-shadow: var(--shadow-inset-sm); outline: none; font-family: Arial, Helvetica, sans-serif;
+          background: var(--body-card-bg); color: var(--body-text); font-size: 19px;
+          box-shadow: var(--shadow-inset-sm); outline: none; font-family: var(--font-body);
         }
         .form-input:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
         .upload-spinner { animation: spin 0.8s linear infinite; }
@@ -744,7 +755,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .cover-tag--clickable {
           cursor: pointer; background: var(--sidebar-bg); color: var(--sidebar-text);
           border: 1px solid var(--sidebar-border); padding: 2px 7px; border-radius: 3px;
-          font-size: 11px; font-weight: bold; box-shadow: var(--shadow-sm);
+          font-size: 21px; font-family: var(--font-header); box-shadow: var(--shadow-sm);
           transition: background 0.1s, color 0.1s;
         }
         .cover-tag--clickable:hover { background: var(--accent); color: white; border-color: var(--accent); transform: none; box-shadow: none; }
@@ -761,27 +772,27 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
           display: flex; flex-direction: column; min-width: 130px; overflow: hidden;
         }
         .cover-download-option {
-          padding: 8px 14px; text-align: left; font-size: 13px; font-weight: bold;
+          padding: 8px 14px; text-align: left; font-size: 19px;
           background: none; border: none; color: var(--body-text); cursor: pointer;
           box-shadow: none;
         }
         .cover-download-option:hover { background: var(--accent); color: white; transform: none; }
         .cover-comments { margin-top: 16px; border-top: 1px solid var(--body-card-border); padding-top: 14px; }
-        .cover-comments-title { display: flex; align-items: center; gap: 6px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--body-text-muted); margin-bottom: 10px; }
+        .cover-comments-title { display: flex; align-items: center; gap: 6px; font-size: 19px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--body-text-muted); margin-bottom: 10px; }
         .cover-comments-composer { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
         .cover-comments-input { width: 100%; min-height: 82px; resize: vertical; border: 1px solid var(--body-card-border); background: var(--body-card-bg); color: var(--body-text); border-radius: 6px; padding: 10px; font: inherit; }
-        .cover-comments-status, .cover-comments-muted { font-size: 12px; color: var(--body-text-muted); }
+        .cover-comments-status, .cover-comments-muted { font-size: 18px; color: var(--body-text-muted); }
         .cover-comments-list { list-style: none; display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow: auto; padding-right: 2px; }
         .cover-comment-item { border: 1px solid var(--body-card-border); border-radius: 6px; background: rgba(255,255,255,0.25); padding: 8px 10px; }
-        .cover-comment-top { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; color: #2f1b0d; margin-bottom: 4px; }
+        .cover-comment-top { display: flex; justify-content: space-between; gap: 10px; font-size: 17px; color: #2f1b0d; margin-bottom: 4px; }
         .cover-comment-top strong, .cover-comment-top span { color: #2f1b0d; }
-        .cover-comment-author { font-weight: bold; color: #2f1b0d; background: none; border: none; padding: 0; cursor: pointer; font-size: 11px; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; }
+        .cover-comment-author { color: #2f1b0d; background: none; border: none; padding: 0; cursor: pointer; font-size: 17px; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; }
         .cover-comment-author:hover { color: var(--accent); transform: none; box-shadow: none; }
-        .cover-comment-body { white-space: pre-wrap; font-size: 13px; margin-bottom: 7px; }
-        .cover-comment-edited { font-size: 11px; color: #6f4a30; margin-bottom: 7px; font-style: italic; }
+        .cover-comment-body { white-space: pre-wrap; font-size: 19px; margin-bottom: 7px; }
+        .cover-comment-edited { font-size: 17px; color: #6f4a30; margin-bottom: 7px; font-style: italic; }
         .cover-comment-edit-wrap { display: flex; flex-direction: column; gap: 8px; }
         .cover-comment-actions { display: flex; gap: 8px; }
-        .cover-comment-action { border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--sidebar-text); font-size: 11px; font-weight: bold; border-radius: 4px; padding: 3px 8px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+        .cover-comment-action { border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--sidebar-text); font-size: 17px; border-radius: 4px; padding: 3px 8px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
         .cover-comment-action:hover { background: var(--accent); color: #fff; }
         .cover-comment-action--delete { background: rgba(200,50,30,0.14); border-color: rgba(200,50,30,0.35); color: #8f2416; }
         [data-theme="dark"] .cover-comment-action--delete { background: rgba(220,92,72,0.22); border-color: rgba(220,92,72,0.55); color: #ffb8ac; }

@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Image, ArrowUpFromLine, Star, Trophy, Sparkles } from 'lucide-react';
+import GalleryIcon from '../components/GalleryIcon';
+import UploadDownloadIcon from '../components/UploadDownloadIcon';
+import FavoritesIcon from '../components/FavoritesIcon';
+import TrophyIcon from '../components/TrophyIcon';
+import DiamondIcon from '../components/DiamondIcon';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
 import CoffeeCupIcon from '../components/CoffeeCupIcon';
@@ -8,9 +12,9 @@ import CoffeeCupIcon from '../components/CoffeeCupIcon';
 export type GalleryTab = 'new' | 'top_rated' | 'acotw';
 
 const TABS: { id: GalleryTab; label: string; icon: React.ReactNode; title: string }[] = [
-  { id: 'new',       label: 'New',       icon: <Sparkles size={13} />, title: 'Recent Covers' },
-  { id: 'top_rated', label: 'Top Rated', icon: <Star size={13} />,     title: 'Top Rated' },
-  { id: 'acotw',     label: 'ACOTW',     icon: <Trophy size={13} />,   title: 'Album Cover Of The Week' },
+  { id: 'new',       label: 'New',       icon: <DiamondIcon size={13} />,    title: 'Recent Covers' },
+  { id: 'top_rated', label: 'Top Rated', icon: <FavoritesIcon size={13} />, title: 'Top Rated' },
+  { id: 'acotw',     label: 'ACOTW',     icon: <TrophyIcon size={13} />,    title: 'Album Cover Of The Week' },
 ];
 
 export default function Gallery() {
@@ -34,12 +38,12 @@ export default function Gallery() {
             <div className="hero-actions">
               {user ? (
                 <a href="/upload" className="btn btn-primary" onClick={(e) => { e.preventDefault(); window.history.pushState({}, '', '/upload'); window.dispatchEvent(new PopStateEvent('popstate')); }}>
-                  <ArrowUpFromLine size={15} />
+                  <UploadDownloadIcon size={15} />
                   Upload a Cover
                 </a>
               ) : (
                 <button className="btn btn-primary" onClick={() => openAuthModal('register')}>
-                  <ArrowUpFromLine size={15} />
+                  <UploadDownloadIcon size={15} />
                   Join &amp; Upload
                 </button>
               )}
@@ -62,7 +66,7 @@ export default function Gallery() {
 
       <section>
         <h2 className="section-title">
-          <Image size={20} />
+          <GalleryIcon size={20} />
           {searchQuery ? `Results for "${searchQuery}"` : activeTitle}
         </h2>
         <GalleryGrid filter="all" tab={searchQuery ? 'new' : activeTab} />
@@ -87,15 +91,14 @@ export default function Gallery() {
         }
         .hero-content { position: relative; z-index: 1; max-width: 620px; }
         .hero-title {
-          font-size: 32px; font-weight: bold; color: #fff8f0;
-          text-shadow: 0 2px 6px rgba(0,0,0,0.5); margin-bottom: 10px; letter-spacing: -0.5px;
+          font-size: 32px; color: #fff8f0; margin-bottom: 10px; letter-spacing: -0.5px;
         }
         .hero-subtitle {
-          font-size: 15px; color: rgba(255,248,240,0.82);
-          margin-bottom: 14px; line-height: 1.6; text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+          font-size: 21px; color: rgba(255,248,240,0.82);
+          margin-bottom: 14px; line-height: 1.6;
         }
         .hero-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
-        .hero-pill { font-size: 11px; font-weight: bold; letter-spacing: 0.3px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: rgba(255,248,240,0.95); text-transform: uppercase; }
+        .hero-pill { font-size: 17px; letter-spacing: 0.3px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: rgba(255,248,240,0.95); text-transform: uppercase; }
         .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
         .hero-tab-strip {
           position: relative; z-index: 1;
@@ -107,7 +110,7 @@ export default function Gallery() {
           display: inline-flex; align-items: center; gap: 6px;
           padding: 7px 16px 9px;
           border: none; border-radius: 6px 6px 6px 6px;
-          font-size: 12px; font-weight: bold; font-family: inherit;
+          font-size: 18px; font-family: inherit;
           cursor: pointer;
           background: transparent;
           color: rgba(255,248,240,0.55);

@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, LogOut, User, Menu, X } from 'lucide-react';
+import SearchIcon from './SearchIcon';
+import LogoutIcon from './LogoutIcon';
+import MenuIcon from './MenuIcon';
+import XIcon from './XIcon';
 import MoonIcon from './MoonIcon';
 import SunIcon from './SunIcon';
+import UserIcon from './UserIcon';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationBell from './NotificationBell';
 
@@ -46,11 +50,11 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
         aria-expanded={isMobileNavOpen}
         aria-controls="main-sidebar"
       >
-        {isMobileNavOpen ? <X size={16} /> : <Menu size={16} />}
+        {isMobileNavOpen ? <XIcon size={16} /> : <MenuIcon size={16} />}
       </button>
           <span className="header-logo-text">covers<span className="header-logo-dot">.</span>cafe</span>
       <form className="header-search-wrap" onSubmit={handleSearch}>
-        <Search size={14} className="header-search-icon" />
+        <SearchIcon size={14} className="header-search-icon" />
         <input
           type="search"
           className="header-search"
@@ -76,13 +80,13 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
         {user ? (
           <div className="header-user-group">
             <button className="btn btn-ghost header-user-btn" onClick={() => navigate('/profile')}>
-              <User size={15} />
+              <UserIcon size={15} />
               <span className="header-username">
                 {profile?.display_name ?? profile?.username ?? user.email?.split('@')[0]}
               </span>
             </button>
             <button className="btn btn-ghost header-signout-btn" onClick={() => signOut()} title="Sign out">
-              <LogOut size={15} />
+              <LogoutIcon size={15} />
             </button>
           </div>
         ) : (
@@ -110,10 +114,9 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
           box-shadow: 0 2px 5px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.18);
         }
         .header-logo-text {
-          font-size: 22px; font-weight: bold; letter-spacing: -0.5px;
-          text-shadow: 0 1px 3px rgba(0,0,0,0.4); font-family: Arial, Helvetica, sans-serif;
+          font-size: 25px; letter-spacing: -0.5px; font-family: var(--font-header);
         }
-        .header-logo-dot { color: #f0a060; text-shadow: 0 0 8px rgba(240,160,96,0.6); }
+        .header-logo-dot { color: #f0a060; }
         .header-search-wrap {
           flex: 1; max-width: 420px; position: relative; display: flex; align-items: center;
         }
@@ -125,7 +128,7 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
           border: 1px solid rgba(0,0,0,0.35) !important;
           background: rgba(0,0,0,0.22) !important;
           color: var(--header-text) !important;
-          font-size: 13px !important;
+          font-size: 19px !important;
           box-shadow: inset 0 2px 4px rgba(0,0,0,0.25), 0 1px 0 rgba(255,255,255,0.08) !important;
           outline: none !important;
         }
@@ -137,16 +140,16 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
         }
         .header-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; }
         .header-menu-btn { display: none; padding: 6px 8px; }
-        .header-theme-btn { display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 12px; font-weight: bold; }
-        .header-theme-label { font-size: 12px; }
+        .header-theme-btn { display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 18px; }
+        .header-theme-label { font-size: 18px; }
         .header-user-group { display: flex; align-items: center; gap: 4px; }
-        .header-user-btn { display: flex; align-items: center; gap: 6px; padding: 6px 10px; font-size: 12px; }
-        .header-username { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
+        .header-user-btn { display: flex; align-items: center; gap: 6px; padding: 6px 10px; font-size: 18px; }
+        .header-username { font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
         .header-signout-btn { padding: 6px 8px; }
         @media (max-width: 640px) {
           .site-header { gap: 8px; padding: 0 10px; }
           .header-menu-btn { display: inline-flex; }
-          .header-logo-text { font-size: 18px; }
+          .header-logo-text { font-size: 21px; }
           .header-theme-label { display: none; }
           .header-search-wrap { max-width: none; min-width: 0; }
           .header-username { display: none; }

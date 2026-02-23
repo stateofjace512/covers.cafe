@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Loader } from 'lucide-react';
+import LoadingIcon from './LoadingIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { checkRateLimit } from '../lib/rateLimit';
@@ -238,7 +238,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
   if (loading) {
     return (
       <div className="gallery-loading">
-        <Loader size={28} className="gallery-spinner" />
+        <LoadingIcon size={28} className="gallery-spinner" />
         <span>Loading covers…</span>
       </div>
     );
@@ -327,7 +327,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
                 disabled={loadingMore}
               >
                 {loadingMore
-                  ? <><Loader size={14} className="gallery-spinner" /> Loading…</>
+                  ? <><LoadingIcon size={14} className="gallery-spinner" /> Loading…</>
                   : 'Load more'}
               </button>
             </div>
@@ -345,13 +345,13 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
           margin-bottom: 16px;
         }
         .gallery-sort-wrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .gallery-sort-label { font-size: 12px; font-weight: bold; color: var(--body-text-muted); }
+        .gallery-sort-label { font-size: 18px; color: var(--body-text-muted); }
         .gallery-sort-select {
-          padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: bold;
+          padding: 5px 10px; border-radius: 4px; font-size: 18px;
           border: 1px solid var(--body-card-border);
           background: var(--body-card-bg); color: var(--body-text);
           box-shadow: var(--shadow-sm); cursor: pointer; outline: none;
-          font-family: Arial, Helvetica, sans-serif;
+          font-family: var(--font-body);
         }
         .gallery-sort-select:focus { border-color: var(--accent); }
 
@@ -363,15 +363,15 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
         }
         .gallery-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .gallery-empty p { font-size: 14px; max-width: 300px; line-height: 1.6; }
-        .gallery-search-label { font-size: 13px; color: var(--body-text-muted); margin-bottom: 12px; }
-        .collection-drag-zone { margin-bottom: 12px; border: 2px dashed var(--accent); border-radius: 8px; padding: 12px; text-align: center; font-weight: bold; color: var(--accent-dark); background: rgba(192,90,26,0.08); }
+        .gallery-empty p { font-size: 20px; max-width: 300px; line-height: 1.6; }
+        .gallery-search-label { font-size: 19px; color: var(--body-text-muted); margin-bottom: 12px; }
+        .collection-drag-zone { margin-bottom: 12px; border: 2px dashed var(--accent); border-radius: 8px; padding: 12px; text-align: center; color: var(--accent-dark); background: rgba(192,90,26,0.08); }
         .gallery-load-more {
           display: flex; justify-content: center; padding: 24px 0 8px;
         }
         .gallery-load-more-btn {
           display: flex; align-items: center; gap: 7px;
-          padding: 9px 28px; font-size: 13px; font-weight: bold;
+          padding: 9px 28px; font-size: 19px;
         }
       `}</style>
     </>

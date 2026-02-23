@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { UserRound, ArrowLeft, Image, Folder, Lock } from 'lucide-react';
+import UserIcon from '../components/UserIcon';
+import BackIcon from '../components/BackIcon';
+import GalleryIcon from '../components/GalleryIcon';
+import FolderIcon from '../components/FolderIcon';
+import LockIcon from '../components/LockIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
@@ -118,7 +122,7 @@ export default function ArtistDetail() {
   if (notFound) return (
     <div>
       <button className="btn btn-secondary" style={{ marginBottom: 20 }} onClick={() => navigate('/users')}>
-        <ArrowLeft size={14} /> Back to Artists
+        <BackIcon size={14} /> Back to Artists
       </button>
       <p className="text-muted">Artist not found.</p>
     </div>
@@ -129,14 +133,14 @@ export default function ArtistDetail() {
   return (
     <div>
       <button className="btn btn-secondary artist-back-btn" onClick={() => navigate('/users')}>
-        <ArrowLeft size={14} /> All Users
+        <BackIcon size={14} /> All Users
       </button>
 
       <div className="artist-detail-header card">
         <div className="artist-detail-avatar">
           {profile && getAvatarSrc(profile)
             ? <img src={getAvatarSrc(profile)!} alt={profile.display_name ?? profile.username} className="artist-detail-avatar-img" loading="lazy" />
-            : <UserRound size={40} style={{ opacity: 0.3 }} />
+            : <UserIcon size={40} style={{ opacity: 0.3 }} />
           }
         </div>
         <div className="artist-detail-info">
@@ -169,7 +173,7 @@ export default function ArtistDetail() {
 
       <section style={{ marginTop: 24 }}>
         <h2 className="section-title">
-          <Folder size={18} />
+          <FolderIcon size={18} />
           {isOwnProfile ? 'My Collections' : 'Collections'}
         </h2>
         {collections.length === 0 ? (
@@ -195,7 +199,7 @@ export default function ArtistDetail() {
                     />
                   ) : (
                     <div className="artist-collection-thumb-empty">
-                      <Folder size={24} style={{ opacity: 0.3 }} />
+                      <FolderIcon size={24} style={{ opacity: 0.3 }} />
                     </div>
                   )}
                 </div>
@@ -203,7 +207,7 @@ export default function ArtistDetail() {
                   <div className="artist-collection-name">
                     {collection.name}
                     {!collection.is_public && (
-                      <span className="artist-collection-private"><Lock size={10} /> Private</span>
+                      <span className="artist-collection-private"><LockIcon size={10} /> Private</span>
                     )}
                   </div>
                   <div className="artist-collection-count">{collection.item_count} item{collection.item_count !== 1 ? 's' : ''}</div>
@@ -216,7 +220,7 @@ export default function ArtistDetail() {
 
       <section style={{ marginTop: 24 }}>
         <h2 className="section-title">
-          <Image size={18} />
+          <GalleryIcon size={18} />
           Covers by {profile?.username}
         </h2>
         {profile && <GalleryGrid filter="artist" artistUserId={profile.id} />}
@@ -239,20 +243,19 @@ export default function ArtistDetail() {
         .artist-detail-avatar-img { width: 100%; height: 100%; object-fit: cover; }
         .artist-detail-info { display: flex; flex-direction: column; gap: 5px; }
         .artist-detail-name {
-          font-size: 22px; font-weight: bold; color: var(--body-text);
+          font-size: 25px; color: var(--body-text);
           display: flex; align-items: center; gap: 10px;
-          text-shadow: 0 1px 0 rgba(255,255,255,0.4);
         }
-        [data-theme="dark"] .artist-detail-name { text-shadow: none; }
+        [data-theme="dark"] .artist-detail-name { }
         .artist-detail-you {
-          font-size: 11px; font-weight: bold; background: var(--accent);
+          font-size: 17px; background: var(--accent);
           color: white; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.3px;
         }
-        .artist-detail-username { font-size: 13px; color: var(--body-text-muted); }
-        .artist-detail-bio { font-size: 14px; color: var(--body-text); max-width: 480px; line-height: 1.5; }
-        .artist-detail-website { font-size: 13px; color: var(--accent); text-decoration: none; }
+        .artist-detail-username { font-size: 19px; color: var(--body-text-muted); }
+        .artist-detail-bio { font-size: 20px; color: var(--body-text); max-width: 480px; line-height: 1.5; }
+        .artist-detail-website { font-size: 19px; color: var(--accent); text-decoration: none; }
         .artist-detail-website:hover { text-decoration: underline; }
-        .artist-detail-count { font-size: 13px; color: var(--body-text-muted); margin-top: 4px; }
+        .artist-detail-count { font-size: 19px; color: var(--body-text-muted); margin-top: 4px; }
         .artist-collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
         .artist-collection-card { padding: 0; overflow: hidden; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
         .artist-collection-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
@@ -260,9 +263,9 @@ export default function ArtistDetail() {
         .artist-collection-thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .artist-collection-thumb-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--body-text-muted); }
         .artist-collection-info { padding: 10px 12px; }
-        .artist-collection-name { font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-        .artist-collection-private { font-size: 10px; font-weight: bold; color: var(--body-text-muted); background: var(--body-border); padding: 1px 6px; border-radius: 8px; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
-        .artist-collection-count { font-size: 12px; color: var(--body-text-muted); margin-top: 3px; }
+        .artist-collection-name { font-size: 19px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .artist-collection-private { font-size: 16px; color: var(--body-text-muted); background: var(--body-border); padding: 1px 6px; border-radius: 8px; display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+        .artist-collection-count { font-size: 18px; color: var(--body-text-muted); margin-top: 3px; }
       `}</style>
     </div>
   );
