@@ -21,6 +21,8 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  // Track whether we just created a new account so "start over" can delete it
+  const [isNewRegistration, setIsNewRegistration] = useState(false);
 
   // When opened directly at the verify step (e.g. reload with unverified session),
   // pull the email from the live session and send a fresh code automatically.
@@ -137,8 +139,35 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
     const token = data.session.access_token;
     const sent = await sendVerificationCode(token, email);
     if (sent) {
+      setIsNewRegistration(true);
       setStep('verify');
     }
+    setLoading(false);
+  };
+
+  // "Wrong email / start over" — signs out and, for new registrations, deletes the
+  // just-created unverified account so the user isn't stuck on "already registered".
+  const handleStartOver = async () => {
+    setError(null);
+    setLoading(true);
+
+    if (isNewRegistration) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // Best-effort delete — ignore errors (account is unverified so it's low-risk to leave)
+        await fetch('/api/account/delete', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }).catch(() => {});
+      }
+    }
+
+    await supabase.auth.signOut();
+    setStep('form');
+    setCode('');
+    setError(null);
+    setSuccess(null);
+    setIsNewRegistration(false);
     setLoading(false);
   };
 
@@ -282,6 +311,10 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
 
               <button type="button" className="auth-switch-btn" style={{ marginTop: 8 }} onClick={handleResend}>
                 Didn't receive it? Resend code
+              </button>
+
+              <button type="button" className="auth-switch-btn auth-back-btn" onClick={handleStartOver} disabled={loading}>
+                {isNewRegistration ? 'Wrong email? Start over' : 'Wrong account? Sign out'}
               </button>
             </form>
           ) : (
@@ -427,6 +460,9 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
           padding: 8px 0 4px;
         }
         .auth-verify-icon { color: var(--accent); }
+        .auth-back-btn { margin-top: 4px; opacity: 0.6; font-size: 12px; }
+        .auth-back-btn:hover { opacity: 1; }
+        .auth-back-btn:disabled { cursor: not-allowed; opacity: 0.35; }
         .auth-error {
           display: flex; align-items: center; gap: 6px;
           padding: 8px 10px; border-radius: 4px;
