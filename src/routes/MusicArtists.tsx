@@ -162,17 +162,11 @@ export default function MusicArtists() {
         .music-artist-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--body-text-muted); }
         .music-artist-info {
           padding: 10px 12px; display: flex; flex-direction: column; gap: 3px;
-          background-image: var(--skeu-card);
-          background-size: cover; background-position: center;
-          position: relative; overflow: hidden;
-          isolation: isolate;
-        }
-        .music-artist-info::before {
-          content: ''; position: absolute; inset: 0;
-          background-color: var(--body-card-bg);
-          opacity: 0.55;
-          pointer-events: none;
-          z-index: -1;
+          background-image:
+            linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
+            var(--skeu-card);
+          background-size: 100% 100%, cover;
+          background-position: center, center;
         }
         .music-artist-name {
           font-size: 25px; color: var(--body-text);

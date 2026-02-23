@@ -224,19 +224,13 @@ export default function Acotw() {
 
         .acotw-header {
           display: flex; align-items: flex-start; gap: 16px;
-          background-image: var(--skeu-hero);
-          background-size: cover; background-position: center;
+          background-image:
+            linear-gradient(var(--skeu-hero-tint), var(--skeu-hero-tint)),
+            var(--skeu-hero);
+          background-size: 100% 100%, cover;
+          background-position: center, center;
           border: 1px solid var(--body-card-border); border-radius: 8px;
           padding: 24px; color: #fff8f0;
-          position: relative; overflow: hidden;
-          isolation: isolate;
-        }
-        .acotw-header::before {
-          content: ''; position: absolute; inset: 0;
-          background: linear-gradient(135deg, var(--header-bg) 0%, var(--sidebar-bg-dark) 100%);
-          opacity: 0.62;
-          pointer-events: none;
-          z-index: -1;
         }
         .acotw-header-icon {
           flex-shrink: 0; width: 52px; height: 52px; border-radius: 50%;

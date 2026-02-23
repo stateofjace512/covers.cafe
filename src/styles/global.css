@@ -59,6 +59,9 @@
   --skeu-card: url('/themes/themelight/album-card-info_light-mode.jpg');
   --skeu-btn: url('/themes/themelight/btn btn-primary_light-mode.jpg');
   --skeu-theme-btn: url('/themes/themelight/btn btn-ghost header-theme-btn_light-mode.jpg');
+  /* Skeuomorphic tint colours (rgba so they work as CSS background layers) */
+  --skeu-card-tint: rgba(255, 243, 232, 0.52);
+  --skeu-hero-tint: rgba(115, 73, 42, 0.62);
 
   /* Fonts */
   --font-body: 'BodyFont', Arial, Helvetica, sans-serif;
@@ -127,6 +130,9 @@
   --skeu-card: url('/themes/themedark/album-card-info_dark-mode.jpg');
   --skeu-btn: url('/themes/themedark/btn btn-primary_dark-mode.jpg');
   --skeu-theme-btn: url('/themes/themedark/btn btn-ghost header-theme-btn_dark-mode.jpg');
+  /* Skeuomorphic tint colours */
+  --skeu-card-tint: rgba(58, 44, 32, 0.52);
+  --skeu-hero-tint: rgba(56, 37, 22, 0.62);
 }
 
 /* ---------- Reset & Base ---------- */
@@ -439,21 +445,11 @@ h1, h2, h3, h4, h5, h6 {
 .album-card-info {
   padding: 10px 12px;
   border-top: 1px solid var(--body-card-border);
-  position: relative;
-  overflow: hidden;
-  background-image: var(--skeu-card);
-  background-size: cover;
-  background-position: center var(--card-skeu-y, 0%);
-}
-
-/* Semi-transparent theme-color tint sits on top of the image, ties it into the palette */
-.album-card-info::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-color: var(--body-card-bg);
-  opacity: 0.52;
-  pointer-events: none;
+  background-image:
+    linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
+    var(--skeu-card);
+  background-size: 100% 100%, cover;
+  background-position: center, center var(--card-skeu-y, 0%);
 }
 
 .album-card-title {
@@ -462,7 +458,6 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  position: relative;
 }
 
 .album-card-artist {
@@ -471,7 +466,6 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  position: relative;
 }
 
 /* ---------- Form elements ---------- */

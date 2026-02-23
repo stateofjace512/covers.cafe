@@ -114,18 +114,8 @@ export default function Artists() {
           background: var(--body-card-bg); border: 1px solid var(--body-card-border);
           border-radius: 6px;
           box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.4);
-          background-image: var(--skeu-hero);
-          background-size: cover; background-position: center;
+          background-image: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 40%);
           transition: box-shadow 0.15s, transform 0.15s;
-          position: relative; overflow: hidden;
-          isolation: isolate;
-        }
-        .artist-card::before {
-          content: ''; position: absolute; inset: 0;
-          background-color: var(--body-card-bg);
-          opacity: 0.58;
-          pointer-events: none;
-          z-index: -1;
         }
         .artist-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
         .artist-card--me { border-color: var(--accent); box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 0 2px rgba(192,90,26,0.18); }
