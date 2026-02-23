@@ -3,12 +3,19 @@ import { supabase } from '../lib/supabase';
 import LoadingIcon from './LoadingIcon';
 
 interface OfficialCoverRow {
-  id: string;
   artist_name: string | null;
   album_title: string | null;
   release_year: number | null;
   album_cover_url: string;
   pixel_dimensions: string | null;
+}
+
+interface OfficialUpsertRow extends OfficialCoverRow {
+  country: string;
+  search_artist: string;
+  search_album: string | null;
+  tags: string[];
+  source_payload: Record<string, unknown>;
 }
 
 interface ItunesAlbumResult {
@@ -64,7 +71,7 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
     if (!q) {
       setCovers([]);
       setHasMore(false);
-      return;
+      return [] as OfficialCoverRow[];
     }
 
     const from = pageNumber * PAGE_SIZE;
@@ -72,7 +79,7 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
 
     const { data } = await supabase
       .from('covers_cafe_official_covers')
-      .select('id, artist_name, album_title, release_year, album_cover_url, pixel_dimensions')
+      .select('artist_name, album_title, release_year, album_cover_url, pixel_dimensions')
       .eq('country', COUNTRY)
       .or(`search_artist.ilike.%${q}%,search_album.ilike.%${q}%,artist_name.ilike.%${q}%,album_title.ilike.%${q}%`)
       .order('created_at', { ascending: false })
@@ -83,17 +90,19 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
 
     if (pageNumber === 0) setCovers(rows);
     else setCovers((prev) => [...prev, ...rows]);
+
+    return rows;
   }, [searchQuery]);
 
-  const syncFromItunes = useCallback(async () => {
+  const fetchFromItunes = useCallback(async () => {
     const q = searchQuery.trim();
-    if (!q) return;
+    if (!q) return [] as OfficialUpsertRow[];
 
     const term = encodeURIComponent(q);
     const url = `https://itunes.apple.com/search?term=${term}&entity=album&country=${COUNTRY}&limit=20`;
 
     const res = await fetch(url);
-    if (!res.ok) return;
+    if (!res.ok) return [] as OfficialUpsertRow[];
 
     const payload = await res.json() as { results?: ItunesAlbumResult[] };
     const results = payload.results ?? [];
@@ -119,13 +128,20 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
       };
     }));
 
-    const upsertRows = rows.filter((row): row is NonNullable<typeof row> => Boolean(row));
-    if (!upsertRows.length) return;
-
-    await supabase
-      .from('covers_cafe_official_covers')
-      .upsert(upsertRows, { onConflict: 'country,artist_name,album_title,album_cover_url' });
+    return rows.filter((row): row is OfficialUpsertRow => Boolean(row));
   }, [searchQuery]);
+
+  const upsertOfficialRows = useCallback(async (rows: OfficialUpsertRow[]) => {
+    if (!rows.length) return;
+    const { error } = await supabase
+      .from('covers_cafe_official_covers')
+      .upsert(rows, { onConflict: 'country,artist_name,album_title,album_cover_url' });
+
+    if (error) {
+      // Keep UX responsive even if cache write is blocked by RLS or policy mismatch.
+      console.warn('Unable to cache official covers in Supabase:', error.message);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -133,17 +149,32 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
     const run = async () => {
       setLoading(true);
       setPage(0);
-      await loadCachedPage(0);
-      await syncFromItunes();
-      if (!cancelled) {
-        await loadCachedPage(0);
+
+      const cachedRows = await loadCachedPage(0);
+      if (!cancelled && cachedRows.length > 0) {
         setLoading(false);
+      }
+
+      const fetchedRows = await fetchFromItunes();
+      if (!cancelled && fetchedRows.length > 0) {
+        setCovers(fetchedRows);
+        setHasMore(fetchedRows.length === PAGE_SIZE);
+        setLoading(false);
+      }
+
+      await upsertOfficialRows(fetchedRows);
+
+      if (!cancelled) {
+        if (fetchedRows.length === 0 && cachedRows.length === 0) {
+          setLoading(false);
+        }
+        await loadCachedPage(0);
       }
     };
 
     run();
     return () => { cancelled = true; };
-  }, [loadCachedPage, syncFromItunes]);
+  }, [fetchFromItunes, loadCachedPage, upsertOfficialRows]);
 
   const handleLoadMore = async () => {
     if (!hasMore || loadingMore) return;
@@ -174,7 +205,7 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
       </p>
       <div className="album-grid">
         {covers.map((cover) => (
-          <article className="album-card" key={cover.id}>
+          <article className="album-card" key={`${cover.album_cover_url}-${cover.album_title ?? ''}`}>
             <div className="album-card-cover">
               <img
                 src={cover.album_cover_url}

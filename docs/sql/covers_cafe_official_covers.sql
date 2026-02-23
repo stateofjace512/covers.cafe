@@ -53,19 +53,21 @@ create policy "official_covers_select_public"
   using (true);
 
 drop policy if exists "official_covers_insert_auth" on public.covers_cafe_official_covers;
-create policy "official_covers_insert_auth"
+drop policy if exists "official_covers_insert_public" on public.covers_cafe_official_covers;
+create policy "official_covers_insert_public"
   on public.covers_cafe_official_covers
   for insert
-  to authenticated
+  to anon, authenticated
   with check (
     'official' = any(tags)
   );
 
 drop policy if exists "official_covers_update_auth" on public.covers_cafe_official_covers;
-create policy "official_covers_update_auth"
+drop policy if exists "official_covers_update_public" on public.covers_cafe_official_covers;
+create policy "official_covers_update_public"
   on public.covers_cafe_official_covers
   for update
-  to authenticated
+  to anon, authenticated
   using (true)
   with check (
     'official' = any(tags)

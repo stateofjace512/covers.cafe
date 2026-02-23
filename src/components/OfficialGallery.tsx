@@ -3,15 +3,19 @@ import { supabase } from '../lib/supabase';
 import LoadingIcon from './LoadingIcon';
 
 interface OfficialCoverRow {
-  id: string;
   artist_name: string | null;
   album_title: string | null;
   release_year: number | null;
   album_cover_url: string;
   pixel_dimensions: string | null;
+}
+
+interface OfficialUpsertRow extends OfficialCoverRow {
   country: string;
   search_artist: string;
   search_album: string | null;
+  tags: string[];
+  source_payload: Record<string, unknown>;
 }
 
 interface ItunesAlbumResult {
@@ -72,7 +76,7 @@ export default function OfficialGallery() {
     if (!normalizedArtist) {
       setCovers([]);
       setHasMore(false);
-      return;
+      return [] as OfficialCoverRow[];
     }
 
     const from = pageNumber * PAGE_SIZE;
@@ -80,7 +84,7 @@ export default function OfficialGallery() {
 
     let query = supabase
       .from('covers_cafe_official_covers')
-      .select('id, artist_name, album_title, release_year, album_cover_url, pixel_dimensions, country, search_artist, search_album')
+      .select('artist_name, album_title, release_year, album_cover_url, pixel_dimensions')
       .eq('country', country)
       .ilike('search_artist', `%${normalizedArtist}%`)
       .order('created_at', { ascending: false })
@@ -99,21 +103,23 @@ export default function OfficialGallery() {
     } else {
       setCovers((prev) => [...prev, ...rows]);
     }
+
+    return rows;
   }, [country, normalizedAlbum, normalizedArtist]);
 
-  const syncFromItunes = useCallback(async () => {
-    if (!normalizedArtist) return;
+  const fetchFromItunes = useCallback(async () => {
+    if (!normalizedArtist) return [] as OfficialUpsertRow[];
 
     const term = encodeURIComponent(`${normalizedArtist} ${normalizedAlbum}`.trim());
     const url = `https://itunes.apple.com/search?term=${term}&entity=album&country=${country}&limit=20`;
 
     const res = await fetch(url);
-    if (!res.ok) throw new Error('iTunes search failed');
+    if (!res.ok) return [] as OfficialUpsertRow[];
 
     const payload = await res.json() as { results?: ItunesAlbumResult[] };
     const results = payload.results ?? [];
 
-    const jsonData = await Promise.all(results.map(async (item) => {
+    const rows = await Promise.all(results.map(async (item) => {
       const small = item.artworkUrl100;
       if (!small) return null;
       const fullUrl = getFullResAppleCover(small);
@@ -134,13 +140,20 @@ export default function OfficialGallery() {
       };
     }));
 
-    const rows = jsonData.filter((row): row is NonNullable<typeof row> => Boolean(row));
-    if (!rows.length) return;
+    return rows.filter((row): row is OfficialUpsertRow => Boolean(row));
+  }, [country, normalizedAlbum, normalizedArtist]);
 
-    await supabase
+  const upsertOfficialRows = useCallback(async (rows: OfficialUpsertRow[]) => {
+    if (!rows.length) return;
+    const { error } = await supabase
       .from('covers_cafe_official_covers')
       .upsert(rows, { onConflict: 'country,artist_name,album_title,album_cover_url' });
-  }, [country, normalizedAlbum, normalizedArtist]);
+
+    if (error) {
+      // We still show fetched data even if cache writes are rejected.
+      console.warn('Unable to cache official covers in Supabase:', error.message);
+    }
+  }, []);
 
   const handleSearch = useCallback(async () => {
     if (!normalizedArtist) return;
@@ -148,15 +161,25 @@ export default function OfficialGallery() {
     setLoading(true);
     setPage(0);
 
-    await loadCachedPage(0);
-
-    try {
-      await syncFromItunes();
-      await loadCachedPage(0);
-    } finally {
+    const cachedRows = await loadCachedPage(0);
+    if (cachedRows.length > 0) {
       setLoading(false);
     }
-  }, [loadCachedPage, normalizedArtist, syncFromItunes]);
+
+    const fetchedRows = await fetchFromItunes();
+    if (fetchedRows.length > 0) {
+      setCovers(fetchedRows);
+      setHasMore(fetchedRows.length === PAGE_SIZE);
+      setLoading(false);
+    }
+
+    await upsertOfficialRows(fetchedRows);
+    await loadCachedPage(0);
+
+    if (cachedRows.length === 0 && fetchedRows.length === 0) {
+      setLoading(false);
+    }
+  }, [fetchFromItunes, loadCachedPage, normalizedArtist, upsertOfficialRows]);
 
   useEffect(() => {
     handleSearch();
@@ -207,7 +230,7 @@ export default function OfficialGallery() {
         <>
           <div className="album-grid">
             {covers.map((cover) => (
-              <article className="album-card" key={cover.id}>
+              <article className="album-card" key={`${cover.album_cover_url}-${cover.album_title ?? ''}`}>
                 <div className="album-card-cover">
                   <img src={cover.album_cover_url} alt={`${cover.album_title ?? 'Album'} by ${cover.artist_name ?? 'Unknown'}`} className="cover-card-img cover-card-img--loaded" loading="lazy" />
                   <div className="official-badge">Official</div>
