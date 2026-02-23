@@ -102,47 +102,38 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
     if (!/^[a-z0-9_]+$/.test(username)) { setError('Username: lowercase letters, numbers, and underscores only.'); return; }
     setLoading(true);
 
-    // AI moderation check before creating the account
+    // Server-side registration: moderation + uniqueness checks happen on the server
+    // before the account is created — cannot be bypassed by calling Supabase directly.
+    let registerJson: { ok: boolean; message?: string; field?: string };
     try {
-      const modRes = await fetch('/api/account/check-username', {
+      const registerRes = await fetch('/api/account/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim() }),
+        body: JSON.stringify({ username: username.trim(), email, password }),
       });
-      if (modRes.ok) {
-        const modJson = await modRes.json() as { ok: boolean; reason?: string };
-        if (!modJson.ok) {
-          setError(modJson.reason ?? 'This username is not allowed. Please choose a different one.');
-          setLoading(false);
-          return;
-        }
-      }
-      // If moderation endpoint is unreachable, fall through and allow registration
+      registerJson = await registerRes.json() as { ok: boolean; message?: string; field?: string };
     } catch {
-      // Network error — don't block registration
-    }
-
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { username: username.trim() } },
-    });
-
-    if (signUpError) {
-      setError(signUpError.message);
+      setError('Network error. Please check your connection and try again.');
       setLoading(false);
       return;
     }
 
-    if (!data.session) {
-      // Supabase email confirmation is still enabled — user must confirm the Supabase
-      // link first, then on their next login they'll go through our OTP step.
-      setSuccess('Account created! Check your email for a confirmation link. After confirming, sign in — you\'ll then verify with a 6-digit code.');
+    if (!registerJson.ok) {
+      setError(registerJson.message ?? 'Registration failed. Please try again.');
       setLoading(false);
       return;
     }
 
-    // Session returned (Supabase email confirmation disabled) — send our OTP now
+    // Account created — now sign in to get a session, then start OTP flow
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (signInError || !data.session) {
+      // Account was created but sign-in failed — rare, but let them sign in manually
+      setSuccess('Account created! Please sign in to complete email verification.');
+      setLoading(false);
+      return;
+    }
+
     const token = data.session.access_token;
     const sent = await sendVerificationCode(token, email);
     if (sent) {
