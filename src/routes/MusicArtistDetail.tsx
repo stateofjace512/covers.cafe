@@ -125,7 +125,7 @@ export default function MusicArtistDetail() {
       const { data } = await supabase
         .from('covers_cafe_covers')
         .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
-        .contains('artists', [artistName])
+        .or(`artists.cs.{${artistName}},artist.ilike.%${artistName}%`)
         .eq('is_public', true)
         .order('favorite_count', { ascending: false })
         .range(0, PAGE_SIZE - 1);
@@ -158,7 +158,7 @@ export default function MusicArtistDetail() {
     const { data } = await supabase
       .from('covers_cafe_covers')
       .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
-      .ilike('artist', artistName)
+      .ilike('artist', `%${artistName}%`)
       .eq('is_public', true)
       .order('favorite_count', { ascending: false })
       .range(from, from + PAGE_SIZE - 1);
