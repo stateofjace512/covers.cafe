@@ -438,19 +438,18 @@ h1, h2, h3, h4, h5, h6 {
   border-top: 1px solid var(--body-card-border);
   position: relative;
   overflow: hidden;
-  background-color: var(--body-card-bg);
-  isolation: isolate;
+  background-image: var(--skeu-card);
+  background-size: 100% auto;
+  background-position: center var(--card-skeu-y, 0%);
 }
 
+/* Semi-transparent theme-color tint sits on top of the image, ties it into the palette */
 .album-card-info::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: var(--skeu-card);
-  background-size: 100% auto;
-  background-position: center var(--card-skeu-y, 0%);
-  mix-blend-mode: overlay;
-  opacity: 0.45;
+  background-color: var(--body-card-bg);
+  opacity: 0.52;
   pointer-events: none;
 }
 
