@@ -361,8 +361,8 @@ export default function Acotw() {
 
         .acotw-archive-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 12px; margin-top: 16px;
+          grid-template-columns: repeat(auto-fill, minmax(var(--cover-grid-min-width), 1fr));
+          gap: 14px;
         }
         .acotw-archive-card {
           background: var(--body-card-bg);
