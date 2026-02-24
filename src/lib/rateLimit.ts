@@ -1,5 +1,6 @@
 interface RateLimitBucket {
   timestamps: number[];
+  weightedEvents: Array<{ timestamp: number; units: number }>;
   blockedUntil: number;
   strikes: number;
   lastViolationAt: number;
@@ -10,7 +11,7 @@ const buckets: Map<string, RateLimitBucket> = new Map();
 function getBucket(action: string): RateLimitBucket {
   const bucket = buckets.get(action);
   if (bucket) return bucket;
-  const created: RateLimitBucket = { timestamps: [], blockedUntil: 0, strikes: 0, lastViolationAt: 0 };
+  const created: RateLimitBucket = { timestamps: [], weightedEvents: [], blockedUntil: 0, strikes: 0, lastViolationAt: 0 };
   buckets.set(action, created);
   return created;
 }
@@ -58,6 +59,31 @@ export function checkRateLimit(action: string, max: number, windowMs: number): b
   }
 
   bucket.timestamps.push(now);
+  return true;
+}
+
+export function checkWeightedRateLimit(action: string, maxUnits: number, windowMs: number, units = 1): boolean {
+  const now = Date.now();
+  const bucket = getBucket(action);
+
+  if (bucket.blockedUntil > 0 && now >= bucket.blockedUntil && now - bucket.lastViolationAt > windowMs * 2) {
+    bucket.strikes = 0;
+  }
+
+  if (bucket.blockedUntil > now) {
+    applyViolation(bucket, now, windowMs);
+    return false;
+  }
+
+  bucket.weightedEvents = bucket.weightedEvents.filter((event) => now - event.timestamp < windowMs);
+  const usedUnits = bucket.weightedEvents.reduce((sum, event) => sum + event.units, 0);
+
+  if (usedUnits + units > maxUnits) {
+    applyViolation(bucket, now, windowMs);
+    return false;
+  }
+
+  bucket.weightedEvents.push({ timestamp: now, units });
   return true;
 }
 

@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import LoadingIcon from './LoadingIcon';
+import RateLimitModal from './RateLimitModal';
 import { useAuth } from '../contexts/AuthContext';
+import { checkRateLimit, checkWeightedRateLimit } from '../lib/rateLimit';
 import { searchOfficialAssets, type OfficialUpsertRow } from '../lib/officialSearch';
 import { getOfficialCoverPath, slugifyArtist } from '../lib/coverRoutes';
 
@@ -25,6 +27,7 @@ export default function OfficialGallery() {
   const [covers, setCovers] = useState<OfficialCoverRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreRateLimited, setLoadMoreRateLimited] = useState(false);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -82,7 +85,7 @@ export default function OfficialGallery() {
   }, [fetchFromItunes, loadCachedPage, normalizedArtist]);
 
   useEffect(() => { handleSearch(); }, [handleSearch]);
-  const handleLoadMore = async () => { if (loadingMore || !hasMore) return; const nextPage = page + 1; setLoadingMore(true); await loadCachedPage(nextPage); setPage(nextPage); setLoadingMore(false); };
+  const handleLoadMore = async () => { if (loadingMore || !hasMore) return; if (!checkRateLimit('official_gallery_load_more_clicks', 5, 10_000) || !checkWeightedRateLimit('official_gallery_load_more_items', 500, 30_000, PAGE_SIZE)) { setLoadMoreRateLimited(true); return; } const nextPage = page + 1; setLoadingMore(true); await loadCachedPage(nextPage); setPage(nextPage); setLoadingMore(false); };
 
   const toggleArtist = (name: string) => {
     setSelectedArtists((prev) => {
@@ -177,6 +180,7 @@ export default function OfficialGallery() {
           <button className="btn btn-primary osg-merge-confirm" onClick={handleMerge} disabled={merging || !mergeCanonical.trim()}>
             {merging ? <><LoadingIcon size={13} className="gallery-spinner" /> Merging…</> : 'Merge'}
           </button>
+          <p style={{ fontSize: 12, color: 'var(--body-text-muted)', marginTop: 6 }}>Tip: use search to jump to specific albums faster.</p>
         </div>
       )}
 
@@ -233,6 +237,8 @@ export default function OfficialGallery() {
           )}
         </>
       )}
+
+      {loadMoreRateLimited && (<RateLimitModal action="official_gallery_load_more_clicks" onClose={() => setLoadMoreRateLimited(false)} />)}
 
       <style>{`
         .official-search-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }

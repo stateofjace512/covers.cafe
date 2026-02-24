@@ -6,10 +6,12 @@ import LoadingIcon from '../components/LoadingIcon';
 import CameraIcon from '../components/CameraIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { checkRateLimit, checkWeightedRateLimit } from '../lib/rateLimit';
 import { getCoverImageSrc } from '../lib/media';
 import CoverCard from '../components/CoverCard';
 import CoverModal from '../components/CoverModal';
 import InfoModal from '../components/InfoModal';
+import RateLimitModal from '../components/RateLimitModal';
 import type { Cover } from '../lib/types';
 import { getPreferModalOverPagePreference } from '../lib/userPreferences';
 import { getCoverPath, getOfficialCoverPath, slugifyArtist } from '../lib/coverRoutes';
@@ -118,6 +120,7 @@ export default function MusicArtistDetail() {
   const [officialHasMore, setOfficialHasMore] = useState(false);
   const [officialPage, setOfficialPage] = useState(0);
   const [officialLoadingMore, setOfficialLoadingMore] = useState(false);
+  const [loadMoreRateLimited, setLoadMoreRateLimited] = useState(false);
 
   // Select/merge state (official tab)
   const [selectMode, setSelectMode] = useState(false);
@@ -219,6 +222,7 @@ export default function MusicArtistDetail() {
 
   const handleLoadMore = async () => {
     if (loadingMore || !hasMore) return;
+    if (!checkRateLimit('music_artist_fan_load_more_clicks', 5, 10_000) || !checkWeightedRateLimit('music_artist_fan_load_more_items', 500, 30_000, PAGE_SIZE)) { setLoadMoreRateLimited(true); return; }
     setLoadingMore(true);
     const from = covers.length;
     const { data } = await supabase
@@ -237,6 +241,7 @@ export default function MusicArtistDetail() {
 
   const handleLoadMoreOfficial = async () => {
     if (officialLoadingMore || !officialHasMore) return;
+    if (!checkRateLimit('music_artist_official_load_more_clicks', 5, 10_000) || !checkWeightedRateLimit('music_artist_official_load_more_items', 500, 30_000, PAGE_SIZE)) { setLoadMoreRateLimited(true); return; }
     setOfficialLoadingMore(true);
     const nextPage = officialPage + 1;
     const from = nextPage * PAGE_SIZE;
@@ -588,6 +593,7 @@ export default function MusicArtistDetail() {
               })}
             </div>
             {officialHasMore && (
+              <>
               <div style={{ display: 'flex', justifyContent: 'center', padding: '24px 0 8px' }}>
                 <button
                   className="btn btn-secondary"
@@ -598,6 +604,8 @@ export default function MusicArtistDetail() {
                   {officialLoadingMore ? <><LoadingIcon size={14} className="ma-spinner" /> Loading…</> : 'Load more'}
                 </button>
               </div>
+              <p className="text-muted" style={{ textAlign: 'center', fontSize: 12 }}>Tip: use search if you need a specific release quickly.</p>
+              </>
             )}
           </>
         )
@@ -623,6 +631,7 @@ export default function MusicArtistDetail() {
               ))}
             </div>
             {hasMore && (
+              <>
               <div style={{ display: 'flex', justifyContent: 'center', padding: '24px 0 8px' }}>
                 <button
                   className="btn btn-secondary"
@@ -633,10 +642,14 @@ export default function MusicArtistDetail() {
                   {loadingMore ? <><LoadingIcon size={14} className="ma-spinner" /> Loading…</> : 'Load more'}
                 </button>
               </div>
+              <p className="text-muted" style={{ textAlign: 'center', fontSize: 12 }}>Tip: use search if you need a specific release quickly.</p>
+              </>
             )}
           </>
         )
       )}
+
+      {loadMoreRateLimited && (<RateLimitModal action="music_artist_fan_load_more_clicks" onClose={() => setLoadMoreRateLimited(false)} />)}
 
       {selectedCover && (
         <CoverModal

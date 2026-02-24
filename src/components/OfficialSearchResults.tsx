@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import LoadingIcon from './LoadingIcon';
+import RateLimitModal from './RateLimitModal';
 import { useAuth } from '../contexts/AuthContext';
+import { checkRateLimit, checkWeightedRateLimit } from '../lib/rateLimit';
 import { searchOfficialAssets, type OfficialUpsertRow } from '../lib/officialSearch';
 
 interface OfficialCoverRow {
@@ -18,6 +20,7 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
   const [covers, setCovers] = useState<OfficialCoverRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreRateLimited, setLoadMoreRateLimited] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(0);
   const [selectMode, setSelectMode] = useState(false);
@@ -79,6 +82,7 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
 
   const handleLoadMore = async () => {
     if (!hasMore || loadingMore) return;
+    if (!checkRateLimit('official_search_load_more_clicks', 5, 10_000) || !checkWeightedRateLimit('official_search_load_more_items', 500, 30_000, PAGE_SIZE)) { setLoadMoreRateLimited(true); return; }
     const next = page + 1;
     setLoadingMore(true);
     await loadCachedPage(next);
@@ -179,6 +183,7 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
           <button className="btn btn-primary osr-merge-confirm" onClick={handleMerge} disabled={merging || !mergeCanonical.trim()}>
             {merging ? <><LoadingIcon size={13} className="gallery-spinner" /> Merging…</> : 'Merge'}
           </button>
+          <p style={{ fontSize: 12, color: 'var(--body-text-muted)', marginTop: 6 }}>Tip: use search to jump to specific albums faster.</p>
         </div>
       )}
 
@@ -220,8 +225,11 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
           <button className="btn btn-secondary gallery-load-more-btn" onClick={handleLoadMore} disabled={loadingMore}>
             {loadingMore ? <><LoadingIcon size={14} className="gallery-spinner" /> Loading…</> : 'Load more'}
           </button>
+          <p style={{ fontSize: 12, color: 'var(--body-text-muted)', marginTop: 6 }}>Tip: use search to jump to specific albums faster.</p>
         </div>
       )}
+      {loadMoreRateLimited && (<RateLimitModal action="official_search_load_more_clicks" onClose={() => setLoadMoreRateLimited(false)} />)}
+
       <style>{`
         .osr-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
         .osr-select-btn { border: 1px solid var(--body-card-border); border-radius: 6px; background: var(--body-card-bg); color: var(--body-text-muted); padding: 5px 14px; font-size: 14px; cursor: pointer; font-family: var(--font-body); }

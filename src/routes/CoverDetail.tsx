@@ -13,11 +13,13 @@ import TrashIcon from '../components/TrashIcon';
 import PencilIcon from '../components/PencilIcon';
 import ChevronDownIcon from '../components/ChevronDownIcon';
 import { supabase } from '../lib/supabase';
+import { checkRateLimit } from '../lib/rateLimit';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
 import { getCoverImageSrc, getCoverDownloadUrl } from '../lib/media';
 import { getCoverPath, parseArtists, slugifyArtist } from '../lib/coverRoutes';
 import CoverComments from '../components/CoverComments';
+import RateLimitModal from '../components/RateLimitModal';
 
 type PanelMode = null | 'collection' | 'report' | 'edit';
 type ReportReason = 'inappropriate' | 'copyright' | 'spam' | 'other';
@@ -67,6 +69,8 @@ export default function CoverDetail() {
 
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [rateLimitedAction, setRateLimitedAction] = useState<string | null>(null);
+  const [refreshPending, setRefreshPending] = useState(false);
 
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -112,6 +116,18 @@ export default function CoverDetail() {
     return () => { cancelled = true; };
   }, [slug, user?.id]);
 
+  useEffect(() => {
+    if (!cover) return;
+    const channel = supabase
+      .channel(`cover-detail-watch-${cover.id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'covers_cafe_covers', filter: `id=eq.${cover.id}` }, () => {
+        setRefreshPending(true);
+        supabase.removeChannel(channel);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [cover?.id]);
+
   // Open panel from ?panel= query param (drag-to-collection from gallery)
   useEffect(() => {
     const panel = searchParams.get('panel') as PanelMode;
@@ -142,6 +158,7 @@ export default function CoverDetail() {
   const toggleFavorite = async () => {
     if (!cover) return;
     if (!user) return openAuthModal('login');
+    if (!checkRateLimit('cover_detail_favorite', 8, 5000)) { setRateLimitedAction('cover_detail_favorite'); return; }
     if (isFavorited) {
       await supabase.from('covers_cafe_favorites').delete().eq('user_id', user.id).eq('cover_id', cover.id);
     } else {
@@ -153,6 +170,7 @@ export default function CoverDetail() {
   const download = async (size?: number) => {
     if (!cover) return;
     if (!user) return openAuthModal('login');
+    if (!checkRateLimit('cover_detail_download', 5, 10000)) { setRateLimitedAction('cover_detail_download'); return; }
     setDownloading(true);
     setShowSizeMenu(false);
     await supabase.from('covers_cafe_downloads').insert({ cover_id: cover.id, user_id: user.id });
@@ -165,6 +183,7 @@ export default function CoverDetail() {
 
   const openCollectionPanel = async () => {
     if (!user) return openAuthModal('login');
+    if (!checkRateLimit('cover_detail_collection_panel', 10, 10000)) { setRateLimitedAction('cover_detail_collection_panel'); return; }
     setActivePanel('collection');
     setColStatus('');
     setCollectionsLoading(true);
@@ -211,6 +230,7 @@ export default function CoverDetail() {
 
   const handleReport = async () => {
     if (!user || !cover) return openAuthModal('login');
+    if (!checkRateLimit('cover_detail_report', 3, 30000)) { setRateLimitedAction('cover_detail_report'); return; }
     setReporting(true);
     await supabase.from('covers_cafe_reports').insert({
       cover_id: cover.id, reporter_id: user.id,
@@ -271,6 +291,12 @@ export default function CoverDetail() {
 
   return (
     <div className="cover-page">
+      {refreshPending && (
+        <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 12, color: 'var(--body-text-muted)' }}>This cover was updated.</span>
+          <button className="btn btn-secondary" onClick={() => { setRefreshPending(false); window.location.reload(); }}>Refresh</button>
+        </div>
+      )}
       <button className="btn btn-secondary cover-page-back" onClick={() => navigate(-1)}>
         <BackIcon size={14} /> Back
       </button>
@@ -495,6 +521,10 @@ export default function CoverDetail() {
             ))}
           </div>
         </section>
+      )}
+
+      {rateLimitedAction && (
+        <RateLimitModal action={rateLimitedAction} onClose={() => setRateLimitedAction(null)} />
       )}
 
       <style>{`
