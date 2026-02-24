@@ -11,10 +11,11 @@ export function parseArtists(artist: string): string[] {
 }
 
 function slugifyPart(value: string): string {
-  return value
+  const slug = value
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
     .replace(/^-+|-+$/g, '');
+  return slug || 'item';
 }
 
 /** Slug for use in /artists/:slug URLs  e.g. "Taylor Swift" → "taylor-swift" */
