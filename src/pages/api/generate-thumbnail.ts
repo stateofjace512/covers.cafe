@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from './_supabase';
+import { isCfPath } from '../../lib/cloudflare';
 import sharp from 'sharp';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -9,7 +10,15 @@ export const POST: APIRoute = async ({ request }) => {
   const { storage_path } = await request.json() as { storage_path: string };
   if (!storage_path) return new Response('Missing storage_path', { status: 400 });
 
-  // Download the original image
+  // Cloudflare Images handles resizing natively — no thumbnail needed
+  if (isCfPath(storage_path)) {
+    return new Response(JSON.stringify({ ok: true, skipped: 'cloudflare' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Legacy Supabase path: generate a 500×500 thumbnail and store it
   const { data: fileData, error: dlErr } = await sb.storage
     .from('covers_cafe_covers')
     .download(storage_path);
@@ -18,14 +27,12 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(`Download failed: ${dlErr?.message ?? 'not found'}`, { status: 404 });
   }
 
-  // Resize to 500px on longest side, keep aspect ratio, crop to square
   const arrayBuffer = await fileData.arrayBuffer();
   const thumbBuffer = await sharp(Buffer.from(arrayBuffer))
     .resize(500, 500, { fit: 'cover', position: 'center' })
     .jpeg({ quality: 85 })
     .toBuffer();
 
-  // Upload thumbnail to thumbnails/{storage_path}
   const thumbPath = `thumbnails/${storage_path}`;
   const { error: upErr } = await sb.storage
     .from('covers_cafe_covers')
@@ -38,7 +45,6 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(`Upload failed: ${upErr.message}`, { status: 500 });
   }
 
-  // Update the DB record with thumbnail_path
   const { error: dbErr } = await sb
     .from('covers_cafe_covers')
     .update({ thumbnail_path: thumbPath })

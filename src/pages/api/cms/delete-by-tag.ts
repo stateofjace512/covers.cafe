@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { requireOperator } from './_auth';
+import { isCfPath, cfImageIdFromPath, deleteFromCf } from '../../../lib/cloudflare';
 
 export const POST: APIRoute = async ({ request }) => {
   const auth = await requireOperator(request);
@@ -16,18 +17,30 @@ export const POST: APIRoute = async ({ request }) => {
     .contains('tags', [tag]);
 
   if (coversError) return new Response(coversError.message, { status: 500 });
-  if (!covers || covers.length === 0) return new Response(JSON.stringify({ ok: true, deletedCount: 0 }), { status: 200 });
+  if (!covers || covers.length === 0) {
+    return new Response(JSON.stringify({ ok: true, deletedCount: 0 }), { status: 200 });
+  }
 
-  const paths = covers
-    .flatMap((cover) => [cover.storage_path, cover.thumbnail_path])
+  // Delete from storage (CF or Supabase)
+  const cfIds = covers
+    .filter((c) => isCfPath(c.storage_path))
+    .map((c) => cfImageIdFromPath(c.storage_path));
+
+  const supabasePaths = covers
+    .filter((c) => !isCfPath(c.storage_path))
+    .flatMap((c) => [c.storage_path, c.thumbnail_path])
     .filter(Boolean) as string[];
 
-  if (paths.length) {
-    const { error: storageError } = await sb.storage.from('covers_cafe_covers').remove(paths);
+  await Promise.all(cfIds.map((id) => deleteFromCf(id).catch((err) => {
+    console.error('[cms/delete-by-tag] CF delete error:', id, err);
+  })));
+
+  if (supabasePaths.length) {
+    const { error: storageError } = await sb.storage.from('covers_cafe_covers').remove(supabasePaths);
     if (storageError) return new Response(storageError.message, { status: 500 });
   }
 
-  const ids = covers.map((cover) => cover.id);
+  const ids = covers.map((c) => c.id);
   const { error: deleteError } = await sb.from('covers_cafe_covers').delete().in('id', ids);
   if (deleteError) return new Response(deleteError.message, { status: 500 });
 

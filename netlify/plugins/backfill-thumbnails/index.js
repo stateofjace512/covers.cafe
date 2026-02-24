@@ -17,6 +17,9 @@ export default {
       .from('covers_cafe_covers')
       .select('id, storage_path')
       .is('thumbnail_path', null)
+      // Skip Cloudflare-hosted images — they don't need Supabase thumbnails
+      .not('storage_path', 'ilike', 'cf:%')
+      .neq('storage_path', '')
       .order('created_at', { ascending: false });
 
     if (error) {

@@ -1,8 +1,10 @@
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from './_supabase';
+import { isCfPath, cfImageIdFromPath } from '../../lib/cloudflare';
 import sharp from 'sharp';
 
 const CACHE_31_DAYS = 'public, max-age=2678400, immutable';
+const CF_IMAGES_HASH = import.meta.env.PUBLIC_CF_IMAGES_HASH as string;
 const VALID_SIZES = new Set([500, 800, 1000, 1500, 3000]);
 
 export const GET: APIRoute = async ({ url }) => {
@@ -25,12 +27,25 @@ export const GET: APIRoute = async ({ url }) => {
 
   if (!storagePath) return new Response('Missing id/path', { status: 400 });
 
+  // CF images: redirect directly to Cloudflare CDN
+  if (isCfPath(storagePath)) {
+    const imageId = cfImageIdFromPath(storagePath);
+    const cfUrl = `https://imagedelivery.net/${CF_IMAGES_HASH}/${imageId}/public`;
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: cfUrl,
+        'Cache-Control': CACHE_31_DAYS,
+      },
+    });
+  }
+
+  // Legacy Supabase images: download and optionally resize via Sharp
   const { data, error } = await sb.storage.from('covers_cafe_covers').download(storagePath);
   if (error || !data) return new Response('Not found', { status: 404 });
 
   const requestedSize = sizeParam ? parseInt(sizeParam, 10) : null;
 
-  // If a resize is requested and it's a valid size, use Sharp
   if (requestedSize && VALID_SIZES.has(requestedSize)) {
     const arrayBuffer = await data.arrayBuffer();
     const resized = await sharp(Buffer.from(arrayBuffer))
@@ -47,7 +62,6 @@ export const GET: APIRoute = async ({ url }) => {
     });
   }
 
-  // No resize — serve the original
   return new Response(data, {
     status: 200,
     headers: {
