@@ -25,7 +25,8 @@ export const POST: APIRoute = async ({ request }) => {
   const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
   if (!token) return json({ ok: false, message: 'Unauthorized' }, 401);
 
-  const sb = getSupabaseServer();
+  // Use token so RLS auth.uid() works when only anon key is available
+  const sb = getSupabaseServer(token);
   if (!sb) return json({ ok: false, message: 'Server misconfigured' }, 503);
 
   const { data: userData, error: userError } = await sb.auth.getUser(token);
@@ -70,7 +71,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   if (insertErr || !cover) {
     console.error('[upload-cover] DB insert error:', insertErr?.message);
-    return json({ ok: false, message: 'Database insert failed' }, 500);
+    return json({ ok: false, message: `Database insert failed: ${insertErr?.message ?? 'unknown'}` }, 500);
   }
 
   return json({ ok: true, cover_id: cover.id }, 200);
