@@ -298,6 +298,44 @@ export default function WeatherMicroApp({ onClose }: WeatherMicroAppProps) {
         .wma-rsz-r  { top: 0; right: -3px; width: 5px; height: 100%; cursor: e-resize; }
         .wma-rsz-b  { bottom: -3px; left: 0; width: 100%; height: 5px; cursor: s-resize; }
         .wma-rsz-rb { bottom: -3px; right: -3px; width: 10px; height: 10px; cursor: se-resize; z-index: 1; }
+
+        /* ── Dark mode ────────────────────────────────────────── */
+        [data-theme="dark"] .wma-window {
+          background: #383838;
+          border-color: #5a5a5a #1a1a1a #1a1a1a #5a5a5a;
+          box-shadow: 1px 1px 0 #000;
+        }
+        [data-theme="dark"] .wma-titlebar {
+          background: linear-gradient(to right, #00005a, #0060b0);
+        }
+        [data-theme="dark"] .wma-close {
+          background: #383838;
+          border-color: #5a5a5a #1a1a1a #1a1a1a #5a5a5a;
+          color: #e0e0e0;
+        }
+        [data-theme="dark"] .wma-close:active {
+          border-color: #1a1a1a #5a5a5a #5a5a5a #1a1a1a;
+        }
+        [data-theme="dark"] .wma-btn {
+          background: #383838;
+          border-color: #5a5a5a #1a1a1a #1a1a1a #5a5a5a;
+          color: #e0e0e0;
+        }
+        [data-theme="dark"] .wma-btn:active,
+        [data-theme="dark"] .wma-btn-active {
+          background: #282828;
+          border-color: #1a1a1a #5a5a5a #5a5a5a #1a1a1a;
+          color: #ffffff;
+        }
+        [data-theme="dark"] .wma-inset {
+          background: #1e1e1e;
+          border-color: #1a1a1a #5a5a5a #5a5a5a #1a1a1a;
+          color: #e0e0e0;
+        }
+        [data-theme="dark"] .wma-lbl,
+        [data-theme="dark"] .wma-val {
+          color: #e0e0e0;
+        }
       `}</style>
     </div>
   );
