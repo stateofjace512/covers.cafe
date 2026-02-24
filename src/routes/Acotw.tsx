@@ -218,26 +218,26 @@ export default function Acotw() {
           ) : (
             <div className="acotw-archive-grid">
               {history.map((entry) => (
-                <div key={entry.poll_id} className="acotw-archive-card">
+                <div key={entry.poll_id} className="acotw-card acotw-archive-card">
                   {entry.cover && getCoverImageSrc(entry.cover) && (
-                    <img
-                      src={getCoverImageSrc(entry.cover)!}
-                      alt={entry.cover.title}
-                      className="acotw-archive-img"
-                      loading="lazy"
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => navigate(getCoverPath(entry.cover!))}
-                    />
+                    <div className="acotw-card-img-wrap">
+                      <img
+                        src={getCoverImageSrc(entry.cover)!}
+                        alt={entry.cover.title}
+                        className="acotw-card-img"
+                        loading="lazy"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => navigate(getCoverPath(entry.cover!))}
+                      />
+                    </div>
                   )}
-                  <div className="acotw-archive-info">
-                    <div className="acotw-archive-week">Week of {formatWeek(entry.week_start)}</div>
-                    {entry.cover && (
-                      <>
-                        <div className="acotw-archive-title">{entry.cover.title}</div>
-                        <div className="acotw-archive-artist">{entry.cover.artist}</div>
-                      </>
-                    )}
-                    <div className="acotw-archive-votes"><FavoritesIcon size={10} /> {entry.total_votes} votes</div>
+                
+                  <div className="acotw-card-body">
+                    <div className="acotw-card-title">{entry.cover?.title}</div>
+                    <div className="acotw-card-artist">{entry.cover?.artist}</div>
+                    <div className="acotw-card-count">
+                      {entry.total_votes} vote{entry.total_votes !== 1 ? 's' : ''}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -365,12 +365,13 @@ export default function Acotw() {
           gap: 12px; margin-top: 16px;
         }
         .acotw-archive-card {
-          display: flex; gap: 10px; align-items: center;
-          background: var(--body-card-bg); border: 1px solid var(--body-card-border);
-          border-radius: 0; padding: 10px; overflow: hidden;
+          background: var(--body-card-bg);
+          border: 1px solid var(--body-card-border);
+          border-radius: 0;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
         }
-        .acotw-archive-img { width: 48px; height: 48px; object-fit: cover; border-radius: 0; flex-shrink: 0; }
-        .acotw-archive-info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
         .acotw-archive-week { font-size: 16px; color: #b8860b; text-transform: uppercase; letter-spacing: 0.5px; }
         .acotw-archive-title { font-size: 19px; color: var(--body-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .acotw-archive-artist { font-size: 17px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
