@@ -1,20 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import LoadingIcon from './LoadingIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { searchOfficialAssets, type OfficialUpsertRow } from '../lib/officialSearch';
+import { slugifyArtist } from '../lib/coverRoutes';
 
 interface OfficialCoverRow {
   artist_name: string | null;
   album_title: string | null;
   release_year: number | null;
   album_cover_url: string;
+  cover_public_id: number | null;
 }
 
 const PAGE_SIZE = 24;
 
 export default function OfficialGallery() {
   const { session } = useAuth();
+  const navigate = useNavigate();
   const [artist, setArtist] = useState('Taylor Swift');
   const [album, setAlbum] = useState('');
   const [covers, setCovers] = useState<OfficialCoverRow[]>([]);
@@ -40,7 +44,7 @@ export default function OfficialGallery() {
     // Fetch one extra to determine if there are more pages
     let query = supabase
       .from('covers_cafe_official_covers')
-      .select('artist_name, album_title, release_year, album_cover_url')
+      .select('artist_name, album_title, release_year, album_cover_url, cover_public_id')
       .ilike('search_artist', `%${normalizedArtist}%`)
       .order('created_at', { ascending: false })
       .range(from, from + PAGE_SIZE);
@@ -192,7 +196,19 @@ export default function OfficialGallery() {
                   data-official-url={cover.album_cover_url}
                   data-artist-name={artistName}
                   data-album-title={cover.album_title ?? ''}
-                  onClick={() => selectMode ? toggleArtist(artistName) : window.open(cover.album_cover_url, '_blank', 'noopener,noreferrer')}
+                  onClick={() => {
+                    if (selectMode) { toggleArtist(artistName); return; }
+                    if (cover.cover_public_id) {
+                      const slug = [
+                        String(cover.cover_public_id).padStart(6, '0'),
+                        slugifyArtist(cover.artist_name ?? ''),
+                        slugifyArtist(cover.album_title ?? '').slice(0, 20).replace(/-+$/, ''),
+                      ].filter(Boolean).join('-');
+                      navigate(`/cover/${slug}`);
+                    } else {
+                      navigate(`/artists/${slugifyArtist(cover.artist_name ?? '')}`, { state: { originalName: cover.artist_name, startTab: 'official' } });
+                    }
+                  }}
                 >
                   <div className="album-card-cover">
                     <img src={cover.album_cover_url} alt={`${cover.album_title ?? 'Album'} by ${cover.artist_name ?? 'Unknown'}`} className="official-card-img" loading="lazy" />

@@ -102,11 +102,16 @@ export default function MusicArtists() {
 
   useEffect(() => {
     (async () => {
-      // Load official covers and alias mappings concurrently.
-      const [{ data: coversData }, { data: aliasData }] = await Promise.all([
+      // Load official covers, alias mappings, and blacklist concurrently.
+      const [{ data: coversData }, { data: aliasData }, { data: blacklistData }] = await Promise.all([
         supabase.from('covers_cafe_official_covers').select('artist_name, album_cover_url').limit(50000),
         supabase.from('covers_cafe_artist_aliases').select('alias, canonical'),
+        supabase.from('covers_cafe_official_artist_blacklist').select('artist_name'),
       ]);
+
+      const blacklistedNames = new Set(
+        (blacklistData ?? []).map((r) => (r.artist_name as string).toLowerCase()),
+      );
 
       // Build alias lookup: alias → canonical (e.g. "テイラー・スウィフト" → "Taylor Swift").
       const aliasMap: Record<string, string> = {};
@@ -136,7 +141,9 @@ export default function MusicArtists() {
         }
       }
 
-      const sorted = Array.from(map.values()).sort((a, b) => b.officialCoverCount - a.officialCoverCount);
+      const sorted = Array.from(map.values())
+        .filter((a) => !blacklistedNames.has(a.name.toLowerCase()))
+        .sort((a, b) => b.officialCoverCount - a.officialCoverCount);
       setOfficialArtists(sorted);
       setOfficialLoading(false);
     })();
@@ -213,11 +220,15 @@ export default function MusicArtists() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
       body: JSON.stringify({ records, aliases }),
     });
-    // Re-fetch covers and aliases to get accurate state after undo.
-    const [{ data: coversData }, { data: aliasData }] = await Promise.all([
+    // Re-fetch covers, aliases, and blacklist to get accurate state after undo.
+    const [{ data: coversData }, { data: aliasData }, { data: blacklistData }] = await Promise.all([
       supabase.from('covers_cafe_official_covers').select('artist_name, album_cover_url').limit(50000),
       supabase.from('covers_cafe_artist_aliases').select('alias, canonical'),
+      supabase.from('covers_cafe_official_artist_blacklist').select('artist_name'),
     ]);
+    const blacklistedNames = new Set(
+      (blacklistData ?? []).map((r) => (r.artist_name as string).toLowerCase()),
+    );
     const aliasMap: Record<string, string> = {};
     for (const row of aliasData ?? []) {
       if (row.alias && row.canonical) aliasMap[row.alias] = row.canonical;
@@ -232,7 +243,11 @@ export default function MusicArtists() {
         map.get(name)!.officialCoverCount++;
       }
     }
-    setOfficialArtists(Array.from(map.values()).sort((a, b) => b.officialCoverCount - a.officialCoverCount));
+    setOfficialArtists(
+      Array.from(map.values())
+        .filter((a) => !blacklistedNames.has(a.name.toLowerCase()))
+        .sort((a, b) => b.officialCoverCount - a.officialCoverCount),
+    );
   };
 
   const toggleArtist = (name: string) => {

@@ -352,7 +352,13 @@ export default function MusicArtistDetail() {
   };
 
   const handleAvatarError = () => {
-    if (headerCover) setAvatarSrc(getCoverImageSrc(headerCover, 200));
+    if (headerCover) {
+      setAvatarSrc(getCoverImageSrc(headerCover, 200));
+    } else if (officialCovers.length > 0) {
+      setAvatarSrc(officialCovers[0].album_cover_url);
+    } else {
+      setAvatarSrc('');
+    }
   };
 
   const handleCoverClick = (cover: Cover) => {
