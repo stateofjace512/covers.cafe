@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
-import { getCoverImageSrc } from '../lib/media';
+import { getCoverImageSrc, getCoverDownloadSrc } from '../lib/media';
 import { getCoverPath, parseArtists, slugifyArtist } from '../lib/coverRoutes';
 
 interface Props {
@@ -86,7 +86,16 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
           >
             <FavoritesIcon size={15} />
           </button>
-          <button className="cover-card-action-btn" title="Download" onClick={(e) => e.stopPropagation()}>
+          <button className="cover-card-action-btn" title="Download" onClick={async (e) => {
+            e.stopPropagation();
+            const src = getCoverDownloadSrc(cover);
+            const res = await fetch(src);
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `${cover.artist} - ${cover.title}.jpg`; a.click();
+            URL.revokeObjectURL(url);
+          }}>
             <DownloadIcon size={15} />
           </button>
           {isOwner && (
@@ -153,60 +162,56 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
       <style>{`
         .cover-card { cursor: pointer; }
         .cover-card--acotw {
-          background-image:
-            linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
-            var(--skeu-card);
-          background-size: 100% 100%, 100% 100%;
-          background-position: 0 0, 0 0;
-          background-repeat: no-repeat, no-repeat;
-          border-color: rgba(184,134,11,0.5);
+          background-image: none;
+          /* ACOTW: gold-tinted border to distinguish */
+          border-color: #c8a800 #806800 #806800 #c8a800;
         }
-        .cover-card-img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.2s ease; }
+        .cover-card-img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.15s ease; }
         .cover-card-img--loaded { opacity: 1; }
         .cover-card-shimmer {
           position: absolute;
           inset: 0;
-          background: linear-gradient(110deg, rgba(255,255,255,0.08) 8%, rgba(255,255,255,0.22) 18%, rgba(255,255,255,0.08) 33%);
-          background-size: 220% 100%;
-          animation: cover-shimmer 1.2s linear infinite;
+          background: #c8935c;
         }
-        @keyframes cover-shimmer { to { background-position-x: -220%; } }
         .cover-card-placeholder {
           width: 100%; height: 100%;
           display: flex; align-items: center; justify-content: center;
-          color: rgba(255,255,255,0.2);
+          color: rgba(255,255,255,0.3);
         }
         .cover-card-overlay {
           position: absolute; inset: 0;
-          background: rgba(0,0,0,0.45);
+          background: rgba(0,0,0,0.5);
           display: flex; align-items: flex-end; justify-content: flex-end;
-          gap: 6px; padding: 8px;
-          opacity: 0; transition: opacity 0.15s;
+          gap: 4px; padding: 6px;
+          opacity: 0; transition: opacity 0.1s;
         }
         .cover-card:hover .cover-card-overlay { opacity: 1; }
+        /* Win95 action buttons: small silver squares */
         .cover-card-action-btn {
           display: flex; align-items: center; justify-content: center;
-          width: 30px; height: 30px; border-radius: 50%;
-          background: rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.2);
-          color: var(--accent-dark); cursor: pointer;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          transition: transform 0.1s, background 0.1s; padding: 0;
+          width: 22px; height: 22px; border-radius: 0;
+          background: #dea77d;
+          border: 2px solid;
+          border-color: #ffffff #c07f55 #c07f55 #ffffff;
+          color: #000000; cursor: pointer;
+          box-shadow: none;
+          transition: none; padding: 0;
         }
-        .cover-card-action-btn:hover { background: white; transform: scale(1.1); box-shadow: 0 3px 6px rgba(0,0,0,0.4); }
-        .cover-card-delete-btn { color: #c83220; }
-        .cover-card-delete-btn--confirm { background: #c83220 !important; color: white !important; animation: delete-pulse 0.4s ease; }
-        @keyframes delete-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-        .cover-card-meta { display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap; position: relative; }
-        .cover-card-year { font-size: 17px; color: var(--body-text-muted); background: var(--body-border); padding: 1px 5px; border-radius: 3px; }
-        .cover-card-fav-count { display: flex; align-items: center; gap: 2px; font-size: 17px; color: var(--body-text-muted); }
-        .cover-card-acotw { display: inline-flex; align-items: center; gap: 3px; font-size: 16px; color: #b8860b; background: rgba(184,134,11,0.12); border: 1px solid rgba(184,134,11,0.3); padding: 1px 5px; border-radius: 3px; }
-        .cover-card-private { display: inline-flex; align-items: center; gap: 3px; font-size: 16px; color: #7a6a8a; background: rgba(120,100,140,0.12); border: 1px solid rgba(120,100,140,0.3); padding: 1px 5px; border-radius: 3px; }
+        .cover-card-action-btn:hover { background: #d0d0d0; transform: none; box-shadow: none; }
+        .cover-card-action-btn:active { border-color: #c07f55 #ffffff #ffffff #c07f55; }
+        .cover-card-delete-btn { color: #800000; }
+        .cover-card-delete-btn--confirm { background: #800000 !important; color: #ffffff !important; }
+        .cover-card-meta { display: flex; align-items: center; gap: 4px; margin-top: 3px; flex-wrap: wrap; position: relative; }
+        .cover-card-year { font-size: 10px; color: var(--body-text-muted); background: #eabb95; padding: 0 4px; border: 1px solid #c07f55; border-radius: 0; }
+        .cover-card-fav-count { display: flex; align-items: center; gap: 2px; font-size: 10px; color: var(--body-text-muted); }
+        .cover-card-acotw { display: inline-flex; align-items: center; gap: 2px; font-size: 10px; color: #806800; background: #ffffc0; border: 1px solid #c8a800; padding: 0 4px; border-radius: 0; }
+        .cover-card-private { display: inline-flex; align-items: center; gap: 2px; font-size: 10px; color: #404060; background: #e0e0f0; border: 1px solid #8080a0; padding: 0 4px; border-radius: 0; }
         /* display:inline is critical — button defaults to inline-block which breaks
            text-overflow:ellipsis on the parent .album-card-artist container */
-        .cover-card-artist-link { display: inline; background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; font-size: inherit; color: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: transparent; transition: text-decoration-color 0.15s; }
-        .cover-card-artist-link:hover { text-decoration-color: currentColor; transform: none; box-shadow: none; }
-        .cover-card-uploader { display: flex; align-items: center; gap: 3px; font-size: 17px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-        .cover-card-uploader--link { background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 2px; }
+        .cover-card-artist-link { display: inline; background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; font-size: inherit; color: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 1px; }
+        .cover-card-artist-link:hover { color: var(--accent); transform: none; box-shadow: none; }
+        .cover-card-uploader { display: flex; align-items: center; gap: 2px; font-size: 10px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .cover-card-uploader--link { background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; box-shadow: none; text-decoration: underline; text-underline-offset: 1px; }
         .cover-card-uploader--link:hover { color: var(--accent); transform: none; box-shadow: none; }
         .album-card-cover { position: relative; }
       `}</style>

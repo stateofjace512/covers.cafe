@@ -125,125 +125,77 @@ export default function Gallery() {
       </section>
 
       <style>{`
+        /* Win95 application window panel for the hero area */
         .hero-banner {
-          background-image:
-            linear-gradient(var(--skeu-hero-tint), var(--skeu-hero-tint)),
-            var(--skeu-hero);
-          background-size: 100% 100%, cover;
-          background-position: center, center;
-          border: 1px solid var(--body-card-border); border-radius: 8px;
-          padding: 32px 32px 16px; margin-bottom: 32px;
-          box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.12);
+          background-image: none;
+          background: var(--body-card-bg);
+          border: 2px solid; border-color: #ffffff #c07f55 #c07f55 #ffffff;
+          padding: 0; margin-bottom: 12px;
           position: relative; overflow: hidden;
+          box-shadow: none;
         }
-        .hero-content { position: relative; z-index: 1; max-width: 620px; }
-        .hero-title {
-          font-size: 32px; color: #fff8f0; margin-bottom: 10px; letter-spacing: -0.5px;
+        [data-theme="dark"] .hero-banner { border-color: #6b3d1f #2a1505 #2a1505 #6b3d1f; }
+        /* Win95 title bar inside hero */
+        .hero-banner::before {
+          content: 'covers.cafe | Album Cover Gallery';
+          display: flex; align-items: center; height: 22px;
+          background: linear-gradient(90deg, #5a3620 0%, #73492a 35%, #8a5a35 100%);
+          color: #ffffff; font-size: 11px; font-weight: bold;
+          font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+          padding: 0 8px;
         }
-        .hero-subtitle {
-          font-size: 21px; color: rgba(255,248,240,0.82);
-          margin-bottom: 14px; line-height: 1.6;
+        .hero-content { padding: 10px 12px 8px; max-width: 620px; }
+        .hero-title { font-size: 15px; font-weight: bold; color: var(--body-text); margin-bottom: 3px; }
+        .hero-subtitle { font-size: 12px; color: var(--body-text-muted); margin-bottom: 8px; line-height: 1.4; }
+        .hero-stats { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; }
+        /* Win95 status bar segments */
+        .hero-pill {
+          font-size: 10px; padding: 1px 6px;
+          border: 2px solid; border-color: #c07f55 #ffffff #ffffff #c07f55;
+          background: var(--body-card-bg); color: var(--body-text);
+          text-transform: uppercase; letter-spacing: 0.3px;
         }
-        .hero-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
-        .hero-pill { font-size: 17px; letter-spacing: 0.3px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: rgba(255,248,240,0.95); text-transform: uppercase; }
-        .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+        .hero-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        /* Win95 property sheet tab strip */
         .hero-tab-strip {
-          position: relative; z-index: 1;
-          display: flex; gap: 8px;
-          padding: 14px 0 4px;
-          border-top: 1px solid rgba(255,255,255,0.12); margin-top: 18px;
+          display: flex; gap: 0;
+          padding: 6px 12px 10px;
+          border-top: 1px solid var(--body-border);
         }
         .hero-tab {
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 7px 16px 9px;
-          border: none; border-radius: 6px;
-          font-size: 18px; font-family: inherit;
-          cursor: pointer;
-          color: rgba(255,248,240,0.55);
-          transition: color 0.15s, background 0.15s;
-          position: relative; bottom: 0;
-          background-image:
-            linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%),
-            linear-gradient(rgba(115,73,42,0.6), rgba(115,73,42,0.6)),
-            var(--skeu-theme-btn);
-          background-size: 100% 50%, 100% 100%, cover;
-          background-position: top, center, center;
-          background-repeat: no-repeat, no-repeat, no-repeat;
+          display: inline-flex; align-items: center; gap: 4px;
+          padding: 3px 12px;
+          border: 2px solid; border-color: #ffffff #c07f55 transparent #ffffff;
+          border-bottom: none;
+          font-size: 11px; font-family: var(--font-body);
+          cursor: pointer; color: var(--body-text-muted);
+          background: var(--body-card-bg); background-image: none;
+          margin-right: 2px; position: relative; bottom: -2px;
+          transition: none;
         }
-        [data-theme="dark"] .hero-tab {
-          background-image:
-            linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%),
-            linear-gradient(rgba(56,37,22,0.6), rgba(56,37,22,0.6)),
-            var(--skeu-theme-btn);
-          background-size: 100% 50%, 100% 100%, cover;
-          background-position: top, center, center;
-          background-repeat: no-repeat, no-repeat, no-repeat;
-        }
-        .hero-tab:hover {
-          color: rgba(255,248,240,0.9);
-          background-image:
-            linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 100%),
-            linear-gradient(rgba(115,73,42,0.5), rgba(115,73,42,0.5)),
-            var(--skeu-theme-btn);
-          background-size: 100% 50%, 100% 100%, cover;
-          background-position: top, center, center;
-          background-repeat: no-repeat, no-repeat, no-repeat;
-        }
-        [data-theme="dark"] .hero-tab:hover {
-          background-image:
-            linear-gradient(180deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 100%),
-            linear-gradient(rgba(56,37,22,0.45), rgba(56,37,22,0.45)),
-            var(--skeu-theme-btn);
-          background-size: 100% 50%, 100% 100%, cover;
-          background-position: top, center, center;
-          background-repeat: no-repeat, no-repeat, no-repeat;
-        }
+        [data-theme="dark"] .hero-tab { border-color: #6b3d1f #2a1505 transparent #6b3d1f; background-image: none; }
+        .hero-tab:hover { color: var(--body-text); background: #d0d0d0; background-image: none; }
+        [data-theme="dark"] .hero-tab:hover { background: #50280f; background-image: none; }
         .hero-tab--active {
-          color: #fff8f0;
-          background-image:
-            linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 100%),
-            linear-gradient(rgba(115,73,42,0.4), rgba(115,73,42,0.4)),
-            var(--skeu-theme-btn);
-          background-size: 100% 50%, 100% 100%, cover;
-          background-position: top, center, center;
-          background-repeat: no-repeat, no-repeat, no-repeat;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+          color: var(--body-text); font-weight: bold;
+          background: var(--body-card-bg); background-image: none;
+          border-bottom: 2px solid var(--body-card-bg); z-index: 1; box-shadow: none;
         }
-        [data-theme="dark"] .hero-tab--active {
-          background-image:
-            linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.03) 100%),
-            linear-gradient(rgba(56,37,22,0.35), rgba(56,37,22,0.35)),
-            var(--skeu-theme-btn);
-          background-size: 100% 50%, 100% 100%, cover;
-          background-position: top, center, center;
-          background-repeat: no-repeat, no-repeat, no-repeat;
-        }
-
+        [data-theme="dark"] .hero-tab--active { background: var(--body-card-bg); background-image: none; border-bottom-color: var(--body-card-bg); }
+        /* Win95 segmented toggle for search source */
         .search-source-toggle {
-          display: inline-flex;
-          gap: 6px;
-          margin-bottom: 14px;
-          border: 1px solid var(--body-card-border);
-          border-radius: 8px;
-          padding: 4px;
+          display: inline-flex; gap: 0;
+          margin-bottom: 10px;
+          border: 2px solid; border-color: #c07f55 #ffffff #ffffff #c07f55;
           background: var(--body-card-bg);
         }
         .search-source-btn {
-          border: 1px solid transparent;
-          border-radius: 6px;
-          background: transparent;
-          color: var(--body-text-muted);
-          padding: 6px 12px;
-          font-size: 16px;
-          font-family: var(--font-body);
-          cursor: pointer;
+          border: none; border-right: 1px solid var(--body-border);
+          background: transparent; color: var(--body-text-muted);
+          padding: 3px 10px; font-size: 11px; font-family: var(--font-body); cursor: pointer;
         }
-        .search-source-btn--active {
-          color: var(--body-text);
-          border-color: var(--body-card-border);
-          background: var(--sidebar-bg);
-          box-shadow: var(--shadow-sm);
-        }
+        .search-source-btn:last-child { border-right: none; }
+        .search-source-btn--active { background: var(--accent); color: #ffffff; box-shadow: none; }
       `}</style>
     </div>
   );

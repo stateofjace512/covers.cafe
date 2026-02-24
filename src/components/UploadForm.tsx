@@ -648,7 +648,7 @@ export default function UploadForm() {
       </div>
 
       <p className="upload-requirements">
-        JPG only &nbsp;·&nbsp; Min {MIN_DIM}×{MIN_DIM}px &nbsp;·&nbsp; Over {MAX_DIM}px? We'll resize it &nbsp;·&nbsp; Square recommended &nbsp;·&nbsp; Stored full-res, displayed at 500px
+        <AlertCircleIcon size={13} /> JPG · {MIN_DIM}×{MIN_DIM}px min · Square preferred · Full-res stored
       </p>
 
       {mode === 'single' && (
@@ -967,7 +967,7 @@ export default function UploadForm() {
 
       <style>{`
         .upload-page { display: flex; flex-direction: column; gap: 16px; max-width: 700px; }
-        .upload-mode-toggle { display: flex; gap: 0; border: 1px solid var(--body-card-border); border-radius: 5px; overflow: hidden; width: fit-content; }
+        .upload-mode-toggle { display: flex; gap: 0; border: 1px solid var(--body-card-border); border-radius: 0; overflow: hidden; width: fit-content; }
         .upload-mode-btn {
           padding: 8px 18px; font-size: 19px;
           background: var(--body-card-bg); color: var(--body-text-muted);
@@ -980,7 +980,8 @@ export default function UploadForm() {
         .upload-requirements {
           font-size: 18px; color: var(--body-text-muted);
           background: var(--sidebar-bg); padding: 6px 12px;
-          border-radius: 4px; border: 1px solid var(--body-card-border);
+          border-radius: 0; border: 1px solid var(--body-card-border);
+          display: flex; align-items: center; gap: 6px;
         }
         .upload-form { display: flex; flex-direction: column; gap: 16px; }
         .upload-gate, .upload-success {
@@ -990,7 +991,7 @@ export default function UploadForm() {
         .upload-gate-title { font-size: 23px; color: var(--body-text); margin-bottom: 8px; }
         .upload-gate-body { font-size: 20px; color: var(--body-text-muted); line-height: 1.6; }
         .upload-drop-zone {
-          border: 3px dashed var(--body-card-border); border-radius: 6px;
+          border: 3px dashed var(--body-card-border); border-radius: 0;
           background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.04) 100%);
           box-shadow: var(--shadow-inset); cursor: pointer;
           transition: border-color 0.15s, background 0.15s;
@@ -1006,10 +1007,10 @@ export default function UploadForm() {
         .upload-drop-label { font-size: 19px; color: var(--body-text); }
         .upload-drop-hint { font-size: 18px; color: var(--body-text-muted); }
         .upload-preview-wrap { position: relative; width: 100%; padding: 16px; display: flex; justify-content: center; }
-        .upload-preview-img { max-height: 300px; max-width: 100%; object-fit: contain; border-radius: 4px; box-shadow: var(--shadow-md); }
+        .upload-preview-img { max-height: 300px; max-width: 100%; object-fit: contain; border-radius: 0; box-shadow: var(--shadow-md); }
         .upload-preview-remove {
           position: absolute; top: 8px; right: 8px;
-          width: 28px; height: 28px; border-radius: 50%;
+          width: 28px; height: 28px; border-radius: 0;
           background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2);
           color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
           padding: 0;
@@ -1023,7 +1024,7 @@ export default function UploadForm() {
         [data-theme="dark"] .form-label { }
         .form-input {
           width: 100%; padding: 8px 12px;
-          border-radius: 4px; border: 1px solid var(--body-card-border);
+          border-radius: 0; border: 1px solid var(--body-card-border);
           background: var(--body-card-bg); color: var(--body-text); font-size: 19px;
           box-shadow: var(--shadow-inset-sm); outline: none; font-family: var(--font-body);
           transition: border-color 0.15s, box-shadow 0.15s;
@@ -1034,17 +1035,17 @@ export default function UploadForm() {
         .form-input:disabled { opacity: 0.5; cursor: not-allowed; }
         .form-hint { font-size: 17px; color: var(--body-text-muted); }
         .tag-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
-        .tag-chip { border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--body-text); border-radius: 999px; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px; }
+        .tag-chip { border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--body-text); border-radius: 0; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px; }
         .collections-head { display: flex; align-items: center; justify-content: space-between; }
-        .collections-plus-box { width: 36px; height: 36px; border: 2px dashed var(--body-card-border); display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; }
+        .collections-plus-box { width: 36px; height: 36px; border: 2px dashed var(--body-card-border); display: flex; align-items: center; justify-content: center; border-radius: 0; cursor: pointer; }
         .collections-creator { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
-        .collection-row { border: 1px solid var(--body-card-border); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .collection-row { border: 1px solid var(--body-card-border); border-radius: 0; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
         .collection-title { font-size: 18px; }
         .collection-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-        .collection-add { border: 1px solid var(--body-card-border); background: var(--body-card-bg); border-radius: 4px; padding: 3px 6px; }
+        .collection-add { border: 1px solid var(--body-card-border); background: var(--body-card-bg); border-radius: 0; padding: 3px 6px; }
         .upload-error {
           display: flex; align-items: center; gap: 6px;
-          padding: 8px 10px; border-radius: 4px;
+          padding: 8px 10px; border-radius: 0;
           background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3);
           color: #c83220; font-size: 19px;
         }
@@ -1055,18 +1056,18 @@ export default function UploadForm() {
         .bulk-item {
           display: flex; align-items: center; gap: 12px;
           background: var(--body-card-bg); border: 1px solid var(--body-card-border);
-          border-radius: 6px; padding: 10px 12px; box-shadow: var(--shadow-sm);
+          border-radius: 0; padding: 10px 12px; box-shadow: var(--shadow-sm);
         }
         .bulk-item--error { border-color: rgba(200,50,30,0.4); background: rgba(200,50,30,0.04); }
         .bulk-item--done { border-color: rgba(50,150,50,0.35); background: rgba(50,150,50,0.04); }
-        .bulk-item-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 4px; flex-shrink: 0; box-shadow: var(--shadow-sm); }
+        .bulk-item-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 0; flex-shrink: 0; box-shadow: var(--shadow-sm); }
         .bulk-item-fields { flex: 1; display: flex; gap: 8px; flex-wrap: wrap; min-width: 0; }
         .bulk-item-fields .form-input { flex: 1; min-width: 140px; }
         .bulk-item-error { width: 100%; display: flex; align-items: center; gap: 5px; font-size: 17px; color: #c83220; margin-top: 2px; }
         .bulk-item-status { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
         .bulk-item-remove {
           display: flex; align-items: center; justify-content: center;
-          width: 26px; height: 26px; border-radius: 4px;
+          width: 26px; height: 26px; border-radius: 0;
           background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.25);
           color: #c83220; cursor: pointer; padding: 0;
         }
@@ -1077,7 +1078,7 @@ export default function UploadForm() {
         }
         .fuzzy-hint--split {
           background: rgba(192,90,26,0.08); border: 1px solid rgba(192,90,26,0.25);
-          border-radius: 4px; padding: 4px 8px; color: var(--body-text);
+          border-radius: 0; padding: 4px 8px; color: var(--body-text);
         }
         .fuzzy-hint-btn {
           background: none; border: none; padding: 0;
@@ -1088,7 +1089,7 @@ export default function UploadForm() {
         .fuzzy-hint-btn:hover { opacity: 0.75; transform: none; box-shadow: none; }
         .fuzzy-hint-tag {
           display: inline-block; background: var(--sidebar-bg);
-          border: 1px solid var(--body-card-border); border-radius: 4px;
+          border: 1px solid var(--body-card-border); border-radius: 0;
           padding: 1px 6px; font-size: 16px; margin: 0 2px;
         }
       `}</style>

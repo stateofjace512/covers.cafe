@@ -362,7 +362,7 @@ export default function MusicArtists() {
       <style>{`
         .toolbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
         .music-artist-search {
-          padding: 7px 12px; border-radius: 4px; border: 1px solid var(--body-card-border);
+          padding: 7px 12px; border-radius: 0; border: 1px solid var(--body-card-border);
           background: var(--body-card-bg); color: var(--body-text); font-size: 19px;
           box-shadow: var(--shadow-inset-sm); outline: none; width: 220px;
           font-family: var(--font-body); transition: border-color 0.15s, box-shadow 0.15s;
@@ -370,7 +370,7 @@ export default function MusicArtists() {
         .music-artist-search:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
         .music-artist-count-label { font-size: 18px; color: var(--body-text-muted); }
         .ma-type-tabs { display: inline-flex; gap: 6px; }
-        .ma-type-tab { border: 1px solid var(--body-card-border); background: var(--body-card-bg); color: var(--body-text-muted); border-radius: 999px; padding: 4px 10px; font-size: 14px; }
+        .ma-type-tab { border: 1px solid var(--body-card-border); background: var(--body-card-bg); color: var(--body-text-muted); border-radius: 0; padding: 4px 10px; font-size: 14px; }
         .ma-type-tab--active { background: var(--accent); border-color: var(--accent); color: white; }
         .music-artist-grid {
           display: grid;
@@ -381,24 +381,24 @@ export default function MusicArtists() {
           display: flex; flex-direction: column; gap: 0;
           cursor: pointer; text-align: left; width: 100%;
           background: var(--body-card-bg); border: 1px solid var(--body-card-border);
-          border-radius: 6px; overflow: hidden;
+          border-radius: 0; overflow: hidden;
           box-shadow: var(--shadow-md);
           transition: box-shadow 0.15s, transform 0.15s;
           padding: 0;
         }
         .music-artist-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
         .music-artist-card--selected { outline: 3px solid var(--accent); outline-offset: -2px; }
-        .ma-select-btn { border: 1px solid var(--body-card-border); border-radius: 6px; background: var(--body-card-bg); color: var(--body-text-muted); padding: 5px 14px; font-size: 14px; cursor: pointer; font-family: var(--font-body); }
+        .ma-select-btn { border: 1px solid var(--body-card-border); border-radius: 0; background: var(--body-card-bg); color: var(--body-text-muted); padding: 5px 14px; font-size: 14px; cursor: pointer; font-family: var(--font-body); }
         .ma-select-btn--active { background: var(--accent); border-color: var(--accent); color: #fff; }
-        .ma-merge-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; padding: 10px 14px; border-radius: 8px; background: var(--body-card-bg); border: 1px solid var(--body-card-border); }
+        .ma-merge-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; padding: 10px 14px; border-radius: 0; background: var(--body-card-bg); border: 1px solid var(--body-card-border); }
         .ma-merge-label { font-size: 15px; color: var(--body-text-muted); flex-shrink: 0; }
-        .ma-merge-input { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--body-text); font-size: 15px; font-family: var(--font-body); flex: 1; min-width: 180px; }
+        .ma-merge-input { padding: 6px 10px; border-radius: 0; border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--body-text); font-size: 15px; font-family: var(--font-body); flex: 1; min-width: 180px; }
         .ma-merge-confirm { font-size: 14px; padding: 6px 18px; }
         .ma-merge-error { font-size: 13px; color: #f87171; flex-basis: 100%; margin-top: 4px; }
-        .ma-undo-toast { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 10px 16px; border-radius: 8px; background: var(--body-card-bg); border: 1px solid var(--body-card-border); font-size: 14px; }
-        .ma-undo-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 4px 14px; font-size: 13px; cursor: pointer; font-family: var(--font-body); }
+        .ma-undo-toast { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 10px 16px; border-radius: 0; background: var(--body-card-bg); border: 1px solid var(--body-card-border); font-size: 14px; }
+        .ma-undo-btn { background: var(--accent); color: #fff; border: none; border-radius: 0; padding: 4px 14px; font-size: 13px; cursor: pointer; font-family: var(--font-body); }
         .ma-undo-countdown { color: var(--body-text-muted); font-size: 13px; margin-left: auto; }
-        .ma-artist-check { position: absolute; left: 8px; top: 8px; width: 20px; height: 20px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.7); background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        .ma-artist-check { position: absolute; left: 8px; top: 8px; width: 20px; height: 20px; border-radius: 0; border: 2px solid rgba(255,255,255,0.7); background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .ma-artist-check--on { background: var(--accent); border-color: var(--accent); }
         .ma-list-spinner { animation: ma-spin 0.8s linear infinite; }
         @keyframes ma-spin { to { transform: rotate(360deg); } }

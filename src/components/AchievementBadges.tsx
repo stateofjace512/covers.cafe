@@ -107,7 +107,7 @@ export default function AchievementBadges({ userId }: Props) {
           align-items: flex-start;
           gap: 12px;
           padding: 12px 14px;
-          border-radius: 6px;
+          border-radius: 0;
           border: 1px solid;
         }
 

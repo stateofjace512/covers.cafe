@@ -16,10 +16,8 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   applyUserPreferencesToDocument,
   getCoverGridMinWidthPreference,
-  getNoThemeImagesPreference,
   getPreferModalOverPagePreference,
   setCoverGridMinWidthPreference,
-  setNoThemeImagesPreference,
   setPreferModalOverPagePreference,
 } from '../lib/userPreferences';
 
@@ -463,7 +461,6 @@ function ActiveSessionsPanel({ onDone }: { onDone: () => void }) {
 export default function Settings() {
   const { user, signOut, openAuthModal } = useAuth();
   const [activeForm, setActiveForm] = useState<ActiveForm>(null);
-  const [noThemeImages, setNoThemeImages] = useState<boolean>(() => getNoThemeImagesPreference());
   const [coverGridMinWidth, setCoverGridMinWidth] = useState<number>(() => getCoverGridMinWidthPreference());
   const [preferModalOverPage, setPreferModalOverPage] = useState<boolean>(() => getPreferModalOverPagePreference());
 
@@ -472,11 +469,6 @@ export default function Settings() {
     localStorage.setItem('theme', theme);
     window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: theme }));
   };
-
-  useEffect(() => {
-    setNoThemeImagesPreference(noThemeImages);
-    applyUserPreferencesToDocument();
-  }, [noThemeImages]);
 
   useEffect(() => {
     setCoverGridMinWidthPreference(coverGridMinWidth);
@@ -500,35 +492,6 @@ export default function Settings() {
         {/* ── Appearance ─────────────────────────────────────── */}
         <section className="card settings-section">
           <h2 className="settings-section-title">Appearance</h2>
-          <div className="settings-row">
-            <div className="settings-row-info">
-              <span className="settings-row-label">No theme images</span>
-              <span className="settings-row-desc">Use flat colors and remove textured theme image layers.</span>
-            </div>
-            <div className="settings-row-control">
-              <div className="settings-pixel-toggle-wrap">
-                <button
-                  type="button"
-                  className="settings-icon-toggle"
-                  role="switch"
-                  aria-checked={noThemeImages}
-                  aria-label="No theme images"
-                  onClick={() => setNoThemeImages((prev) => !prev)}
-                >
-                  <svg width="40" height="20" viewBox="0 0 32 16" className="toggle-icon" aria-hidden="true">
-                    <rect x="1" y="1" width="30" height="14" fill="none" stroke="currentColor" strokeWidth="2" />
-                    <rect x="3" y="3" width="26" height="10" fill="currentColor" opacity="0.15" />
-                    <g className={`toggle-knob${noThemeImages ? ' toggle-knob--on' : ''}`}>
-                      <rect x="3" y="3" width="10" height="10" fill="currentColor" />
-                      <rect x="5" y="5" width="2" height="2" fill="currentColor" opacity="0.35" />
-                    </g>
-                  </svg>
-                </button>
-                <span className="settings-icon-toggle-label">{noThemeImages ? 'Yes' : 'No'}</span>
-              </div>
-            </div>
-          </div>
-
           <div className="settings-row">
             <div className="settings-row-info">
               <span className="settings-row-label">Cover columns</span>
@@ -749,7 +712,6 @@ export default function Settings() {
         .settings-select {
           min-width: 220px;
           padding: 6px 10px;
-          border-radius: 4px;
           border: 1px solid var(--body-card-border);
           background: var(--body-card-bg);
           color: var(--body-text);
@@ -788,7 +750,7 @@ export default function Settings() {
           text-align: center;
         }
         .settings-input {
-          width: 100%; padding: 8px 12px; border-radius: 4px;
+          width: 100%; padding: 8px 12px
           border: 1px solid var(--body-card-border);
           background: var(--body-card-bg); color: var(--body-text);
           font-size: 19px; font-family: var(--font-body);
@@ -806,30 +768,30 @@ export default function Settings() {
         .settings-inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .settings-inline-error {
           display: flex; align-items: center; gap: 6px;
-          padding: 7px 10px; border-radius: 4px; font-size: 18px;
+          padding: 7px 10px; font-size: 18px;
           background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3); color: #c83220;
         }
         .settings-inline-success {
           display: flex; align-items: center; gap: 6px;
-          padding: 9px 12px; border-radius: 4px; font-size: 19px;
+          padding: 9px 12px; font-size: 19px;
           background: rgba(40,160,80,0.1); border: 1px solid rgba(40,160,80,0.3); color: #1a7a40;
         }
         .settings-inline-hint {
           display: flex; align-items: flex-start; gap: 6px;
           font-size: 18px; color: var(--body-text-muted); line-height: 1.5;
-          padding: 8px 10px; border-radius: 4px; background: var(--body-card-bg);
+          padding: 8px 10px; background: var(--body-card-bg);
           border: 1px solid var(--body-border);
         }
         .settings-delete-warning {
           display: flex; align-items: flex-start; gap: 7px;
-          padding: 10px 12px; border-radius: 4px; font-size: 18px; line-height: 1.5;
+          padding: 10px 12px; font-size: 18px; line-height: 1.5;
           background: rgba(200,50,30,0.08); border: 1px solid rgba(200,50,30,0.25); color: #c83220;
         }
         .settings-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .settings-session-msg {
           display: flex; align-items: center; gap: 6px;
-          padding: 7px 10px; border-radius: 4px; font-size: 18px; margin-top: 8px;
+          padding: 7px 10px; font-size: 18px; margin-top: 8px;
         }
         .settings-session-msg--ok { background: rgba(40,160,80,0.1); border: 1px solid rgba(40,160,80,0.3); color: #1a7a40; }
         .settings-session-msg--err { background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3); color: #c83220; }
@@ -843,7 +805,7 @@ export default function Settings() {
         .sessions-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
         .sessions-item {
           display: flex; align-items: center; justify-content: space-between; gap: 12px;
-          padding: 9px 12px; border-radius: 5px;
+          padding: 9px 12px;
           background: var(--body-card-bg); border: 1px solid var(--body-border);
           flex-wrap: wrap;
         }
@@ -856,7 +818,7 @@ export default function Settings() {
         }
         .sessions-current-badge {
           display: inline-flex; align-items: center;
-          padding: 1px 6px; border-radius: 10px; font-size: 17px;
+          padding: 1px 6px; font-size: 17px;
           background: var(--accent); color: #fff;
         }
         .sessions-item-meta { font-size: 17px; color: var(--body-text-muted); }

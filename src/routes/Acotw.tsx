@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+import { getCoverPath } from '../lib/coverRoutes';
 import { useEffect, useState, useCallback } from 'react';
 import TrophyIcon from '../components/TrophyIcon';
 import FavoritesIcon from '../components/FavoritesIcon';
@@ -20,6 +22,7 @@ function formatWeek(dateStr: string) {
 }
 
 export default function Acotw() {
+  const navigate = useNavigate();
   const { user, session, openAuthModal } = useAuth();
   const [data, setData] = useState<PollData | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -71,58 +74,103 @@ export default function Acotw() {
 
   return (
     <div className="acotw-page">
+    
+      {/* HEADER (always visible) */}
       <div className="acotw-header">
-        <div className="acotw-header-icon"><TrophyIcon size={28} /></div>
-        <div>
-          <h1 className="acotw-title">Album Cover Of The Week</h1>
-          <p className="acotw-subtitle">
-            {isClosed
-              ? 'Voting has closed — see the winner below.'
-              : poll
-              ? `Vote for your favourite cover this week · Week of ${formatWeek(poll.week_start)}`
-              : 'Community vote — every week, top 10 most-favorited covers go head-to-head.'}
-          </p>
-        </div>
+        <h1 className="section-title acotw-title-line">
+          <span className="acotw-title-chunk">
+            <TrophyIcon size={22} />
+            <span>Album Cover Of The Week</span>
+          </span>
+    
+          {poll && (
+            <span className="acotw-title-chunk">
+              Week of {formatWeek(poll.week_start)}
+            </span>
+          )}
+    
+          {loading ? (
+            <span className="acotw-title-chunk">Loading poll…</span>
+          ) : !poll || nominees.length === 0 ? (
+            <span className="acotw-title-chunk">
+              No poll yet. Favorite some covers to fuel next week’s nominees!
+            </span>
+          ) : (
+            <>
+              <span className="acotw-title-chunk">
+                <FavoritesIcon size={18} />
+                {totalVotes} vote{totalVotes !== 1 ? 's' : ''} cast
+              </span>
+    
+              {!isClosed && !hasVoted && !user && (
+                <button
+                  className="btn btn-primary acotw-signin-btn"
+                  onClick={() => openAuthModal('login')}
+                >
+                  Sign in to vote
+                </button>
+              )}
+    
+              {!isClosed && hasVoted && (
+                <span className="acotw-title-chunk">
+                  <ClockIcon size={18} />
+                  You voted! Results reveal Sunday night.
+                </span>
+              )}
+            </>
+          )}
+        </h1>
       </div>
-
-      {loading ? (
-        <div className="acotw-loading"><LoadingIcon size={24} className="acotw-spinner" /><span>Loading poll…</span></div>
-      ) : !poll || nominees.length === 0 ? (
-        <div className="acotw-empty">
-          <FavoritesIcon size={40} style={{ opacity: 0.3 }} />
-          <p>No poll yet — favorite some covers to fuel next week's nominees!</p>
-        </div>
-      ) : (
+    
+      {/* BODY (only render when poll exists and not loading) */}
+      {!loading && poll && nominees.length > 0 && (
         <>
-          {/* Vote progress bar */}
-          <div className="acotw-meta">
-            <span className="acotw-vote-total"><FavoritesIcon size={13} />{totalVotes} vote{totalVotes !== 1 ? 's' : ''} cast</span>
-            {!isClosed && !hasVoted && !user && (
-              <button className="btn btn-primary acotw-signin-btn" onClick={() => openAuthModal('login')}>
-                Sign in to vote
-              </button>
-            )}
-            {!isClosed && hasVoted && (
-              <span className="acotw-voted-label"><ClockIcon size={13} />You voted — results reveal Sunday night</span>
-            )}
-          </div>
 
           {/* Winner banner (closed poll) */}
           {isClosed && poll.winner_cover_id && (() => {
             const winner = nominees.find((n) => n.cover.id === poll.winner_cover_id);
             if (!winner) return null;
+          
             return (
-              <div className="acotw-winner-banner">
-                <div className="acotw-winner-badge"><TrophyIcon size={16} /> This Week's Winner</div>
-                <div className="acotw-winner-cover-wrap">
-                  <img src={getCoverImageSrc(winner.cover) ?? ''} alt={winner.cover.title} className="acotw-winner-img" />
+              <section className="acotw-winner-section">
+                <h2 className="acotw-section-title">This Week’s Winner</h2>
+          
+                <div className="acotw-winner-grid">
+                  <div className="acotw-card acotw-card--winner acotw-card--winner-featured">
+                    <div className="acotw-card-img-wrap">
+                      <img
+                        src={getCoverImageSrc(winner.cover) ?? ''}
+                        alt={winner.cover.title}
+                        className="acotw-card-img"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => navigate(getCoverPath(winner.cover))}
+                      />
+                      <div className="acotw-card-winner-overlay">
+                        <TrophyIcon size={20} />
+                      </div>
+                    </div>
+          
+                    <div className="acotw-card-body">
+                      <div className="acotw-card-title">{winner.cover.title}</div>
+                      <div className="acotw-card-artist">{winner.cover.artist}</div>
+                        {winner.cover.profiles?.username && (
+                          <button
+                            className="acotw-card-uploader"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/users/${winner.cover.profiles!.username}`);
+                            }}
+                          >
+                            @{winner.cover.profiles.username}
+                          </button>
+                        )}
+                      <div className="acotw-card-count">
+                        {winner.vote_count} vote{winner.vote_count !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div className="acotw-winner-title">{winner.cover.title}</div>
-                  <div className="acotw-winner-artist">{winner.cover.artist}</div>
-                  <div className="acotw-winner-votes">{winner.vote_count} vote{winner.vote_count !== 1 ? 's' : ''}</div>
-                </div>
-              </div>
+              </section>
             );
           })()}
 
@@ -140,13 +188,31 @@ export default function Acotw() {
                 >
                   <div className="acotw-card-img-wrap">
                     {getCoverImageSrc(n.cover) && (
-                      <img src={getCoverImageSrc(n.cover)!} alt={n.cover.title} className="acotw-card-img" loading="lazy" />
+                      <img
+                        src={getCoverImageSrc(n.cover)!}
+                        alt={n.cover.title}
+                        className="acotw-card-img"
+                        loading="lazy"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => navigate(getCoverPath(n.cover))}
+                      />
                     )}
                     {isWinner && <div className="acotw-card-winner-overlay"><TrophyIcon size={20} /></div>}
                   </div>
                   <div className="acotw-card-body">
                     <div className="acotw-card-title" title={n.cover.title}>{n.cover.title}</div>
                     <div className="acotw-card-artist">{n.cover.artist}</div>
+                      {n.cover.profiles?.username && (
+                        <button
+                          className="acotw-card-uploader"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/users/${n.cover.profiles!.username}`);
+                          }}
+                        >
+                          @{n.cover.profiles.username}
+                        </button>
+                      )}
 
                     {/* Vote bar — only visible after user voted or poll closed */}
                     {(hasVoted || isClosed) && (
@@ -197,19 +263,37 @@ export default function Acotw() {
           ) : (
             <div className="acotw-archive-grid">
               {history.map((entry) => (
-                <div key={entry.poll_id} className="acotw-archive-card">
+                <div key={entry.poll_id} className="acotw-card acotw-archive-card">
                   {entry.cover && getCoverImageSrc(entry.cover) && (
-                    <img src={getCoverImageSrc(entry.cover)!} alt={entry.cover.title} className="acotw-archive-img" loading="lazy" />
+                    <div className="acotw-card-img-wrap">
+                      <img
+                        src={getCoverImageSrc(entry.cover)!}
+                        alt={entry.cover.title}
+                        className="acotw-card-img"
+                        loading="lazy"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => navigate(getCoverPath(entry.cover!))}
+                      />
+                    </div>
                   )}
-                  <div className="acotw-archive-info">
-                    <div className="acotw-archive-week">Week of {formatWeek(entry.week_start)}</div>
-                    {entry.cover && (
-                      <>
-                        <div className="acotw-archive-title">{entry.cover.title}</div>
-                        <div className="acotw-archive-artist">{entry.cover.artist}</div>
-                      </>
-                    )}
-                    <div className="acotw-archive-votes"><FavoritesIcon size={10} /> {entry.total_votes} votes</div>
+                
+                  <div className="acotw-card-body">
+                    <div className="acotw-card-title">{entry.cover?.title}</div>
+                    <div className="acotw-card-artist">{entry.cover?.artist}</div>
+                      {entry.cover?.profiles?.username && (
+                        <button
+                          className="acotw-card-uploader"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/users/${entry.cover.profiles!.username}`);
+                          }}
+                        >
+                          @{entry.cover.profiles.username}
+                        </button>
+                      )}
+                    <div className="acotw-card-count">
+                      {entry.total_votes} vote{entry.total_votes !== 1 ? 's' : ''}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -220,46 +304,85 @@ export default function Acotw() {
 
       <style>{`
         .acotw-page { display: flex; flex-direction: column; gap: 24px; }
-
+        
+        /* ───────────────── Header (new “Artists-style” header layout) ───────────────── */
         .acotw-header {
-          display: flex; align-items: flex-start; gap: 16px;
-          background-image:
-            linear-gradient(var(--skeu-hero-tint), var(--skeu-hero-tint)),
-            var(--skeu-hero);
-          background-size: 100% 100%, cover;
-          background-position: center, center;
-          border: 1px solid var(--body-card-border); border-radius: 8px;
-          padding: 24px; color: #fff8f0;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
         }
-        .acotw-header-icon {
-          flex-shrink: 0; width: 52px; height: 52px; border-radius: 50%;
-          background: rgba(184,134,11,0.25); border: 2px solid rgba(184,134,11,0.5);
-          display: flex; align-items: center; justify-content: center; color: #f0c040;
+        
+        .acotw-title-line {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 20px;
         }
-        .acotw-title { font-size: 24px; margin: 0 0 6px; }
-        .acotw-subtitle { font-size: 20px; color: rgba(255,248,240,0.7); margin: 0; line-height: 1.5; }
+        
+        .acotw-title-chunk {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;           /* icon-to-text spacing */
+          font: inherit;
+          color: inherit;
+          line-height: inherit;
+        }
+        
+        .acotw-title-line span,
+        .acotw-title-line svg {
+          color: inherit;
+        }
 
+        .acotw-title-line svg { display: block; }
+        
+        /* Top row: title + week */
+        .acotw-header-top {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 14px;
+          flex-wrap: wrap;
+        }
+        
+        .acotw-week-row {
+          font-size: 17px;
+          color: var(--body-text-muted);
+          padding-top: 4px;
+          white-space: nowrap;
+        }
+        
+        /* Bottom row: loading / empty / meta bar */
+        .acotw-header-bottom {
+          display: flex;
+          flex-direction: column;
+        }
+        
+        /* NOTE: you’re using .section-title from your global styles (like Artists) so we do NOT redefine it here. */
+        
+        
+        /* ───────────────── Loading / Empty ───────────────── */
         .acotw-loading { display: flex; align-items: center; gap: 10px; color: var(--body-text-muted); padding: 40px 0; }
         .acotw-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
+        
         .acotw-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px 20px; color: var(--body-text-muted); text-align: center; }
         .acotw-empty p { font-size: 20px; max-width: 300px; line-height: 1.6; }
-
+        
+        /* ───────────────── Meta row (votes / sign-in / voted label) ───────────────── */
         .acotw-meta {
           display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
           padding: 12px 16px; background: var(--body-card-bg);
-          border: 1px solid var(--body-card-border); border-radius: 6px;
+          border: 1px solid var(--body-card-border); border-radius: 0;
         }
         .acotw-vote-total { display: flex; align-items: center; gap: 6px; font-size: 19px; color: var(--body-text-muted); }
         .acotw-voted-label { display: flex; align-items: center; gap: 6px; font-size: 19px; color: var(--body-text-muted); }
         .acotw-signin-btn { margin-left: auto; }
-
-        /* Winner banner */
+        
+        /* ───────────────── Winner banner (legacy / still available if you ever use it) ───────────────── */
         .acotw-winner-banner {
           display: flex; align-items: center; gap: 16px;
           background: linear-gradient(135deg, rgba(184,134,11,0.15) 0%, rgba(192,90,26,0.1) 100%);
-          border: 2px solid rgba(184,134,11,0.4); border-radius: 8px; padding: 16px 20px;
+          border: 2px solid rgba(184,134,11,0.4); border-radius: 0; padding: 16px 20px;
         }
         .acotw-winner-badge {
           display: flex; align-items: center; gap: 6px;
@@ -267,13 +390,13 @@ export default function Acotw() {
           color: #b8860b; white-space: nowrap; writing-mode: vertical-rl; text-orientation: mixed;
           transform: rotate(180deg);
         }
-        .acotw-winner-cover-wrap { width: 80px; height: 80px; border-radius: 4px; overflow: hidden; flex-shrink: 0; box-shadow: var(--shadow-lg); }
+        .acotw-winner-cover-wrap { width: 80px; height: 80px; border-radius: 0; overflow: hidden; flex-shrink: 0; box-shadow: var(--shadow-lg); }
         .acotw-winner-img { width: 100%; height: 100%; object-fit: cover; }
         .acotw-winner-title { font-size: 21px; color: var(--body-text); }
         .acotw-winner-artist { font-size: 20px; color: var(--body-text-muted); margin-top: 2px; }
         .acotw-winner-votes { font-size: 18px; color: #b8860b; margin-top: 6px; }
-
-        /* Nominees grid */
+        
+        /* ───────────────── Nominees grid ───────────────── */
         .acotw-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(var(--cover-grid-min-width), 1fr));
@@ -281,29 +404,42 @@ export default function Acotw() {
         }
         .acotw-card {
           background: var(--body-card-bg); border: 1px solid var(--body-card-border);
-          border-radius: 8px; overflow: hidden;
+          border-radius: 0; overflow: hidden;
           transition: border-color 0.15s, box-shadow 0.15s;
         }
         .acotw-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); }
         .acotw-card--winner { border-color: #b8860b; box-shadow: 0 0 0 2px rgba(184,134,11,0.25); }
         .acotw-card--voted { border-color: var(--accent); }
-
+        
         .acotw-card-img-wrap { position: relative; aspect-ratio: 1; overflow: hidden; background: var(--body-border); }
         .acotw-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .acotw-card-winner-overlay {
           position: absolute; top: 6px; right: 6px;
           background: rgba(184,134,11,0.9); color: white;
-          border-radius: 50%; width: 32px; height: 32px;
+          border-radius: 0; width: 32px; height: 32px;
           display: flex; align-items: center; justify-content: center;
         }
-
+        
         .acotw-card-body { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
         .acotw-card-title { font-size: 19px; color: var(--body-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .acotw-card-uploader {
+          background: none;
+          border: none;
+          padding: 0;
+          font-size: 15px;
+          color: var(--accent);
+          cursor: pointer;
+          text-align: left;
+        }
+        .acotw-card-uploader:hover { text-decoration: underline; }
+        
         .acotw-card-artist { font-size: 17px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .acotw-card-count { font-size: 17px; color: var(--body-text-muted); min-height: 16px; }
-
-        .acotw-bar-wrap { position: relative; height: 6px; background: var(--body-border); border-radius: 3px; overflow: hidden; }
-        .acotw-bar { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s ease; }
+        
+        .acotw-bar-wrap { position: relative; height: 6px; background: var(--body-border); border-radius: 0; overflow: hidden; }
+        .acotw-bar { height: 100%; background: var(--accent); border-radius: 0; transition: width 0.4s ease; }
+        
         .acotw-vote-btn { width: 100%; justify-content: center; font-size: 18px; padding: 5px 10px; gap: 5px; }
         .acotw-vote-btn--active {
           background-image:
@@ -315,34 +451,50 @@ export default function Acotw() {
           border-color: var(--accent-dark) !important;
         }
         .acotw-vote-btn--active::before { display: none; }
-
-        /* Archive */
+        
+        /* ───────────────── Archive ───────────────── */
         .acotw-archive-section { border-top: 1px solid var(--body-card-border); padding-top: 20px; }
+        
         .acotw-archive-toggle {
-          display: flex; align-items: center; gap: 8px;
-          background: none; border: 1px solid var(--body-card-border); border-radius: 6px;
-          padding: 8px 14px; font-size: 19px; color: var(--body-text);
-          cursor: pointer; transition: background 0.12s;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: none;
+          border: 1px solid var(--body-card-border);
+          border-radius: 0;
+          padding: 8px 14px;
+          font-size: 19px;
+          color: var(--body-text);
+          cursor: pointer;
+          transition: background 0.12s;
+        
+          margin-bottom: 16px;   /* ← ADD THIS */
         }
+        
         .acotw-archive-toggle:hover { background: var(--body-card-bg); transform: none; box-shadow: none; }
+        
         .acotw-archive-count {
           margin-left: 4px; background: var(--accent); color: white;
-          font-size: 16px; padding: 1px 6px; border-radius: 10px;
+          font-size: 16px; padding: 1px 6px; border-radius: 0;
         }
+        
         .acotw-archive-empty { font-size: 20px; color: var(--body-text-muted); padding: 16px 0; }
-
+        
         .acotw-archive-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 12px; margin-top: 16px;
+          grid-template-columns: repeat(auto-fill, minmax(var(--cover-grid-min-width), 1fr));
+          gap: 14px;
         }
+        
         .acotw-archive-card {
-          display: flex; gap: 10px; align-items: center;
-          background: var(--body-card-bg); border: 1px solid var(--body-card-border);
-          border-radius: 6px; padding: 10px; overflow: hidden;
+          background: var(--body-card-bg);
+          border: 1px solid var(--body-card-border);
+          border-radius: 0;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
         }
-        .acotw-archive-img { width: 48px; height: 48px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
-        .acotw-archive-info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        
         .acotw-archive-week { font-size: 16px; color: #b8860b; text-transform: uppercase; letter-spacing: 0.5px; }
         .acotw-archive-title { font-size: 19px; color: var(--body-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .acotw-archive-artist { font-size: 17px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -46,7 +46,7 @@ export function buildCoverSlug(cover: Cover): string {
 }
 
 export function getCoverPath(cover: Cover): string {
-  return `/covers/fan/${buildCoverSlug(cover)}`;
+  return `/covers/fan/${cover.page_slug}`;
 }
 
 export interface OfficialCoverSlugParts {

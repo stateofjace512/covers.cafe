@@ -263,7 +263,7 @@ export default function CoverComments({ coverId, cover }: Props) {
       {loading ? (
         <p className="cc-empty"><LoadingIcon size={14} className="upload-spinner" /> Loading comments…</p>
       ) : comments.length === 0 ? (
-        <p className="cc-empty">No comments yet — be the first!</p>
+        <p className="cc-empty">No comments yet, be the first!</p>
       ) : (
         <ul className="cc-list">
           {comments.map((comment) => (
@@ -367,14 +367,12 @@ export default function CoverComments({ coverId, cover }: Props) {
           color: var(--accent-text);
           font-size: 17px;
           padding: 1px 7px;
-          border-radius: 10px;
           box-shadow: 0 1px 2px rgba(0,0,0,0.25);
         }
 
         .cc-composer {
           background: var(--body-card-bg);
           border: 1px solid var(--body-card-border);
-          border-radius: 7px;
           box-shadow: var(--shadow-inset-sm);
           overflow: hidden;
           margin-bottom: 16px;
@@ -451,7 +449,6 @@ export default function CoverComments({ coverId, cover }: Props) {
         .cc-item {
           background: var(--body-card-bg);
           border: 1px solid var(--body-card-border);
-          border-radius: 7px;
           box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.35);
           padding: 12px 14px;
           background-image: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 40%);
@@ -527,7 +524,6 @@ export default function CoverComments({ coverId, cover }: Props) {
           gap: 4px;
           background: none;
           border: 1px solid var(--body-border);
-          border-radius: 4px;
           padding: 3px 8px;
           font-size: 17px;
           color: var(--body-text-muted);
