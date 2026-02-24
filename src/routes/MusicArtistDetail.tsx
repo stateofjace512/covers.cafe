@@ -196,7 +196,7 @@ export default function MusicArtistDetail() {
         .from('covers_cafe_official_covers')
         .select('artist_name, album_title, release_year, album_cover_url, cover_public_id')
         .or(orFilter)
-        .order('release_year', { ascending: false })
+        .order('created_at', { ascending: true })
         .range(0, PAGE_SIZE);
 
       const raw = (data as OfficialCover[] | null) ?? [];
@@ -249,7 +249,7 @@ export default function MusicArtistDetail() {
       .from('covers_cafe_official_covers')
       .select('artist_name, album_title, release_year, album_cover_url, cover_public_id')
       .or(orFilter)
-      .order('release_year', { ascending: false })
+      .order('created_at', { ascending: true })
       .range(from, from + PAGE_SIZE);
     const raw = (data as OfficialCover[] | null) ?? [];
     const more = raw.length > PAGE_SIZE;
