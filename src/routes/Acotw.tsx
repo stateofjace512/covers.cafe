@@ -137,6 +137,17 @@ export default function Acotw() {
                     <div className="acotw-card-body">
                       <div className="acotw-card-title">{winner.cover.title}</div>
                       <div className="acotw-card-artist">{winner.cover.artist}</div>
+                        {winner.cover.profiles?.username && (
+                          <button
+                            className="acotw-card-uploader"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/users/${winner.cover.profiles!.username}`);
+                            }}
+                          >
+                            @{winner.cover.profiles.username}
+                          </button>
+                        )}
                       <div className="acotw-card-count">
                         {winner.vote_count} vote{winner.vote_count !== 1 ? 's' : ''}
                       </div>
@@ -161,13 +172,31 @@ export default function Acotw() {
                 >
                   <div className="acotw-card-img-wrap">
                     {getCoverImageSrc(n.cover) && (
-                      <img src={getCoverImageSrc(n.cover)!} alt={n.cover.title} className="acotw-card-img" loading="lazy" />
+                      <img
+                        src={getCoverImageSrc(n.cover)!}
+                        alt={n.cover.title}
+                        className="acotw-card-img"
+                        loading="lazy"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => navigate(getCoverPath(n.cover))}
+                      />
                     )}
                     {isWinner && <div className="acotw-card-winner-overlay"><TrophyIcon size={20} /></div>}
                   </div>
                   <div className="acotw-card-body">
                     <div className="acotw-card-title" title={n.cover.title}>{n.cover.title}</div>
                     <div className="acotw-card-artist">{n.cover.artist}</div>
+                      {n.cover.profiles?.username && (
+                        <button
+                          className="acotw-card-uploader"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/users/${n.cover.profiles!.username}`);
+                          }}
+                        >
+                          @{n.cover.profiles.username}
+                        </button>
+                      )}
 
                     {/* Vote bar — only visible after user voted or poll closed */}
                     {(hasVoted || isClosed) && (
@@ -235,6 +264,17 @@ export default function Acotw() {
                   <div className="acotw-card-body">
                     <div className="acotw-card-title">{entry.cover?.title}</div>
                     <div className="acotw-card-artist">{entry.cover?.artist}</div>
+                      {entry.cover?.profiles?.username && (
+                        <button
+                          className="acotw-card-uploader"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/users/${entry.cover.profiles!.username}`);
+                          }}
+                        >
+                          @{entry.cover.profiles.username}
+                        </button>
+                      )}
                     <div className="acotw-card-count">
                       {entry.total_votes} vote{entry.total_votes !== 1 ? 's' : ''}
                     </div>
@@ -327,6 +367,19 @@ export default function Acotw() {
 
         .acotw-card-body { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
         .acotw-card-title { font-size: 19px; color: var(--body-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .acotw-card-uploader {
+          background: none;
+          border: none;
+          padding: 0;
+          font-size: 15px;
+          color: var(--accent);
+          cursor: pointer;
+          text-align: left;
+        }
+        
+        .acotw-card-uploader:hover {
+          text-decoration: underline;
+        }
         .acotw-card-artist { font-size: 17px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .acotw-card-count { font-size: 17px; color: var(--body-text-muted); min-height: 16px; }
 
