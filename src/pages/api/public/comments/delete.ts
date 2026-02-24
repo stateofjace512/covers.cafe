@@ -19,14 +19,22 @@ export const POST: APIRoute = async ({ request }) => {
 
   const { data: comment, error: fetchErr } = await supabase
     .from('comments')
-    .select('id, user_id')
+    .select('id, author_username')
     .eq('id', commentId)
     .single();
 
   if (fetchErr || !comment) return json({ error: 'Comment not found' }, 404);
 
   const userId = userData.user.id;
-  const isOwner = comment.user_id === userId;
+
+  // Resolve the caller's username the same way the POST handler does
+  const { data: authorProfile } = await supabase
+    .from('covers_cafe_profiles')
+    .select('username')
+    .eq('id', userId)
+    .single();
+  const callerUsername = authorProfile?.username ?? userData.user.email?.split('@')[0] ?? userId.slice(0, 8);
+  const isOwner = comment.author_username === callerUsername;
 
   // Operators can delete any comment for moderation purposes
   const { data: opRole } = await supabase

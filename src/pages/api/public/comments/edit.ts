@@ -27,13 +27,21 @@ export const POST: APIRoute = async ({ request }) => {
 
   const { data: comment, error: fetchErr } = await supabase
     .from('comments')
-    .select('id, user_id')
+    .select('id, author_username')
     .eq('id', commentId)
     .single();
 
   if (fetchErr || !comment) return json({ error: 'Comment not found' }, 404);
 
-  if (comment.user_id !== userData.user.id) return json({ error: 'You can only edit your own comments' }, 403);
+  // Resolve the caller's username the same way the POST handler does
+  const { data: authorProfile } = await supabase
+    .from('covers_cafe_profiles')
+    .select('username')
+    .eq('id', userData.user.id)
+    .single();
+  const callerUsername = authorProfile?.username ?? userData.user.email?.split('@')[0] ?? userData.user.id.slice(0, 8);
+
+  if (comment.author_username !== callerUsername) return json({ error: 'You can only edit your own comments' }, 403);
 
   const { data: updated, error: updateErr } = await supabase
     .from('comments')
