@@ -86,6 +86,13 @@ function artistPhotoTransformUrl(artistName: string, bust?: number): string {
 
 type ArtType = 'fan' | 'official';
 
+interface OfficialCover {
+  artist_name: string | null;
+  album_title: string | null;
+  release_year: number | null;
+  album_cover_url: string;
+}
+
 export default function MusicArtistDetail() {
   const { artistName: slugParam } = useParams<{ artistName: string }>();
   const location = useLocation();
@@ -104,6 +111,12 @@ export default function MusicArtistDetail() {
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
   const [headerCover, setHeaderCover] = useState<Cover | null>(null);
   const [artType, setArtType] = useState<ArtType>('fan');
+
+  const [officialCovers, setOfficialCovers] = useState<OfficialCover[]>([]);
+  const [officialLoading, setOfficialLoading] = useState(true);
+  const [officialHasMore, setOfficialHasMore] = useState(false);
+  const [officialPage, setOfficialPage] = useState(0);
+  const [officialLoadingMore, setOfficialLoadingMore] = useState(false);
 
   // Artist photo state
   const [avatarSrc, setAvatarSrc] = useState('');
@@ -145,6 +158,29 @@ export default function MusicArtistDetail() {
   }, [artistName]);
 
   useEffect(() => {
+    if (!artistName) return;
+    setOfficialLoading(true);
+    setOfficialPage(0);
+
+    const fetchOfficial = async () => {
+      const { data } = await supabase
+        .from('covers_cafe_official_covers')
+        .select('artist_name, album_title, release_year, album_cover_url')
+        .ilike('artist_name', `%${artistName}%`)
+        .order('release_year', { ascending: false })
+        .range(0, PAGE_SIZE);
+
+      const raw = (data as OfficialCover[] | null) ?? [];
+      const more = raw.length > PAGE_SIZE;
+      setOfficialCovers(more ? raw.slice(0, PAGE_SIZE) : raw);
+      setOfficialHasMore(more);
+      setOfficialLoading(false);
+    };
+
+    fetchOfficial();
+  }, [artistName]);
+
+  useEffect(() => {
     if (!user) return;
     supabase
       .from('covers_cafe_favorites')
@@ -173,6 +209,25 @@ export default function MusicArtistDetail() {
     setLoadingMore(false);
   };
 
+  const handleLoadMoreOfficial = async () => {
+    if (officialLoadingMore || !officialHasMore) return;
+    setOfficialLoadingMore(true);
+    const nextPage = officialPage + 1;
+    const from = nextPage * PAGE_SIZE;
+    const { data } = await supabase
+      .from('covers_cafe_official_covers')
+      .select('artist_name, album_title, release_year, album_cover_url')
+      .ilike('artist_name', `%${artistName}%`)
+      .order('release_year', { ascending: false })
+      .range(from, from + PAGE_SIZE);
+    const raw = (data as OfficialCover[] | null) ?? [];
+    const more = raw.length > PAGE_SIZE;
+    setOfficialCovers((prev) => [...prev, ...(more ? raw.slice(0, PAGE_SIZE) : raw)]);
+    setOfficialHasMore(more);
+    setOfficialPage(nextPage);
+    setOfficialLoadingMore(false);
+  };
+
   const handleToggleFavorite = async (coverId: string) => {
     if (!user) return;
     const isFav = favoritedIds.has(coverId);
@@ -195,12 +250,6 @@ export default function MusicArtistDetail() {
   const handleAvatarError = () => {
     if (headerCover) setAvatarSrc(getCoverImageSrc(headerCover, 200));
   };
-
-  const visibleCovers = covers.filter((cover) => {
-    const isOfficial = (cover.tags ?? []).includes('official');
-    if (artType === 'official') return isOfficial;
-    return !isOfficial;
-  });
 
   const handleCoverClick = (cover: Cover) => {
     if (getPreferModalOverPagePreference()) {
@@ -330,11 +379,15 @@ export default function MusicArtistDetail() {
           </div>
           <div className="ma-header-info">
             <h1 className="ma-artist-name">{artistName}</h1>
-            {!loading && (
-              <p className="ma-cover-count">
-                {visibleCovers.length}{hasMore ? '+' : ''} cover{visibleCovers.length !== 1 ? 's' : ''}
-              </p>
-            )}
+            {!loading && !officialLoading && (() => {
+              const count = artType === 'official' ? officialCovers.length : covers.length;
+              const more = artType === 'official' ? officialHasMore : hasMore;
+              return (
+                <p className="ma-cover-count">
+                  {count}{more ? '+' : ''} cover{count !== 1 ? 's' : ''}
+                </p>
+              );
+            })()}
             {uploadError && <p className="ma-upload-error">{uploadError}</p>}
           </div>
         </div>
@@ -345,40 +398,83 @@ export default function MusicArtistDetail() {
         <button role="tab" aria-selected={artType === 'official'} className={`ma-type-tab${artType === 'official' ? ' ma-type-tab--active' : ''}`} onClick={() => setArtType('official')}>Album Art</button>
       </div>
 
-      {loading ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '40px 0', color: 'var(--body-text-muted)' }}>
-          <LoadingIcon size={22} className="ma-spinner" /> Loading covers…
-        </div>
-      ) : visibleCovers.length === 0 ? (
-        <p className="text-muted" style={{ marginTop: 24 }}>No {artType === 'official' ? 'official' : 'fan'} covers found for "{artistName}".</p>
-      ) : (
-        <>
-          <div className="album-grid" style={{ marginTop: 24 }}>
-            {visibleCovers.map((cover) => (
-              <CoverCard
-                key={cover.id}
-                cover={cover}
-                isFavorited={favoritedIds.has(cover.id)}
-                onToggleFavorite={handleToggleFavorite}
-                onClick={() => handleCoverClick(cover)}
-                onDeleted={(id) => setCovers((prev) => prev.filter((c) => c.id !== id))}
-              />
-            ))}
+      {artType === 'official' ? (
+        officialLoading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '40px 0', color: 'var(--body-text-muted)' }}>
+            <LoadingIcon size={22} className="ma-spinner" /> Loading covers…
           </div>
-
-          {hasMore && (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '24px 0 8px' }}>
-              <button
-                className="btn btn-secondary"
-                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 28px', fontSize: 13, fontWeight: 'bold' }}
-                onClick={handleLoadMore}
-                disabled={loadingMore}
-              >
-                {loadingMore ? <><LoadingIcon size={14} className="ma-spinner" /> Loading…</> : 'Load more'}
-              </button>
+        ) : officialCovers.length === 0 ? (
+          <p className="text-muted" style={{ marginTop: 24 }}>No official covers found for "{artistName}".</p>
+        ) : (
+          <>
+            <div className="album-grid" style={{ marginTop: 24 }}>
+              {officialCovers.map((cover) => (
+                <article
+                  className="album-card official-card official-card--clickable"
+                  key={`${cover.album_cover_url}-${cover.album_title ?? ''}`}
+                  onClick={() => window.open(cover.album_cover_url, '_blank', 'noopener,noreferrer')}
+                >
+                  <div className="album-card-cover">
+                    <img src={cover.album_cover_url} alt={`${cover.album_title ?? 'Album'} by ${cover.artist_name ?? 'Unknown'}`} className="official-card-img" loading="lazy" />
+                    <div className="official-badge">Official</div>
+                  </div>
+                  <div className="album-card-info">
+                    <div className="album-card-title">{cover.album_title ?? 'Unknown album'}</div>
+                    <div className="album-card-artist">{cover.artist_name ?? 'Unknown artist'}</div>
+                    <div className="cover-card-meta">{cover.release_year && <span className="cover-card-date-badge">{cover.release_year}</span>}</div>
+                  </div>
+                </article>
+              ))}
             </div>
-          )}
-        </>
+            {officialHasMore && (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '24px 0 8px' }}>
+                <button
+                  className="btn btn-secondary"
+                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 28px', fontSize: 13, fontWeight: 'bold' }}
+                  onClick={handleLoadMoreOfficial}
+                  disabled={officialLoadingMore}
+                >
+                  {officialLoadingMore ? <><LoadingIcon size={14} className="ma-spinner" /> Loading…</> : 'Load more'}
+                </button>
+              </div>
+            )}
+          </>
+        )
+      ) : (
+        loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '40px 0', color: 'var(--body-text-muted)' }}>
+            <LoadingIcon size={22} className="ma-spinner" /> Loading covers…
+          </div>
+        ) : covers.length === 0 ? (
+          <p className="text-muted" style={{ marginTop: 24 }}>No fan covers found for "{artistName}".</p>
+        ) : (
+          <>
+            <div className="album-grid" style={{ marginTop: 24 }}>
+              {covers.map((cover) => (
+                <CoverCard
+                  key={cover.id}
+                  cover={cover}
+                  isFavorited={favoritedIds.has(cover.id)}
+                  onToggleFavorite={handleToggleFavorite}
+                  onClick={() => handleCoverClick(cover)}
+                  onDeleted={(id) => setCovers((prev) => prev.filter((c) => c.id !== id))}
+                />
+              ))}
+            </div>
+            {hasMore && (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '24px 0 8px' }}>
+                <button
+                  className="btn btn-secondary"
+                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 28px', fontSize: 13, fontWeight: 'bold' }}
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? <><LoadingIcon size={14} className="ma-spinner" /> Loading…</> : 'Load more'}
+                </button>
+              </div>
+            )}
+          </>
+        )
       )}
 
       {selectedCover && (
@@ -445,6 +541,10 @@ export default function MusicArtistDetail() {
         .ma-type-tab--active { background: var(--accent); border-color: var(--accent); color: #fff; }
         .ma-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .official-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .official-card--clickable { cursor: pointer; }
+        .official-badge { position: absolute; right: 8px; top: 8px; background: rgba(0,0,0,0.72); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 12px; padding: 2px 8px; border-radius: 999px; pointer-events: none; }
+        .cover-card-date-badge { display: inline-flex; align-items: center; font-size: 12px; padding: 1px 7px; border-radius: 999px; background: var(--body-card-border); color: var(--body-text-muted); border: 1px solid var(--body-card-border); }
       `}</style>
     </div>
   );

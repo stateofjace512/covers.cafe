@@ -17,7 +17,6 @@ export default function OfficialGallery() {
   const { session } = useAuth();
   const [artist, setArtist] = useState('Taylor Swift');
   const [album, setAlbum] = useState('');
-  const [country, setCountry] = useState('us');
   const [covers, setCovers] = useState<OfficialCoverRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -55,8 +54,8 @@ export default function OfficialGallery() {
 
   const fetchFromItunes = useCallback(async () => {
     if (!normalizedArtist) return [] as OfficialUpsertRow[];
-    return searchOfficialAssets(normalizedArtist, normalizedAlbum, [country, 'us', 'au', 'mx', 'jp']);
-  }, [country, normalizedAlbum, normalizedArtist]);
+    return searchOfficialAssets(normalizedArtist, normalizedAlbum, ['us', 'au', 'mx', 'jp']);
+  }, [normalizedAlbum, normalizedArtist]);
 
   const handleSearch = useCallback(async () => {
     if (!normalizedArtist) return;
@@ -111,7 +110,6 @@ export default function OfficialGallery() {
       <div className="official-search-bar">
         <input value={artist} onChange={(e) => setArtist(e.target.value)} placeholder="Artist (required)" />
         <input value={album} onChange={(e) => setAlbum(e.target.value)} placeholder="Album (optional)" />
-        <select value={country} onChange={(e) => setCountry(e.target.value)}><option value="us">US</option><option value="gb">UK</option><option value="jp">Japan</option><option value="ca">Canada</option><option value="au">Australia</option></select>
         <button className="btn btn-secondary" onClick={handleSearch} disabled={loading || !normalizedArtist}>{loading ? <><LoadingIcon size={14} className="gallery-spinner" /> Syncing…</> : 'Search Official'}</button>
         {searched && covers.length > 0 && (
           <button

@@ -49,6 +49,8 @@ function ArtistCardImg({ artist }: { artist: ArtistEntry }) {
 export default function MusicArtists() {
   const [artists, setArtists] = useState<ArtistEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [officialArtists, setOfficialArtists] = useState<ArtistEntry[]>([]);
+  const [officialLoading, setOfficialLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [artType, setArtType] = useState<ArtType>('fan');
   const navigate = useNavigate();
@@ -57,7 +59,7 @@ export default function MusicArtists() {
     (async () => {
       const { data } = await supabase
         .from('covers_cafe_covers')
-        .select('artist, id, storage_path, image_url, favorite_count, tags')
+        .select('artist, id, storage_path, image_url, favorite_count')
         .eq('is_public', true)
         .order('favorite_count', { ascending: false });
 
@@ -76,27 +78,54 @@ export default function MusicArtists() {
             });
           }
           const entry = map.get(name)!;
-          const isOfficial = Boolean(row.tags?.includes('official'));
           entry.coverCount++;
-          if (isOfficial) entry.officialCoverCount++;
-          else entry.fanCoverCount++;
+          entry.fanCoverCount++;
         }
       }
 
-      const sorted = Array.from(map.values()).sort((a, b) => b.coverCount - a.coverCount);
+      const sorted = Array.from(map.values()).sort((a, b) => b.fanCoverCount - a.fanCoverCount);
       setArtists(sorted);
       setLoading(false);
     })();
   }, []);
 
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('covers_cafe_official_covers')
+        .select('artist_name, album_cover_url');
+
+      const map = new Map<string, ArtistEntry>();
+      for (const row of data ?? []) {
+        const name = row.artist_name?.trim();
+        if (!name) continue;
+        if (!map.has(name)) {
+          map.set(name, {
+            name,
+            coverCount: 0,
+            officialCoverCount: 0,
+            fanCoverCount: 0,
+            sampleCover: { storage_path: '', image_url: row.album_cover_url },
+          });
+        }
+        const entry = map.get(name)!;
+        entry.coverCount++;
+        entry.officialCoverCount++;
+      }
+
+      const sorted = Array.from(map.values()).sort((a, b) => b.officialCoverCount - a.officialCoverCount);
+      setOfficialArtists(sorted);
+      setOfficialLoading(false);
+    })();
+  }, []);
+
+  const isLoading = artType === 'official' ? officialLoading : loading;
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return artists.filter((a) => {
-      if (q && !a.name.toLowerCase().includes(q)) return false;
-      if (artType === 'official') return a.officialCoverCount > 0;
-      return a.fanCoverCount > 0;
-    });
-  }, [artists, search, artType]);
+    const source = artType === 'official' ? officialArtists : artists;
+    return source.filter((a) => !q || a.name.toLowerCase().includes(q));
+  }, [artists, officialArtists, search, artType]);
 
   return (
     <div>
@@ -117,14 +146,14 @@ export default function MusicArtists() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        {!loading && (
+        {!isLoading && (
           <span className="music-artist-count-label">
             {filtered.length} artist{filtered.length !== 1 ? 's' : ''}
           </span>
         )}
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <p className="text-muted">Loading…</p>
       ) : !filtered.length ? (
         <p className="text-muted">No artists found{search ? ` for "${search}"` : ''}.</p>
