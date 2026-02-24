@@ -3,608 +3,304 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Windows 95 Rain</title>
+<title>Win95 Weather Station Pro</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
     background: #008080;
-    font-family: 'MS Sans Serif', 'Pixelated MS Sans Serif', Arial, sans-serif;
-    overflow: hidden;
-    height: 100vh;
-    width: 100vw;
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cpolygon points='0,0 0,24 8,18 12,28 16,26 12,16 20,16' fill='white' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E") 0 0, default;
+    font-family: 'MS Sans Serif', Arial, sans-serif;
+    overflow: hidden; height: 100vh; width: 100vw;
   }
-
-  /* RAIN CANVAS */
-  #rainCanvas {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* DESKTOP ICONS */
-  .desktop-icons {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    z-index: 10;
-  }
-  .icon {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    width: 70px;
-  }
-  .icon img, .icon .icon-img {
-    width: 32px;
-    height: 32px;
-    image-rendering: pixelated;
-  }
-  .icon-img {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-  }
-  .icon span {
-    color: white;
-    font-size: 11px;
-    text-align: center;
-    text-shadow: 1px 1px 1px black;
-    line-height: 1.2;
-  }
-  .icon:hover span { background: #000080; padding: 0 2px; }
+  #weatherCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
 
   /* WINDOWS */
   .window {
-    position: absolute;
-    background: #c0c0c0;
-    border: 2px solid;
-    border-color: #ffffff #808080 #808080 #ffffff;
-    box-shadow: 2px 2px 0 #000000;
-    min-width: 280px;
-    z-index: 100;
-    font-size: 11px;
-    font-family: 'MS Sans Serif', Arial, sans-serif;
+    position: absolute; background: #c0c0c0; border: 2px solid;
+    border-color: #fff #808080 #808080 #fff; box-shadow: 2px 2px 0 #000;
+    width: 320px; z-index: 100;
   }
   .window-titlebar {
-    background: linear-gradient(to right, #000080, #1084d0);
-    color: white;
-    padding: 3px 4px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 11px;
-    font-weight: bold;
-    user-select: none;
-    cursor: move;
-  }
-  .window-title-left {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .title-icon { font-size: 14px; }
-  .window-controls {
-    display: flex;
-    gap: 2px;
+    background: linear-gradient(to right, #000080, #1084d0); color: white;
+    padding: 3px 4px; display: flex; align-items: center; justify-content: space-between;
+    font-weight: bold; font-size: 11px; cursor: move; user-select: none;
   }
   .win-btn {
-    width: 16px;
-    height: 14px;
-    background: #c0c0c0;
-    border: 1px solid;
-    border-color: #ffffff #808080 #808080 #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 9px;
-    color: black;
-    cursor: pointer;
-    line-height: 1;
-    font-weight: bold;
+    width: 16px; height: 14px; background: #c0c0c0; border: 1px solid;
+    border-color: #fff #808080 #808080 #fff; font-size: 9px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
   }
-  .win-btn:active {
-    border-color: #808080 #ffffff #ffffff #808080;
-  }
-  .window-menubar {
-    padding: 2px 4px;
-    border-bottom: 1px solid #808080;
-    display: flex;
-    gap: 2px;
-  }
-  .menu-item {
-    padding: 2px 6px;
-    cursor: pointer;
-    font-size: 11px;
-  }
-  .menu-item:hover { background: #000080; color: white; }
-  .window-content {
-    padding: 8px;
-  }
-  .status-bar {
-    border-top: 1px solid #808080;
-    padding: 2px 6px;
-    font-size: 10px;
-    color: #444;
-    display: flex;
-    gap: 2px;
-  }
-  .status-panel {
-    border: 1px solid;
-    border-color: #808080 #ffffff #ffffff #808080;
-    padding: 0 4px;
-    flex: 1;
-  }
+  .window-content { padding: 10px; font-size: 11px; }
+  .inset { border: 2px solid; border-color: #808080 #fff #fff #808080; background: #fff; padding: 10px; margin-bottom: 8px; }
 
-  /* INSET PANEL */
-  .inset {
-    border: 2px solid;
-    border-color: #808080 #ffffff #ffffff #808080;
-    background: white;
-    padding: 6px;
-    margin-bottom: 6px;
-  }
-
-  /* WEATHER WINDOW */
-  #weatherWindow {
-    top: 60px;
-    left: 120px;
-    width: 340px;
-  }
-  .weather-display {
-    text-align: center;
-    padding: 10px;
-  }
-  .weather-emoji { font-size: 48px; display: block; margin-bottom: 8px; }
-  .weather-temp { font-size: 32px; font-weight: bold; color: #000080; }
-  .weather-desc { font-size: 13px; color: #444; margin-top: 4px; }
-  .weather-details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px;
-    margin-top: 8px;
-  }
-  .weather-detail-row {
-    border: 1px solid #808080;
-    padding: 3px 6px;
-    font-size: 10px;
-    background: #f0f0f0;
-  }
-
-  /* RAIN CONTROLS WINDOW */
-  #controlWindow {
-    top: 300px;
-    left: 120px;
-    width: 280px;
-  }
-  .slider-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
-    font-size: 11px;
-  }
-  .slider-label { width: 70px; text-align: right; }
-  input[type=range] {
-    -webkit-appearance: none;
-    height: 20px;
-    background: none;
-    flex: 1;
-    cursor: pointer;
-    position: relative;
-  }
-  input[type=range]::-webkit-slider-runnable-track {
-    height: 4px;
-    background: #808080;
-    border: 1px solid;
-    border-color: #808080 #ffffff #ffffff #808080;
-    margin: 8px 0;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 11px;
-    height: 20px;
-    background: #c0c0c0;
-    border: 2px solid;
-    border-color: #ffffff #808080 #808080 #ffffff;
-    margin-top: -10px;
-    cursor: pointer;
-  }
-  .slider-val { width: 30px; font-size: 10px; }
+  /* UI ELEMENTS */
+  .slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .slider-label { width: 85px; text-align: right; }
+  .slider-val { width: 30px; font-weight: bold; }
+  input[type=range] { flex: 1; height: 4px; cursor: pointer; }
   .btn {
-    background: #c0c0c0;
-    border: 2px solid;
-    border-color: #ffffff #808080 #808080 #ffffff;
-    padding: 4px 14px;
-    font-size: 11px;
-    font-family: 'MS Sans Serif', Arial, sans-serif;
-    cursor: pointer;
-    min-width: 70px;
-    text-align: center;
+    background: #c0c0c0; border: 2px solid; border-color: #fff #808080 #808080 #fff;
+    padding: 3px 8px; cursor: pointer; font-size: 11px;
   }
-  .btn:active {
-    border-color: #808080 #ffffff #ffffff #808080;
-    padding: 5px 13px 3px 15px;
-  }
-  .btn-row {
-    display: flex;
-    gap: 6px;
-    justify-content: center;
-    margin-top: 8px;
-  }
+  .btn:active, .btn.active { border-color: #808080 #fff #fff #808080; background: #d0d0d0; }
 
   /* TASKBAR */
   #taskbar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 28px;
-    background: #c0c0c0;
-    border-top: 2px solid #ffffff;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    padding: 0 2px;
-    z-index: 1000;
+    position: fixed; bottom: 0; left: 0; right: 0; height: 28px;
+    background: #c0c0c0; border-top: 2px solid #fff;
+    display: flex; align-items: center; padding: 2px; z-index: 1000;
   }
-  #startBtn {
-    background: #c0c0c0;
-    border: 2px solid;
-    border-color: #ffffff #808080 #808080 #ffffff;
-    padding: 2px 6px;
-    font-size: 11px;
-    font-weight: bold;
-    font-family: 'MS Sans Serif', Arial, sans-serif;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    height: 22px;
-  }
-  #startBtn:active {
-    border-color: #808080 #ffffff #ffffff #808080;
-  }
-  .taskbar-divider {
-    width: 2px;
-    height: 22px;
-    border-left: 1px solid #808080;
-    border-right: 1px solid #ffffff;
-    margin: 0 2px;
-  }
-  .taskbar-btn {
-    background: #c0c0c0;
-    border: 2px solid;
-    border-color: #808080 #ffffff #ffffff #808080;
-    padding: 2px 8px;
-    font-size: 11px;
-    font-family: 'MS Sans Serif', Arial, sans-serif;
-    cursor: pointer;
-    height: 22px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .clock-area {
-    margin-left: auto;
-    border: 1px solid;
-    border-color: #808080 #ffffff #ffffff #808080;
-    padding: 2px 8px;
-    font-size: 11px;
-    height: 22px;
-    display: flex;
-    align-items: center;
-  }
-
-  /* RIPPLE */
-  .ripple {
-    position: fixed;
-    border-radius: 50%;
-    border: 1px solid rgba(150, 200, 255, 0.6);
-    pointer-events: none;
-    z-index: 5;
-    animation: rippleAnim 0.8s ease-out forwards;
-  }
-  @keyframes rippleAnim {
-    0% { width: 0; height: 0; opacity: 0.7; transform: translate(0,0); }
-    100% { width: 30px; height: 10px; opacity: 0; transform: translate(-15px, -5px); }
-  }
-
-  /* PROGRESS BAR */
-  .progress-container {
-    border: 2px solid;
-    border-color: #808080 #ffffff #ffffff #808080;
-    background: white;
-    height: 16px;
-    margin-top: 6px;
-    overflow: hidden;
-  }
-  .progress-bar {
-    height: 100%;
-    background: repeating-linear-gradient(
-      90deg,
-      #000080 0px,
-      #000080 8px,
-      #c0c0c0 8px,
-      #c0c0c0 10px
-    );
-    width: 0%;
-    animation: progressAnim 3s ease-in-out infinite;
-  }
-  @keyframes progressAnim {
-    0% { width: 0%; }
-    50% { width: 100%; }
-    100% { width: 0%; }
-  }
+  .clock { margin-left: auto; border: 1px solid; border-color: #808080 #fff #fff #808080; padding: 2px 8px; font-size: 11px; }
 </style>
 </head>
 <body>
 
-<canvas id="rainCanvas"></canvas>
+<canvas id="weatherCanvas"></canvas>
 
-<!-- Desktop Icons -->
-<div class="desktop-icons">
-  <div class="icon" ondblclick="toggleWindow('weatherWindow')">
-    <div class="icon-img">🌧️</div>
-    <span>Weather.exe</span>
-  </div>
-  <div class="icon" ondblclick="toggleWindow('controlWindow')">
-    <div class="icon-img">🎛️</div>
-    <span>Rain Control</span>
-  </div>
-</div>
-
-<!-- Weather Window -->
-<div class="window" id="weatherWindow">
-  <div class="window-titlebar" onmousedown="startDrag(event, 'weatherWindow')">
-    <div class="window-title-left">
-      <span class="title-icon">🌧️</span>
-      <span>Weather - Rain Today</span>
-    </div>
-    <div class="window-controls">
-      <div class="win-btn">_</div>
-      <div class="win-btn">□</div>
-      <div class="win-btn" onclick="toggleWindow('weatherWindow')">✕</div>
-    </div>
-  </div>
-  <div class="window-menubar">
-    <span class="menu-item">File</span>
-    <span class="menu-item">View</span>
-    <span class="menu-item">Help</span>
+<div class="window" id="weatherControl" style="top: 20px; left: 20px;" onmousedown="focusWindow('weatherControl')">
+  <div class="window-titlebar" onmousedown="startDrag(event, 'weatherControl')">
+    <span>System Weather Tuner</span>
+    <div class="win-btn" onclick="this.parentElement.parentElement.style.display='none'">✕</div>
   </div>
   <div class="window-content">
+    <div style="display:flex; gap:4px; margin-bottom:10px;">
+      <button class="btn" id="btn-sun" onclick="setMode('sun')">Sun</button>
+      <button class="btn" id="btn-rain" onclick="setMode('rain')">Rain</button>
+      <button class="btn" id="btn-snow" onclick="setMode('snow')">Snow</button>
+      <button class="btn" id="btn-up" onclick="toggleRising()" style="margin-left:auto;">⬆️ Rise</button>
+    </div>
+    
     <div class="inset">
-      <div class="weather-display">
-        <span class="weather-emoji">⛈️</span>
-        <div class="weather-temp">17°C</div>
-        <div class="weather-desc">Heavy Rain &amp; Thunder</div>
+      <div class="slider-row">
+        <span class="slider-label">Density:</span>
+        <input type="range" id="densityS" min="10" max="1000" value="400" oninput="updateUI()">
+        <span class="slider-val" id="densityV">400</span>
       </div>
-      <div class="weather-details">
-        <div class="weather-detail-row">💧 Humidity: 94%</div>
-        <div class="weather-detail-row">🌬️ Wind: 18 km/h</div>
-        <div class="weather-detail-row">👁️ Visibility: 2 km</div>
-        <div class="weather-detail-row">🌡️ Feels: 15°C</div>
+      <div class="slider-row">
+        <span class="slider-label">Gravity:</span>
+        <input type="range" id="speedS" min="1" max="40" value="15" oninput="updateUI()">
+        <span class="slider-val" id="speedV">15</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Wind Force:</span>
+        <input type="range" id="windS" min="-40" max="40" value="5" oninput="updateUI()">
+        <span class="slider-val" id="windV">5</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label" id="extraLabel">Effect Scale:</span>
+        <input type="range" id="extraS" min="1" max="50" value="15" oninput="updateUI()">
+        <span class="slider-val" id="extraV">15</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Jitter:</span>
+        <input type="range" id="jitterS" min="0" max="100" value="20" oninput="updateUI()">
+        <span class="slider-val" id="jitterV">20</span>
       </div>
     </div>
-    <div style="font-size:10px; color:#444; text-align:center;">
-      Downloading weather data...
-      <div class="progress-container"><div class="progress-bar"></div></div>
-    </div>
-  </div>
-  <div class="status-bar">
-    <div class="status-panel">Rain Alert Active</div>
-    <div class="status-panel" style="flex:0; min-width:80px;">Connected</div>
   </div>
 </div>
 
-<!-- Rain Controls Window -->
-<div class="window" id="controlWindow">
-  <div class="window-titlebar" onmousedown="startDrag(event, 'controlWindow')">
-    <div class="window-title-left">
-      <span class="title-icon">🎛️</span>
-      <span>Rain Control Panel</span>
-    </div>
-    <div class="window-controls">
-      <div class="win-btn">_</div>
-      <div class="win-btn">□</div>
-      <div class="win-btn" onclick="toggleWindow('controlWindow')">✕</div>
-    </div>
-  </div>
-  <div class="window-content">
-    <div class="inset">
-      <div class="slider-row">
-        <span class="slider-label">Intensity:</span>
-        <input type="range" id="intensitySlider" min="50" max="500" value="200" oninput="updateRain()">
-        <span class="slider-val" id="intensityVal">200</span>
-      </div>
-      <div class="slider-row">
-        <span class="slider-label">Speed:</span>
-        <input type="range" id="speedSlider" min="2" max="20" value="8" oninput="updateRain()">
-        <span class="slider-val" id="speedVal">8</span>
-      </div>
-      <div class="slider-row">
-        <span class="slider-label">Wind:</span>
-        <input type="range" id="windSlider" min="-5" max="5" value="1" oninput="updateRain()">
-        <span class="slider-val" id="windVal">1</span>
-      </div>
-      <div class="slider-row">
-        <span class="slider-label">Length:</span>
-        <input type="range" id="lengthSlider" min="5" max="40" value="15" oninput="updateRain()">
-        <span class="slider-val" id="lengthVal">15</span>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="btn" onclick="setPreset('drizzle')">Drizzle</button>
-      <button class="btn" onclick="setPreset('storm')">Storm</button>
-      <button class="btn" onclick="setPreset('blizzard')">Blizzard</button>
-    </div>
-  </div>
-  <div class="status-bar">
-    <div class="status-panel" id="rainStatus">Rain: Active</div>
-  </div>
-</div>
-
-<!-- Taskbar -->
 <div id="taskbar">
-  <button id="startBtn">
-    <span style="font-size:16px;">🪟</span> Start
-  </button>
-  <div class="taskbar-divider"></div>
-  <button class="taskbar-btn" onclick="toggleWindow('weatherWindow')">🌧️ Weather</button>
-  <button class="taskbar-btn" onclick="toggleWindow('controlWindow')">🎛️ Rain Control</button>
-  <div class="clock-area" id="clock"></div>
+  <button class="btn" style="font-weight:bold">Start</button>
+  <div class="clock" id="clock">12:00</div>
 </div>
 
 <script>
-// ─── CLOCK ────────────────────────────────────────────
-function updateClock() {
-  const now = new Date();
-  const h = String(now.getHours()).padStart(2,'0');
-  const m = String(now.getMinutes()).padStart(2,'0');
-  document.getElementById('clock').textContent = `${h}:${m}`;
-}
-updateClock();
-setInterval(updateClock, 1000);
+const canvas = document.getElementById('weatherCanvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let mode = 'snow';
+let isRising = false;
+let dragTarget = null, offX, offY, zCount = 100;
+let heatTime = 0; // For sun warping
 
-// ─── WINDOW DRAG ──────────────────────────────────────
-let dragTarget = null, dragOffX = 0, dragOffY = 0;
+const cfg = { density: 400, speed: 15, wind: 5, extra: 15, jitter: 20 };
+
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+window.addEventListener('resize', resize);
+resize();
+
+function focusWindow(id) {
+  const el = document.getElementById(id);
+  el.style.zIndex = ++zCount;
+}
+
 function startDrag(e, id) {
   dragTarget = document.getElementById(id);
-  const rect = dragTarget.getBoundingClientRect();
-  dragOffX = e.clientX - rect.left;
-  dragOffY = e.clientY - rect.top;
-  dragTarget.style.zIndex = 200;
-  e.preventDefault();
+  offX = e.clientX - dragTarget.offsetLeft;
+  offY = e.clientY - dragTarget.offsetTop;
+  focusWindow(id);
 }
+
 document.addEventListener('mousemove', e => {
   if (!dragTarget) return;
-  dragTarget.style.left = (e.clientX - dragOffX) + 'px';
-  dragTarget.style.top  = (e.clientY - dragOffY) + 'px';
+  dragTarget.style.left = (e.clientX - offX) + 'px';
+  dragTarget.style.top = (e.clientY - offY) + 'px';
 });
-document.addEventListener('mouseup', () => { dragTarget = null; });
+document.addEventListener('mouseup', () => dragTarget = null);
 
-function toggleWindow(id) {
-  const w = document.getElementById(id);
-  w.style.display = w.style.display === 'none' ? '' : 'none';
+function setMode(m) {
+  mode = m;
+  particles = [];
+  document.querySelectorAll('[id^="btn-"]').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-'+m).classList.add('active');
+  
+  // Visual adjustments
+  if(m === 'sun') {
+    document.body.style.background = '#008080';
+    document.getElementById('extraLabel').innerText = 'Heat Warp:';
+  } else {
+    document.body.style.background = m==='rain'?'#1a202c':'#4a5568';
+    document.getElementById('extraLabel').innerText = m==='snow'?'Complexity:':'Streak:';
+  }
+  updateUI();
 }
 
-// ─── RAIN ENGINE ──────────────────────────────────────
-const canvas = document.getElementById('rainCanvas');
-const ctx = canvas.getContext('2d');
-let drops = [];
-let config = { count: 200, speed: 8, wind: 1, length: 15 };
-
-function resize() {
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
+function toggleRising() {
+  isRising = !isRising;
+  document.getElementById('btn-up').classList.toggle('active', isRising);
+  particles.forEach(p => p.y = isRising ? canvas.height + 100 : -100);
 }
-resize();
-window.addEventListener('resize', resize);
 
-function createDrop() {
+function updateUI() {
+  cfg.density = +document.getElementById('densityS').value;
+  cfg.speed = +document.getElementById('speedS').value;
+  cfg.wind = +document.getElementById('windS').value;
+  cfg.extra = +document.getElementById('extraS').value;
+  cfg.jitter = +document.getElementById('jitterS').value;
+  
+  document.getElementById('densityV').innerText = cfg.density;
+  document.getElementById('speedV').innerText = cfg.speed;
+  document.getElementById('windV').innerText = cfg.wind;
+  document.getElementById('extraV').innerText = cfg.extra;
+  document.getElementById('jitterV').innerText = cfg.jitter + "%";
+}
+
+function createParticle(randomY = false) {
+  const z = Math.random(); 
   return {
-    x: Math.random() * canvas.width,
-    y: Math.random() * -canvas.height,
-    speed: config.speed * (0.7 + Math.random() * 0.6),
-    opacity: 0.3 + Math.random() * 0.5,
-    len: config.length * (0.6 + Math.random() * 0.8)
+    x: Math.random() * (canvas.width + 600) - 300,
+    y: randomY ? Math.random() * canvas.height : (isRising ? canvas.height + 100 : -100),
+    z: z,
+    v: z * 0.8 + 0.2, 
+    o: z * 0.5 + 0.2, 
+    phase: Math.random() * Math.PI * 2,
+    rot: Math.random() * Math.PI * 2,
+    rotS: (Math.random() - 0.5) * 0.05,
+    arms: Math.floor(Math.random() * 3) + 4
   };
 }
 
-function initDrops() {
-  drops = [];
-  for (let i = 0; i < config.count; i++) {
-    const d = createDrop();
-    d.y = Math.random() * canvas.height; // scatter initial
-    drops.push(d);
+function drawFlake(x, y, p) {
+  const size = (cfg.extra / 5) * p.v;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(p.rot);
+  ctx.strokeStyle = `rgba(255, 255, 255, ${p.o})`;
+  ctx.lineWidth = 1;
+  for(let i=0; i<p.arms; i++) {
+    ctx.rotate((Math.PI * 2) / p.arms);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, -size);
+    ctx.moveTo(0, -size/2);
+    ctx.lineTo(-size/3, -size/1.5);
+    ctx.moveTo(0, -size/2);
+    ctx.lineTo(size/3, -size/1.5);
+    ctx.stroke();
   }
-}
-initDrops();
-
-function spawnRipple(x, y) {
-  const r = document.createElement('div');
-  r.className = 'ripple';
-  r.style.left = x + 'px';
-  r.style.top  = y + 'px';
-  document.body.appendChild(r);
-  setTimeout(() => r.remove(), 800);
+  ctx.restore();
 }
 
-let frame = 0;
 function animate() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  frame++;
+  heatTime += 0.05;
+  
+  if(mode === 'sun') {
+    const sunX = canvas.width - 100;
+    const sunY = 100;
+    const warpFactor = cfg.extra / 10;
 
-  for (let d of drops) {
-    ctx.beginPath();
-    ctx.moveTo(d.x, d.y);
-    ctx.lineTo(d.x + config.wind * d.len * 0.3, d.y + d.len);
-    ctx.strokeStyle = `rgba(140, 195, 240, ${d.opacity})`;
-    ctx.lineWidth = 0.8;
-    ctx.stroke();
-
-    d.x += config.wind * 0.5;
-    d.y += d.speed;
-
-    if (d.y > canvas.height) {
-      // maybe spawn ripple
-      if (Math.random() < 0.08) spawnRipple(d.x, canvas.height - 30);
-      Object.assign(d, createDrop());
-      d.y = -10;
+    // Heat Warp Rings
+    for(let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      const radius = 60 + (i * 35) + (Math.sin(heatTime + i) * 10);
+      const alpha = 0.15 / (i + 1);
+      ctx.strokeStyle = `rgba(255, 220, 100, ${alpha})`;
+      ctx.lineWidth = 20 * warpFactor;
+      
+      for(let a = 0; a < Math.PI * 2; a += 0.2) {
+        const wobble = Math.sin(a * 7 + heatTime * 3) * (4 * warpFactor);
+        const rx = sunX + Math.cos(a) * (radius + wobble);
+        const ry = sunY + Math.sin(a) * (radius + wobble);
+        if(a === 0) ctx.moveTo(rx, ry); else ctx.lineTo(rx, ry);
+      }
+      ctx.closePath();
+      ctx.stroke();
     }
-  }
 
-  // occasional lightning flash
-  if (Math.random() < 0.001) {
-    ctx.fillStyle = 'rgba(200,220,255,0.12)';
+    // Glowing Atmosphere
+    const g = ctx.createRadialGradient(sunX, sunY, 10, sunX, sunY, 250 + (Math.sin(heatTime) * 30));
+    g.addColorStop(0, 'rgba(255, 255, 180, 0.5)');
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
+    
+    // Sun Core
+    ctx.fillStyle = '#fffce0'; 
+    ctx.beginPath(); 
+    ctx.arc(sunX, sunY, 45 + Math.sin(heatTime*2)*2, 0, Math.PI*2); 
+    ctx.fill();
 
+  } else {
+    while(particles.length < cfg.density) particles.push(createParticle(true));
+    if(particles.length > cfg.density) particles.length = cfg.density;
+
+    particles.forEach(p => {
+      if(mode === 'rain') {
+        const vSpd = (isRising ? -cfg.speed : cfg.speed) * (p.v * 1.8);
+        const hSpd = (cfg.wind * p.v);
+        const tailX = p.x - (hSpd * (cfg.extra / 15));
+        const tailY = p.y - (vSpd * (cfg.extra / 15));
+
+        const dropGrad = ctx.createLinearGradient(p.x, p.y, tailX, tailY);
+        dropGrad.addColorStop(0, `rgba(200, 225, 255, ${p.o})`);
+        dropGrad.addColorStop(1, `rgba(200, 225, 255, 0)`);
+
+        ctx.beginPath();
+        ctx.strokeStyle = dropGrad;
+        ctx.lineWidth = p.z * 1.5; 
+        ctx.lineCap = 'round';
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(tailX, tailY);
+        ctx.stroke();
+
+        p.x += hSpd + (Math.sin(p.phase) * (cfg.jitter / 20));
+        p.y += vSpd;
+      } else {
+        const vSpd = (isRising ? -cfg.speed : cfg.speed) * (p.v * 0.4);
+        const hSpd = (cfg.wind * p.v) + (Math.sin(p.phase) * (cfg.jitter / 10));
+        drawFlake(p.x, p.y, p);
+        p.x += hSpd;
+        p.y += vSpd;
+        p.rot += p.rotS;
+      }
+      p.phase += 0.05;
+      const outV = isRising ? p.y < -150 : p.y > canvas.height + 150;
+      if(outV || p.x > canvas.width + 500 || p.x < -500) {
+        Object.assign(p, createParticle());
+      }
+    });
+  }
   requestAnimationFrame(animate);
 }
+
+setInterval(() => {
+  const d = new Date();
+  document.getElementById('clock').innerText = d.getHours().toString().padStart(2,'0') + ":" + d.getMinutes().toString().padStart(2,'0');
+}, 1000);
+
+setMode('snow');
 animate();
-
-// ─── CONTROLS ─────────────────────────────────────────
-function updateRain() {
-  config.count  = +document.getElementById('intensitySlider').value;
-  config.speed  = +document.getElementById('speedSlider').value;
-  config.wind   = +document.getElementById('windSlider').value;
-  config.length = +document.getElementById('lengthSlider').value;
-  document.getElementById('intensityVal').textContent = config.count;
-  document.getElementById('speedVal').textContent     = config.speed;
-  document.getElementById('windVal').textContent      = config.wind;
-  document.getElementById('lengthVal').textContent    = config.length;
-  // sync drop count
-  while (drops.length < config.count) drops.push(createDrop());
-  if (drops.length > config.count) drops.length = config.count;
-  document.getElementById('rainStatus').textContent = `Drops: ${config.count}`;
-}
-
-function setPreset(type) {
-  const presets = {
-    drizzle:  { count:80,  speed:4,  wind:0,  length:8  },
-    storm:    { count:400, speed:14, wind:3,  length:25 },
-    blizzard: { count:300, speed:6,  wind:4,  length:6  }
-  };
-  const p = presets[type];
-  document.getElementById('intensitySlider').value = p.count;
-  document.getElementById('speedSlider').value     = p.speed;
-  document.getElementById('windSlider').value      = p.wind;
-  document.getElementById('lengthSlider').value    = p.length;
-  Object.assign(config, p);
-  while (drops.length < config.count) drops.push(createDrop());
-  if (drops.length > config.count) drops.length = config.count;
-  updateRain();
-}
 </script>
 </body>
 </html>
