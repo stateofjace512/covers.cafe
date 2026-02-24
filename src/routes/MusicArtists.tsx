@@ -155,7 +155,9 @@ export default function MusicArtists() {
   }, []);
 
   const handleMerge = async () => {
-    if (!session?.access_token || !mergeCanonical.trim() || selectedArtists.size < 2) return;
+    if (!session?.access_token) { setMergeError('You must be logged in to merge.'); return; }
+    if (!mergeCanonical.trim()) { setMergeError('Enter a canonical name.'); return; }
+    if (selectedArtists.size < 2) { setMergeError('Select at least 2 artists.'); return; }
     setMergeError('');
     const canonical = mergeCanonical.trim();
     // Fetch all covers for selected artists to build undo snapshot

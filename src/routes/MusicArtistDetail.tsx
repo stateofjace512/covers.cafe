@@ -12,7 +12,7 @@ import CoverModal from '../components/CoverModal';
 import InfoModal from '../components/InfoModal';
 import type { Cover } from '../lib/types';
 import { getPreferModalOverPagePreference } from '../lib/userPreferences';
-import { getCoverPath } from '../lib/coverRoutes';
+import { getCoverPath, slugifyArtist } from '../lib/coverRoutes';
 
 const PAGE_SIZE = 24;
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
@@ -91,7 +91,7 @@ interface OfficialCover {
   album_title: string | null;
   release_year: number | null;
   album_cover_url: string;
-  source_payload: Record<string, unknown> | null;
+  cover_public_id: number | null;
 }
 
 export default function MusicArtistDetail() {
@@ -103,7 +103,7 @@ export default function MusicArtistDetail() {
   const locationState = location.state as { originalName?: string; startTab?: ArtType } | null;
   const artistName: string = locationState?.originalName
     ?? (slugParam ? decodeURIComponent(slugParam).replace(/-/g, ' ') : '');
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   const [covers, setCovers] = useState<Cover[]>([]);
   const [loading, setLoading] = useState(true);
@@ -194,7 +194,7 @@ export default function MusicArtistDetail() {
 
       const { data } = await supabase
         .from('covers_cafe_official_covers')
-        .select('artist_name, album_title, release_year, album_cover_url, source_payload')
+        .select('artist_name, album_title, release_year, album_cover_url, cover_public_id')
         .or(orFilter)
         .order('release_year', { ascending: false })
         .range(0, PAGE_SIZE);
@@ -247,7 +247,7 @@ export default function MusicArtistDetail() {
     const orFilter = allNames.map((n) => `artist_name.ilike.%${n}%`).join(',');
     const { data } = await supabase
       .from('covers_cafe_official_covers')
-      .select('artist_name, album_title, release_year, album_cover_url')
+      .select('artist_name, album_title, release_year, album_cover_url, cover_public_id')
       .or(orFilter)
       .order('release_year', { ascending: false })
       .range(from, from + PAGE_SIZE);
@@ -276,7 +276,9 @@ export default function MusicArtistDetail() {
   }, []);
 
   const handleMerge = async () => {
-    if (!session?.access_token || !mergeCanonical.trim() || selectedArtists.size < 2) return;
+    if (!session?.access_token) { setMergeError('You must be logged in to merge.'); return; }
+    if (!mergeCanonical.trim()) { setMergeError('Enter a canonical name.'); return; }
+    if (selectedArtists.size < 2) { setMergeError('Select at least 2 artists.'); return; }
     setMergeError('');
     const canonical = mergeCanonical.trim();
     // Capture snapshot for undo
@@ -555,8 +557,14 @@ export default function MusicArtistDetail() {
                   data-album-title={cover.album_title ?? ''}
                   onClick={() => {
                     if (selectMode) { toggleArtist(aName); return; }
-                    const pageUrl = (cover.source_payload?.collectionViewUrl ?? cover.source_payload?.trackViewUrl) as string | undefined;
-                    window.open(pageUrl ?? cover.album_cover_url, '_blank', 'noopener,noreferrer');
+                    if (cover.cover_public_id) {
+                      const slug = [
+                        String(cover.cover_public_id).padStart(6, '0'),
+                        slugifyArtist(cover.artist_name ?? ''),
+                        slugifyArtist(cover.album_title ?? '').slice(0, 20).replace(/-+$/, ''),
+                      ].filter(Boolean).join('-');
+                      navigate(`/cover/${slug}`);
+                    }
                   }}
                 >
                   <div className="album-card-cover">
