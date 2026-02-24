@@ -11,13 +11,12 @@ import CoffeeCupIcon from '../components/CoffeeCupIcon';
 import OfficialGallery from '../components/OfficialGallery';
 import OfficialSearchResults from '../components/OfficialSearchResults';
 
-export type GalleryTab = 'new' | 'top_rated' | 'acotw' | 'official';
+export type GalleryTab = 'new' | 'top_rated' | 'acotw';
 
 const TABS: { id: GalleryTab; label: string; icon: React.ReactNode; title: string }[] = [
   { id: 'new',       label: 'New',       icon: <DiamondIcon size={13} />,    title: 'Recent Covers' },
   { id: 'top_rated', label: 'Top Rated', icon: <FavoritesIcon size={13} />, title: 'Top Rated' },
   { id: 'acotw',     label: 'ACOTW',     icon: <TrophyIcon size={13} />,    title: 'Album Cover Of The Week' },
-  { id: 'official',  label: 'Official',  icon: <GalleryIcon size={13} />,   title: 'Official Covers' },
 ];
 
 export default function Gallery() {
@@ -27,6 +26,10 @@ export default function Gallery() {
   const searchQuery = searchParams.get('q');
   const searchSource = searchParams.get('source') === 'official' ? 'official' : 'fan';
   const [activeTab, setActiveTab] = useState<GalleryTab>('new');
+  const [browseSource, setBrowseSource] = useState<'fan' | 'official'>('fan');
+
+  // Unified source: URL param when searching, state when browsing
+  const activeSource = searchQuery ? searchSource : browseSource;
 
   const activeTitle = TABS.find((t) => t.id === activeTab)?.title ?? 'Recent Covers';
 
@@ -72,42 +75,50 @@ export default function Gallery() {
       <section>
         <h2 className="section-title">
           <GalleryIcon size={20} />
-          {searchQuery ? `Results for "${searchQuery}"` : activeTitle}
+          {searchQuery
+            ? (activeSource === 'official' ? 'Official' : 'Fan Art')
+            : (activeSource === 'official' ? 'Official Covers' : activeTitle)}
         </h2>
 
-        {searchQuery && (
-          <div className="search-source-toggle" role="tablist" aria-label="Search source">
-            <button
-              role="tab"
-              aria-selected={searchSource === 'fan'}
-              className={`search-source-btn${searchSource === 'fan' ? ' search-source-btn--active' : ''}`}
-              onClick={() => {
+        <div className="search-source-toggle" role="tablist" aria-label="Content source">
+          <button
+            role="tab"
+            aria-selected={activeSource === 'fan'}
+            className={`search-source-btn${activeSource === 'fan' ? ' search-source-btn--active' : ''}`}
+            onClick={() => {
+              if (searchQuery) {
                 const params = new URLSearchParams(searchParams);
                 params.delete('source');
                 navigate(`/?${params.toString()}`);
-              }}
-            >
-              Fan Art
-            </button>
-            <button
-              role="tab"
-              aria-selected={searchSource === 'official'}
-              className={`search-source-btn${searchSource === 'official' ? ' search-source-btn--active' : ''}`}
-              onClick={() => {
+              } else {
+                setBrowseSource('fan');
+              }
+            }}
+          >
+            Fan Art
+          </button>
+          <button
+            role="tab"
+            aria-selected={activeSource === 'official'}
+            className={`search-source-btn${activeSource === 'official' ? ' search-source-btn--active' : ''}`}
+            onClick={() => {
+              if (searchQuery) {
                 const params = new URLSearchParams(searchParams);
                 params.set('source', 'official');
                 navigate(`/?${params.toString()}`);
-              }}
-            >
-              Official
-            </button>
-          </div>
-        )}
+              } else {
+                setBrowseSource('official');
+              }
+            }}
+          >
+            Official
+          </button>
+        </div>
 
-        {!searchQuery && activeTab === 'official' ? (
-          <OfficialGallery />
-        ) : searchQuery && searchSource === 'official' ? (
-          <OfficialSearchResults searchQuery={searchQuery} />
+        {activeSource === 'official' ? (
+          searchQuery
+            ? <OfficialSearchResults searchQuery={searchQuery} />
+            : <OfficialGallery />
         ) : (
           <GalleryGrid filter="all" tab={searchQuery ? 'new' : activeTab} />
         )}

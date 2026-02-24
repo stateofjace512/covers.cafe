@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import LoadingIcon from './LoadingIcon';
 import { useAuth } from '../contexts/AuthContext';
-import { slugifyArtist } from '../lib/coverRoutes';
 import { searchOfficialAssets, type OfficialUpsertRow } from '../lib/officialSearch';
 
 interface OfficialCoverRow {
@@ -11,34 +9,12 @@ interface OfficialCoverRow {
   album_title: string | null;
   release_year: number | null;
   album_cover_url: string;
-  pixel_dimensions: string | null;
-  cover_id?: string | null;
-  cover_public_id?: number | null;
 }
 
 const PAGE_SIZE = 24;
-const COUNTRY = 'us';
-
-
-function slugifySegment(value: string): string {
-  const slug = value
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, '-')
-    .replace(/^-+|-+$/g, '');
-  return slug || 'item';
-}
-
-function coverPath(publicId: number | null | undefined, artist: string | null, album: string | null): string | null {
-  if (!publicId) return null;
-  const idPart = String(publicId).padStart(6, '0');
-  const a = slugifyArtist(artist ?? 'unknown');
-  const t = slugifySegment(album ?? 'untitled').slice(0, 20);
-  return `/cover/${idPart}-${a}-${t}`;
-}
 
 export default function OfficialSearchResults({ searchQuery }: { searchQuery: string }) {
   const { session } = useAuth();
-  const navigate = useNavigate();
   const [covers, setCovers] = useState<OfficialCoverRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -50,55 +26,24 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
   const [merging, setMerging] = useState(false);
   const [mergeMsg, setMergeMsg] = useState('');
 
-  const hydrateCoverLinks = useCallback(async (rows: OfficialCoverRow[]) => {
-    const urls = Array.from(new Set(rows.map((r) => r.album_cover_url)));
-    if (!urls.length) return rows;
-    const { data } = await supabase
-      .from('covers_cafe_covers')
-      .select('id, public_id, image_url')
-      .in('image_url', urls)
-      .contains('tags', ['official'])
-      .eq('is_public', true);
-    const map = new Map((data ?? []).map((d: { id: string; public_id: number | null; image_url: string }) => [d.image_url, d]));
-    return rows.map((r) => {
-      const m = map.get(r.album_cover_url);
-      return m ? { ...r, cover_id: m.id, cover_public_id: m.public_id } : r;
-    });
-  }, []);
-
-  const persistAsCovers = useCallback(async (rows: OfficialUpsertRow[]) => {
-    if (!rows.length || !session?.access_token) return;
-    const res = await fetch('/api/official/mirror', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ rows }),
-    });
-    if (!res.ok) {
-      console.warn('Unable to mirror official covers into covers table.');
-    }
-  }, [session?.access_token]);
-
   const loadCachedPage = useCallback(async (pageNumber: number) => {
     const q = searchQuery.trim();
     if (!q) { setCovers([]); setHasMore(false); return [] as OfficialCoverRow[]; }
     const from = pageNumber * PAGE_SIZE;
-    // Fetch one extra to determine if there are more pages without a separate count query
+    // Fetch one extra to determine if there are more pages
     const { data } = await supabase
       .from('covers_cafe_official_covers')
-      .select('artist_name, album_title, release_year, album_cover_url, pixel_dimensions, cover_public_id')
+      .select('artist_name, album_title, release_year, album_cover_url')
       .or(`search_artist.ilike.%${q}%,search_album.ilike.%${q}%,artist_name.ilike.%${q}%,album_title.ilike.%${q}%`)
       .order('created_at', { ascending: false })
       .range(from, from + PAGE_SIZE);
     const raw = (data as OfficialCoverRow[] | null) ?? [];
     const more = raw.length > PAGE_SIZE;
-    const rows = await hydrateCoverLinks(more ? raw.slice(0, PAGE_SIZE) : raw);
+    const rows = more ? raw.slice(0, PAGE_SIZE) : raw;
     setHasMore(more);
     if (pageNumber === 0) setCovers(rows); else setCovers((prev) => [...prev, ...rows]);
     return rows;
-  }, [hydrateCoverLinks, searchQuery]);
+  }, [searchQuery]);
 
   const fetchFromItunes = useCallback(async () => {
     const q = searchQuery.trim();
@@ -114,28 +59,21 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
       const cachedRows = await loadCachedPage(0);
       if (!cancelled && cachedRows.length > 0) setLoading(false);
       const fetchedRows = await fetchFromItunes();
-      if (!cancelled && fetchedRows.length > 0) {
-        await persistAsCovers(fetchedRows);
-        const withLinks = await hydrateCoverLinks(fetchedRows);
-        setCovers(withLinks);
-        setHasMore(withLinks.length === PAGE_SIZE);
-        setLoading(false);
-      }
       const { error: cacheUpsertError } = await supabase
         .from('covers_cafe_official_covers')
         .upsert(fetchedRows, { onConflict: 'country,artist_name,album_title,album_cover_url' });
-
       if (!cancelled) {
         if (fetchedRows.length === 0 && cachedRows.length === 0) setLoading(false);
         // Prevent "pop in then disappear": only overwrite with cache when write succeeded.
         if (!cacheUpsertError) {
           await loadCachedPage(0);
         }
+        setLoading(false);
       }
     };
     run();
     return () => { cancelled = true; };
-  }, [fetchFromItunes, hydrateCoverLinks, loadCachedPage, persistAsCovers]);
+  }, [fetchFromItunes, loadCachedPage]);
 
   const handleLoadMore = async () => {
     if (!hasMore || loadingMore) return;
@@ -208,14 +146,13 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
 
       <div className="album-grid">
         {covers.map((cover) => {
-          const path = coverPath(cover.cover_public_id, cover.artist_name, cover.album_title);
           const artistName = cover.artist_name ?? '';
           const isSelected = selectedArtists.has(artistName);
           return (
             <article
               className={`album-card official-card official-card--clickable${isSelected ? ' official-card--selected' : ''}`}
               key={`${cover.album_cover_url}-${cover.album_title ?? ''}`}
-              onClick={() => selectMode ? toggleArtist(artistName) : (path ? navigate(path) : window.open(cover.album_cover_url, '_blank', 'noopener,noreferrer'))}
+              onClick={() => selectMode ? toggleArtist(artistName) : window.open(cover.album_cover_url, '_blank', 'noopener,noreferrer')}
             >
               <div className="album-card-cover">
                 <img src={cover.album_cover_url} alt={`${cover.album_title ?? 'Album'} by ${cover.artist_name ?? 'Unknown'}`} className="official-card-img" loading="lazy" />

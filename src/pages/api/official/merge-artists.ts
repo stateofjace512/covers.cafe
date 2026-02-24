@@ -28,14 +28,6 @@ export const POST: APIRoute = async ({ request }) => {
 
   if (officialError) return new Response(officialError.message, { status: 500 });
 
-  const { error: coversError } = await sb
-    .from('covers_cafe_covers')
-    .update({ artist: canonicalName })
-    .in('artist', artistNames)
-    .contains('tags', ['official']);
-
-  if (coversError) return new Response(coversError.message, { status: 500 });
-
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
