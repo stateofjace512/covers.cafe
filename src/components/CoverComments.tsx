@@ -374,7 +374,6 @@ export default function CoverComments({ coverId, cover }: Props) {
         .cc-composer {
           background: var(--body-card-bg);
           border: 1px solid var(--body-card-border);
-          border-radius: 7px;
           box-shadow: var(--shadow-inset-sm);
           overflow: hidden;
           margin-bottom: 16px;
@@ -451,7 +450,6 @@ export default function CoverComments({ coverId, cover }: Props) {
         .cc-item {
           background: var(--body-card-bg);
           border: 1px solid var(--body-card-border);
-          border-radius: 7px;
           box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.35);
           padding: 12px 14px;
           background-image: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 40%);
