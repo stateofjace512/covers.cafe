@@ -61,18 +61,37 @@ export default function Profile() {
       <style>{`
         .profile-card { max-width: 640px; }
         .profile-header { display: flex; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
-        .profile-avatar {
-          width: 80px; height: 80px; border-radius: 50%; flex-shrink: 0;
-          background: linear-gradient(145deg, var(--sidebar-bg-light), var(--sidebar-bg-dark));
-          border: 3px solid var(--body-card-border);
-          box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.2);
-          display: flex; align-items: center; justify-content: center;
-          overflow: hidden; color: var(--body-text-muted);
-        }
-        .profile-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+
         .profile-info { flex: 1; min-width: 0; }
+        
         .profile-name {
-          font-size: 25px; color: var(--body-text);
+          font-size: 25px;
+          color: var(--body-text);
+        }
+        
+        .profile-avatar {
+          width: 80px;
+          height: 80px;
+          border-radius: 0;
+          flex-shrink: 0;
+        
+          background: #c07f55;
+          border: 2px solid;
+          border-color: #c07f55 #ffffff #ffffff #c07f55;
+        
+          box-shadow: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        
+          color: #dea77d;
+          overflow: hidden;
+        }
+        
+        .profile-avatar-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
         [data-theme="dark"] .profile-name { }
         .profile-username { font-size: 19px; color: var(--body-text-muted); margin-top: 2px; }
