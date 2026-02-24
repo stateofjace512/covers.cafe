@@ -363,19 +363,37 @@ export default function UploadForm() {
         setUploading(false);
         return;
       }
-      const tagsArray = normalizeTags([...tags, tagInput]);
-      const form = new FormData();
-      form.append('file', file);
-      form.append('title', title.trim());
-      form.append('artist', artist.trim());
-      if (year) form.append('year', year);
-      form.append('tags', JSON.stringify(tagsArray));
-      if (phash) form.append('phash', phash);
 
-      const res = await fetch('/api/upload-cover', {
+      // Step 1: get a one-time direct upload URL from CF (file never touches Netlify)
+      const urlRes = await fetch('/api/cf-upload-url', {
         method: 'POST',
         headers: { Authorization: `Bearer ${session.access_token}` },
-        body: form,
+      });
+      const urlJson = await urlRes.json() as { ok: boolean; uploadUrl?: string; cfImageId?: string; message?: string };
+      if (!urlJson.ok || !urlJson.uploadUrl || !urlJson.cfImageId) {
+        throw new Error(urlJson.message ?? 'Could not get upload URL');
+      }
+
+      // Step 2: upload file directly to Cloudflare (bypasses Netlify size limit)
+      // Explicitly set content-type so CF doesn't reject files with an empty File.type
+      const cfForm = new FormData();
+      cfForm.append('file', file.slice(0, file.size, file.type || 'image/jpeg'), file.name || 'cover.jpg');
+      const cfRes = await fetch(urlJson.uploadUrl, { method: 'POST', body: cfForm });
+      if (!cfRes.ok) throw new Error('Image upload to Cloudflare failed');
+
+      // Step 3: save metadata to DB via our server (tiny JSON payload)
+      const tagsArray = normalizeTags([...tags, tagInput]);
+      const res = await fetch('/api/upload-cover', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cfImageId: urlJson.cfImageId,
+          title: title.trim(),
+          artist: artist.trim(),
+          year: year ? parseInt(year, 10) : undefined,
+          tags: tagsArray,
+          phash: phash ?? undefined,
+        }),
       });
       const json = await res.json() as { ok: boolean; message?: string };
       if (!json.ok) throw new Error(json.message ?? 'Upload failed');
@@ -470,17 +488,33 @@ export default function UploadForm() {
           continue;
         }
 
-        const form = new FormData();
-        form.append('file', item.file);
-        form.append('title', item.title.trim());
-        form.append('artist', item.artist.trim());
-        form.append('tags', JSON.stringify(tagsArray));
-        if (phash) form.append('phash', phash);
-
-        const res = await fetch('/api/upload-cover', {
+        // Step 1: get a one-time direct upload URL
+        const urlRes = await fetch('/api/cf-upload-url', {
           method: 'POST',
           headers: { Authorization: `Bearer ${session.access_token}` },
-          body: form,
+        });
+        const urlJson = await urlRes.json() as { ok: boolean; uploadUrl?: string; cfImageId?: string; message?: string };
+        if (!urlJson.ok || !urlJson.uploadUrl || !urlJson.cfImageId) {
+          throw new Error(urlJson.message ?? 'Could not get upload URL');
+        }
+
+        // Step 2: upload directly to Cloudflare
+        const cfForm = new FormData();
+        cfForm.append('file', item.file.slice(0, item.file.size, item.file.type || 'image/jpeg'), item.file.name || 'cover.jpg');
+        const cfRes = await fetch(urlJson.uploadUrl, { method: 'POST', body: cfForm });
+        if (!cfRes.ok) throw new Error('Image upload to Cloudflare failed');
+
+        // Step 3: save metadata
+        const res = await fetch('/api/upload-cover', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cfImageId: urlJson.cfImageId,
+            title: item.title.trim(),
+            artist: item.artist.trim(),
+            tags: tagsArray,
+            phash: phash ?? undefined,
+          }),
         });
         const json = await res.json() as { ok: boolean; message?: string };
         if (!json.ok) throw new Error(json.message ?? 'Upload failed');

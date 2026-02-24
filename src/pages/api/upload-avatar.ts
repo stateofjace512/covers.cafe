@@ -16,29 +16,31 @@ import sharp from 'sharp';
 
 const CF_IMAGES_HASH = import.meta.env.PUBLIC_CF_IMAGES_HASH as string;
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+const json = (body: object, status: number) =>
+  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
 export const POST: APIRoute = async ({ request }) => {
   const auth = request.headers.get('authorization');
   const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
-  if (!token) return new Response('Unauthorized', { status: 401 });
+  if (!token) return json({ ok: false, message: 'Unauthorized' }, 401);
 
   const sb = getSupabaseServer();
-  if (!sb) return new Response('Server misconfigured', { status: 503 });
+  if (!sb) return json({ ok: false, message: 'Server misconfigured' }, 503);
 
   const { data: userData, error: userError } = await sb.auth.getUser(token);
-  if (userError || !userData.user) return new Response('Unauthorized', { status: 401 });
+  if (userError || !userData.user) return json({ ok: false, message: 'Unauthorized' }, 401);
   const userId = userData.user.id;
 
   let formData: FormData;
   try {
     formData = await request.formData();
   } catch {
-    return new Response('Invalid form data', { status: 400 });
+    return json({ ok: false, message: 'Invalid form data' }, 400);
   }
 
   const file = formData.get('file') as File | null;
-  if (!file) return new Response('Missing file', { status: 400 });
-  if (file.size > MAX_SIZE_BYTES) return new Response('File too large (max 10 MB)', { status: 413 });
+  if (!file) return json({ ok: false, message: 'Missing file' }, 400);
+  if (file.size > MAX_SIZE_BYTES) return json({ ok: false, message: 'File too large (max 10 MB)' }, 413);
 
   // Resize to 500×500 square JPEG server-side
   let resizedBuffer: Buffer;
@@ -49,10 +51,7 @@ export const POST: APIRoute = async ({ request }) => {
       .jpeg({ quality: 92 })
       .toBuffer();
   } catch (err) {
-    return new Response(
-      JSON.stringify({ ok: false, message: 'Could not process image' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } },
-    );
+    return json({ ok: false, message: 'Could not process image' }, 400);
   }
 
   // Upload to Cloudflare Images (one image per user, keyed by userId)
@@ -64,16 +63,10 @@ export const POST: APIRoute = async ({ request }) => {
     });
   } catch (err) {
     console.error('[upload-avatar] CF upload error:', err);
-    return new Response(
-      JSON.stringify({ ok: false, message: err instanceof Error ? err.message : 'Upload failed' }),
-      { status: 502, headers: { 'Content-Type': 'application/json' } },
-    );
+    return json({ ok: false, message: err instanceof Error ? err.message : 'Upload failed' }, 502);
   }
 
   const url = `https://imagedelivery.net/${CF_IMAGES_HASH}/${cfImageId}/public`;
 
-  return new Response(
-    JSON.stringify({ ok: true, url }),
-    { status: 200, headers: { 'Content-Type': 'application/json' } },
-  );
+  return json({ ok: true, url }, 200);
 };

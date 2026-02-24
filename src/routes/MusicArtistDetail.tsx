@@ -15,7 +15,6 @@ import { getPreferModalOverPagePreference } from '../lib/userPreferences';
 import { getCoverPath, getOfficialCoverPath, slugifyArtist } from '../lib/coverRoutes';
 
 const PAGE_SIZE = 24;
-const CF_IMAGES_HASH = import.meta.env.PUBLIC_CF_IMAGES_HASH as string;
 const MAX_DIM = 5000;
 
 type ArtistPhotoValidationResult =
@@ -80,7 +79,7 @@ async function resizeToNearestThousand(file: File): Promise<File> {
 
 function artistPhotoCfUrl(artistName: string): string {
   const id = 'artist-photo-' + artistName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 220);
-  return `https://imagedelivery.net/${CF_IMAGES_HASH}/${id}/public`;
+  return `/api/cover-media?path=${encodeURIComponent(`cf:${id}`)}`;
 }
 
 type ArtType = 'fan' | 'official';
