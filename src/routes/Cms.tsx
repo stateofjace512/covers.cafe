@@ -689,8 +689,7 @@ export default function Cms() {
                 const { done, value } = await reader.read();
                 if (done) break;
                 buf += dec.decode(value, { stream: true });
-                const lines = buf.split('
-');
+                const lines = buf.split('\n');
                 buf = lines.pop() ?? '';
                 for (const line of lines) {
                   if (!line.startsWith('data: ')) continue;
