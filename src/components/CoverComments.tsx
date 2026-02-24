@@ -40,6 +40,7 @@ export default function CoverComments({ coverId, cover }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [editSaving, setEditSaving] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isOperator, setIsOperator] = useState(false);
 
   const identity = useMemo(() => (typeof window === 'undefined' ? null : getClientIdentity()), []);
@@ -315,14 +316,25 @@ export default function CoverComments({ coverId, cover }: Props) {
                       <FlagIcon size={12} /> Report
                     </button>
                     {currentAuthorName && comment.author_username === currentAuthorName && (
-                      <>
-                        <button className="cc-action" onClick={() => startEdit(comment)}>
-                          <PencilIcon size={12} /> Edit
-                        </button>
-                        <button className="cc-action cc-action--delete" onClick={() => deleteComment(comment.id)}>
-                          <TrashIcon size={12} /> Delete
-                        </button>
-                      </>
+                      <button className="cc-action" onClick={() => startEdit(comment)}>
+                        <PencilIcon size={12} /> Edit
+                      </button>
+                    )}
+                    {(currentAuthorName && comment.author_username === currentAuthorName || isOperator) && (
+                      <button
+                        className={`cc-action cc-action--delete${deleteConfirmId === comment.id ? ' cc-action--delete-confirm' : ''}`}
+                        onClick={() => {
+                          if (deleteConfirmId === comment.id) {
+                            void deleteComment(comment.id);
+                            setDeleteConfirmId(null);
+                          } else {
+                            setDeleteConfirmId(comment.id);
+                          }
+                        }}
+                        onMouseLeave={() => { if (deleteConfirmId === comment.id) setDeleteConfirmId(null); }}
+                      >
+                        <TrashIcon size={12} /> {deleteConfirmId === comment.id ? 'Confirm?' : 'Delete'}
+                      </button>
                     )}
                   </div>
                 </>
@@ -544,6 +556,16 @@ export default function CoverComments({ coverId, cover }: Props) {
           background: rgba(180, 40, 20, 0.1);
           color: #c0392b;
           border-color: #c0392b;
+        }
+
+        .cc-action--delete-confirm {
+          background: #c83220 !important;
+          color: white !important;
+          border-color: #a02010 !important;
+        }
+        .cc-action--delete-confirm:hover {
+          background: #a02010 !important;
+          color: white !important;
         }
 
 
