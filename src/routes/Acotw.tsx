@@ -77,10 +77,10 @@ export default function Acotw() {
           <h1 className="acotw-title">Album Cover Of The Week</h1>
           <p className="acotw-subtitle">
             {isClosed
-              ? 'Voting has closed — see the winner below.'
+              ? 'Voting has closed. See the winner below.'
               : poll
               ? `Vote for your favourite cover this week · Week of ${formatWeek(poll.week_start)}`
-              : 'Community vote — every week, top 10 most-favorited covers go head-to-head.'}
+              : 'Community voted every week, top 10 most-favorited covers go head-to-head.'}
           </p>
         </div>
       </div>
@@ -90,7 +90,7 @@ export default function Acotw() {
       ) : !poll || nominees.length === 0 ? (
         <div className="acotw-empty">
           <FavoritesIcon size={40} style={{ opacity: 0.3 }} />
-          <p>No poll yet — favorite some covers to fuel next week's nominees!</p>
+          <p>No poll yet! Favorite some covers to fuel next week's nominees!</p>
         </div>
       ) : (
         <>
@@ -103,7 +103,7 @@ export default function Acotw() {
               </button>
             )}
             {!isClosed && hasVoted && (
-              <span className="acotw-voted-label"><ClockIcon size={13} />You voted — results reveal Sunday night</span>
+              <span className="acotw-voted-label"><ClockIcon size={13} />You voted! Results reveal Sunday night</span>
             )}
           </div>
 
