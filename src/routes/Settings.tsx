@@ -712,7 +712,6 @@ export default function Settings() {
         .settings-select {
           min-width: 220px;
           padding: 6px 10px;
-          border-radius: 4px;
           border: 1px solid var(--body-card-border);
           background: var(--body-card-bg);
           color: var(--body-text);
@@ -751,7 +750,7 @@ export default function Settings() {
           text-align: center;
         }
         .settings-input {
-          width: 100%; padding: 8px 12px; border-radius: 4px;
+          width: 100%; padding: 8px 12px
           border: 1px solid var(--body-card-border);
           background: var(--body-card-bg); color: var(--body-text);
           font-size: 19px; font-family: var(--font-body);
@@ -769,30 +768,30 @@ export default function Settings() {
         .settings-inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .settings-inline-error {
           display: flex; align-items: center; gap: 6px;
-          padding: 7px 10px; border-radius: 4px; font-size: 18px;
+          padding: 7px 10px; font-size: 18px;
           background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3); color: #c83220;
         }
         .settings-inline-success {
           display: flex; align-items: center; gap: 6px;
-          padding: 9px 12px; border-radius: 4px; font-size: 19px;
+          padding: 9px 12px; font-size: 19px;
           background: rgba(40,160,80,0.1); border: 1px solid rgba(40,160,80,0.3); color: #1a7a40;
         }
         .settings-inline-hint {
           display: flex; align-items: flex-start; gap: 6px;
           font-size: 18px; color: var(--body-text-muted); line-height: 1.5;
-          padding: 8px 10px; border-radius: 4px; background: var(--body-card-bg);
+          padding: 8px 10px; background: var(--body-card-bg);
           border: 1px solid var(--body-border);
         }
         .settings-delete-warning {
           display: flex; align-items: flex-start; gap: 7px;
-          padding: 10px 12px; border-radius: 4px; font-size: 18px; line-height: 1.5;
+          padding: 10px 12px; font-size: 18px; line-height: 1.5;
           background: rgba(200,50,30,0.08); border: 1px solid rgba(200,50,30,0.25); color: #c83220;
         }
         .settings-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .settings-session-msg {
           display: flex; align-items: center; gap: 6px;
-          padding: 7px 10px; border-radius: 4px; font-size: 18px; margin-top: 8px;
+          padding: 7px 10px; font-size: 18px; margin-top: 8px;
         }
         .settings-session-msg--ok { background: rgba(40,160,80,0.1); border: 1px solid rgba(40,160,80,0.3); color: #1a7a40; }
         .settings-session-msg--err { background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3); color: #c83220; }
@@ -806,7 +805,7 @@ export default function Settings() {
         .sessions-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
         .sessions-item {
           display: flex; align-items: center; justify-content: space-between; gap: 12px;
-          padding: 9px 12px; border-radius: 5px;
+          padding: 9px 12px;
           background: var(--body-card-bg); border: 1px solid var(--body-border);
           flex-wrap: wrap;
         }
@@ -819,7 +818,7 @@ export default function Settings() {
         }
         .sessions-current-badge {
           display: inline-flex; align-items: center;
-          padding: 1px 6px; border-radius: 10px; font-size: 17px;
+          padding: 1px 6px; font-size: 17px;
           background: var(--accent); color: #fff;
         }
         .sessions-item-meta { font-size: 17px; color: var(--body-text-muted); }
