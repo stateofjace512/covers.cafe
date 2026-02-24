@@ -525,7 +525,6 @@ export default function CoverComments({ coverId, cover }: Props) {
           gap: 4px;
           background: none;
           border: 1px solid var(--body-border);
-          border-radius: 4px;
           padding: 3px 8px;
           font-size: 17px;
           color: var(--body-text-muted);
