@@ -114,29 +114,36 @@ export default function Acotw() {
           {isClosed && poll.winner_cover_id && (() => {
             const winner = nominees.find((n) => n.cover.id === poll.winner_cover_id);
             if (!winner) return null;
+          
             return (
-              <div className="acotw-card acotw-card--winner acotw-card--winner-featured">
-                <div className="acotw-card-img-wrap">
-                  <img
-                    src={getCoverImageSrc(winner.cover) ?? ''}
-                    alt={winner.cover.title}
-                    className="acotw-card-img"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => navigate(getCoverPath(winner.cover))}
-                  />
-                  <div className="acotw-card-winner-overlay">
-                    <TrophyIcon size={20} />
+              <section className="acotw-winner-section">
+                <h2 className="acotw-section-title">This Week’s Winner</h2>
+          
+                <div className="acotw-winner-grid">
+                  <div className="acotw-card acotw-card--winner acotw-card--winner-featured">
+                    <div className="acotw-card-img-wrap">
+                      <img
+                        src={getCoverImageSrc(winner.cover) ?? ''}
+                        alt={winner.cover.title}
+                        className="acotw-card-img"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => navigate(getCoverPath(winner.cover))}
+                      />
+                      <div className="acotw-card-winner-overlay">
+                        <TrophyIcon size={20} />
+                      </div>
+                    </div>
+          
+                    <div className="acotw-card-body">
+                      <div className="acotw-card-title">{winner.cover.title}</div>
+                      <div className="acotw-card-artist">{winner.cover.artist}</div>
+                      <div className="acotw-card-count">
+                        {winner.vote_count} vote{winner.vote_count !== 1 ? 's' : ''}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              
-                <div className="acotw-card-body">
-                  <div className="acotw-card-title">{winner.cover.title}</div>
-                  <div className="acotw-card-artist">{winner.cover.artist}</div>
-                  <div className="acotw-card-count">
-                    {winner.vote_count} vote{winner.vote_count !== 1 ? 's' : ''}
-                  </div>
-                </div>
-              </div>
+              </section>
             );
           })()}
 
