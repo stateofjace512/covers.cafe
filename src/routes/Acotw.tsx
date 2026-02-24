@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+import { getCoverPath } from '../lib/coverRoutes';
 import { useEffect, useState, useCallback } from 'react';
 import TrophyIcon from '../components/TrophyIcon';
 import FavoritesIcon from '../components/FavoritesIcon';
@@ -20,6 +22,7 @@ function formatWeek(dateStr: string) {
 }
 
 export default function Acotw() {
+  const navigate = useNavigate();
   const { user, session, openAuthModal } = useAuth();
   const [data, setData] = useState<PollData | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -112,15 +115,26 @@ export default function Acotw() {
             const winner = nominees.find((n) => n.cover.id === poll.winner_cover_id);
             if (!winner) return null;
             return (
-              <div className="acotw-winner-banner">
-                <div className="acotw-winner-badge"><TrophyIcon size={16} /> This Week's Winner</div>
-                <div className="acotw-winner-cover-wrap">
-                  <img src={getCoverImageSrc(winner.cover) ?? ''} alt={winner.cover.title} className="acotw-winner-img" />
+              <div className="acotw-card acotw-card--winner acotw-card--winner-featured">
+                <div className="acotw-card-img-wrap">
+                  <img
+                    src={getCoverImageSrc(winner.cover) ?? ''}
+                    alt={winner.cover.title}
+                    className="acotw-card-img"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => navigate(getCoverPath(winner.cover))}
+                  />
+                  <div className="acotw-card-winner-overlay">
+                    <TrophyIcon size={20} />
+                  </div>
                 </div>
-                <div>
-                  <div className="acotw-winner-title">{winner.cover.title}</div>
-                  <div className="acotw-winner-artist">{winner.cover.artist}</div>
-                  <div className="acotw-winner-votes">{winner.vote_count} vote{winner.vote_count !== 1 ? 's' : ''}</div>
+              
+                <div className="acotw-card-body">
+                  <div className="acotw-card-title">{winner.cover.title}</div>
+                  <div className="acotw-card-artist">{winner.cover.artist}</div>
+                  <div className="acotw-card-count">
+                    {winner.vote_count} vote{winner.vote_count !== 1 ? 's' : ''}
+                  </div>
                 </div>
               </div>
             );
@@ -199,7 +213,14 @@ export default function Acotw() {
               {history.map((entry) => (
                 <div key={entry.poll_id} className="acotw-archive-card">
                   {entry.cover && getCoverImageSrc(entry.cover) && (
-                    <img src={getCoverImageSrc(entry.cover)!} alt={entry.cover.title} className="acotw-archive-img" loading="lazy" />
+                    <img
+                      src={getCoverImageSrc(entry.cover)!}
+                      alt={entry.cover.title}
+                      className="acotw-archive-img"
+                      loading="lazy"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => navigate(getCoverPath(entry.cover!))}
+                    />
                   )}
                   <div className="acotw-archive-info">
                     <div className="acotw-archive-week">Week of {formatWeek(entry.week_start)}</div>
