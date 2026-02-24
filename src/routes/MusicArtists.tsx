@@ -11,7 +11,7 @@ function artistPhotoUrl(artistName: string): string {
   return `${SUPABASE_URL}/storage/v1/render/image/public/covers_cafe_artist_photos/${encodeURIComponent(artistName)}.jpg?width=400&height=400&resize=cover&quality=85`;
 }
 
-type ArtType = 'all' | 'fan' | 'official';
+type ArtType = 'fan' | 'official';
 
 interface ArtistEntry {
   name: string;
@@ -50,7 +50,7 @@ export default function MusicArtists() {
   const [artists, setArtists] = useState<ArtistEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [artType, setArtType] = useState<ArtType>('all');
+  const [artType, setArtType] = useState<ArtType>('fan');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -90,13 +90,11 @@ export default function MusicArtists() {
   }, []);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return artists;
-    const q = search.toLowerCase();
+    const q = search.trim().toLowerCase();
     return artists.filter((a) => {
-      if (!a.name.toLowerCase().includes(q)) return false;
+      if (q && !a.name.toLowerCase().includes(q)) return false;
       if (artType === 'official') return a.officialCoverCount > 0;
-      if (artType === 'fan') return a.fanCoverCount > 0;
-      return true;
+      return a.fanCoverCount > 0;
     });
   }, [artists, search, artType]);
 
@@ -109,7 +107,6 @@ export default function MusicArtists() {
 
       <div className="toolbar mb-4">
         <div className="ma-type-tabs" role="tablist" aria-label="Artist art type">
-          <button role="tab" aria-selected={artType === 'all'} className={`ma-type-tab${artType === 'all' ? ' ma-type-tab--active' : ''}`} onClick={() => setArtType('all')}>All</button>
           <button role="tab" aria-selected={artType === 'fan'} className={`ma-type-tab${artType === 'fan' ? ' ma-type-tab--active' : ''}`} onClick={() => setArtType('fan')}>Fan Art</button>
           <button role="tab" aria-selected={artType === 'official'} className={`ma-type-tab${artType === 'official' ? ' ma-type-tab--active' : ''}`} onClick={() => setArtType('official')}>Album Art</button>
         </div>
@@ -143,7 +140,7 @@ export default function MusicArtists() {
               <ArtistCardImg artist={artist} />
               <div className="music-artist-info">
                 <span className="music-artist-name">{artist.name}</span>
-                <span className="music-artist-covers">{artType === 'official' ? artist.officialCoverCount : artType === 'fan' ? artist.fanCoverCount : artist.coverCount} cover{(artType === 'official' ? artist.officialCoverCount : artType === 'fan' ? artist.fanCoverCount : artist.coverCount) !== 1 ? 's' : ''}</span>
+                <span className="music-artist-covers">{artType === 'official' ? artist.officialCoverCount : artist.fanCoverCount} cover{(artType === 'official' ? artist.officialCoverCount : artist.fanCoverCount) !== 1 ? 's' : ''}</span>
               </div>
             </button>
           ))}

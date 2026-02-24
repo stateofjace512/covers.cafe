@@ -84,7 +84,7 @@ function artistPhotoTransformUrl(artistName: string, bust?: number): string {
   return `${SUPABASE_URL}/storage/v1/render/image/public/covers_cafe_artist_photos/${path}?width=850&height=850&resize=cover&quality=85${t}`;
 }
 
-type ArtType = 'all' | 'fan' | 'official';
+type ArtType = 'fan' | 'official';
 
 export default function MusicArtistDetail() {
   const { artistName: slugParam } = useParams<{ artistName: string }>();
@@ -103,7 +103,7 @@ export default function MusicArtistDetail() {
   const [selectedCover, setSelectedCover] = useState<Cover | null>(null);
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
   const [headerCover, setHeaderCover] = useState<Cover | null>(null);
-  const [artType, setArtType] = useState<ArtType>('all');
+  const [artType, setArtType] = useState<ArtType>('fan');
 
   // Artist photo state
   const [avatarSrc, setAvatarSrc] = useState('');
@@ -199,8 +199,7 @@ export default function MusicArtistDetail() {
   const visibleCovers = covers.filter((cover) => {
     const isOfficial = (cover.tags ?? []).includes('official');
     if (artType === 'official') return isOfficial;
-    if (artType === 'fan') return !isOfficial;
-    return true;
+    return !isOfficial;
   });
 
   const handleCoverClick = (cover: Cover) => {
@@ -333,7 +332,7 @@ export default function MusicArtistDetail() {
             <h1 className="ma-artist-name">{artistName}</h1>
             {!loading && (
               <p className="ma-cover-count">
-                {visibleCovers.length}{hasMore && artType === 'all' ? '+' : ''} cover{visibleCovers.length !== 1 ? 's' : ''}
+                {visibleCovers.length}{hasMore ? '+' : ''} cover{visibleCovers.length !== 1 ? 's' : ''}
               </p>
             )}
             {uploadError && <p className="ma-upload-error">{uploadError}</p>}
@@ -342,7 +341,6 @@ export default function MusicArtistDetail() {
       </div>
 
       <div className="ma-type-tabs" role="tablist" aria-label="Artist cover type">
-        <button role="tab" aria-selected={artType === 'all'} className={`ma-type-tab${artType === 'all' ? ' ma-type-tab--active' : ''}`} onClick={() => setArtType('all')}>All</button>
         <button role="tab" aria-selected={artType === 'fan'} className={`ma-type-tab${artType === 'fan' ? ' ma-type-tab--active' : ''}`} onClick={() => setArtType('fan')}>Fan Art</button>
         <button role="tab" aria-selected={artType === 'official'} className={`ma-type-tab${artType === 'official' ? ' ma-type-tab--active' : ''}`} onClick={() => setArtType('official')}>Album Art</button>
       </div>
@@ -352,7 +350,7 @@ export default function MusicArtistDetail() {
           <LoadingIcon size={22} className="ma-spinner" /> Loading covers…
         </div>
       ) : visibleCovers.length === 0 ? (
-        <p className="text-muted" style={{ marginTop: 24 }}>No {artType === 'official' ? 'official' : artType === 'fan' ? 'fan' : 'public'} covers found for "{artistName}".</p>
+        <p className="text-muted" style={{ marginTop: 24 }}>No {artType === 'official' ? 'official' : 'fan'} covers found for "{artistName}".</p>
       ) : (
         <>
           <div className="album-grid" style={{ marginTop: 24 }}>

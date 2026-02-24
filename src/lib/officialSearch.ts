@@ -51,7 +51,7 @@ async function getImageMetrics(url: string): Promise<{ score: number; dimensions
 async function searchOneCountry(artist: string, album: string, country: string): Promise<RankedOfficialRow[]> {
   try {
     const term = encodeURIComponent(`${artist} ${album}`.trim());
-    const res = await fetch(`https://itunes.apple.com/search?term=${term}&entity=album&country=${country}&limit=40`);
+    const res = await fetch(`https://itunes.apple.com/search?term=${term}&entity=album&country=${country}&limit=200`);
     if (!res.ok) return [];
     const payload = await res.json() as { results?: ItunesAlbumResult[] };
     const results = payload.results ?? [];
