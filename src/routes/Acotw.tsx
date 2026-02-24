@@ -77,18 +77,16 @@ export default function Acotw() {
   
       {/* HEADER (always visible) */}
       <div className="acotw-header">
-        <h1 className="section-title">
+        <h1 className="section-title acotw-title-line">
           <TrophyIcon size={22} />
-          Album Cover Of The Week
-        </h1>
-      
-        <div className="toolbar mb-4 acotw-toolbar">
+          <span>Album Cover Of The Week</span>
+        
           {poll && (
             <span className="acotw-week-row">
               Week of {formatWeek(poll.week_start)}
             </span>
           )}
-      
+        
           {loading ? (
             <span className="text-muted">Loading poll…</span>
           ) : !poll || nominees.length === 0 ? (
@@ -99,7 +97,7 @@ export default function Acotw() {
                 <FavoritesIcon size={13} />
                 {totalVotes} vote{totalVotes !== 1 ? 's' : ''} cast
               </span>
-      
+        
               {!isClosed && !hasVoted && !user && (
                 <button
                   className="btn btn-primary acotw-signin-btn"
@@ -108,7 +106,7 @@ export default function Acotw() {
                   Sign in to vote
                 </button>
               )}
-      
+        
               {!isClosed && hasVoted && (
                 <span className="acotw-voted-label">
                   <ClockIcon size={13} />
@@ -117,7 +115,7 @@ export default function Acotw() {
               )}
             </>
           )}
-        </div>
+        </h1>
       </div>
   
       {/* BODY (only render when poll exists and not loading) */}
@@ -308,6 +306,13 @@ export default function Acotw() {
           display: flex;
           flex-direction: column;
           gap: 14px;
+        }
+        
+        .acotw-title-line {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
         }
         
         /* Top row: title + week */
