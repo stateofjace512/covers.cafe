@@ -74,41 +74,55 @@ export default function Acotw() {
 
   return (
     <div className="acotw-page">
+  
+      {/* HEADER (always visible) */}
       <div className="acotw-header">
-        <div className="acotw-header-icon"><TrophyIcon size={28} /></div>
-        <div>
-          <h1 className="acotw-title">Album Cover Of The Week</h1>
-          <p className="acotw-subtitle">
-            {isClosed
-              ? 'Voting has closed. See the winner below.'
-              : poll
-              ? `Vote for your favourite cover this week · Week of ${formatWeek(poll.week_start)}`
-              : 'Community voted every week, top 10 most-favorited covers go head-to-head.'}
-          </p>
+        <h1 className="section-title">
+          <TrophyIcon size={22} />
+          Album Cover Of The Week
+        </h1>
+      
+        <div className="toolbar mb-4 acotw-toolbar">
+          {poll && (
+            <span className="acotw-week-row">
+              Week of {formatWeek(poll.week_start)}
+            </span>
+          )}
+      
+          {loading ? (
+            <span className="text-muted">Loading poll…</span>
+          ) : !poll || nominees.length === 0 ? (
+            <span className="text-muted">No poll yet. Favorite some covers to fuel next week’s nominees!</span>
+          ) : (
+            <>
+              <span className="acotw-vote-total">
+                <FavoritesIcon size={13} />
+                {totalVotes} vote{totalVotes !== 1 ? 's' : ''} cast
+              </span>
+      
+              {!isClosed && !hasVoted && !user && (
+                <button
+                  className="btn btn-primary acotw-signin-btn"
+                  onClick={() => openAuthModal('login')}
+                >
+                  Sign in to vote
+                </button>
+              )}
+      
+              {!isClosed && hasVoted && (
+                <span className="acotw-voted-label">
+                  <ClockIcon size={13} />
+                  You voted! Results reveal Sunday night.
+                </span>
+              )}
+            </>
+          )}
         </div>
       </div>
-
-      {loading ? (
-        <div className="acotw-loading"><LoadingIcon size={24} className="acotw-spinner" /><span>Loading poll…</span></div>
-      ) : !poll || nominees.length === 0 ? (
-        <div className="acotw-empty">
-          <FavoritesIcon size={40} style={{ opacity: 0.3 }} />
-          <p>No poll yet! Favorite some covers to fuel next week's nominees!</p>
-        </div>
-      ) : (
+  
+      {/* BODY (only render when poll exists and not loading) */}
+      {!loading && poll && nominees.length > 0 && (
         <>
-          {/* Vote progress bar */}
-          <div className="acotw-meta">
-            <span className="acotw-vote-total"><FavoritesIcon size={13} />{totalVotes} vote{totalVotes !== 1 ? 's' : ''} cast</span>
-            {!isClosed && !hasVoted && !user && (
-              <button className="btn btn-primary acotw-signin-btn" onClick={() => openAuthModal('login')}>
-                Sign in to vote
-              </button>
-            )}
-            {!isClosed && hasVoted && (
-              <span className="acotw-voted-label"><ClockIcon size={13} />You voted! Results reveal Sunday night.</span>
-            )}
-          </div>
 
           {/* Winner banner (closed poll) */}
           {isClosed && poll.winner_cover_id && (() => {
@@ -288,32 +302,48 @@ export default function Acotw() {
 
       <style>{`
         .acotw-page { display: flex; flex-direction: column; gap: 24px; }
-
+        
+        /* ───────────────── Header (new “Artists-style” header layout) ───────────────── */
         .acotw-header {
-          display: flex; align-items: flex-start; gap: 16px;
-          background-image:
-            linear-gradient(var(--skeu-hero-tint), var(--skeu-hero-tint)),
-            var(--skeu-hero);
-          background-size: 100% 100%, cover;
-          background-position: center, center;
-          border: 1px solid var(--body-card-border); border-radius: 0;
-          padding: 24px; color: #fff8f0;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
         }
-        .acotw-header-icon {
-          flex-shrink: 0; width: 52px; height: 52px; border-radius: 0;
-          background: rgba(184,134,11,0.25); border: 2px solid rgba(184,134,11,0.5);
-          display: flex; align-items: center; justify-content: center; color: #f0c040;
+        
+        /* Top row: title + week */
+        .acotw-header-top {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 14px;
+          flex-wrap: wrap;
         }
-        .acotw-title { font-size: 24px; margin: 0 0 6px; }
-        .acotw-subtitle { font-size: 20px; color: rgba(255,248,240,0.7); margin: 0; line-height: 1.5; }
-
+        
+        .acotw-week-row {
+          font-size: 17px;
+          color: var(--body-text-muted);
+          padding-top: 4px;
+          white-space: nowrap;
+        }
+        
+        /* Bottom row: loading / empty / meta bar */
+        .acotw-header-bottom {
+          display: flex;
+          flex-direction: column;
+        }
+        
+        /* NOTE: you’re using .section-title from your global styles (like Artists) so we do NOT redefine it here. */
+        
+        
+        /* ───────────────── Loading / Empty ───────────────── */
         .acotw-loading { display: flex; align-items: center; gap: 10px; color: var(--body-text-muted); padding: 40px 0; }
         .acotw-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
+        
         .acotw-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px 20px; color: var(--body-text-muted); text-align: center; }
         .acotw-empty p { font-size: 20px; max-width: 300px; line-height: 1.6; }
-
+        
+        /* ───────────────── Meta row (votes / sign-in / voted label) ───────────────── */
         .acotw-meta {
           display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
           padding: 12px 16px; background: var(--body-card-bg);
@@ -322,8 +352,8 @@ export default function Acotw() {
         .acotw-vote-total { display: flex; align-items: center; gap: 6px; font-size: 19px; color: var(--body-text-muted); }
         .acotw-voted-label { display: flex; align-items: center; gap: 6px; font-size: 19px; color: var(--body-text-muted); }
         .acotw-signin-btn { margin-left: auto; }
-
-        /* Winner banner */
+        
+        /* ───────────────── Winner banner (legacy / still available if you ever use it) ───────────────── */
         .acotw-winner-banner {
           display: flex; align-items: center; gap: 16px;
           background: linear-gradient(135deg, rgba(184,134,11,0.15) 0%, rgba(192,90,26,0.1) 100%);
@@ -340,8 +370,8 @@ export default function Acotw() {
         .acotw-winner-title { font-size: 21px; color: var(--body-text); }
         .acotw-winner-artist { font-size: 20px; color: var(--body-text-muted); margin-top: 2px; }
         .acotw-winner-votes { font-size: 18px; color: #b8860b; margin-top: 6px; }
-
-        /* Nominees grid */
+        
+        /* ───────────────── Nominees grid ───────────────── */
         .acotw-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(var(--cover-grid-min-width), 1fr));
@@ -355,7 +385,7 @@ export default function Acotw() {
         .acotw-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); }
         .acotw-card--winner { border-color: #b8860b; box-shadow: 0 0 0 2px rgba(184,134,11,0.25); }
         .acotw-card--voted { border-color: var(--accent); }
-
+        
         .acotw-card-img-wrap { position: relative; aspect-ratio: 1; overflow: hidden; background: var(--body-border); }
         .acotw-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .acotw-card-winner-overlay {
@@ -364,9 +394,10 @@ export default function Acotw() {
           border-radius: 0; width: 32px; height: 32px;
           display: flex; align-items: center; justify-content: center;
         }
-
+        
         .acotw-card-body { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
         .acotw-card-title { font-size: 19px; color: var(--body-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
         .acotw-card-uploader {
           background: none;
           border: none;
@@ -376,15 +407,14 @@ export default function Acotw() {
           cursor: pointer;
           text-align: left;
         }
+        .acotw-card-uploader:hover { text-decoration: underline; }
         
-        .acotw-card-uploader:hover {
-          text-decoration: underline;
-        }
         .acotw-card-artist { font-size: 17px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .acotw-card-count { font-size: 17px; color: var(--body-text-muted); min-height: 16px; }
-
+        
         .acotw-bar-wrap { position: relative; height: 6px; background: var(--body-border); border-radius: 0; overflow: hidden; }
         .acotw-bar { height: 100%; background: var(--accent); border-radius: 0; transition: width 0.4s ease; }
+        
         .acotw-vote-btn { width: 100%; justify-content: center; font-size: 18px; padding: 5px 10px; gap: 5px; }
         .acotw-vote-btn--active {
           background-image:
@@ -396,9 +426,10 @@ export default function Acotw() {
           border-color: var(--accent-dark) !important;
         }
         .acotw-vote-btn--active::before { display: none; }
-
-        /* Archive */
+        
+        /* ───────────────── Archive ───────────────── */
         .acotw-archive-section { border-top: 1px solid var(--body-card-border); padding-top: 20px; }
+        
         .acotw-archive-toggle {
           display: flex; align-items: center; gap: 8px;
           background: none; border: 1px solid var(--body-card-border); border-radius: 0;
@@ -406,17 +437,20 @@ export default function Acotw() {
           cursor: pointer; transition: background 0.12s;
         }
         .acotw-archive-toggle:hover { background: var(--body-card-bg); transform: none; box-shadow: none; }
+        
         .acotw-archive-count {
           margin-left: 4px; background: var(--accent); color: white;
           font-size: 16px; padding: 1px 6px; border-radius: 0;
         }
+        
         .acotw-archive-empty { font-size: 20px; color: var(--body-text-muted); padding: 16px 0; }
-
+        
         .acotw-archive-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(var(--cover-grid-min-width), 1fr));
           gap: 14px;
         }
+        
         .acotw-archive-card {
           background: var(--body-card-bg);
           border: 1px solid var(--body-card-border);
@@ -425,6 +459,7 @@ export default function Acotw() {
           display: flex;
           flex-direction: column;
         }
+        
         .acotw-archive-week { font-size: 16px; color: #b8860b; text-transform: uppercase; letter-spacing: 0.5px; }
         .acotw-archive-title { font-size: 19px; color: var(--body-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .acotw-archive-artist { font-size: 17px; color: var(--body-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
