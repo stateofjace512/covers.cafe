@@ -263,7 +263,7 @@ export default function CoverComments({ coverId, cover }: Props) {
       {loading ? (
         <p className="cc-empty"><LoadingIcon size={14} className="upload-spinner" /> Loading comments…</p>
       ) : comments.length === 0 ? (
-        <p className="cc-empty">No comments yet — be the first!</p>
+        <p className="cc-empty">No comments yet, be the first!</p>
       ) : (
         <ul className="cc-list">
           {comments.map((comment) => (

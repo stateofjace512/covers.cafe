@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
-import { getCoverImageSrc } from '../lib/media';
+import { getCoverImageSrc, getCoverDownloadSrc } from '../lib/media';
 import { getCoverPath, parseArtists, slugifyArtist } from '../lib/coverRoutes';
 
 interface Props {
@@ -86,7 +86,16 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
           >
             <FavoritesIcon size={15} />
           </button>
-          <button className="cover-card-action-btn" title="Download" onClick={(e) => e.stopPropagation()}>
+          <button className="cover-card-action-btn" title="Download" onClick={async (e) => {
+            e.stopPropagation();
+            const src = getCoverDownloadSrc(cover);
+            const res = await fetch(src);
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `${cover.artist} - ${cover.title}.jpg`; a.click();
+            URL.revokeObjectURL(url);
+          }}>
             <DownloadIcon size={15} />
           </button>
           {isOwner && (

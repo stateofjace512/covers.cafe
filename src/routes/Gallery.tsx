@@ -137,7 +137,7 @@ export default function Gallery() {
         [data-theme="dark"] .hero-banner { border-color: #6b3d1f #2a1505 #2a1505 #6b3d1f; }
         /* Win95 title bar inside hero */
         .hero-banner::before {
-          content: 'covers.cafe \u2014  Album Cover Gallery';
+          content: 'covers.cafe | Album Cover Gallery';
           display: flex; align-items: center; height: 22px;
           background: linear-gradient(90deg, #5a3620 0%, #73492a 35%, #8a5a35 100%);
           color: #ffffff; font-size: 11px; font-weight: bold;
@@ -159,7 +159,7 @@ export default function Gallery() {
         /* Win95 property sheet tab strip */
         .hero-tab-strip {
           display: flex; gap: 0;
-          padding: 6px 12px 0;
+          padding: 6px 12px 4px;
           border-top: 1px solid var(--body-border);
         }
         .hero-tab {

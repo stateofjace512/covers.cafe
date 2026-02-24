@@ -655,7 +655,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
         .cover-modal { width: 100%; max-width: 780px; max-height: min(92vh, 860px); padding: 0; overflow: hidden; display: flex; flex-direction: column; }
         /* Win95 title bar */
         .cover-modal::before {
-          content: 'covers.cafe \u2014  Cover Details';
+          content: 'covers.cafe | Cover Details';
           display: flex; align-items: center;
           height: 22px; flex-shrink: 0;
           background: linear-gradient(90deg, #5a3620 0%, #73492a 35%, #8a5a35 100%);

@@ -655,7 +655,7 @@ export default function MusicArtistDetail() {
       <style>{`
         .ma-back-btn { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; }
         .ma-header {
-          position: relative; border-radius: 8px; overflow: hidden;
+          position: relative; border-radius: 0; overflow: hidden;
           background: var(--sidebar-bg-dark);
           background-size: cover; background-position: center;
           margin-bottom: 4px; min-height: 170px;
@@ -672,7 +672,7 @@ export default function MusicArtistDetail() {
           padding: 28px 24px;
         }
         .ma-avatar {
-          width: 130px; height: 130px; border-radius: 8px; flex-shrink: 0;
+          width: 130px; height: 130px; border-radius: 0; flex-shrink: 0;
           overflow: hidden; border: 2px solid rgba(255,255,255,0.25);
           box-shadow: 0 4px 16px rgba(0,0,0,0.5);
           background: rgba(255,255,255,0.1);
@@ -682,7 +682,7 @@ export default function MusicArtistDetail() {
         .ma-avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .ma-photo-upload-btn {
           position: absolute; bottom: 0; right: 0;
-          width: 26px; height: 26px; border-radius: 50%;
+          width: 26px; height: 26px; border-radius: 0;
           background: rgba(10,5,2,0.8); border: 1px solid rgba(255,255,255,0.3);
           color: rgba(255,255,255,0.85);
           display: flex; align-items: center; justify-content: center;
@@ -698,27 +698,27 @@ export default function MusicArtistDetail() {
         .ma-cover-count { font-size: 20px; color: rgba(255,255,255,0.65); margin: 0; }
         .ma-upload-error { font-size: 18px; color: #f87171; margin: 0; }
 .ma-type-tabs { display: inline-flex; gap: 8px; }
-        .ma-type-tab { border: 1px solid var(--body-card-border); background: var(--body-card-bg); color: var(--body-text-muted); border-radius: 999px; padding: 4px 10px; font-size: 14px; }
+        .ma-type-tab { border: 1px solid var(--body-card-border); background: var(--body-card-bg); color: var(--body-text-muted); border-radius: 0; padding: 4px 10px; font-size: 14px; }
         .ma-type-tab--active { background: var(--accent); border-color: var(--accent); color: #fff; }
         .ma-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .ma-tab-row { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
-        .osr-select-btn { border: 1px solid var(--body-card-border); border-radius: 6px; background: var(--body-card-bg); color: var(--body-text-muted); padding: 5px 14px; font-size: 14px; cursor: pointer; font-family: var(--font-body); }
+        .osr-select-btn { border: 1px solid var(--body-card-border); border-radius: 0; background: var(--body-card-bg); color: var(--body-text-muted); padding: 5px 14px; font-size: 14px; cursor: pointer; font-family: var(--font-body); }
         .osr-select-btn--active { background: var(--accent); border-color: var(--accent); color: #fff; }
-        .osr-merge-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0 4px; padding: 10px 14px; border-radius: 8px; background: var(--body-card-bg); border: 1px solid var(--body-card-border); }
+        .osr-merge-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0 4px; padding: 10px 14px; border-radius: 0; background: var(--body-card-bg); border: 1px solid var(--body-card-border); }
         .osr-merge-label { font-size: 15px; color: var(--body-text-muted); flex-shrink: 0; }
-        .osr-merge-input { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--body-text); font-size: 15px; font-family: var(--font-body); flex: 1; min-width: 180px; }
+        .osr-merge-input { padding: 6px 10px; border-radius: 0; border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--body-text); font-size: 15px; font-family: var(--font-body); flex: 1; min-width: 180px; }
         .osr-merge-confirm { font-size: 14px; padding: 6px 18px; }
         .osr-merge-error { font-size: 13px; color: #f87171; flex-basis: 100%; margin-top: 4px; }
         .official-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .official-card--clickable { cursor: pointer; }
-        .official-card--selected .album-card-cover { outline: 3px solid var(--accent); outline-offset: -3px; border-radius: 4px; }
-        .official-badge { position: absolute; right: 8px; top: 8px; background: rgba(0,0,0,0.72); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 12px; padding: 2px 8px; border-radius: 999px; pointer-events: none; }
-        .official-select-check { position: absolute; left: 8px; top: 8px; width: 20px; height: 20px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.7); background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        .official-card--selected .album-card-cover { outline: 3px solid var(--accent); outline-offset: -3px; border-radius: 0; }
+        .official-badge { position: absolute; right: 8px; top: 8px; background: rgba(0,0,0,0.72); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 12px; padding: 2px 8px; border-radius: 0; pointer-events: none; }
+        .official-select-check { position: absolute; left: 8px; top: 8px; width: 20px; height: 20px; border-radius: 0; border: 2px solid rgba(255,255,255,0.7); background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .official-select-check--on { background: var(--accent); border-color: var(--accent); }
-        .cover-card-date-badge { display: inline-flex; align-items: center; font-size: 12px; padding: 1px 7px; border-radius: 999px; background: var(--body-card-border); color: var(--body-text-muted); border: 1px solid var(--body-card-border); }
-        .ma-undo-toast { display: flex; align-items: center; gap: 10px; margin: 10px 0; padding: 10px 16px; border-radius: 8px; background: var(--body-card-bg); border: 1px solid var(--body-card-border); font-size: 14px; }
-        .ma-undo-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 4px 14px; font-size: 13px; cursor: pointer; font-family: var(--font-body); }
+        .cover-card-date-badge { display: inline-flex; align-items: center; font-size: 12px; padding: 1px 7px; border-radius: 0; background: var(--body-card-border); color: var(--body-text-muted); border: 1px solid var(--body-card-border); }
+        .ma-undo-toast { display: flex; align-items: center; gap: 10px; margin: 10px 0; padding: 10px 16px; border-radius: 0; background: var(--body-card-bg); border: 1px solid var(--body-card-border); font-size: 14px; }
+        .ma-undo-btn { background: var(--accent); color: #fff; border: none; border-radius: 0; padding: 4px 14px; font-size: 13px; cursor: pointer; font-family: var(--font-body); }
         .ma-undo-countdown { color: var(--body-text-muted); font-size: 13px; margin-left: auto; }
       `}</style>
     </div>
