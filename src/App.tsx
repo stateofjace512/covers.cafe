@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AppShell from './components/AppShell';
 import AuthModal from './components/AuthModal';
 import { applyUserPreferencesToDocument } from './lib/userPreferences';
+import ContextMenu from './components/ContextMenu';
 
 // Route pages
 import Gallery from './routes/Gallery';
@@ -233,6 +234,7 @@ function AppContent() {
 
   return (
     <>
+      <ContextMenu />
       <AppShell>
         <Routes>
           <Route path="/" element={<Gallery />} />

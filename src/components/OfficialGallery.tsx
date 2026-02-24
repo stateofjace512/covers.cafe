@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import LoadingIcon from './LoadingIcon';
 import { useAuth } from '../contexts/AuthContext';
@@ -27,7 +27,9 @@ export default function OfficialGallery() {
   const [selectedArtists, setSelectedArtists] = useState<Set<string>>(new Set());
   const [mergeCanonical, setMergeCanonical] = useState('');
   const [merging, setMerging] = useState(false);
-  const [mergeMsg, setMergeMsg] = useState('');
+  const [undoSnapshot, setUndoSnapshot] = useState<{ album_cover_url: string; artist_name: string }[] | null>(null);
+  const [undoCountdown, setUndoCountdown] = useState(0);
+  const undoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const normalizedArtist = useMemo(() => artist.trim(), [artist]);
   const normalizedAlbum = useMemo(() => album.trim(), [album]);
@@ -85,24 +87,53 @@ export default function OfficialGallery() {
     });
   };
 
+  const startUndoCountdown = useCallback((snapshot: { album_cover_url: string; artist_name: string }[]) => {
+    setUndoSnapshot(snapshot);
+    setUndoCountdown(3);
+    if (undoTimerRef.current) clearInterval(undoTimerRef.current);
+    undoTimerRef.current = setInterval(() => {
+      setUndoCountdown((n) => {
+        if (n <= 1) { clearInterval(undoTimerRef.current!); setUndoSnapshot(null); return 0; }
+        return n - 1;
+      });
+    }, 1000);
+  }, []);
+
   const handleMerge = async () => {
     if (!session?.access_token || !mergeCanonical.trim() || selectedArtists.size < 2) return;
+    const canonical = mergeCanonical.trim();
+    const snapshot = covers
+      .filter((c) => selectedArtists.has(c.artist_name ?? ''))
+      .map((c) => ({ album_cover_url: c.album_cover_url, artist_name: c.artist_name ?? '' }));
     setMerging(true);
-    setMergeMsg('');
     const res = await fetch('/api/official/merge-artists', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ artistNames: Array.from(selectedArtists), canonicalName: mergeCanonical.trim() }),
+      body: JSON.stringify({ artistNames: Array.from(selectedArtists), canonicalName: canonical }),
     });
     setMerging(false);
     if (res.ok) {
-      setCovers((prev) => prev.map((c) => selectedArtists.has(c.artist_name ?? '') ? { ...c, artist_name: mergeCanonical.trim() } : c));
-      setMergeMsg('Merged successfully.');
+      setCovers((prev) => prev.map((c) => selectedArtists.has(c.artist_name ?? '') ? { ...c, artist_name: canonical } : c));
       setSelectedArtists(new Set());
       setMergeCanonical('');
-    } else {
-      setMergeMsg('Merge failed. Please try again.');
+      setSelectMode(false);
+      startUndoCountdown(snapshot);
     }
+  };
+
+  const handleUndo = async () => {
+    if (!undoSnapshot || !session?.access_token) return;
+    if (undoTimerRef.current) clearInterval(undoTimerRef.current);
+    const snapshot = undoSnapshot;
+    setUndoSnapshot(null);
+    setUndoCountdown(0);
+    await fetch('/api/official/undo-merge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ records: snapshot }),
+    });
+    const urlToName = new Map(snapshot.map((r) => [r.album_cover_url, r.artist_name]));
+    setCovers((prev) => prev.map((c) => urlToName.has(c.album_cover_url) ? { ...c, artist_name: urlToName.get(c.album_cover_url)! } : c));
   };
 
   return (
@@ -114,12 +145,20 @@ export default function OfficialGallery() {
         {searched && covers.length > 0 && (
           <button
             className={`osg-select-btn${selectMode ? ' osg-select-btn--active' : ''}`}
-            onClick={() => { setSelectMode((v) => !v); setSelectedArtists(new Set()); setMergeMsg(''); }}
+            onClick={() => { setSelectMode((v) => !v); setSelectedArtists(new Set()); setMergeCanonical(''); }}
           >
             Select
           </button>
         )}
       </div>
+
+      {undoSnapshot && undoCountdown > 0 && (
+        <div className="osg-undo-toast">
+          <span>Artists merged.</span>
+          <button className="osg-undo-btn" onClick={handleUndo}>Undo</button>
+          <span className="osg-undo-countdown">{undoCountdown}</span>
+        </div>
+      )}
 
       {selectMode && selectedArtists.size >= 2 && (
         <div className="osg-merge-bar">
@@ -133,7 +172,6 @@ export default function OfficialGallery() {
           <button className="btn btn-primary osg-merge-confirm" onClick={handleMerge} disabled={merging || !mergeCanonical.trim()}>
             {merging ? <><LoadingIcon size={13} className="gallery-spinner" /> Merging…</> : 'Merge'}
           </button>
-          {mergeMsg && <span className="osg-merge-msg">{mergeMsg}</span>}
         </div>
       )}
 
@@ -151,6 +189,9 @@ export default function OfficialGallery() {
                 <article
                   className={`album-card official-card official-card--clickable${isSelected ? ' official-card--selected' : ''}`}
                   key={`${cover.album_cover_url}-${cover.album_title ?? ''}`}
+                  data-official-url={cover.album_cover_url}
+                  data-artist-name={artistName}
+                  data-album-title={cover.album_title ?? ''}
                   onClick={() => selectMode ? toggleArtist(artistName) : window.open(cover.album_cover_url, '_blank', 'noopener,noreferrer')}
                 >
                   <div className="album-card-cover">
@@ -190,7 +231,9 @@ export default function OfficialGallery() {
         .osg-merge-label { font-size:15px; color:var(--body-text-muted); flex-shrink:0; }
         .osg-merge-input { padding:6px 10px; border-radius:6px; border:1px solid var(--body-card-border); background:var(--sidebar-bg); color:var(--body-text); font-size:15px; font-family:var(--font-body); flex:1; min-width:180px; }
         .osg-merge-confirm { font-size:14px; padding:6px 18px; }
-        .osg-merge-msg { font-size:14px; color:var(--body-text-muted); }
+        .osg-undo-toast { display:flex; align-items:center; gap:10px; margin-bottom:12px; padding:10px 16px; border-radius:8px; background:var(--body-card-bg); border:1px solid var(--body-card-border); font-size:14px; }
+        .osg-undo-btn { background:var(--accent); color:#fff; border:none; border-radius:6px; padding:4px 14px; font-size:13px; cursor:pointer; font-family:var(--font-body); }
+        .osg-undo-countdown { color:var(--body-text-muted); font-size:13px; margin-left:auto; }
         .official-card-img { width:100%; height:100%; object-fit:cover; display:block; }
         .official-card--clickable { cursor:pointer; }
         .official-card--selected .album-card-cover { outline:3px solid var(--accent); outline-offset:-3px; border-radius:4px; }
