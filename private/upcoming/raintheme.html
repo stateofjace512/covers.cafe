@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windows 95 Rain</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #008080;
+    font-family: 'MS Sans Serif', 'Pixelated MS Sans Serif', Arial, sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cpolygon points='0,0 0,24 8,18 12,28 16,26 12,16 20,16' fill='white' stroke='black' stroke-width='1.5'/%3E%3C/svg%3E") 0 0, default;
+  }
+
+  /* RAIN CANVAS */
+  #rainCanvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* DESKTOP ICONS */
+  .desktop-icons {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 10;
+  }
+  .icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    width: 70px;
+  }
+  .icon img, .icon .icon-img {
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+  }
+  .icon-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+  }
+  .icon span {
+    color: white;
+    font-size: 11px;
+    text-align: center;
+    text-shadow: 1px 1px 1px black;
+    line-height: 1.2;
+  }
+  .icon:hover span { background: #000080; padding: 0 2px; }
+
+  /* WINDOWS */
+  .window {
+    position: absolute;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    box-shadow: 2px 2px 0 #000000;
+    min-width: 280px;
+    z-index: 100;
+    font-size: 11px;
+    font-family: 'MS Sans Serif', Arial, sans-serif;
+  }
+  .window-titlebar {
+    background: linear-gradient(to right, #000080, #1084d0);
+    color: white;
+    padding: 3px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: bold;
+    user-select: none;
+    cursor: move;
+  }
+  .window-title-left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .title-icon { font-size: 14px; }
+  .window-controls {
+    display: flex;
+    gap: 2px;
+  }
+  .win-btn {
+    width: 16px;
+    height: 14px;
+    background: #c0c0c0;
+    border: 1px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: black;
+    cursor: pointer;
+    line-height: 1;
+    font-weight: bold;
+  }
+  .win-btn:active {
+    border-color: #808080 #ffffff #ffffff #808080;
+  }
+  .window-menubar {
+    padding: 2px 4px;
+    border-bottom: 1px solid #808080;
+    display: flex;
+    gap: 2px;
+  }
+  .menu-item {
+    padding: 2px 6px;
+    cursor: pointer;
+    font-size: 11px;
+  }
+  .menu-item:hover { background: #000080; color: white; }
+  .window-content {
+    padding: 8px;
+  }
+  .status-bar {
+    border-top: 1px solid #808080;
+    padding: 2px 6px;
+    font-size: 10px;
+    color: #444;
+    display: flex;
+    gap: 2px;
+  }
+  .status-panel {
+    border: 1px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    padding: 0 4px;
+    flex: 1;
+  }
+
+  /* INSET PANEL */
+  .inset {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: white;
+    padding: 6px;
+    margin-bottom: 6px;
+  }
+
+  /* WEATHER WINDOW */
+  #weatherWindow {
+    top: 60px;
+    left: 120px;
+    width: 340px;
+  }
+  .weather-display {
+    text-align: center;
+    padding: 10px;
+  }
+  .weather-emoji { font-size: 48px; display: block; margin-bottom: 8px; }
+  .weather-temp { font-size: 32px; font-weight: bold; color: #000080; }
+  .weather-desc { font-size: 13px; color: #444; margin-top: 4px; }
+  .weather-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .weather-detail-row {
+    border: 1px solid #808080;
+    padding: 3px 6px;
+    font-size: 10px;
+    background: #f0f0f0;
+  }
+
+  /* RAIN CONTROLS WINDOW */
+  #controlWindow {
+    top: 300px;
+    left: 120px;
+    width: 280px;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-size: 11px;
+  }
+  .slider-label { width: 70px; text-align: right; }
+  input[type=range] {
+    -webkit-appearance: none;
+    height: 20px;
+    background: none;
+    flex: 1;
+    cursor: pointer;
+    position: relative;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 4px;
+    background: #808080;
+    border: 1px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    margin: 8px 0;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 11px;
+    height: 20px;
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    margin-top: -10px;
+    cursor: pointer;
+  }
+  .slider-val { width: 30px; font-size: 10px; }
+  .btn {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 4px 14px;
+    font-size: 11px;
+    font-family: 'MS Sans Serif', Arial, sans-serif;
+    cursor: pointer;
+    min-width: 70px;
+    text-align: center;
+  }
+  .btn:active {
+    border-color: #808080 #ffffff #ffffff #808080;
+    padding: 5px 13px 3px 15px;
+  }
+  .btn-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  /* TASKBAR */
+  #taskbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background: #c0c0c0;
+    border-top: 2px solid #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 2px;
+    z-index: 1000;
+  }
+  #startBtn {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #808080 #808080 #ffffff;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: bold;
+    font-family: 'MS Sans Serif', Arial, sans-serif;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 22px;
+  }
+  #startBtn:active {
+    border-color: #808080 #ffffff #ffffff #808080;
+  }
+  .taskbar-divider {
+    width: 2px;
+    height: 22px;
+    border-left: 1px solid #808080;
+    border-right: 1px solid #ffffff;
+    margin: 0 2px;
+  }
+  .taskbar-btn {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-family: 'MS Sans Serif', Arial, sans-serif;
+    cursor: pointer;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .clock-area {
+    margin-left: auto;
+    border: 1px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    padding: 2px 8px;
+    font-size: 11px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* RIPPLE */
+  .ripple {
+    position: fixed;
+    border-radius: 50%;
+    border: 1px solid rgba(150, 200, 255, 0.6);
+    pointer-events: none;
+    z-index: 5;
+    animation: rippleAnim 0.8s ease-out forwards;
+  }
+  @keyframes rippleAnim {
+    0% { width: 0; height: 0; opacity: 0.7; transform: translate(0,0); }
+    100% { width: 30px; height: 10px; opacity: 0; transform: translate(-15px, -5px); }
+  }
+
+  /* PROGRESS BAR */
+  .progress-container {
+    border: 2px solid;
+    border-color: #808080 #ffffff #ffffff #808080;
+    background: white;
+    height: 16px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: repeating-linear-gradient(
+      90deg,
+      #000080 0px,
+      #000080 8px,
+      #c0c0c0 8px,
+      #c0c0c0 10px
+    );
+    width: 0%;
+    animation: progressAnim 3s ease-in-out infinite;
+  }
+  @keyframes progressAnim {
+    0% { width: 0%; }
+    50% { width: 100%; }
+    100% { width: 0%; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="rainCanvas"></canvas>
+
+<!-- Desktop Icons -->
+<div class="desktop-icons">
+  <div class="icon" ondblclick="toggleWindow('weatherWindow')">
+    <div class="icon-img">🌧️</div>
+    <span>Weather.exe</span>
+  </div>
+  <div class="icon" ondblclick="toggleWindow('controlWindow')">
+    <div class="icon-img">🎛️</div>
+    <span>Rain Control</span>
+  </div>
+</div>
+
+<!-- Weather Window -->
+<div class="window" id="weatherWindow">
+  <div class="window-titlebar" onmousedown="startDrag(event, 'weatherWindow')">
+    <div class="window-title-left">
+      <span class="title-icon">🌧️</span>
+      <span>Weather - Rain Today</span>
+    </div>
+    <div class="window-controls">
+      <div class="win-btn">_</div>
+      <div class="win-btn">□</div>
+      <div class="win-btn" onclick="toggleWindow('weatherWindow')">✕</div>
+    </div>
+  </div>
+  <div class="window-menubar">
+    <span class="menu-item">File</span>
+    <span class="menu-item">View</span>
+    <span class="menu-item">Help</span>
+  </div>
+  <div class="window-content">
+    <div class="inset">
+      <div class="weather-display">
+        <span class="weather-emoji">⛈️</span>
+        <div class="weather-temp">17°C</div>
+        <div class="weather-desc">Heavy Rain &amp; Thunder</div>
+      </div>
+      <div class="weather-details">
+        <div class="weather-detail-row">💧 Humidity: 94%</div>
+        <div class="weather-detail-row">🌬️ Wind: 18 km/h</div>
+        <div class="weather-detail-row">👁️ Visibility: 2 km</div>
+        <div class="weather-detail-row">🌡️ Feels: 15°C</div>
+      </div>
+    </div>
+    <div style="font-size:10px; color:#444; text-align:center;">
+      Downloading weather data...
+      <div class="progress-container"><div class="progress-bar"></div></div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="status-panel">Rain Alert Active</div>
+    <div class="status-panel" style="flex:0; min-width:80px;">Connected</div>
+  </div>
+</div>
+
+<!-- Rain Controls Window -->
+<div class="window" id="controlWindow">
+  <div class="window-titlebar" onmousedown="startDrag(event, 'controlWindow')">
+    <div class="window-title-left">
+      <span class="title-icon">🎛️</span>
+      <span>Rain Control Panel</span>
+    </div>
+    <div class="window-controls">
+      <div class="win-btn">_</div>
+      <div class="win-btn">□</div>
+      <div class="win-btn" onclick="toggleWindow('controlWindow')">✕</div>
+    </div>
+  </div>
+  <div class="window-content">
+    <div class="inset">
+      <div class="slider-row">
+        <span class="slider-label">Intensity:</span>
+        <input type="range" id="intensitySlider" min="50" max="500" value="200" oninput="updateRain()">
+        <span class="slider-val" id="intensityVal">200</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Speed:</span>
+        <input type="range" id="speedSlider" min="2" max="20" value="8" oninput="updateRain()">
+        <span class="slider-val" id="speedVal">8</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Wind:</span>
+        <input type="range" id="windSlider" min="-5" max="5" value="1" oninput="updateRain()">
+        <span class="slider-val" id="windVal">1</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Length:</span>
+        <input type="range" id="lengthSlider" min="5" max="40" value="15" oninput="updateRain()">
+        <span class="slider-val" id="lengthVal">15</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" onclick="setPreset('drizzle')">Drizzle</button>
+      <button class="btn" onclick="setPreset('storm')">Storm</button>
+      <button class="btn" onclick="setPreset('blizzard')">Blizzard</button>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="status-panel" id="rainStatus">Rain: Active</div>
+  </div>
+</div>
+
+<!-- Taskbar -->
+<div id="taskbar">
+  <button id="startBtn">
+    <span style="font-size:16px;">🪟</span> Start
+  </button>
+  <div class="taskbar-divider"></div>
+  <button class="taskbar-btn" onclick="toggleWindow('weatherWindow')">🌧️ Weather</button>
+  <button class="taskbar-btn" onclick="toggleWindow('controlWindow')">🎛️ Rain Control</button>
+  <div class="clock-area" id="clock"></div>
+</div>
+
+<script>
+// ─── CLOCK ────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('clock').textContent = `${h}:${m}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ─── WINDOW DRAG ──────────────────────────────────────
+let dragTarget = null, dragOffX = 0, dragOffY = 0;
+function startDrag(e, id) {
+  dragTarget = document.getElementById(id);
+  const rect = dragTarget.getBoundingClientRect();
+  dragOffX = e.clientX - rect.left;
+  dragOffY = e.clientY - rect.top;
+  dragTarget.style.zIndex = 200;
+  e.preventDefault();
+}
+document.addEventListener('mousemove', e => {
+  if (!dragTarget) return;
+  dragTarget.style.left = (e.clientX - dragOffX) + 'px';
+  dragTarget.style.top  = (e.clientY - dragOffY) + 'px';
+});
+document.addEventListener('mouseup', () => { dragTarget = null; });
+
+function toggleWindow(id) {
+  const w = document.getElementById(id);
+  w.style.display = w.style.display === 'none' ? '' : 'none';
+}
+
+// ─── RAIN ENGINE ──────────────────────────────────────
+const canvas = document.getElementById('rainCanvas');
+const ctx = canvas.getContext('2d');
+let drops = [];
+let config = { count: 200, speed: 8, wind: 1, length: 15 };
+
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+function createDrop() {
+  return {
+    x: Math.random() * canvas.width,
+    y: Math.random() * -canvas.height,
+    speed: config.speed * (0.7 + Math.random() * 0.6),
+    opacity: 0.3 + Math.random() * 0.5,
+    len: config.length * (0.6 + Math.random() * 0.8)
+  };
+}
+
+function initDrops() {
+  drops = [];
+  for (let i = 0; i < config.count; i++) {
+    const d = createDrop();
+    d.y = Math.random() * canvas.height; // scatter initial
+    drops.push(d);
+  }
+}
+initDrops();
+
+function spawnRipple(x, y) {
+  const r = document.createElement('div');
+  r.className = 'ripple';
+  r.style.left = x + 'px';
+  r.style.top  = y + 'px';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 800);
+}
+
+let frame = 0;
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  frame++;
+
+  for (let d of drops) {
+    ctx.beginPath();
+    ctx.moveTo(d.x, d.y);
+    ctx.lineTo(d.x + config.wind * d.len * 0.3, d.y + d.len);
+    ctx.strokeStyle = `rgba(140, 195, 240, ${d.opacity})`;
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+
+    d.x += config.wind * 0.5;
+    d.y += d.speed;
+
+    if (d.y > canvas.height) {
+      // maybe spawn ripple
+      if (Math.random() < 0.08) spawnRipple(d.x, canvas.height - 30);
+      Object.assign(d, createDrop());
+      d.y = -10;
+    }
+  }
+
+  // occasional lightning flash
+  if (Math.random() < 0.001) {
+    ctx.fillStyle = 'rgba(200,220,255,0.12)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ─── CONTROLS ─────────────────────────────────────────
+function updateRain() {
+  config.count  = +document.getElementById('intensitySlider').value;
+  config.speed  = +document.getElementById('speedSlider').value;
+  config.wind   = +document.getElementById('windSlider').value;
+  config.length = +document.getElementById('lengthSlider').value;
+  document.getElementById('intensityVal').textContent = config.count;
+  document.getElementById('speedVal').textContent     = config.speed;
+  document.getElementById('windVal').textContent      = config.wind;
+  document.getElementById('lengthVal').textContent    = config.length;
+  // sync drop count
+  while (drops.length < config.count) drops.push(createDrop());
+  if (drops.length > config.count) drops.length = config.count;
+  document.getElementById('rainStatus').textContent = `Drops: ${config.count}`;
+}
+
+function setPreset(type) {
+  const presets = {
+    drizzle:  { count:80,  speed:4,  wind:0,  length:8  },
+    storm:    { count:400, speed:14, wind:3,  length:25 },
+    blizzard: { count:300, speed:6,  wind:4,  length:6  }
+  };
+  const p = presets[type];
+  document.getElementById('intensitySlider').value = p.count;
+  document.getElementById('speedSlider').value     = p.speed;
+  document.getElementById('windSlider').value      = p.wind;
+  document.getElementById('lengthSlider').value    = p.length;
+  Object.assign(config, p);
+  while (drops.length < config.count) drops.push(createDrop());
+  if (drops.length > config.count) drops.length = config.count;
+  updateRain();
+}
+</script>
+</body>
+</html>
