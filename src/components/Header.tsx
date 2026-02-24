@@ -108,31 +108,31 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
         .header-logo:hover { transform: none; box-shadow: none; }
         .header-logo-text {
           font-size: 15px; font-weight: bold; letter-spacing: 0; font-family: var(--font-header);
-          color: #ffffff; text-shadow: 1px 1px #000060;
+          color: #ffffff; text-shadow: 1px 1px #5a3620;
         }
         .header-logo-dot { color: #ffffff; }
         .header-search-wrap {
           flex: 1; max-width: 420px; position: relative; display: flex; align-items: center;
         }
-        .header-search-icon { position: absolute; left: 6px; color: #808080; pointer-events: none; }
+        .header-search-icon { position: absolute; left: 6px; color: #c07f55; pointer-events: none; }
         .header-search {
           width: 100%;
           height: 22px !important;
           padding: 2px 8px 2px 24px !important;
           border-radius: 0 !important;
           border: 2px solid !important;
-          border-color: #808080 #ffffff #ffffff #808080 !important;
+          border-color: #c07f55 #ffffff #ffffff #c07f55 !important;
           background: #ffffff !important;
           color: #000000 !important;
           font-size: 12px !important;
           box-shadow: none !important;
           outline: none !important;
         }
-        .header-search::placeholder { color: #808080; }
+        .header-search::placeholder { color: #c07f55; }
         .header-search:focus {
-          border-color: #808080 #ffffff #ffffff #808080 !important;
+          border-color: #c07f55 #ffffff #ffffff #c07f55 !important;
           box-shadow: none !important;
-          outline: 1px dotted #000080 !important;
+          outline: 1px dotted #73492a !important;
           outline-offset: 1px !important;
         }
         .header-actions { display: flex; align-items: center; gap: 4px; margin-left: auto; flex-shrink: 0; }

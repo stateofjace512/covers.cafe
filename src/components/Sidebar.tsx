@@ -135,12 +135,12 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
         }
         .sidebar-avatar {
           width: 32px; height: 32px; border-radius: 0; flex-shrink: 0;
-          background: #808080;
+          background: #c07f55;
           border: 2px solid;
-          border-color: #808080 #ffffff #ffffff #808080;
+          border-color: #c07f55 #ffffff #ffffff #c07f55;
           box-shadow: none;
           display: flex; align-items: center; justify-content: center;
-          color: #c0c0c0; overflow: hidden;
+          color: #dea77d; overflow: hidden;
         }
         .sidebar-avatar-img { width: 100%; height: 100%; object-fit: cover; }
         .sidebar-user-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }

@@ -89,15 +89,15 @@ export default function InfoModal({
           display: block;
         }
         .info-modal-title {
-          font-size: 25px;
+          font-size: 13px;
+          font-weight: bold;
           color: var(--body-text);
           margin: 0;
         }
-        [data-theme="dark"] .info-modal-title { }
         .info-modal-body {
-          font-size: 21px;
+          font-size: 12px;
           color: var(--body-text-muted);
-          line-height: 1.55;
+          line-height: 1.5;
           margin: 0;
         }
         .info-modal-actions {

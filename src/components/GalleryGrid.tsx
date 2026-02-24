@@ -370,51 +370,40 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
 
       <style>{`
         .gallery-toolbar {
-          display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap;
-          margin-bottom: 16px;
+          display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap;
+          margin-bottom: 10px;
         }
-        .gallery-sort-wrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .gallery-sort-label { font-size: 18px; color: var(--body-text-muted); }
+        .gallery-sort-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .gallery-sort-label { font-size: 11px; color: var(--body-text-muted); }
         .gallery-sort-select {
-          padding: 5px 10px; border-radius: 4px; font-size: 18px;
-          border: 1px solid var(--body-card-border);
-          background: var(--body-card-bg); color: var(--body-text);
-          box-shadow: var(--shadow-sm); cursor: pointer; outline: none;
+          padding: 2px 6px; font-size: 11px; height: 22px;
+          border: 2px solid; border-color: #c07f55 #ffffff #ffffff #c07f55;
+          background: #ffffff; color: #000000;
+          box-shadow: none; cursor: pointer; outline: none;
           font-family: var(--font-body);
         }
-        .gallery-sort-select:focus { border-color: var(--accent); }
+        .gallery-sort-select:focus { outline: 1px dotted #73492a; outline-offset: 1px; }
 
         .gallery-loading, .gallery-empty {
           display: flex; flex-direction: column;
           align-items: center; justify-content: center;
-          gap: 12px; padding: 60px 20px;
+          gap: 10px; padding: 40px 20px;
           color: var(--body-text-muted); text-align: center;
         }
         .gallery-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .gallery-empty p { font-size: 20px; max-width: 300px; line-height: 1.6; }
-        .gallery-search-label { font-size: 19px; color: var(--body-text-muted); margin-bottom: 12px; }
-        .collection-drag-zone { margin-bottom: 12px; border: 2px dashed var(--accent); border-radius: 8px; padding: 12px; text-align: center; color: var(--accent-dark); background: rgba(192,90,26,0.08); }
-        .gallery-load-more {
-          display: flex; justify-content: center; padding: 24px 0 8px;
-        }
+        .gallery-empty p { font-size: 12px; max-width: 300px; line-height: 1.5; }
+        .gallery-search-label { font-size: 12px; color: var(--body-text-muted); margin-bottom: 8px; }
+        /* Win95 drag zone: flat dashed border, no rounding */
+        .collection-drag-zone { margin-bottom: 10px; border: 2px dashed var(--body-border); padding: 10px; text-align: center; color: var(--body-text-muted); background: var(--body-card-bg); font-size: 11px; }
+        .gallery-load-more { display: flex; justify-content: center; padding: 16px 0 6px; }
         .gallery-load-more-btn {
-          display: flex; align-items: center; gap: 7px;
-          padding: 9px 28px; font-size: 19px;
-          background-image:
-            linear-gradient(180deg, rgba(234,187,149,0.7) 0%, rgba(222,167,125,0.7) 55%, rgba(200,147,92,0.7) 100%),
-            var(--skeu-hero);
-          background-size: 100% 100%, cover;
-          background-position: center, center;
+          display: flex; align-items: center; gap: 6px;
+          padding: 4px 20px; font-size: 12px;
+          background: #dea77d; background-image: none;
         }
         .gallery-load-more-btn::before { display: none; }
-        [data-theme="dark"] .gallery-load-more-btn {
-          background-image:
-            linear-gradient(180deg, rgba(126,90,71,0.7) 0%, rgba(111,78,60,0.7) 55%, rgba(90,61,46,0.7) 100%),
-            var(--skeu-hero);
-          background-size: 100% 100%, cover;
-          background-position: center, center;
-        }
+        [data-theme="dark"] .gallery-load-more-btn { background: #3d1a05; background-image: none; }
       `}</style>
     </>
   );

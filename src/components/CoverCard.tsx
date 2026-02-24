@@ -162,7 +162,7 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
         .cover-card-shimmer {
           position: absolute;
           inset: 0;
-          background: #a0a0a0;
+          background: #c8935c;
         }
         .cover-card-placeholder {
           width: 100%; height: 100%;
@@ -181,19 +181,19 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
         .cover-card-action-btn {
           display: flex; align-items: center; justify-content: center;
           width: 22px; height: 22px; border-radius: 0;
-          background: #c0c0c0;
+          background: #dea77d;
           border: 2px solid;
-          border-color: #ffffff #808080 #808080 #ffffff;
+          border-color: #ffffff #c07f55 #c07f55 #ffffff;
           color: #000000; cursor: pointer;
           box-shadow: none;
           transition: none; padding: 0;
         }
         .cover-card-action-btn:hover { background: #d0d0d0; transform: none; box-shadow: none; }
-        .cover-card-action-btn:active { border-color: #808080 #ffffff #ffffff #808080; }
+        .cover-card-action-btn:active { border-color: #c07f55 #ffffff #ffffff #c07f55; }
         .cover-card-delete-btn { color: #800000; }
         .cover-card-delete-btn--confirm { background: #800000 !important; color: #ffffff !important; }
         .cover-card-meta { display: flex; align-items: center; gap: 4px; margin-top: 3px; flex-wrap: wrap; position: relative; }
-        .cover-card-year { font-size: 10px; color: var(--body-text-muted); background: #d4d0c8; padding: 0 4px; border: 1px solid #808080; border-radius: 0; }
+        .cover-card-year { font-size: 10px; color: var(--body-text-muted); background: #eabb95; padding: 0 4px; border: 1px solid #c07f55; border-radius: 0; }
         .cover-card-fav-count { display: flex; align-items: center; gap: 2px; font-size: 10px; color: var(--body-text-muted); }
         .cover-card-acotw { display: inline-flex; align-items: center; gap: 2px; font-size: 10px; color: #806800; background: #ffffc0; border: 1px solid #c8a800; padding: 0 4px; border-radius: 0; }
         .cover-card-private { display: inline-flex; align-items: center; gap: 2px; font-size: 10px; color: #404060; background: #e0e0f0; border: 1px solid #8080a0; padding: 0 4px; border-radius: 0; }

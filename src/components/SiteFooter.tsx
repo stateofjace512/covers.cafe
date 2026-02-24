@@ -37,11 +37,11 @@ export default function SiteFooter() {
           overflow: hidden;
           /* Win95 statusbar: raised top edge */
           border-top: 2px solid #ffffff;
-          background: #c0c0c0;
+          background: #dea77d;
         }
         [data-theme="dark"] .site-footer-inner {
           background: var(--body-card-bg);
-          border-top-color: #606060;
+          border-top-color: #6b3d1f;
         }
         .site-footer-inner::before { display: none; }
         .site-footer-inner > * { position: relative; z-index: 1; }
@@ -86,7 +86,7 @@ export default function SiteFooter() {
         }
 
         .site-footer-links button:hover {
-          background: #000080;
+          background: #73492a;
           color: #ffffff;
           text-decoration: none;
         }

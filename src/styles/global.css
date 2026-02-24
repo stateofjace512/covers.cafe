@@ -1,40 +1,40 @@
 /* ============================================================
    covers.cafe — Global Stylesheet
-   Windows 95 inspired design: silver, teal, navy
+   Windows 95 inspired design: brown panels, warm borders
    ============================================================ */
 
 /* No custom web fonts — using Win95 system fonts for authenticity */
 
 /* ---------- CSS Custom Properties ---------- */
 :root {
-  /* Light mode — Classic Win95 */
-  --header-bg: #000080;
-  --sidebar-bg: #c0c0c0;
-  --body-bg: #008080;
+  /* Light mode — Win95 with brand brown palette */
+  --header-bg: #73492a;
+  --sidebar-bg: #dea77d;
+  --body-bg: #ffdec5;
 
-  --header-bg-light: #1111aa;
-  --header-bg-dark: #000060;
-  --header-text: #ffffff;
-  --header-text-muted: rgba(255, 255, 255, 0.75);
+  --header-bg-light: #8a5a35;
+  --header-bg-dark: #5a3620;
+  --header-text: #fff8f0;
+  --header-text-muted: rgba(255, 248, 240, 0.75);
 
-  --sidebar-bg-light: #d4d0c8;
-  --sidebar-bg-dark: #a0a0a0;
-  --sidebar-border: #808080;
-  --sidebar-text: #000000;
-  --sidebar-text-muted: #444444;
-  --sidebar-active-bg: #000080;
-  --sidebar-active-text: #ffffff;
-  --sidebar-hover-bg: #000080;
+  --sidebar-bg-light: #eabb95;
+  --sidebar-bg-dark: #c8935c;
+  --sidebar-border: #c07f55;
+  --sidebar-text: #3d2009;
+  --sidebar-text-muted: #6b3d1f;
+  --sidebar-active-bg: #73492a;
+  --sidebar-active-text: #fff8f0;
+  --sidebar-hover-bg: rgba(115, 73, 42, 0.18);
 
-  --body-text: #000000;
-  --body-text-muted: #444444;
-  --body-border: #808080;
-  --body-card-bg: #c0c0c0;
-  --body-card-border: #808080;
+  --body-text: #2e1a08;
+  --body-text-muted: #7a4a27;
+  --body-border: #c07f55;
+  --body-card-bg: #fff3e8;
+  --body-card-border: #c07f55;
 
-  --accent: #000080;
-  --accent-light: #0000c0;
-  --accent-dark: #000060;
+  --accent: #73492a;
+  --accent-light: #c05a1a;
+  --accent-dark: #5a3620;
   --accent-text: #ffffff;
 
   /* Disable skeuomorphic images — not used in Win95 theme */
@@ -58,8 +58,8 @@
   --shadow-sm: none;
   --shadow-md: none;
   --shadow-lg: none;
-  --shadow-inset: inset 2px 2px #808080, inset -2px -2px #ffffff;
-  --shadow-inset-sm: inset 1px 1px #808080, inset -1px -1px #ffffff;
+  --shadow-inset: inset 2px 2px #c07f55, inset -2px -2px #ffffff;
+  --shadow-inset-sm: inset 1px 1px #c07f55, inset -1px -1px #ffffff;
 
   --btn-shadow: none;
   --btn-shadow-hover: none;
@@ -68,36 +68,36 @@
 
 /* ---------- Dark mode (Win95-style dark theme) ---------- */
 [data-theme="dark"] {
-  --header-bg: #000080;
-  --header-bg-light: #0000aa;
-  --header-bg-dark: #000060;
+  --header-bg: #73492a;
+  --header-bg-light: #73492a;
+  --header-bg-dark: #5a3620;
   --header-text: #ffffff;
   --header-text-muted: rgba(255, 255, 255, 0.75);
 
-  --sidebar-bg: #404040;
-  --sidebar-bg-light: #505050;
-  --sidebar-bg-dark: #303030;
-  --sidebar-border: #606060;
+  --sidebar-bg: #3d1a05;
+  --sidebar-bg-light: #50280f;
+  --sidebar-bg-dark: #2a1505;
+  --sidebar-border: #6b3d1f;
   --sidebar-text: #ffffff;
-  --sidebar-text-muted: #c0c0c0;
-  --sidebar-active-bg: #000080;
+  --sidebar-text-muted: #dea77d;
+  --sidebar-active-bg: #73492a;
   --sidebar-active-text: #ffffff;
-  --sidebar-hover-bg: rgba(0, 0, 128, 0.85);
+  --sidebar-hover-bg: rgba(115, 73, 42, 0.85);
 
-  --body-bg: #004040;
-  --body-text: #ffffff;
-  --body-text-muted: #c0c0c0;
-  --body-border: #606060;
-  --body-card-bg: #404040;
-  --body-card-border: #606060;
+  --body-bg: #2f241a;
+  --body-text: #f5e8d8;
+  --body-text-muted: #b09070;
+  --body-border: #6b3d1f;
+  --body-card-bg: #3d1a05;
+  --body-card-border: #6b3d1f;
 
-  --accent: #00c8ff;
-  --accent-light: #40d8ff;
-  --accent-dark: #0090c0;
-  --accent-text: #000000;
+  --accent: #e07030;
+  --accent-light: #c05a1a;
+  --accent-dark: #8f3f0f;
+  --accent-text: #fff8f0;
 
-  --shadow-inset: inset 2px 2px #303030, inset -2px -2px #606060;
-  --shadow-inset-sm: inset 1px 1px #303030, inset -1px -1px #606060;
+  --shadow-inset: inset 2px 2px #2a1505, inset -2px -2px #6b3d1f;
+  --shadow-inset-sm: inset 1px 1px #2a1505, inset -1px -1px #6b3d1f;
 }
 
 [data-no-theme-images="true"] {
@@ -152,23 +152,23 @@ a:hover {
   height: 16px;
 }
 ::-webkit-scrollbar-track {
-  background: #c0c0c0;
+  background: #dea77d;
   border: 2px solid;
-  border-color: #808080 #ffffff #ffffff #808080;
+  border-color: #c07f55 #ffffff #ffffff #c07f55;
 }
 ::-webkit-scrollbar-thumb {
-  background: #c0c0c0;
+  background: #dea77d;
   border: 2px solid;
-  border-color: #ffffff #808080 #808080 #ffffff;
+  border-color: #ffffff #c07f55 #c07f55 #ffffff;
   border-radius: 0;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #b0b0b0;
 }
 ::-webkit-scrollbar-button {
-  background: #c0c0c0;
+  background: #dea77d;
   border: 2px solid;
-  border-color: #ffffff #808080 #808080 #ffffff;
+  border-color: #ffffff #c07f55 #c07f55 #ffffff;
   height: 16px;
   width: 16px;
   display: block;
@@ -228,7 +228,7 @@ a:hover {
   display: flex;
   flex-direction: column;
   /* Silver "window interior" surface */
-  background: #c0c0c0;
+  background: #dea77d;
 }
 
 [data-theme="dark"] .site-main {
@@ -240,7 +240,7 @@ a:hover {
   background: var(--body-card-bg);
   /* Win95 raised panel border */
   border: 2px solid;
-  border-color: #ffffff #808080 #808080 #ffffff;
+  border-color: #ffffff #c07f55 #c07f55 #ffffff;
   border-radius: 0;
   box-shadow: none;
   padding: 12px;
@@ -248,7 +248,7 @@ a:hover {
 }
 
 [data-theme="dark"] .card {
-  border-color: #606060 #303030 #303030 #606060;
+  border-color: #6b3d1f #2a1505 #2a1505 #6b3d1f;
 }
 
 /* ---------- Buttons ---------- */
@@ -260,12 +260,12 @@ a:hover {
   border-radius: 0;
   /* Win95 raised button border */
   border: 2px solid;
-  border-color: #ffffff #808080 #808080 #ffffff;
+  border-color: #ffffff #c07f55 #c07f55 #ffffff;
   font-family: var(--font-body);
   font-size: 12px;
   letter-spacing: 0;
   cursor: pointer;
-  background: #c0c0c0;
+  background: #dea77d;
   color: #000000;
   box-shadow: none;
   transition: none;
@@ -284,15 +284,15 @@ a:hover {
 
 .btn:active {
   /* Win95 depressed/sunken button */
-  border-color: #808080 #ffffff #ffffff #808080;
+  border-color: #c07f55 #ffffff #ffffff #c07f55;
   transform: none;
 }
 
 /* Primary: navy blue (like a default dialog button) */
 .btn-primary {
-  background: #000080;
+  background: #73492a;
   color: #ffffff;
-  border-color: #ffffff #808080 #808080 #ffffff;
+  border-color: #ffffff #c07f55 #c07f55 #ffffff;
   background-image: none;
   /* Win95 default button has a bold outer border */
   outline: 1px solid #000000;
@@ -306,12 +306,12 @@ a:hover {
 }
 
 .btn-primary:active {
-  background: #000060;
-  border-color: #808080 #ffffff #ffffff #808080;
+  background: #5a3620;
+  border-color: #c07f55 #ffffff #ffffff #c07f55;
 }
 
 .btn-secondary {
-  background: #c0c0c0;
+  background: #dea77d;
   color: #000000;
   background-image: none;
 }
@@ -338,19 +338,19 @@ a:hover {
 }
 
 [data-theme="dark"] .btn {
-  background: #404040;
+  background: #3d1a05;
   color: #ffffff;
-  border-color: #606060 #303030 #303030 #606060;
+  border-color: #6b3d1f #2a1505 #2a1505 #6b3d1f;
 }
 
 [data-theme="dark"] .btn:active {
-  border-color: #303030 #606060 #606060 #303030;
+  border-color: #2a1505 #6b3d1f #6b3d1f #2a1505;
 }
 
 [data-theme="dark"] .btn-primary {
-  background: #000080;
+  background: #73492a;
   color: #ffffff;
-  border-color: #606060 #303030 #303030 #606060;
+  border-color: #6b3d1f #2a1505 #2a1505 #6b3d1f;
 }
 
 /* ---------- Badges ---------- */
@@ -361,7 +361,7 @@ a:hover {
   font-size: 10px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  background: #000080;
+  background: #73492a;
   color: #ffffff;
   box-shadow: none;
   border: 1px solid #000040;
@@ -396,7 +396,7 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--body-card-bg);
   /* Win95 raised window border */
   border: 2px solid;
-  border-color: #ffffff #808080 #808080 #ffffff;
+  border-color: #ffffff #c07f55 #c07f55 #ffffff;
   border-radius: 0;
   overflow: hidden;
   box-shadow: none;
@@ -408,12 +408,12 @@ h1, h2, h3, h4, h5, h6 {
 .album-card:hover {
   box-shadow: none;
   transform: none;
-  outline: 1px dotted #000080;
+  outline: 1px dotted #73492a;
   outline-offset: 1px;
 }
 
 [data-theme="dark"] .album-card {
-  border-color: #606060 #303030 #303030 #606060;
+  border-color: #6b3d1f #2a1505 #2a1505 #6b3d1f;
 }
 
 .album-card-cover {
@@ -471,7 +471,7 @@ select {
   border-radius: 0;
   /* Win95 sunken text field border */
   border: 2px solid;
-  border-color: #808080 #ffffff #ffffff #808080;
+  border-color: #c07f55 #ffffff #ffffff #c07f55;
   background: #ffffff;
   color: #000000;
   box-shadow: none;
@@ -482,9 +482,9 @@ select {
 input:focus,
 textarea:focus,
 select:focus {
-  border-color: #808080 #ffffff #ffffff #808080;
+  border-color: #c07f55 #ffffff #ffffff #c07f55;
   box-shadow: none;
-  outline: 1px dotted #000080;
+  outline: 1px dotted #73492a;
   outline-offset: 1px;
 }
 
@@ -542,14 +542,26 @@ textarea {
 /* Win95 dialog box */
 .modal-box {
   position: relative;
-  background: #c0c0c0;
+  background: #dea77d;
   background-image: none;
   border: 2px solid;
-  border-color: #ffffff #808080 #808080 #ffffff;
+  border-color: #ffffff #c07f55 #c07f55 #ffffff;
   border-radius: 0;
   box-shadow: none;
   animation: modal-in 0.08s ease;
   overflow: visible;
+}
+
+[data-theme="dark"] .modal-box {
+  background: #3d1a05;
+  border-color: #6b3d1f #2a1505 #2a1505 #6b3d1f;
+}
+
+/* Ensure text inside modals is readable in dark mode */
+[data-theme="dark"] .modal-box,
+[data-theme="dark"] .modal-box input,
+[data-theme="dark"] .modal-box textarea {
+  color: var(--body-text);
 }
 
 @keyframes modal-in {
@@ -565,7 +577,7 @@ textarea {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  background: #c0c0c0;
+  background: #dea77d;
 }
 
 [data-theme="dark"] .site-main {
