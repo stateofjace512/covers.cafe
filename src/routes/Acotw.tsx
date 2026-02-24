@@ -74,30 +74,34 @@ export default function Acotw() {
 
   return (
     <div className="acotw-page">
-  
+    
       {/* HEADER (always visible) */}
       <div className="acotw-header">
         <h1 className="section-title acotw-title-line">
-          <TrophyIcon size={22} />
-          <span>Album Cover Of The Week</span>
-        
+          <span className="acotw-title-chunk">
+            <TrophyIcon size={22} />
+            <span>Album Cover Of The Week</span>
+          </span>
+    
           {poll && (
-            <span className="acotw-week-row">
+            <span className="acotw-title-chunk">
               Week of {formatWeek(poll.week_start)}
             </span>
           )}
-        
+    
           {loading ? (
-            <span className="text-muted">Loading poll…</span>
+            <span className="acotw-title-chunk">Loading poll…</span>
           ) : !poll || nominees.length === 0 ? (
-            <span className="text-muted">No poll yet. Favorite some covers to fuel next week’s nominees!</span>
+            <span className="acotw-title-chunk">
+              No poll yet. Favorite some covers to fuel next week’s nominees!
+            </span>
           ) : (
             <>
-              <span className="acotw-vote-total">
-                <FavoritesIcon size={13} />
+              <span className="acotw-title-chunk">
+                <FavoritesIcon size={18} />
                 {totalVotes} vote{totalVotes !== 1 ? 's' : ''} cast
               </span>
-        
+    
               {!isClosed && !hasVoted && !user && (
                 <button
                   className="btn btn-primary acotw-signin-btn"
@@ -106,10 +110,10 @@ export default function Acotw() {
                   Sign in to vote
                 </button>
               )}
-        
+    
               {!isClosed && hasVoted && (
-                <span className="acotw-voted-label">
-                  <ClockIcon size={13} />
+                <span className="acotw-title-chunk">
+                  <ClockIcon size={18} />
                   You voted! Results reveal Sunday night.
                 </span>
               )}
@@ -117,7 +121,7 @@ export default function Acotw() {
           )}
         </h1>
       </div>
-  
+    
       {/* BODY (only render when poll exists and not loading) */}
       {!loading && poll && nominees.length > 0 && (
         <>
@@ -311,9 +315,25 @@ export default function Acotw() {
         .acotw-title-line {
           display: flex;
           align-items: center;
-          gap: 12px;
           flex-wrap: wrap;
+          gap: 20px;
         }
+        
+        .acotw-title-chunk {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;           /* icon-to-text spacing */
+          font: inherit;
+          color: inherit;
+          line-height: inherit;
+        }
+        
+        .acotw-title-line span,
+        .acotw-title-line svg {
+          color: inherit;
+        }
+
+        .acotw-title-line svg { display: block; }
         
         /* Top row: title + week */
         .acotw-header-top {
