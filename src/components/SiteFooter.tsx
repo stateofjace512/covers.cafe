@@ -22,98 +22,88 @@ export default function SiteFooter() {
       <style>{`
         .site-footer {
           margin-top: auto;
-          margin-left: -32px;
-          margin-right: -32px;
-          margin-bottom: -28px;
+          margin-left: -14px;
+          margin-right: -14px;
+          margin-bottom: -10px;
         }
 
         .site-footer-inner {
           display: flex;
           align-items: center;
-          gap: 20px;
-          padding: 16px 32px;
+          gap: 12px;
+          padding: 4px 14px;
           flex-wrap: wrap;
           position: relative;
           overflow: hidden;
+          /* Win95 statusbar: raised top edge */
+          border-top: 2px solid #ffffff;
+          background: #c0c0c0;
         }
-        .site-footer-inner::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
-            var(--skeu-card);
-          background-size: 100% 100%, auto 100%;
-          background-position: center, center;
-          background-repeat: no-repeat, repeat-x;
-          pointer-events: none;
-          z-index: 0;
+        [data-theme="dark"] .site-footer-inner {
+          background: var(--body-card-bg);
+          border-top-color: #606060;
         }
-        .site-footer-inner > * {
-          position: relative;
-          z-index: 1;
-        }
+        .site-footer-inner::before { display: none; }
+        .site-footer-inner > * { position: relative; z-index: 1; }
 
         .site-footer-brand {
           display: flex;
           flex-direction: column;
-          gap: 2px;
+          gap: 1px;
           margin-right: auto;
         }
 
         .site-footer-logo {
-          font-size: 21px;
+          font-size: 12px;
+          font-weight: bold;
           color: var(--body-text);
-          letter-spacing: 0.5px;
+          letter-spacing: 0;
         }
 
-        [data-theme="dark"] .site-footer-logo { }
-
         .site-footer-tagline {
-          font-size: 17px;
+          font-size: 10px;
           color: var(--body-text-muted);
-          letter-spacing: 0.3px;
         }
 
         .site-footer-links {
           display: flex;
           align-items: center;
-          gap: 4px;
+          gap: 2px;
         }
 
         .site-footer-links button {
           background: none;
-          border: 1px solid transparent;
-          border-radius: 4px;
+          border: none;
+          border-radius: 0;
           color: var(--body-text-muted);
-          font-size: 18px;
+          font-size: 11px;
           font-family: var(--font-body);
           cursor: pointer;
-          padding: 4px 10px;
+          padding: 2px 6px;
           box-shadow: none;
-          transition: background 0.1s, color 0.1s, border-color 0.1s;
+          transition: none;
+          text-decoration: underline;
         }
 
         .site-footer-links button:hover {
-          background: var(--body-card-bg);
-          border-color: var(--body-card-border);
-          color: var(--accent);
+          background: #000080;
+          color: #ffffff;
+          text-decoration: none;
         }
 
         .site-footer-copy {
-          font-size: 17px;
+          font-size: 11px;
           color: var(--body-text-muted);
-          opacity: 0.7;
         }
 
         @media (max-width: 900px) {
-          .site-footer { margin-left: -16px; margin-right: -16px; margin-bottom: -20px; }
-          .site-footer-inner { padding-left: 16px; padding-right: 16px; }
+          .site-footer { margin-left: -10px; margin-right: -10px; margin-bottom: -8px; }
+          .site-footer-inner { padding-left: 10px; padding-right: 10px; }
         }
 
         @media (max-width: 640px) {
-          .site-footer { margin-left: -12px; margin-right: -12px; margin-bottom: -16px; }
-          .site-footer-inner { justify-content: center; text-align: center; padding-left: 12px; padding-right: 12px; }
+          .site-footer { margin-left: -8px; margin-right: -8px; margin-bottom: -6px; }
+          .site-footer-inner { justify-content: center; text-align: center; padding-left: 8px; padding-right: 8px; }
           .site-footer-brand { align-items: center; margin-right: 0; }
         }
       `}</style>
