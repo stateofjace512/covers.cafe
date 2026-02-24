@@ -91,6 +91,7 @@ interface OfficialCover {
   album_title: string | null;
   release_year: number | null;
   album_cover_url: string;
+  source_payload: Record<string, unknown> | null;
 }
 
 export default function MusicArtistDetail() {
@@ -124,6 +125,7 @@ export default function MusicArtistDetail() {
   const [selectedArtists, setSelectedArtists] = useState<Set<string>>(new Set());
   const [mergeCanonical, setMergeCanonical] = useState('');
   const [merging, setMerging] = useState(false);
+  const [mergeError, setMergeError] = useState('');
   // Undo state
   const [undoSnapshot, setUndoSnapshot] = useState<{ records: { album_cover_url: string; artist_name: string }[]; aliases: string[] } | null>(null);
   const [undoCountdown, setUndoCountdown] = useState(0);
@@ -192,7 +194,7 @@ export default function MusicArtistDetail() {
 
       const { data } = await supabase
         .from('covers_cafe_official_covers')
-        .select('artist_name, album_title, release_year, album_cover_url')
+        .select('artist_name, album_title, release_year, album_cover_url, source_payload')
         .or(orFilter)
         .order('release_year', { ascending: false })
         .range(0, PAGE_SIZE);
@@ -275,6 +277,7 @@ export default function MusicArtistDetail() {
 
   const handleMerge = async () => {
     if (!session?.access_token || !mergeCanonical.trim() || selectedArtists.size < 2) return;
+    setMergeError('');
     const canonical = mergeCanonical.trim();
     // Capture snapshot for undo
     const snapshot = officialCovers
@@ -287,6 +290,11 @@ export default function MusicArtistDetail() {
       body: JSON.stringify({ artistNames: Array.from(selectedArtists), canonicalName: canonical }),
     });
     setMerging(false);
+    if (!res.ok) {
+      const msg = await res.text().catch(() => '');
+      setMergeError(msg || 'Merge failed. Please try again.');
+      return;
+    }
     if (res.ok) {
       const resJson = await res.json().catch(() => ({})) as { aliases?: string[] };
       const createdAliases: string[] = resJson.aliases ?? [];
@@ -516,11 +524,12 @@ export default function MusicArtistDetail() {
             className="osr-merge-input"
             placeholder="Canonical artist name…"
             value={mergeCanonical}
-            onChange={(e) => setMergeCanonical(e.target.value)}
+            onChange={(e) => { setMergeCanonical(e.target.value); setMergeError(''); }}
           />
           <button className="btn btn-primary osr-merge-confirm" onClick={handleMerge} disabled={merging || !mergeCanonical.trim()}>
             {merging ? <><LoadingIcon size={13} className="ma-spinner" /> Merging…</> : 'Merge'}
           </button>
+          {mergeError && <span className="osr-merge-error">{mergeError}</span>}
         </div>
       )}
 
@@ -544,7 +553,11 @@ export default function MusicArtistDetail() {
                   data-official-url={cover.album_cover_url}
                   data-artist-name={aName}
                   data-album-title={cover.album_title ?? ''}
-                  onClick={() => selectMode ? toggleArtist(aName) : window.open(cover.album_cover_url, '_blank', 'noopener,noreferrer')}
+                  onClick={() => {
+                    if (selectMode) { toggleArtist(aName); return; }
+                    const pageUrl = (cover.source_payload?.collectionViewUrl ?? cover.source_payload?.trackViewUrl) as string | undefined;
+                    window.open(pageUrl ?? cover.album_cover_url, '_blank', 'noopener,noreferrer');
+                  }}
                 >
                   <div className="album-card-cover">
                     <img src={cover.album_cover_url} alt={`${cover.album_title ?? 'Album'} by ${aName || 'Unknown'}`} className="official-card-img" loading="lazy" />
@@ -686,6 +699,7 @@ export default function MusicArtistDetail() {
         .osr-merge-label { font-size: 15px; color: var(--body-text-muted); flex-shrink: 0; }
         .osr-merge-input { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--body-text); font-size: 15px; font-family: var(--font-body); flex: 1; min-width: 180px; }
         .osr-merge-confirm { font-size: 14px; padding: 6px 18px; }
+        .osr-merge-error { font-size: 13px; color: #f87171; flex-basis: 100%; margin-top: 4px; }
         .official-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .official-card--clickable { cursor: pointer; }
         .official-card--selected .album-card-cover { outline: 3px solid var(--accent); outline-offset: -3px; border-radius: 4px; }

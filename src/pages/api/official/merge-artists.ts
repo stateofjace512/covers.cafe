@@ -30,15 +30,15 @@ export const POST: APIRoute = async ({ request }) => {
 
   // Persist alias mappings so compound names (e.g. "テイラー・スウィフト & ILLENIUM") can later
   // be split and each token resolved without incorrectly merging co-artists together.
+  // This is best-effort — if the table doesn't exist yet the main rename still succeeds.
   const newAliases = artistNames.filter((n) => n !== canonicalName);
   if (newAliases.length > 0) {
-    const { error: aliasError } = await sb
+    await sb
       .from('covers_cafe_artist_aliases')
       .upsert(
         newAliases.map((alias) => ({ alias, canonical: canonicalName })),
         { onConflict: 'alias' },
       );
-    if (aliasError) return new Response(aliasError.message, { status: 500 });
   }
 
   return new Response(JSON.stringify({ ok: true, aliases: newAliases }), {

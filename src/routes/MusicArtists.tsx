@@ -59,6 +59,7 @@ export default function MusicArtists() {
   const [selectedArtists, setSelectedArtists] = useState<Set<string>>(new Set());
   const [mergeCanonical, setMergeCanonical] = useState('');
   const [merging, setMerging] = useState(false);
+  const [mergeError, setMergeError] = useState('');
   const [undoSnapshot, setUndoSnapshot] = useState<{ records: { album_cover_url: string; artist_name: string }[]; aliases: string[] } | null>(null);
   const [undoCountdown, setUndoCountdown] = useState(0);
   const undoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -155,6 +156,7 @@ export default function MusicArtists() {
 
   const handleMerge = async () => {
     if (!session?.access_token || !mergeCanonical.trim() || selectedArtists.size < 2) return;
+    setMergeError('');
     const canonical = mergeCanonical.trim();
     // Fetch all covers for selected artists to build undo snapshot
     const { data: snapData } = await supabase
@@ -170,6 +172,11 @@ export default function MusicArtists() {
       body: JSON.stringify({ artistNames: Array.from(selectedArtists), canonicalName: canonical }),
     });
     setMerging(false);
+    if (!res.ok) {
+      const msg = await res.text().catch(() => '');
+      setMergeError(msg || 'Merge failed. Please try again.');
+      return;
+    }
     if (res.ok) {
       const resJson = await res.json().catch(() => ({})) as { aliases?: string[] };
       const createdAliases: string[] = resJson.aliases ?? [];
@@ -289,11 +296,12 @@ export default function MusicArtists() {
             className="ma-merge-input"
             placeholder="Canonical artist name…"
             value={mergeCanonical}
-            onChange={(e) => setMergeCanonical(e.target.value)}
+            onChange={(e) => { setMergeCanonical(e.target.value); setMergeError(''); }}
           />
           <button className="btn btn-primary ma-merge-confirm" onClick={handleMerge} disabled={merging || !mergeCanonical.trim()}>
             {merging ? <><LoadingIcon size={13} className="ma-list-spinner" /> Merging…</> : 'Merge'}
           </button>
+          {mergeError && <span className="ma-merge-error">{mergeError}</span>}
         </div>
       )}
 
@@ -369,6 +377,7 @@ export default function MusicArtists() {
         .ma-merge-label { font-size: 15px; color: var(--body-text-muted); flex-shrink: 0; }
         .ma-merge-input { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--body-text); font-size: 15px; font-family: var(--font-body); flex: 1; min-width: 180px; }
         .ma-merge-confirm { font-size: 14px; padding: 6px 18px; }
+        .ma-merge-error { font-size: 13px; color: #f87171; flex-basis: 100%; margin-top: 4px; }
         .ma-undo-toast { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 10px 16px; border-radius: 8px; background: var(--body-card-bg); border: 1px solid var(--body-card-border); font-size: 14px; }
         .ma-undo-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 4px 14px; font-size: 13px; cursor: pointer; font-family: var(--font-body); }
         .ma-undo-countdown { color: var(--body-text-muted); font-size: 13px; margin-left: auto; }

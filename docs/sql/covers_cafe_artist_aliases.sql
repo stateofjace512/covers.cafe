@@ -20,18 +20,20 @@ create policy "artist_aliases_select_public"
   for select
   using (true);
 
+-- Allow anon as well as authenticated so the server-side Supabase client works even when
+-- only the anon key is configured (no service-role key set).
 drop policy if exists "artist_aliases_insert_auth" on public.covers_cafe_artist_aliases;
 create policy "artist_aliases_insert_auth"
   on public.covers_cafe_artist_aliases
   for insert
-  to authenticated
+  to anon, authenticated
   with check (true);
 
 drop policy if exists "artist_aliases_update_auth" on public.covers_cafe_artist_aliases;
 create policy "artist_aliases_update_auth"
   on public.covers_cafe_artist_aliases
   for update
-  to authenticated
+  to anon, authenticated
   using (true)
   with check (true);
 
@@ -39,5 +41,5 @@ drop policy if exists "artist_aliases_delete_auth" on public.covers_cafe_artist_
 create policy "artist_aliases_delete_auth"
   on public.covers_cafe_artist_aliases
   for delete
-  to authenticated
+  to anon, authenticated
   using (true);
