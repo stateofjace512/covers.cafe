@@ -12,7 +12,7 @@ import CoverModal from '../components/CoverModal';
 import InfoModal from '../components/InfoModal';
 import type { Cover } from '../lib/types';
 import { getPreferModalOverPagePreference } from '../lib/userPreferences';
-import { getCoverPath } from '../lib/coverRoutes';
+import { getCoverPath, slugifyArtist } from '../lib/coverRoutes';
 
 const PAGE_SIZE = 24;
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
@@ -91,6 +91,7 @@ interface OfficialCover {
   album_title: string | null;
   release_year: number | null;
   album_cover_url: string;
+  cover_public_id: number | null;
 }
 
 export default function MusicArtistDetail() {
@@ -102,7 +103,7 @@ export default function MusicArtistDetail() {
   const locationState = location.state as { originalName?: string; startTab?: ArtType } | null;
   const artistName: string = locationState?.originalName
     ?? (slugParam ? decodeURIComponent(slugParam).replace(/-/g, ' ') : '');
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   const [covers, setCovers] = useState<Cover[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,10 +125,13 @@ export default function MusicArtistDetail() {
   const [selectedArtists, setSelectedArtists] = useState<Set<string>>(new Set());
   const [mergeCanonical, setMergeCanonical] = useState('');
   const [merging, setMerging] = useState(false);
+  const [mergeError, setMergeError] = useState('');
   // Undo state
-  const [undoSnapshot, setUndoSnapshot] = useState<{ album_cover_url: string; artist_name: string }[] | null>(null);
+  const [undoSnapshot, setUndoSnapshot] = useState<{ records: { album_cover_url: string; artist_name: string }[]; aliases: string[] } | null>(null);
   const [undoCountdown, setUndoCountdown] = useState(0);
   const undoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Known aliases for this artist (alias → this artistName) — used to expand official cover queries.
+  const [artistAliases, setArtistAliases] = useState<string[]>([]);
 
   // Artist photo state
   const [avatarSrc, setAvatarSrc] = useState('');
@@ -174,11 +178,25 @@ export default function MusicArtistDetail() {
     setOfficialPage(0);
 
     const fetchOfficial = async () => {
+      // Load aliases where this artist is the canonical name (e.g. テイラー・スウィフト for Taylor Swift).
+      // These are used to also surface covers recorded under alternate name spellings or localisations.
+      const { data: aliasData } = await supabase
+        .from('covers_cafe_artist_aliases')
+        .select('alias')
+        .eq('canonical', artistName);
+      const aliases = (aliasData ?? []).map((r) => r.alias as string).filter(Boolean);
+      setArtistAliases(aliases);
+
+      // Build an OR filter that matches the canonical name and any known aliases so compound
+      // strings like "テイラー・スウィフト & ILLENIUM" appear on Taylor Swift's page.
+      const allNames = [artistName, ...aliases];
+      const orFilter = allNames.map((n) => `artist_name.ilike.%${n}%`).join(',');
+
       const { data } = await supabase
         .from('covers_cafe_official_covers')
-        .select('artist_name, album_title, release_year, album_cover_url')
-        .ilike('artist_name', `%${artistName}%`)
-        .order('release_year', { ascending: false })
+        .select('artist_name, album_title, release_year, album_cover_url, cover_public_id')
+        .or(orFilter)
+        .order('created_at', { ascending: true })
         .range(0, PAGE_SIZE);
 
       const raw = (data as OfficialCover[] | null) ?? [];
@@ -225,11 +243,13 @@ export default function MusicArtistDetail() {
     setOfficialLoadingMore(true);
     const nextPage = officialPage + 1;
     const from = nextPage * PAGE_SIZE;
+    const allNames = [artistName, ...artistAliases];
+    const orFilter = allNames.map((n) => `artist_name.ilike.%${n}%`).join(',');
     const { data } = await supabase
       .from('covers_cafe_official_covers')
-      .select('artist_name, album_title, release_year, album_cover_url')
-      .ilike('artist_name', `%${artistName}%`)
-      .order('release_year', { ascending: false })
+      .select('artist_name, album_title, release_year, album_cover_url, cover_public_id')
+      .or(orFilter)
+      .order('created_at', { ascending: true })
       .range(from, from + PAGE_SIZE);
     const raw = (data as OfficialCover[] | null) ?? [];
     const more = raw.length > PAGE_SIZE;
@@ -239,8 +259,8 @@ export default function MusicArtistDetail() {
     setOfficialLoadingMore(false);
   };
 
-  const startUndoCountdown = useCallback((snapshot: { album_cover_url: string; artist_name: string }[]) => {
-    setUndoSnapshot(snapshot);
+  const startUndoCountdown = useCallback((records: { album_cover_url: string; artist_name: string }[], aliases: string[]) => {
+    setUndoSnapshot({ records, aliases });
     setUndoCountdown(3);
     if (undoTimerRef.current) clearInterval(undoTimerRef.current);
     undoTimerRef.current = setInterval(() => {
@@ -256,7 +276,10 @@ export default function MusicArtistDetail() {
   }, []);
 
   const handleMerge = async () => {
-    if (!session?.access_token || !mergeCanonical.trim() || selectedArtists.size < 2) return;
+    if (!session?.access_token) { setMergeError('You must be logged in to merge.'); return; }
+    if (!mergeCanonical.trim()) { setMergeError('Enter a canonical name.'); return; }
+    if (selectedArtists.size < 2) { setMergeError('Select at least 2 artists.'); return; }
+    setMergeError('');
     const canonical = mergeCanonical.trim();
     // Capture snapshot for undo
     const snapshot = officialCovers
@@ -269,28 +292,35 @@ export default function MusicArtistDetail() {
       body: JSON.stringify({ artistNames: Array.from(selectedArtists), canonicalName: canonical }),
     });
     setMerging(false);
+    if (!res.ok) {
+      const msg = await res.text().catch(() => '');
+      setMergeError(msg || 'Merge failed. Please try again.');
+      return;
+    }
     if (res.ok) {
+      const resJson = await res.json().catch(() => ({})) as { aliases?: string[] };
+      const createdAliases: string[] = resJson.aliases ?? [];
       setOfficialCovers((prev) => prev.map((c) => selectedArtists.has(c.artist_name ?? '') ? { ...c, artist_name: canonical } : c));
       setSelectedArtists(new Set());
       setMergeCanonical('');
       setSelectMode(false);
-      startUndoCountdown(snapshot);
+      startUndoCountdown(snapshot, createdAliases);
     }
   };
 
   const handleUndo = async () => {
     if (!undoSnapshot || !session?.access_token) return;
     if (undoTimerRef.current) clearInterval(undoTimerRef.current);
-    const snapshot = undoSnapshot;
+    const { records, aliases } = undoSnapshot;
     setUndoSnapshot(null);
     setUndoCountdown(0);
     await fetch('/api/official/undo-merge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ records: snapshot }),
+      body: JSON.stringify({ records, aliases }),
     });
     // Restore state: re-map covers back to original names
-    const urlToName = new Map(snapshot.map((r) => [r.album_cover_url, r.artist_name]));
+    const urlToName = new Map(records.map((r) => [r.album_cover_url, r.artist_name]));
     setOfficialCovers((prev) => prev.map((c) => urlToName.has(c.album_cover_url) ? { ...c, artist_name: urlToName.get(c.album_cover_url)! } : c));
   };
 
@@ -496,11 +526,12 @@ export default function MusicArtistDetail() {
             className="osr-merge-input"
             placeholder="Canonical artist name…"
             value={mergeCanonical}
-            onChange={(e) => setMergeCanonical(e.target.value)}
+            onChange={(e) => { setMergeCanonical(e.target.value); setMergeError(''); }}
           />
           <button className="btn btn-primary osr-merge-confirm" onClick={handleMerge} disabled={merging || !mergeCanonical.trim()}>
             {merging ? <><LoadingIcon size={13} className="ma-spinner" /> Merging…</> : 'Merge'}
           </button>
+          {mergeError && <span className="osr-merge-error">{mergeError}</span>}
         </div>
       )}
 
@@ -524,7 +555,17 @@ export default function MusicArtistDetail() {
                   data-official-url={cover.album_cover_url}
                   data-artist-name={aName}
                   data-album-title={cover.album_title ?? ''}
-                  onClick={() => selectMode ? toggleArtist(aName) : window.open(cover.album_cover_url, '_blank', 'noopener,noreferrer')}
+                  onClick={() => {
+                    if (selectMode) { toggleArtist(aName); return; }
+                    if (cover.cover_public_id) {
+                      const slug = [
+                        String(cover.cover_public_id).padStart(6, '0'),
+                        slugifyArtist(cover.artist_name ?? ''),
+                        slugifyArtist(cover.album_title ?? '').slice(0, 20).replace(/-+$/, ''),
+                      ].filter(Boolean).join('-');
+                      navigate(`/cover/${slug}`);
+                    }
+                  }}
                 >
                   <div className="album-card-cover">
                     <img src={cover.album_cover_url} alt={`${cover.album_title ?? 'Album'} by ${aName || 'Unknown'}`} className="official-card-img" loading="lazy" />
@@ -666,6 +707,7 @@ export default function MusicArtistDetail() {
         .osr-merge-label { font-size: 15px; color: var(--body-text-muted); flex-shrink: 0; }
         .osr-merge-input { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--body-text); font-size: 15px; font-family: var(--font-body); flex: 1; min-width: 180px; }
         .osr-merge-confirm { font-size: 14px; padding: 6px 18px; }
+        .osr-merge-error { font-size: 13px; color: #f87171; flex-basis: 100%; margin-top: 4px; }
         .official-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .official-card--clickable { cursor: pointer; }
         .official-card--selected .album-card-cover { outline: 3px solid var(--accent); outline-offset: -3px; border-radius: 4px; }

@@ -15,6 +15,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const body = await request.json().catch(() => null) as {
     records?: { album_cover_url: string; artist_name: string }[];
+    aliases?: string[];
   } | null;
 
   const records = Array.isArray(body?.records)
@@ -37,6 +38,12 @@ export const POST: APIRoute = async ({ request }) => {
 
   if (errors.length) {
     return new Response(errors.join('; '), { status: 500 });
+  }
+
+  // Remove the alias entries that were created by the merge being undone.
+  const aliases = Array.isArray(body?.aliases) ? body!.aliases.filter(Boolean) : [];
+  if (aliases.length > 0) {
+    await sb.from('covers_cafe_artist_aliases').delete().in('alias', aliases);
   }
 
   return new Response(JSON.stringify({ ok: true }), {
