@@ -23,18 +23,17 @@ let coverMeta: CoverMeta | null = null;
 
 if (isFanCoverPage) {
   const coverSlug = slug.replace(/^covers\/fan\//, '').replace(/^cover\//, '');
-  const publicId = getCoverPublicIdFromSlug(coverSlug);
 
-  if (publicId !== null) {
+  if (coverSlug) {
     const supabase = getSupabaseServer();
     if (supabase) {
       const { data } = await supabase
         .from('covers_cafe_covers')
         .select('title, artist, year, storage_path, image_url')
-        .eq('public_id', publicId)
+        .eq('page_slug', coverSlug)
         .eq('is_public', true)
         .eq('is_private', false)
-        .single();
+        .maybeSingle();
 
       if (data) {
         const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL as string;

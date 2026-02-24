@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import LoadingIcon from '../components/LoadingIcon';
 import FavoritesIcon from '../components/FavoritesIcon';
@@ -16,7 +16,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
 import { getCoverImageSrc, getCoverDownloadSrc } from '../lib/media';
-import { getCoverPath, getCoverPublicIdFromSlug, parseArtists, slugifyArtist } from '../lib/coverRoutes';
+import { getCoverPath, parseArtists, slugifyArtist } from '../lib/coverRoutes';
 import CoverComments from '../components/CoverComments';
 
 type PanelMode = null | 'collection' | 'report' | 'edit';
@@ -70,18 +70,16 @@ export default function CoverDetail() {
 
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const publicId = useMemo(() => (slug ? getCoverPublicIdFromSlug(slug) : null), [slug]);
-
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      if (!publicId) { setLoading(false); return; }
+      if (!slug) { setLoading(false); return; }
       setLoading(true);
       const { data } = await supabase
         .from('covers_cafe_covers')
         .select('*, profiles:covers_cafe_profiles(id,username,display_name,avatar_url)')
-        .eq('public_id', publicId)
-        .single();
+        .eq('page_slug', slug)
+        .maybeSingle();
       if (cancelled) return;
       if (!data) { setCover(null); setLoading(false); return; }
       const c = data as Cover;
@@ -112,7 +110,7 @@ export default function CoverDetail() {
     }
     void load();
     return () => { cancelled = true; };
-  }, [publicId, user?.id]);
+  }, [slug, user?.id]);
 
   // Open panel from ?panel= query param (drag-to-collection from gallery)
   useEffect(() => {
