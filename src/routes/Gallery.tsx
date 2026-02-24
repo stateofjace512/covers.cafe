@@ -159,7 +159,7 @@ export default function Gallery() {
         /* Win95 property sheet tab strip */
         .hero-tab-strip {
           display: flex; gap: 0;
-          padding: 6px 12px 12px;
+          padding: 6px 12px 10px;
           border-top: 1px solid var(--body-border);
         }
         .hero-tab {
