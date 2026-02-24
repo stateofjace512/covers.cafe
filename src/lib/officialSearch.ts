@@ -32,6 +32,26 @@ function getFullResAppleCover(url: string | undefined): string | undefined {
     .replace(/\/\d+x\d+[^/]*\.(jpg|webp|png|tif)$/, '');
 }
 
+
+function getItunes100CoverForPhash(url: string | undefined): string | null {
+  if (!url || !url.includes('mzstatic.com')) return null;
+
+  // Preferred canonical iTunes thumb URL with explicit bb suffix.
+  const thumbMatch = url.match(/^https:\/\/is\d-ssl\.mzstatic\.com\/image\/thumb\/(.+)$/i);
+  if (thumbMatch) {
+    const path = thumbMatch[1].replace(/\/\d+x\d+bb\.jpg$/i, '');
+    return `https://is1-ssl.mzstatic.com/image/thumb/${path}/100x100bb.jpg`;
+  }
+
+  // Full-size URL shown in-app can be converted back to thumb form for 100x100 pHash fetches.
+  const fullMatch = url.match(/^https:\/\/a1\.mzstatic\.com\/r40\/(.+)$/i);
+  if (fullMatch) {
+    return `https://is1-ssl.mzstatic.com/image/thumb/${fullMatch[1]}/100x100bb.jpg`;
+  }
+
+  return null;
+}
+
 function hasCJK(text: string): boolean {
   return /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f\u1100-\u11ff\u3130-\u318f\ua960-\ua97f\uac00-\ud7af]/.test(text);
 }
@@ -118,7 +138,8 @@ async function searchOneCountry(artist: string, album: string, country: string):
 
     const imageData = await Promise.all(rows.map(async (row) => {
       const metrics = await getImageMetrics(row.album_cover_url);
-      const phash = await computeOfficialPhashFrom100(row.album_cover_url.replace(/\/\d+x\d+[^/]*\.(jpg|webp|png|tif)$/i, '/100x100bb.jpg'));
+      const phashSourceUrl = getItunes100CoverForPhash((row.source_payload.artworkUrl100 as string | undefined) ?? row.album_cover_url);
+      const phash = phashSourceUrl ? await computeOfficialPhashFrom100(phashSourceUrl) : null;
       return { ...metrics, phash };
     }));
     return rows.map((row, index) => ({
