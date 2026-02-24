@@ -106,7 +106,7 @@ export default function Acotw() {
               </button>
             )}
             {!isClosed && hasVoted && (
-              <span className="acotw-voted-label"><ClockIcon size={13} />You voted! Results reveal Sunday night</span>
+              <span className="acotw-voted-label"><ClockIcon size={13} />You voted! Results reveal Sunday night.</span>
             )}
           </div>
 
