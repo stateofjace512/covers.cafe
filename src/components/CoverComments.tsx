@@ -367,7 +367,6 @@ export default function CoverComments({ coverId, cover }: Props) {
           color: var(--accent-text);
           font-size: 17px;
           padding: 1px 7px;
-          border-radius: 10px;
           box-shadow: 0 1px 2px rgba(0,0,0,0.25);
         }
 
