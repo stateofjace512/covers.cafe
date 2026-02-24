@@ -719,11 +719,7 @@ export default function Cms() {
             readOnly
             className="form-input"
             style={{ fontFamily: 'monospace', fontSize: 15, height: 280, resize: 'vertical', whiteSpace: 'pre' }}
-            value={migrateLog.join('
-') + (migrating ? '
-…' : migrateDone ? `
-
-✅ Done — ${migrateDone.migrated} migrated, ${migrateDone.failed} failed, ${migrateDone.remaining} still remaining.` : '')}
+            value={migrateLog.join('\n') + (migrating ? '\n\u2026' : migrateDone ? `\n\n\u2705 Done — ${migrateDone.migrated} migrated, ${migrateDone.failed} failed, ${migrateDone.remaining} still remaining.` : '')}
             ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}
           />
         )}
