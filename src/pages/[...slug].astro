@@ -8,19 +8,21 @@ const logoUrl = `/cover_cafe_logo.svg`;
 
 // ── Server-side SEO for cover pages ──────────────────────────────────────────
 const slug = Astro.params.slug ?? '';
-const isCoverPage = /^cover\//.test(slug);
+const isFanCoverPage      = /^covers\/fan\//.test(slug) || /^cover\//.test(slug);
+const isOfficialCoverPage = /^covers\/official\//.test(slug);
 
 interface CoverMeta {
   title: string;
   artist: string;
   year: number | null;
   imageUrl: string;
+  isOfficial?: boolean;
 }
 
 let coverMeta: CoverMeta | null = null;
 
-if (isCoverPage) {
-  const coverSlug = slug.replace(/^cover\//, '');
+if (isFanCoverPage) {
+  const coverSlug = slug.replace(/^covers\/fan\//, '').replace(/^cover\//, '');
   const publicId = getCoverPublicIdFromSlug(coverSlug);
 
   if (publicId !== null) {
@@ -51,15 +53,45 @@ if (isCoverPage) {
   }
 }
 
+if (isOfficialCoverPage) {
+  const coverSlug = slug.replace(/^covers\/official\//, '');
+  const publicId = getCoverPublicIdFromSlug(coverSlug);
+
+  if (publicId !== null) {
+    const supabase = getSupabaseServer();
+    if (supabase) {
+      const { data } = await supabase
+        .from('covers_cafe_official_covers')
+        .select('album_title, artist_name, release_year, album_cover_url')
+        .eq('official_public_id', publicId)
+        .single();
+
+      if (data) {
+        coverMeta = {
+          title: data.album_title as string,
+          artist: data.artist_name as string,
+          year: (data.release_year as number | null) ?? null,
+          imageUrl: data.album_cover_url as string,
+          isOfficial: true,
+        };
+      }
+    }
+  }
+}
+
 // ── Build final meta values ───────────────────────────────────────────────────
 const yearSuffix = coverMeta?.year ? ` (${coverMeta.year})` : '';
 
 const pageTitle = coverMeta
-  ? `${coverMeta.title} by ${coverMeta.artist}${yearSuffix} - Album Cover Art | covers.cafe`
+  ? coverMeta.isOfficial
+    ? `${coverMeta.title} by ${coverMeta.artist}${yearSuffix} - Official Album Art | covers.cafe`
+    : `${coverMeta.title} by ${coverMeta.artist}${yearSuffix} - Album Cover Art | covers.cafe`
   : 'covers.cafe';
 
 const pageDescription = coverMeta
-  ? `Download and view the ${coverMeta.title} album cover art by ${coverMeta.artist}${yearSuffix}. Discover and download high-quality album artwork on covers.cafe.`
+  ? coverMeta.isOfficial
+    ? `View official album artwork for ${coverMeta.title} by ${coverMeta.artist}${yearSuffix}. Discover community fan covers on covers.cafe.`
+    : `Download and view the ${coverMeta.title} album cover art by ${coverMeta.artist}${yearSuffix}. Discover and download high-quality album artwork on covers.cafe.`
   : 'Upload and discover album cover art at covers.cafe';
 
 const ogImage = coverMeta?.imageUrl ?? null;

@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import LoadingIcon from './LoadingIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { searchOfficialAssets, type OfficialUpsertRow } from '../lib/officialSearch';
-import { slugifyArtist } from '../lib/coverRoutes';
+import { getOfficialCoverPath, slugifyArtist } from '../lib/coverRoutes';
 
 interface OfficialCoverRow {
   artist_name: string | null;
@@ -12,6 +12,7 @@ interface OfficialCoverRow {
   release_year: number | null;
   album_cover_url: string;
   cover_public_id: number | null;
+  official_public_id: number | null;
 }
 
 const PAGE_SIZE = 24;
@@ -44,7 +45,7 @@ export default function OfficialGallery() {
     // Fetch one extra to determine if there are more pages
     let query = supabase
       .from('covers_cafe_official_covers')
-      .select('artist_name, album_title, release_year, album_cover_url, cover_public_id')
+      .select('artist_name, album_title, release_year, album_cover_url, cover_public_id, official_public_id')
       .ilike('search_artist', `%${normalizedArtist}%`)
       .order('created_at', { ascending: false })
       .range(from, from + PAGE_SIZE);
@@ -198,13 +199,8 @@ export default function OfficialGallery() {
                   data-album-title={cover.album_title ?? ''}
                   onClick={() => {
                     if (selectMode) { toggleArtist(artistName); return; }
-                    if (cover.cover_public_id) {
-                      const slug = [
-                        String(cover.cover_public_id).padStart(6, '0'),
-                        slugifyArtist(cover.artist_name ?? ''),
-                        slugifyArtist(cover.album_title ?? '').slice(0, 20).replace(/-+$/, ''),
-                      ].filter(Boolean).join('-');
-                      navigate(`/cover/${slug}`);
+                    if (cover.official_public_id) {
+                      navigate(getOfficialCoverPath(cover));
                     } else {
                       navigate(`/artists/${slugifyArtist(cover.artist_name ?? '')}`, { state: { originalName: cover.artist_name, startTab: 'official' } });
                     }

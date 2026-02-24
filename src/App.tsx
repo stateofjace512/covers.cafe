@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AppShell from './components/AppShell';
@@ -27,6 +27,7 @@ import Cms from './routes/Cms';
 import Acotw from './routes/Acotw';
 import NotFound from './routes/NotFound';
 import CoverDetail from './routes/CoverDetail';
+import OfficialCoverDetail from './routes/OfficialCoverDetail';
 
 
 interface SeoPayload {
@@ -145,6 +146,14 @@ function getSeoForPath(pathname: string): SeoPayload {
     title: 'CMS | covers.cafe',
     description: 'Admin and moderation tools for managing covers.cafe content and reports.',
   };
+  if (pathname.startsWith('/covers/fan/')) return {
+    title: 'Cover Details | covers.cafe',
+    description: 'View full-size album artwork, metadata, tags, favorites, and downloads for a cover on covers.cafe.',
+  };
+  if (pathname.startsWith('/covers/official/')) return {
+    title: 'Official Album Art | covers.cafe',
+    description: 'View official album artwork, release details, favorites, and community fan covers on covers.cafe.',
+  };
   if (pathname.startsWith('/cover/')) return {
     title: 'Cover Details | covers.cafe',
     description: 'View full-size album artwork, metadata, tags, favorites, and downloads for a cover on covers.cafe.',
@@ -156,6 +165,12 @@ function getSeoForPath(pathname: string): SeoPayload {
 }
 
 
+
+/** Redirect /cover/:slug → /covers/fan/:slug for backwards compatibility. */
+function LegacyCoverRedirect() {
+  const { slug } = useParams<{ slug: string }>();
+  return <Navigate to={`/covers/fan/${slug ?? ''}`} replace />;
+}
 
 function AppContent() {
   const { authModalOpen, authModalTab, closeAuthModal, session, user } = useAuth();
@@ -255,7 +270,10 @@ function AppContent() {
           <Route path="/about" element={<About />} />
           <Route path="/acotw" element={<Acotw />} />
           <Route path="/cms" element={<Cms />} />
-          <Route path="/cover/:slug" element={<CoverDetail />} />
+          <Route path="/covers/fan/:slug" element={<CoverDetail />} />
+          <Route path="/covers/official/:slug" element={<OfficialCoverDetail />} />
+          {/* Legacy redirect — old /cover/ links go to the new fan path */}
+          <Route path="/cover/:slug" element={<LegacyCoverRedirect />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AppShell>

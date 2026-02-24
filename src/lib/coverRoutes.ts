@@ -39,14 +39,31 @@ export function slugifyArtist(name: string): string {
 }
 
 export function buildCoverSlug(cover: Cover): string {
-  const publicId = String(cover.public_id ?? '').padStart(6, '0');
+  const publicId = String(cover.public_id ?? '');
   const artist = slugifyPart(cover.artist);
   const title = slugifyPart(cover.title).slice(0, 20).replace(/-+$/g, '');
   return [publicId, artist, title].filter(Boolean).join('-');
 }
 
 export function getCoverPath(cover: Cover): string {
-  return `/cover/${buildCoverSlug(cover)}`;
+  return `/covers/fan/${buildCoverSlug(cover)}`;
+}
+
+export interface OfficialCoverSlugParts {
+  official_public_id: number | null;
+  artist_name: string | null;
+  album_title: string | null;
+}
+
+export function buildOfficialCoverSlug(cover: OfficialCoverSlugParts): string {
+  const publicId = String(cover.official_public_id ?? '');
+  const artist = slugifyPart(cover.artist_name ?? '');
+  const title = slugifyPart(cover.album_title ?? '').slice(0, 20).replace(/-+$/g, '');
+  return [publicId, artist, title].filter(Boolean).join('-');
+}
+
+export function getOfficialCoverPath(cover: OfficialCoverSlugParts): string {
+  return `/covers/official/${buildOfficialCoverSlug(cover)}`;
 }
 
 export function getCoverPublicIdFromSlug(slug: string): number | null {
