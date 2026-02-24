@@ -544,7 +544,7 @@ export default function CoverDetail() {
         .cover-page-meta-topline { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
         .cover-meta-stats { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
         .cover-meta-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
-        .cover-meta-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 18px; color: var(--body-text-muted); background: var(--body-border); padding: 3px 8px; border-radius: 0; }
+        .cover-meta-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 18px; color: var(--body-text); background: var(--body-border); padding: 3px 8px; border-radius: 0; }
         .cover-tags { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: center; }
         .cover-tags-icon { color: var(--body-text-muted); flex-shrink: 0; }
         .cover-tag { font-size: 21px; font-family: var(--font-header); background: var(--sidebar-bg); color: var(--sidebar-text); padding: 2px 7px; border-radius: 0; border: 1px solid var(--sidebar-border); box-shadow: var(--shadow-sm); cursor: pointer; transition: background 0.1s, color 0.1s; }
