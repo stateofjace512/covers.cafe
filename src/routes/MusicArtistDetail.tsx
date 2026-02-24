@@ -99,7 +99,8 @@ export default function MusicArtistDetail() {
   const navigate = useNavigate();
   // Prefer the original name passed as router state (set by MusicArtists navigation).
   // Fallback: replace hyphens with spaces for a best-effort ilike lookup.
-  const artistName: string = (location.state as { originalName?: string } | null)?.originalName
+  const locationState = location.state as { originalName?: string; startTab?: ArtType } | null;
+  const artistName: string = locationState?.originalName
     ?? (slugParam ? decodeURIComponent(slugParam).replace(/-/g, ' ') : '');
   const { user } = useAuth();
 
@@ -110,7 +111,7 @@ export default function MusicArtistDetail() {
   const [selectedCover, setSelectedCover] = useState<Cover | null>(null);
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
   const [headerCover, setHeaderCover] = useState<Cover | null>(null);
-  const [artType, setArtType] = useState<ArtType>('fan');
+  const [artType, setArtType] = useState<ArtType>(locationState?.startTab ?? 'fan');
 
   const [officialCovers, setOfficialCovers] = useState<OfficialCover[]>([]);
   const [officialLoading, setOfficialLoading] = useState(true);

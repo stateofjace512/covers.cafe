@@ -1,7 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MusicIcon from '../components/MusicIcon';
+import LoadingIcon from '../components/LoadingIcon';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import { getCoverImageSrc } from '../lib/media';
 import { slugifyArtist, parseArtists } from '../lib/coverRoutes';
 
@@ -53,7 +55,15 @@ export default function MusicArtists() {
   const [officialLoading, setOfficialLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [artType, setArtType] = useState<ArtType>('fan');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedArtists, setSelectedArtists] = useState<Set<string>>(new Set());
+  const [mergeCanonical, setMergeCanonical] = useState('');
+  const [merging, setMerging] = useState(false);
+  const [undoSnapshot, setUndoSnapshot] = useState<{ album_cover_url: string; artist_name: string }[] | null>(null);
+  const [undoCountdown, setUndoCountdown] = useState(0);
+  const undoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const navigate = useNavigate();
+  const { session } = useAuth();
 
   useEffect(() => {
     (async () => {
@@ -93,7 +103,8 @@ export default function MusicArtists() {
     (async () => {
       const { data } = await supabase
         .from('covers_cafe_official_covers')
-        .select('artist_name, album_cover_url');
+        .select('artist_name, album_cover_url')
+        .limit(50000);
 
       const map = new Map<string, ArtistEntry>();
       for (const row of data ?? []) {
@@ -119,6 +130,91 @@ export default function MusicArtists() {
     })();
   }, []);
 
+  const startUndoCountdown = useCallback((snapshot: { album_cover_url: string; artist_name: string }[]) => {
+    setUndoSnapshot(snapshot);
+    setUndoCountdown(3);
+    if (undoTimerRef.current) clearInterval(undoTimerRef.current);
+    undoTimerRef.current = setInterval(() => {
+      setUndoCountdown((n) => {
+        if (n <= 1) { clearInterval(undoTimerRef.current!); setUndoSnapshot(null); return 0; }
+        return n - 1;
+      });
+    }, 1000);
+  }, []);
+
+  const handleMerge = async () => {
+    if (!session?.access_token || !mergeCanonical.trim() || selectedArtists.size < 2) return;
+    const canonical = mergeCanonical.trim();
+    // Fetch all covers for selected artists to build undo snapshot
+    const { data: snapData } = await supabase
+      .from('covers_cafe_official_covers')
+      .select('album_cover_url, artist_name')
+      .in('artist_name', Array.from(selectedArtists))
+      .limit(50000);
+    const snapshot = (snapData ?? []).map((r) => ({ album_cover_url: r.album_cover_url as string, artist_name: (r.artist_name ?? '') as string }));
+    setMerging(true);
+    const res = await fetch('/api/official/merge-artists', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ artistNames: Array.from(selectedArtists), canonicalName: canonical }),
+    });
+    setMerging(false);
+    if (res.ok) {
+      setOfficialArtists((prev) => {
+        const mergedCount = prev.filter((a) => selectedArtists.has(a.name)).reduce((s, a) => s + a.officialCoverCount, 0);
+        const sampleCover = prev.find((a) => selectedArtists.has(a.name) && a.sampleCover?.image_url)?.sampleCover ?? null;
+        const existing = prev.find((a) => a.name === canonical);
+        const canonicalEntry: ArtistEntry = {
+          name: canonical,
+          coverCount: (existing?.coverCount ?? 0) + mergedCount,
+          officialCoverCount: (existing?.officialCoverCount ?? 0) + mergedCount,
+          fanCoverCount: existing?.fanCoverCount ?? 0,
+          sampleCover: existing?.sampleCover ?? sampleCover,
+        };
+        return [canonicalEntry, ...prev.filter((a) => !selectedArtists.has(a.name) && a.name !== canonical)];
+      });
+      setSelectedArtists(new Set());
+      setMergeCanonical('');
+      setSelectMode(false);
+      startUndoCountdown(snapshot);
+    }
+  };
+
+  const handleUndo = async () => {
+    if (!undoSnapshot || !session?.access_token) return;
+    if (undoTimerRef.current) clearInterval(undoTimerRef.current);
+    const snapshot = undoSnapshot;
+    setUndoSnapshot(null);
+    setUndoCountdown(0);
+    await fetch('/api/official/undo-merge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ records: snapshot }),
+    });
+    // Re-fetch to get accurate state after undo
+    const { data } = await supabase
+      .from('covers_cafe_official_covers')
+      .select('artist_name, album_cover_url')
+      .limit(50000);
+    const map = new Map<string, ArtistEntry>();
+    for (const row of data ?? []) {
+      const name = (row.artist_name as string | null)?.trim();
+      if (!name) continue;
+      if (!map.has(name)) map.set(name, { name, coverCount: 0, officialCoverCount: 0, fanCoverCount: 0, sampleCover: { storage_path: '', image_url: row.album_cover_url as string } });
+      map.get(name)!.coverCount++;
+      map.get(name)!.officialCoverCount++;
+    }
+    setOfficialArtists(Array.from(map.values()).sort((a, b) => b.officialCoverCount - a.officialCoverCount));
+  };
+
+  const toggleArtist = (name: string) => {
+    setSelectedArtists((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  };
+
   const isLoading = artType === 'official' ? officialLoading : loading;
 
   const filtered = useMemo(() => {
@@ -136,7 +232,7 @@ export default function MusicArtists() {
 
       <div className="toolbar mb-4">
         <div className="ma-type-tabs" role="tablist" aria-label="Artist art type">
-          <button role="tab" aria-selected={artType === 'fan'} className={`ma-type-tab${artType === 'fan' ? ' ma-type-tab--active' : ''}`} onClick={() => setArtType('fan')}>Fan Art</button>
+          <button role="tab" aria-selected={artType === 'fan'} className={`ma-type-tab${artType === 'fan' ? ' ma-type-tab--active' : ''}`} onClick={() => { setArtType('fan'); setSelectMode(false); setSelectedArtists(new Set()); }}>Fan Art</button>
           <button role="tab" aria-selected={artType === 'official'} className={`ma-type-tab${artType === 'official' ? ' ma-type-tab--active' : ''}`} onClick={() => setArtType('official')}>Album Art</button>
         </div>
         <input
@@ -151,7 +247,36 @@ export default function MusicArtists() {
             {filtered.length} artist{filtered.length !== 1 ? 's' : ''}
           </span>
         )}
+        {artType === 'official' && !isLoading && filtered.length > 0 && (
+          <button
+            className={`ma-select-btn${selectMode ? ' ma-select-btn--active' : ''}`}
+            onClick={() => { setSelectMode((v) => !v); setSelectedArtists(new Set()); setMergeCanonical(''); }}
+          >Select</button>
+        )}
       </div>
+
+      {undoSnapshot && undoCountdown > 0 && (
+        <div className="ma-undo-toast">
+          <span>Artists merged.</span>
+          <button className="ma-undo-btn" onClick={handleUndo}>Undo</button>
+          <span className="ma-undo-countdown">{undoCountdown}</span>
+        </div>
+      )}
+
+      {selectMode && selectedArtists.size >= 2 && (
+        <div className="ma-merge-bar">
+          <span className="ma-merge-label">{selectedArtists.size} artists selected</span>
+          <input
+            className="ma-merge-input"
+            placeholder="Canonical artist name…"
+            value={mergeCanonical}
+            onChange={(e) => setMergeCanonical(e.target.value)}
+          />
+          <button className="btn btn-primary ma-merge-confirm" onClick={handleMerge} disabled={merging || !mergeCanonical.trim()}>
+            {merging ? <><LoadingIcon size={13} className="ma-list-spinner" /> Merging…</> : 'Merge'}
+          </button>
+        </div>
+      )}
 
       {isLoading ? (
         <p className="text-muted">Loading…</p>
@@ -159,20 +284,34 @@ export default function MusicArtists() {
         <p className="text-muted">No artists found{search ? ` for "${search}"` : ''}.</p>
       ) : (
         <div className="music-artist-grid">
-          {filtered.map((artist) => (
-            <button
-              key={artist.name}
-              className="music-artist-card"
-              onClick={() => navigate(`/artists/${slugifyArtist(artist.name)}`, { state: { originalName: artist.name } })}
-              title={`Browse covers by ${artist.name}`}
-            >
-              <ArtistCardImg artist={artist} />
-              <div className="music-artist-info">
-                <span className="music-artist-name">{artist.name}</span>
-                <span className="music-artist-covers">{artType === 'official' ? artist.officialCoverCount : artist.fanCoverCount} cover{(artType === 'official' ? artist.officialCoverCount : artist.fanCoverCount) !== 1 ? 's' : ''}</span>
-              </div>
-            </button>
-          ))}
+          {filtered.map((artist) => {
+            const isSelected = selectedArtists.has(artist.name);
+            const count = artType === 'official' ? artist.officialCoverCount : artist.fanCoverCount;
+            return (
+              <button
+                key={artist.name}
+                className={`music-artist-card${isSelected ? ' music-artist-card--selected' : ''}`}
+                onClick={() => {
+                  if (selectMode && artType === 'official') { toggleArtist(artist.name); return; }
+                  navigate(`/artists/${slugifyArtist(artist.name)}`, { state: { originalName: artist.name, startTab: artType } });
+                }}
+                title={selectMode ? `Select ${artist.name}` : `Browse covers by ${artist.name}`}
+              >
+                <div style={{ position: 'relative' }}>
+                  <ArtistCardImg artist={artist} />
+                  {selectMode && artType === 'official' && (
+                    <div className={`ma-artist-check${isSelected ? ' ma-artist-check--on' : ''}`}>
+                      {isSelected && <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    </div>
+                  )}
+                </div>
+                <div className="music-artist-info">
+                  <span className="music-artist-name">{artist.name}</span>
+                  <span className="music-artist-covers">{count} cover{count !== 1 ? 's' : ''}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -204,6 +343,20 @@ export default function MusicArtists() {
           padding: 0;
         }
         .music-artist-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+        .music-artist-card--selected { outline: 3px solid var(--accent); outline-offset: -2px; }
+        .ma-select-btn { border: 1px solid var(--body-card-border); border-radius: 6px; background: var(--body-card-bg); color: var(--body-text-muted); padding: 5px 14px; font-size: 14px; cursor: pointer; font-family: var(--font-body); }
+        .ma-select-btn--active { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .ma-merge-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; padding: 10px 14px; border-radius: 8px; background: var(--body-card-bg); border: 1px solid var(--body-card-border); }
+        .ma-merge-label { font-size: 15px; color: var(--body-text-muted); flex-shrink: 0; }
+        .ma-merge-input { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--body-card-border); background: var(--sidebar-bg); color: var(--body-text); font-size: 15px; font-family: var(--font-body); flex: 1; min-width: 180px; }
+        .ma-merge-confirm { font-size: 14px; padding: 6px 18px; }
+        .ma-undo-toast { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 10px 16px; border-radius: 8px; background: var(--body-card-bg); border: 1px solid var(--body-card-border); font-size: 14px; }
+        .ma-undo-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 4px 14px; font-size: 13px; cursor: pointer; font-family: var(--font-body); }
+        .ma-undo-countdown { color: var(--body-text-muted); font-size: 13px; margin-left: auto; }
+        .ma-artist-check { position: absolute; left: 8px; top: 8px; width: 20px; height: 20px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.7); background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        .ma-artist-check--on { background: var(--accent); border-color: var(--accent); }
+        .ma-list-spinner { animation: ma-spin 0.8s linear infinite; }
+        @keyframes ma-spin { to { transform: rotate(360deg); } }
         .music-artist-img-wrap {
           width: 100%; aspect-ratio: 1;
           background: var(--sidebar-bg);
