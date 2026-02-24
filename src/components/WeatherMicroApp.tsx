@@ -289,10 +289,11 @@ export default function WeatherMicroApp({ onClose }: WeatherMicroAppProps) {
           border: 2px solid; border-color: #808080 #fff #fff #808080;
           background: #fff; padding: 8px;
           display: flex; flex-direction: column; gap: 5px;
+          overflow: visible;
         }
         .wma-row { display: flex; align-items: center; gap: 6px; }
         .wma-lbl { width: 82px; text-align: right; flex-shrink: 0; }
-        .wma-row input[type=range] { flex: 1; height: 4px; cursor: pointer; }
+        .wma-row input[type=range] { flex: 1; cursor: pointer; }
         .wma-val { width: 34px; font-weight: bold; text-align: right; flex-shrink: 0; }
         .wma-rsz { position: absolute; background: transparent; }
         .wma-rsz-r  { top: 0; right: -3px; width: 5px; height: 100%; cursor: e-resize; }
