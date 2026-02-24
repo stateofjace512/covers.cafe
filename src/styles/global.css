@@ -583,6 +583,9 @@ textarea {
   display: flex;
   flex-direction: column;
   background: #dea77d;
+  /* Own stacking context: weather canvas (z-index:0) sits above this
+     background but below .site-main-content (z-index:1) */
+  isolation: isolate;
 }
 
 [data-theme="dark"] .site-main {
@@ -592,6 +595,9 @@ textarea {
 .site-main-content {
   flex: 1 1 auto;
   padding-bottom: 0.5rem;
+  /* Sit above weather canvas (z-index:0) inside site-main's stacking context */
+  position: relative;
+  z-index: 1;
 }
 
 .mobile-nav-backdrop {

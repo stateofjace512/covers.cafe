@@ -82,7 +82,10 @@ export default function WeatherMicroApp({ onClose }: WeatherMicroAppProps) {
   useEffect(() => {
     const canvas = document.createElement('canvas');
     canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;';
-    document.body.appendChild(canvas);
+    // Mount inside .site-main so it participates in that element's isolation
+    // stacking context — above site-main's background but below site-main-content
+    const mount = document.querySelector('.site-main') ?? document.body;
+    mount.appendChild(canvas);
     canvasRef.current = canvas;
 
     function resize() {
