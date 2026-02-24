@@ -7,10 +7,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { getCoverImageSrc } from '../lib/media';
 import { slugifyArtist, parseArtists, splitAndResolveOfficialArtist } from '../lib/coverRoutes';
 
-const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
+const CF_IMAGES_HASH = import.meta.env.PUBLIC_CF_IMAGES_HASH as string;
 
-function artistPhotoUrl(artistName: string): string {
-  return `${SUPABASE_URL}/storage/v1/render/image/public/covers_cafe_artist_photos/${encodeURIComponent(artistName)}.jpg?width=400&height=400&resize=cover&quality=85`;
+function artistPhotoCfUrl(artistName: string): string {
+  const id = 'artist-photo-' + artistName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 220);
+  return `https://imagedelivery.net/${CF_IMAGES_HASH}/${id}/public`;
 }
 
 type ArtType = 'fan' | 'official';
@@ -24,7 +25,15 @@ interface ArtistEntry {
 }
 
 function ArtistCardImg({ artist }: { artist: ArtistEntry }) {
-  const [src, setSrc] = useState(() => artistPhotoUrl(artist.name));
+  const [src, setSrc] = useState(() => artistPhotoCfUrl(artist.name));
+
+  const handleError = () => {
+    if (artist.sampleCover) {
+      setSrc(getCoverImageSrc(artist.sampleCover));
+    } else {
+      setSrc('');
+    }
+  };
 
   return (
     <div className="music-artist-img-wrap">
@@ -33,11 +42,8 @@ function ArtistCardImg({ artist }: { artist: ArtistEntry }) {
           src={src}
           alt={artist.name}
           className="music-artist-img"
+          onError={handleError}
           loading="lazy"
-          onError={() => {
-            if (artist.sampleCover) setSrc(getCoverImageSrc(artist.sampleCover, 200));
-            else setSrc('');
-          }}
         />
       ) : (
         <div className="music-artist-img-placeholder">

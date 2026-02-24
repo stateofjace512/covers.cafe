@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from '../_supabase';
+import { isCfPath, cfImageIdFromPath, deleteFromCf } from '../../../lib/cloudflare';
 
 export const POST: APIRoute = async ({ request }) => {
   const auth = request.headers.get('authorization');
@@ -25,17 +26,25 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response('Failed to fetch user covers', { status: 500 });
   }
 
-  // 2. Delete all storage files (fire-and-forget individual failures are acceptable —
-  //    orphaned files can be cleaned up later; the important thing is the DB records go)
+  // 2. Delete all storage files
   if (covers && covers.length > 0) {
-    const storagePaths = covers
+    const cfIds = covers
+      .filter((c) => isCfPath(c.storage_path))
+      .map((c) => cfImageIdFromPath(c.storage_path));
+
+    const supabasePaths = covers
+      .filter((c) => !isCfPath(c.storage_path))
       .flatMap((c) => [c.storage_path, c.thumbnail_path])
       .filter(Boolean) as string[];
 
-    if (storagePaths.length > 0) {
+    await Promise.all(cfIds.map((id) => deleteFromCf(id).catch((err) => {
+      console.error('[delete-account] CF delete error:', id, err);
+    })));
+
+    if (supabasePaths.length > 0) {
       const { error: storageError } = await sb.storage
         .from('covers_cafe_covers')
-        .remove(storagePaths);
+        .remove(supabasePaths);
       if (storageError) {
         console.error('[delete-account] storage delete error:', storageError.message);
       }

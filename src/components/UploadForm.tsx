@@ -151,7 +151,7 @@ async function resizeToNearestThousand(file: File): Promise<File> {
 }
 
 export default function UploadForm() {
-  const { user, openAuthModal } = useAuth();
+  const { user, session, openAuthModal } = useAuth();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
@@ -347,7 +347,7 @@ export default function UploadForm() {
   };
 
   const doSingleUpload = async () => {
-    if (!user || !file) return;
+    if (!user || !file || !session) return;
     if (!checkRateLimit('upload', UPLOAD_RATE_MAX, UPLOAD_RATE_WINDOW)) {
       const { retryAfterMs } = getRateLimitState('upload');
       const waitSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
@@ -363,30 +363,23 @@ export default function UploadForm() {
         setUploading(false);
         return;
       }
-      const fileName = `${user.id}/${crypto.randomUUID()}.jpg`;
-      const { error: storageErr } = await supabase.storage
-        .from('covers_cafe_covers')
-        .upload(fileName, file, { contentType: 'image/jpeg', upsert: false });
-      if (storageErr) throw new Error(storageErr.message);
-      const { data: urlData } = supabase.storage.from('covers_cafe_covers').getPublicUrl(fileName);
       const tagsArray = normalizeTags([...tags, tagInput]);
-      const { error: insertErr } = await supabase.from('covers_cafe_covers').insert({
-        user_id: user.id,
-        title: title.trim(),
-        artist: artist.trim(),
-        year: year ? parseInt(year, 10) : null,
-        tags: tagsArray,
-        storage_path: fileName,
-        image_url: urlData.publicUrl,
-        phash: phash || null,
-        is_public: true,
-      });
-      if (insertErr) throw new Error(insertErr.message);
-      fetch('/api/generate-thumbnail', {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('title', title.trim());
+      form.append('artist', artist.trim());
+      if (year) form.append('year', year);
+      form.append('tags', JSON.stringify(tagsArray));
+      if (phash) form.append('phash', phash);
+
+      const res = await fetch('/api/upload-cover', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storage_path: fileName }),
-      }).catch(() => {/* thumbnail generation is best-effort */});
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: form,
+      });
+      const json = await res.json() as { ok: boolean; message?: string };
+      if (!json.ok) throw new Error(json.message ?? 'Upload failed');
+
       setSuccess(true);
       setTimeout(() => navigate('/'), 1800);
     } catch (err: unknown) {
@@ -453,7 +446,7 @@ export default function UploadForm() {
   };
 
   const doBulkUpload = async () => {
-    if (!user) return;
+    if (!user || !session) return;
     if (!checkRateLimit('upload', UPLOAD_RATE_MAX, UPLOAD_RATE_WINDOW)) {
       const { retryAfterMs } = getRateLimitState('upload');
       const waitSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
@@ -477,34 +470,20 @@ export default function UploadForm() {
           continue;
         }
 
-        const fileName = `${user.id}/${crypto.randomUUID()}.jpg`;
-        const { error: storageErr } = await supabase.storage
-          .from('covers_cafe_covers')
-          .upload(fileName, item.file, { contentType: 'image/jpeg', upsert: false });
+        const form = new FormData();
+        form.append('file', item.file);
+        form.append('title', item.title.trim());
+        form.append('artist', item.artist.trim());
+        form.append('tags', JSON.stringify(tagsArray));
+        if (phash) form.append('phash', phash);
 
-        if (storageErr) throw new Error(storageErr.message);
-
-        const { data: urlData } = supabase.storage.from('covers_cafe_covers').getPublicUrl(fileName);
-
-        const { error: insertErr } = await supabase.from('covers_cafe_covers').insert({
-          user_id: user.id,
-          title: item.title.trim(),
-          artist: item.artist.trim(),
-          tags: tagsArray,
-          storage_path: fileName,
-          image_url: urlData.publicUrl,
-          phash: phash || null,
-          is_public: true,
-        });
-
-        if (insertErr) throw new Error(insertErr.message);
-
-        // Generate thumbnail in background (non-blocking)
-        fetch('/api/generate-thumbnail', {
+        const res = await fetch('/api/upload-cover', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ storage_path: fileName }),
-        }).catch(() => {/* best-effort */});
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: form,
+        });
+        const json = await res.json() as { ok: boolean; message?: string };
+        if (!json.ok) throw new Error(json.message ?? 'Upload failed');
 
         updateBulkItem(i, { status: 'done' });
       } catch (err: unknown) {

@@ -1,30 +1,35 @@
 import type { Cover, Profile } from './types';
 
-const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
+const CF_IMAGES_HASH = import.meta.env.PUBLIC_CF_IMAGES_HASH as string;
 
-function storageUrl(bucket: string, path: string): string {
-  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+function cfImageUrl(storagePath: string): string {
+  const imageId = storagePath.slice(3); // strip "cf:" prefix
+  return `https://imagedelivery.net/${CF_IMAGES_HASH}/${imageId}/public`;
 }
 
-function transformUrl(path: string, width: number): string {
-  return `${SUPABASE_URL}/storage/v1/render/image/public/covers_cafe_covers/${path}?width=${width}&height=${width}&resize=cover&quality=80`;
-}
-
-export function getCoverImageSrc(cover: Pick<Cover, 'storage_path' | 'image_url'>, width = 500): string {
-  if (cover.storage_path) return transformUrl(cover.storage_path, width);
+/**
+ * Returns the display URL for a cover image.
+ * All covers are served from Cloudflare Images (storage_path starts with "cf:").
+ * Falls back to image_url for any cover not yet on CF.
+ */
+export function getCoverImageSrc(cover: Pick<Cover, 'storage_path' | 'image_url'>, _width?: number): string {
+  if (cover.storage_path?.startsWith('cf:')) return cfImageUrl(cover.storage_path);
   return cover.image_url;
 }
 
-export function getCoverDownloadSrc(cover: Pick<Cover, 'storage_path'>, size?: number): string {
-  // Route through /api/cover-media so Sharp can resize on the server
-  const params = new URLSearchParams({ path: cover.storage_path });
-  if (size) params.set('size', String(size));
-  return `/api/cover-media?${params.toString()}`;
+/**
+ * Returns the download URL for a cover image.
+ * All covers are served directly from Cloudflare Images.
+ */
+export function getCoverDownloadSrc(cover: Pick<Cover, 'storage_path' | 'image_url'>, _size?: number): string {
+  if (cover.storage_path?.startsWith('cf:')) return cfImageUrl(cover.storage_path);
+  return cover.image_url;
 }
 
-export function getAvatarSrc(profile: Pick<Profile, 'avatar_url'> & { updated_at?: string }): string | null {
-  if (!profile.avatar_url) return null;
-  const sep = profile.avatar_url.includes('?') ? '&' : '?';
-  const ts = profile.updated_at ? new Date(profile.updated_at).getTime() : Date.now();
-  return `${profile.avatar_url}${sep}v=${ts}`;
+/**
+ * Returns the avatar URL for a profile.
+ * All avatars are on Cloudflare; stored as full delivery URLs in avatar_url.
+ */
+export function getAvatarSrc(profile: Pick<Profile, 'avatar_url'>): string | null {
+  return profile.avatar_url ?? null;
 }

@@ -22,7 +22,7 @@ interface Props {
 }
 
 export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClick, onDeleted, onDragForCollection }: Props) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -35,10 +35,15 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
     if (!confirmDelete) { setConfirmDelete(true); return; }
     setDeleting(true);
     try {
-      const paths = [cover.storage_path];
-      if (cover.thumbnail_path) paths.push(cover.thumbnail_path);
-      await supabase.storage.from('covers_cafe_covers').remove(paths);
-      await supabase.from('covers_cafe_covers').delete().eq('id', cover.id);
+      const res = await fetch('/api/delete-cover', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ cover_id: cover.id }),
+      });
+      if (!res.ok) throw new Error('Delete failed');
       onDeleted?.(cover.id);
     } catch {
       setDeleting(false);

@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { requireOperator } from './_auth';
+import { isCfPath, cfImageIdFromPath, deleteFromCf } from '../../../lib/cloudflare';
 
 export const POST: APIRoute = async ({ request }) => {
   const auth = await requireOperator(request);
@@ -18,8 +19,14 @@ export const POST: APIRoute = async ({ request }) => {
 
   if (coverError || !cover) return new Response('Cover not found', { status: 404 });
 
-  const paths = [cover.storage_path, cover.thumbnail_path].filter(Boolean) as string[];
-  if (paths.length) await sb.storage.from('covers_cafe_covers').remove(paths);
+  if (isCfPath(cover.storage_path)) {
+    await deleteFromCf(cfImageIdFromPath(cover.storage_path)).catch((err) => {
+      console.error('[cms/delete-cover] CF delete error:', err);
+    });
+  } else {
+    const paths = [cover.storage_path, cover.thumbnail_path].filter(Boolean) as string[];
+    if (paths.length) await sb.storage.from('covers_cafe_covers').remove(paths);
+  }
 
   const { error: deleteErr } = await sb.from('covers_cafe_covers').delete().eq('id', coverId);
   if (deleteErr) return new Response(deleteErr.message, { status: 500 });

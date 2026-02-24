@@ -8,7 +8,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function EditProfile() {
-  const { user, profile, refreshProfile, openAuthModal, updateProfilePicture } = useAuth();
+  const { user, session, profile, refreshProfile, openAuthModal, updateProfilePicture } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -56,7 +56,7 @@ export default function EditProfile() {
   }, [profile]);
 
   const uploadAvatar = async () => {
-    if (!user || !avatarPreview) return null;
+    if (!user || !session || !avatarPreview) return null;
     const img = new Image();
     img.src = avatarPreview;
     await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
@@ -75,11 +75,16 @@ export default function EditProfile() {
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
     if (!blob) return null;
 
-    const path = `${user.id}/avatar.jpg`;
-    const { error: storageError } = await supabase.storage.from('covers_cafe_avatars').upload(path, blob, { contentType: 'image/jpeg', upsert: true });
-    if (storageError) throw new Error(storageError.message);
-    const { data } = supabase.storage.from('covers_cafe_avatars').getPublicUrl(path);
-    return `${data.publicUrl}?v=${Date.now()}`;
+    const form = new FormData();
+    form.append('file', blob, 'avatar.jpg');
+    const res = await fetch('/api/upload-avatar', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      body: form,
+    });
+    const json = await res.json() as { ok: boolean; url?: string; message?: string };
+    if (!json.ok || !json.url) throw new Error(json.message ?? 'Avatar upload failed');
+    return json.url;
   };
 
   const handleSave = async (e: React.FormEvent) => {

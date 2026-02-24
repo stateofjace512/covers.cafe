@@ -3,7 +3,12 @@ import { useAuth } from '../contexts/AuthContext';
 
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
 
+const CF_IMAGES_HASH = import.meta.env.PUBLIC_CF_IMAGES_HASH as string;
+
 function coverThumbUrl(storagePath: string) {
+  if (storagePath.startsWith('cf:')) {
+    return `https://imagedelivery.net/${CF_IMAGES_HASH}/${storagePath.slice(3)}/public`;
+  }
   return `${SUPABASE_URL}/storage/v1/render/image/public/covers_cafe_covers/${storagePath}?width=80&height=80&resize=cover&quality=70`;
 }
 
@@ -89,6 +94,13 @@ export default function Cms() {
 
   // Legal operations
   const [removeTag, setRemoveTag] = useState('');
+
+  // Cloudflare migration
+  const [migrating, setMigrating] = useState(false);
+  const [migrateLog, setMigrateLog] = useState<string[]>([]);
+  const [migrateDone, setMigrateDone] = useState<{ migrated: number; failed: number; remaining: number } | null>(null);
+  const [migrateBatch, setMigrateBatch] = useState(50);
+  const [migrateType, setMigrateType] = useState<'all' | 'covers' | 'avatars' | 'artist-photos'>('all');
 
   const token = session?.access_token;
 
@@ -612,6 +624,105 @@ export default function Cms() {
             Mass remove by tag
           </button>
         </div>
+      </section>
+
+      {/* ── Cloudflare Image Migration ──────────────────────────────────── */}
+      <section className="surface cms-section">
+        <h2 className="cms-h2">Cloudflare Image Migration</h2>
+        <p className="cms-desc">
+          Migrate images from Supabase storage to Cloudflare Images. Process {migrateBatch} items per run.
+          {migrateDone && !migrating && (
+            <> Last run: <strong>{migrateDone.migrated}</strong> migrated, <strong>{migrateDone.failed}</strong> failed, <strong>{migrateDone.remaining}</strong> remaining.</>
+          )}
+        </p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 10 }}>
+          <select
+            className="form-input"
+            style={{ width: 'auto' }}
+            value={migrateType}
+            onChange={(e) => setMigrateType(e.target.value as typeof migrateType)}
+            disabled={migrating}
+          >
+            <option value="all">All (covers + avatars + artist photos)</option>
+            <option value="covers">Covers only</option>
+            <option value="avatars">Avatars only</option>
+            <option value="artist-photos">Artist photos only</option>
+          </select>
+          <input
+            type="number"
+            className="form-input"
+            style={{ width: 90 }}
+            min={1}
+            max={200}
+            value={migrateBatch}
+            onChange={(e) => setMigrateBatch(Math.max(1, Math.min(200, parseInt(e.target.value, 10) || 50)))}
+            disabled={migrating}
+            title="Batch size (1–200)"
+          />
+          <button
+            className="btn btn-primary"
+            disabled={migrating || !token}
+            onClick={async () => {
+              if (!token) return;
+              setMigrating(true);
+              setMigrateLog([]);
+              setMigrateDone(null);
+              const params = new URLSearchParams({ batch: String(migrateBatch), type: migrateType });
+              const es = new EventSource(`/api/cms/migrate-images?${params.toString()}`);
+              // SSE doesn't support custom headers; need to append token as query param
+              // Actually use fetch-based SSE workaround via a streaming fetch
+              es.close();
+
+              // Use fetch streaming instead (EventSource doesn't support Authorization header)
+              const res = await fetch(`/api/cms/migrate-images?${params.toString()}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              if (!res.ok || !res.body) {
+                setMigrateLog(['Error: could not start migration.']);
+                setMigrating(false);
+                return;
+              }
+              const reader = res.body.getReader();
+              const dec = new TextDecoder();
+              let buf = '';
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buf += dec.decode(value, { stream: true });
+                const lines = buf.split('\n');
+                buf = lines.pop() ?? '';
+                for (const line of lines) {
+                  if (!line.startsWith('data: ')) continue;
+                  try {
+                    const evt = JSON.parse(line.slice(6)) as { type: string; message?: string; migrated?: number; failed?: number; remaining?: number };
+                    if (evt.type === 'log' && evt.message) {
+                      setMigrateLog((prev) => [...prev, evt.message!]);
+                    } else if (evt.type === 'done') {
+                      setMigrateDone({ migrated: evt.migrated ?? 0, failed: evt.failed ?? 0, remaining: evt.remaining ?? 0 });
+                    }
+                  } catch { /* ignore parse errors */ }
+                }
+              }
+              setMigrating(false);
+            }}
+          >
+            {migrating ? '⏳ Migrating…' : '🚀 Start Migration'}
+          </button>
+          {migrating && (
+            <button className="btn btn-secondary" onClick={() => setMigrating(false)}>
+              Stop
+            </button>
+          )}
+        </div>
+        {(migrateLog.length > 0 || migrating) && (
+          <textarea
+            readOnly
+            className="form-input"
+            style={{ fontFamily: 'monospace', fontSize: 15, height: 280, resize: 'vertical', whiteSpace: 'pre' }}
+            value={migrateLog.join('\n') + (migrating ? '\n\u2026' : migrateDone ? `\n\n\u2705 Done — ${migrateDone.migrated} migrated, ${migrateDone.failed} failed, ${migrateDone.remaining} still remaining.` : '')}
+            ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}
+          />
+        )}
       </section>
 
       <style>{`

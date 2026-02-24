@@ -48,7 +48,7 @@ const REPORT_REASONS: { value: ReportReason; label: string }[] = [
 ];
 
 export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClose, onDeleted, onUpdated, initialPanelMode = 'details' }: Props) {
-  const { user, openAuthModal } = useAuth();
+  const { user, session, openAuthModal } = useAuth();
   const navigate = useNavigate();
   const isOwner = user?.id === cover.user_id;
 
@@ -148,10 +148,15 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
     if (!deleteConfirm) { setDeleteConfirm(true); return; }
     setDeleting(true);
     try {
-      const paths = [cover.storage_path];
-      if (cover.thumbnail_path) paths.push(cover.thumbnail_path);
-      await supabase.storage.from('covers_cafe_covers').remove(paths);
-      await supabase.from('covers_cafe_covers').delete().eq('id', cover.id);
+      const res = await fetch('/api/delete-cover', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ cover_id: cover.id }),
+      });
+      if (!res.ok) throw new Error('Delete failed');
       onDeleted?.(cover.id);
       onClose();
     } catch {
