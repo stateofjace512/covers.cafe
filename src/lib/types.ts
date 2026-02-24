@@ -22,7 +22,6 @@ export interface Cover {
   tags: string[];
   storage_path: string;
   image_url: string;
-  thumbnail_path: string | null;
   download_count: number;
   favorite_count: number;
   is_public: boolean;
