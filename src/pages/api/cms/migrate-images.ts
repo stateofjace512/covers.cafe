@@ -101,7 +101,7 @@ export const GET: APIRoute = async ({ request, url: reqUrl }) => {
       if (typeParam === 'covers' || typeParam === 'all') {
         const { data: covers, error: coversErr } = await sb
           .from('covers_cafe_covers')
-          .select('id, storage_path, thumbnail_path')
+          .select('id, storage_path')
           .neq('storage_path', '')
           .not('storage_path', 'ilike', 'cf:%')
           .order('created_at', { ascending: true })
@@ -127,13 +127,9 @@ export const GET: APIRoute = async ({ request, url: reqUrl }) => {
 
               const { error: dbErr } = await sb
                 .from('covers_cafe_covers')
-                .update({ storage_path: `cf:${cfId}`, thumbnail_path: null })
+                .update({ storage_path: `cf:${cfId}` })
                 .eq('id', cover.id);
               if (dbErr) throw new Error(`DB: ${dbErr.message}`);
-
-              if (cover.thumbnail_path) {
-                await sb.storage.from('covers_cafe_covers').remove([cover.thumbnail_path]).catch(() => {});
-              }
 
               migrated++;
               send({ type: 'progress', done: i + 1, total: covers.length });

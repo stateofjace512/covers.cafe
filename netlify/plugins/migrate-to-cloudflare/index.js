@@ -75,7 +75,7 @@ export default {
 
     const { data: covers, error: coversErr } = await sb
       .from('covers_cafe_covers')
-      .select('id, storage_path, thumbnail_path')
+      .select('id, storage_path')
       .neq('storage_path', '')
       .not('storage_path', 'ilike', 'cf:%')
       .order('created_at', { ascending: true })
@@ -106,14 +106,10 @@ export default {
 
           const { error: dbErr } = await sb
             .from('covers_cafe_covers')
-            .update({ storage_path: 'cf:' + cfId, thumbnail_path: null })
+            .update({ storage_path: 'cf:' + cfId })
             .eq('id', cover.id);
 
           if (dbErr) throw new Error('DB update: ' + dbErr.message);
-
-          if (cover.thumbnail_path) {
-            await sb.storage.from('covers_cafe_covers').remove([cover.thumbnail_path]).catch(() => {});
-          }
 
           console.log('  ok cover ' + cover.id + ' → cf:' + cfId);
           totalSuccess++;
