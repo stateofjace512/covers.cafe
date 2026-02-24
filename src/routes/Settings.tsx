@@ -16,10 +16,8 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   applyUserPreferencesToDocument,
   getCoverGridMinWidthPreference,
-  getNoThemeImagesPreference,
   getPreferModalOverPagePreference,
   setCoverGridMinWidthPreference,
-  setNoThemeImagesPreference,
   setPreferModalOverPagePreference,
 } from '../lib/userPreferences';
 
@@ -463,7 +461,6 @@ function ActiveSessionsPanel({ onDone }: { onDone: () => void }) {
 export default function Settings() {
   const { user, signOut, openAuthModal } = useAuth();
   const [activeForm, setActiveForm] = useState<ActiveForm>(null);
-  const [noThemeImages, setNoThemeImages] = useState<boolean>(() => getNoThemeImagesPreference());
   const [coverGridMinWidth, setCoverGridMinWidth] = useState<number>(() => getCoverGridMinWidthPreference());
   const [preferModalOverPage, setPreferModalOverPage] = useState<boolean>(() => getPreferModalOverPagePreference());
 
@@ -472,11 +469,6 @@ export default function Settings() {
     localStorage.setItem('theme', theme);
     window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: theme }));
   };
-
-  useEffect(() => {
-    setNoThemeImagesPreference(noThemeImages);
-    applyUserPreferencesToDocument();
-  }, [noThemeImages]);
 
   useEffect(() => {
     setCoverGridMinWidthPreference(coverGridMinWidth);
@@ -500,35 +492,6 @@ export default function Settings() {
         {/* ── Appearance ─────────────────────────────────────── */}
         <section className="card settings-section">
           <h2 className="settings-section-title">Appearance</h2>
-          <div className="settings-row">
-            <div className="settings-row-info">
-              <span className="settings-row-label">No theme images</span>
-              <span className="settings-row-desc">Use flat colors and remove textured theme image layers.</span>
-            </div>
-            <div className="settings-row-control">
-              <div className="settings-pixel-toggle-wrap">
-                <button
-                  type="button"
-                  className="settings-icon-toggle"
-                  role="switch"
-                  aria-checked={noThemeImages}
-                  aria-label="No theme images"
-                  onClick={() => setNoThemeImages((prev) => !prev)}
-                >
-                  <svg width="40" height="20" viewBox="0 0 32 16" className="toggle-icon" aria-hidden="true">
-                    <rect x="1" y="1" width="30" height="14" fill="none" stroke="currentColor" strokeWidth="2" />
-                    <rect x="3" y="3" width="26" height="10" fill="currentColor" opacity="0.15" />
-                    <g className={`toggle-knob${noThemeImages ? ' toggle-knob--on' : ''}`}>
-                      <rect x="3" y="3" width="10" height="10" fill="currentColor" />
-                      <rect x="5" y="5" width="2" height="2" fill="currentColor" opacity="0.35" />
-                    </g>
-                  </svg>
-                </button>
-                <span className="settings-icon-toggle-label">{noThemeImages ? 'Yes' : 'No'}</span>
-              </div>
-            </div>
-          </div>
-
           <div className="settings-row">
             <div className="settings-row-info">
               <span className="settings-row-label">Cover columns</span>
