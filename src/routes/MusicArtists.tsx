@@ -5,7 +5,7 @@ import LoadingIcon from '../components/LoadingIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getCoverImageSrc } from '../lib/media';
-import { slugifyArtist, splitAndResolveOfficialArtist } from '../lib/coverRoutes';
+import { slugifyArtist, parseArtists, splitAndResolveOfficialArtist } from '../lib/coverRoutes';
 
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
 
