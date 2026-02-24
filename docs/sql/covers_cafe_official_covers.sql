@@ -15,6 +15,7 @@ create table if not exists public.covers_cafe_official_covers (
   search_album text,
   tags text[] not null default array['official'],
   source_payload jsonb,
+  official_phash text,
   cover_id uuid references public.covers_cafe_covers(id) on delete set null,
   cover_public_id bigint,
   official_public_id bigint not null,
@@ -44,6 +45,10 @@ create index if not exists covers_cafe_official_covers_cover_public_id_idx
 
 create unique index if not exists covers_cafe_official_covers_official_public_id_key
   on public.covers_cafe_official_covers (official_public_id);
+
+create index if not exists covers_cafe_official_covers_official_phash_idx
+  on public.covers_cafe_official_covers (official_phash)
+  where official_phash is not null;
 
 create or replace function public.covers_cafe_official_covers_set_updated_at()
 returns trigger

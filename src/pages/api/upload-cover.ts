@@ -52,6 +52,26 @@ export const POST: APIRoute = async ({ request }) => {
   const tags = Array.isArray(body.tags) ? (body.tags as string[]).filter((t) => typeof t === 'string') : [];
   const phash = typeof body.phash === 'string' ? body.phash : null;
 
+  if (phash) {
+    const { data: existingDup } = await sb
+      .from('covers_cafe_covers')
+      .select('id')
+      .eq('phash', phash)
+      .limit(1);
+    if ((existingDup?.length ?? 0) > 0) {
+      return json({ ok: false, code: 'DUPLICATE', message: 'This image is already in our gallery!' }, 409);
+    }
+
+    const { data: blockedOfficial } = await sb
+      .from('covers_cafe_official_covers')
+      .select('id')
+      .eq('official_phash', phash)
+      .limit(1);
+    if ((blockedOfficial?.length ?? 0) > 0) {
+      return json({ ok: false, code: 'OFFICIAL_BLOCKED', message: 'This image is not allowed on our site. Read our Terms: /terms' }, 403);
+    }
+  }
+
   const storagePath = `cf:${cfImageId}`;
   const { data: cover, error: insertErr } = await sb
     .from('covers_cafe_covers')

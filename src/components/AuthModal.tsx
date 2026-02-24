@@ -502,6 +502,16 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
           border-color: #c07f55 #ffffff #ffffff #c07f55;
           box-shadow: none;
         }
+        [data-theme="dark"] .auth-input {
+          background: #1a0d04;
+          color: #f5e6dc;
+          border-color: #6b3d1f #2a1505 #2a1505 #6b3d1f;
+        }
+        [data-theme="dark"] .auth-input::placeholder { color: #c7a690; opacity: 1; }
+        [data-theme="dark"] .auth-input:focus {
+          outline: 1px dotted #c8935c;
+          border-color: #8a4f2a #2a1505 #2a1505 #8a4f2a;
+        }
         .auth-code-input {
           font-size: 16px; letter-spacing: 6px; text-align: center;
           padding: 6px;

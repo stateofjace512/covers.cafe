@@ -359,7 +359,7 @@ export default function UploadForm() {
     try {
       const phash = await computePhash(file);
       if (phash && await isDuplicate(phash, supabase)) {
-        setError('This image already appears to be in the gallery (duplicate detected).');
+        setError('This image is already in our gallery!');
         setUploading(false);
         return;
       }
@@ -367,10 +367,13 @@ export default function UploadForm() {
       // Step 1: get a one-time direct upload URL from CF (file never touches Netlify)
       const urlRes = await fetch('/api/cf-upload-url', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${session.access_token}` },
+        headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phash }),
       });
-      const urlJson = await urlRes.json() as { ok: boolean; uploadUrl?: string; cfImageId?: string; message?: string };
+      const urlJson = await urlRes.json() as { ok: boolean; code?: string; uploadUrl?: string; cfImageId?: string; message?: string };
       if (!urlJson.ok || !urlJson.uploadUrl || !urlJson.cfImageId) {
+        if (urlJson.code === 'DUPLICATE') throw new Error('This image is already in our gallery!');
+        if (urlJson.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms: /terms');
         throw new Error(urlJson.message ?? 'Could not get upload URL');
       }
 
@@ -379,7 +382,10 @@ export default function UploadForm() {
       const cfForm = new FormData();
       cfForm.append('file', file.slice(0, file.size, file.type || 'image/jpeg'), file.name || 'cover.jpg');
       const cfRes = await fetch(urlJson.uploadUrl, { method: 'POST', body: cfForm });
-      if (!cfRes.ok) throw new Error('Image upload to Cloudflare failed');
+      if (!cfRes.ok) {
+        const cfErr = await cfRes.json().catch(() => null) as { errors?: Array<{ message?: string }> } | null;
+        throw new Error(cfErr?.errors?.[0]?.message ?? 'Image upload to Cloudflare failed');
+      }
 
       // Step 3: save metadata to DB via our server (tiny JSON payload)
       const tagsArray = normalizeTags([...tags, tagInput]);
@@ -395,8 +401,12 @@ export default function UploadForm() {
           phash: phash ?? undefined,
         }),
       });
-      const json = await res.json() as { ok: boolean; message?: string };
-      if (!json.ok) throw new Error(json.message ?? 'Upload failed');
+      const json = await res.json() as { ok: boolean; code?: string; message?: string };
+      if (!json.ok) {
+        if (json.code === 'DUPLICATE') throw new Error('This image is already in our gallery!');
+        if (json.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms: /terms');
+        throw new Error(json.message ?? 'Upload failed');
+      }
 
       setSuccess(true);
       setTimeout(() => navigate('/'), 1800);
@@ -484,17 +494,20 @@ export default function UploadForm() {
       try {
         const phash = await computePhash(item.file);
         if (phash && await isDuplicate(phash, supabase)) {
-          updateBulkItem(i, { status: 'error', errorMsg: 'Duplicate — already in gallery.' });
+          updateBulkItem(i, { status: 'error', errorMsg: 'This image is already in our gallery!' });
           continue;
         }
 
         // Step 1: get a one-time direct upload URL
         const urlRes = await fetch('/api/cf-upload-url', {
           method: 'POST',
-          headers: { Authorization: `Bearer ${session.access_token}` },
+          headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phash }),
         });
-        const urlJson = await urlRes.json() as { ok: boolean; uploadUrl?: string; cfImageId?: string; message?: string };
+        const urlJson = await urlRes.json() as { ok: boolean; code?: string; uploadUrl?: string; cfImageId?: string; message?: string };
         if (!urlJson.ok || !urlJson.uploadUrl || !urlJson.cfImageId) {
+          if (urlJson.code === 'DUPLICATE') throw new Error('This image is already in our gallery!');
+          if (urlJson.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms: /terms');
           throw new Error(urlJson.message ?? 'Could not get upload URL');
         }
 
@@ -502,7 +515,10 @@ export default function UploadForm() {
         const cfForm = new FormData();
         cfForm.append('file', item.file.slice(0, item.file.size, item.file.type || 'image/jpeg'), item.file.name || 'cover.jpg');
         const cfRes = await fetch(urlJson.uploadUrl, { method: 'POST', body: cfForm });
-        if (!cfRes.ok) throw new Error('Image upload to Cloudflare failed');
+        if (!cfRes.ok) {
+          const cfErr = await cfRes.json().catch(() => null) as { errors?: Array<{ message?: string }> } | null;
+          throw new Error(cfErr?.errors?.[0]?.message ?? 'Image upload to Cloudflare failed');
+        }
 
         // Step 3: save metadata
         const res = await fetch('/api/upload-cover', {
@@ -516,8 +532,12 @@ export default function UploadForm() {
             phash: phash ?? undefined,
           }),
         });
-        const json = await res.json() as { ok: boolean; message?: string };
-        if (!json.ok) throw new Error(json.message ?? 'Upload failed');
+        const json = await res.json() as { ok: boolean; code?: string; message?: string };
+        if (!json.ok) {
+          if (json.code === 'DUPLICATE') throw new Error('This image is already in our gallery!');
+          if (json.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms: /terms');
+          throw new Error(json.message ?? 'Upload failed');
+        }
 
         updateBulkItem(i, { status: 'done' });
       } catch (err: unknown) {

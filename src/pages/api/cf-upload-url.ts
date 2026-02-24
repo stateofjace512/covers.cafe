@@ -23,6 +23,29 @@ export const POST: APIRoute = async ({ request }) => {
   const { data: userData, error: userError } = await sb.auth.getUser(token);
   if (userError || !userData.user) return json({ ok: false, message: 'Unauthorized' }, 401);
 
+  const body = await request.json().catch(() => ({})) as { phash?: string };
+  const phash = typeof body.phash === 'string' ? body.phash.trim() : '';
+
+  if (phash) {
+    const { data: existingDup } = await sb
+      .from('covers_cafe_covers')
+      .select('id')
+      .eq('phash', phash)
+      .limit(1);
+    if ((existingDup?.length ?? 0) > 0) {
+      return json({ ok: false, code: 'DUPLICATE', message: 'This image is already in our gallery!' }, 409);
+    }
+
+    const { data: blockedOfficial } = await sb
+      .from('covers_cafe_official_covers')
+      .select('id')
+      .eq('official_phash', phash)
+      .limit(1);
+    if ((blockedOfficial?.length ?? 0) > 0) {
+      return json({ ok: false, code: 'OFFICIAL_BLOCKED', message: 'This image is not allowed on our site. Read our Terms: /terms' }, 403);
+    }
+  }
+
   const cfToken = import.meta.env.CLOUDFLARE_API as string | undefined;
   const accountId = import.meta.env.CLOUDFLARE_ACCOUNT_ID as string | undefined;
   if (!cfToken || !accountId) return json({ ok: false, message: 'Server misconfigured' }, 503);
