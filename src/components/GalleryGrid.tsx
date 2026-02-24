@@ -114,7 +114,8 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
         supabase
           .from('covers_cafe_covers')
           .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
-          .eq('user_id', currentUser.id),
+          .eq('user_id', currentUser.id)
+          .not('tags', 'cs', '{"official"}'),
         currentSort,
       ).range(from, to);
       const d = (data as Cover[]) ?? [];
@@ -127,7 +128,8 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
           .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
           .eq('user_id', currentArtistUserId)
           .eq('is_public', true)
-          .eq('is_private', false),
+          .eq('is_private', false)
+          .not('tags', 'cs', '{"official"}'),
         currentSort,
       ).range(from, to);
       const d = (data as Cover[]) ?? [];
@@ -284,7 +286,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
 
       {searchQuery && (
         <p className="gallery-search-label">
-          Results for <strong>"{searchQuery}"</strong> — {covers.length} loaded
+          <strong>{covers.length}</strong> results for <strong>"{searchQuery}"</strong>
         </p>
       )}
 
