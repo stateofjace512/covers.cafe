@@ -456,11 +456,21 @@ export default function Acotw() {
         .acotw-archive-section { border-top: 1px solid var(--body-card-border); padding-top: 20px; }
         
         .acotw-archive-toggle {
-          display: flex; align-items: center; gap: 8px;
-          background: none; border: 1px solid var(--body-card-border); border-radius: 0;
-          padding: 8px 14px; font-size: 19px; color: var(--body-text);
-          cursor: pointer; transition: background 0.12s;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: none;
+          border: 1px solid var(--body-card-border);
+          border-radius: 0;
+          padding: 8px 14px;
+          font-size: 19px;
+          color: var(--body-text);
+          cursor: pointer;
+          transition: background 0.12s;
+        
+          margin-bottom: 16px;   /* ← ADD THIS */
         }
+        
         .acotw-archive-toggle:hover { background: var(--body-card-bg); transform: none; box-shadow: none; }
         
         .acotw-archive-count {
