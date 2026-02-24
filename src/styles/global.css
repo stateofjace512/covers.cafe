@@ -218,6 +218,8 @@ a:hover {
   box-shadow: none;
   color: var(--sidebar-text);
   font-family: var(--font-body);
+  /* Sit above weather canvas (z-index 5) */
+  z-index: 10;
 }
 
 /* ---------- Main content ---------- */

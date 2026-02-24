@@ -13,6 +13,8 @@ import FavoritesIcon from './FavoritesIcon';
 import UploadDownloadIcon from './UploadDownloadIcon';
 import GearIcon from './GearIcon';
 import ShieldIcon from './ShieldIcon';
+import WeatherIcon from './WeatherIcon';
+import WeatherMicroApp from './WeatherMicroApp';
 
 const NAV = [
   { section: 'Discover', label: 'Gallery',   icon: <GalleryIcon size={18} />,        path: '/' },
@@ -33,11 +35,26 @@ type SidebarProps = {
   onNavigate: () => void;
 };
 
+// Each microapp entry: { id, icon, label, component }
+const MICROAPPS = [
+  { id: 'weather', icon: <WeatherIcon size={14} />, label: 'Weather' },
+] as const;
+
 export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, openAuthModal } = useAuth();
   const [isOperator, setIsOperator] = useState(false);
+  const [openApps, setOpenApps] = useState<Set<string>>(new Set());
+
+  function toggleApp(id: string) {
+    setOpenApps((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   useEffect(() => {
     let active = true;
@@ -125,6 +142,29 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
         })}
       </nav>
 
+      {/* Microapps grid */}
+      <div className="sidebar-microapps">
+        <div className="sidebar-section-label">Apps</div>
+        <div className="microapp-grid">
+          {MICROAPPS.map(({ id, icon, label }) => (
+            <button
+              key={id}
+              className={`microapp-cell${openApps.has(id) ? ' microapp-cell--active' : ''}`}
+              onClick={() => toggleApp(id)}
+              title={label}
+              aria-pressed={openApps.has(id)}
+            >
+              {icon}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Rendered microapp windows */}
+      {openApps.has('weather') && (
+        <WeatherMicroApp onClose={() => toggleApp('weather')} />
+      )}
+
       <style>{`
         .sidebar-user-panel {
           display: flex; align-items: center; gap: 8px;
@@ -190,6 +230,40 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
         .sidebar-nav-pip {
           width: 4px; height: 4px; border-radius: 0;
           background: #ffffff; flex-shrink: 0;
+        }
+        .sidebar-microapps {
+          border-top: 1px solid var(--sidebar-border);
+          padding-bottom: 6px;
+        }
+        .microapp-grid {
+          display: grid;
+          grid-template-columns: repeat(9, 1fr);
+          gap: 2px;
+          padding: 2px 6px 0;
+        }
+        .microapp-cell {
+          aspect-ratio: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--sidebar-bg);
+          border: 2px solid;
+          border-color: #ffffff #c07f55 #c07f55 #ffffff;
+          color: var(--sidebar-text);
+          cursor: pointer;
+          padding: 0;
+          min-width: 0;
+        }
+        .microapp-cell:hover {
+          background: var(--sidebar-hover-bg);
+        }
+        .microapp-cell:active {
+          border-color: #c07f55 #ffffff #ffffff #c07f55;
+        }
+        .microapp-cell--active {
+          background: var(--sidebar-active-bg);
+          color: var(--sidebar-active-text);
+          border-color: #c07f55 #ffffff #ffffff #c07f55;
         }
       `}</style>
     </aside>
