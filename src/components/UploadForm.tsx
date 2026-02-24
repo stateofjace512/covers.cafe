@@ -375,8 +375,9 @@ export default function UploadForm() {
       }
 
       // Step 2: upload file directly to Cloudflare (bypasses Netlify size limit)
+      // Explicitly set content-type so CF doesn't reject files with an empty File.type
       const cfForm = new FormData();
-      cfForm.append('file', file);
+      cfForm.append('file', file.slice(0, file.size, file.type || 'image/jpeg'), file.name || 'cover.jpg');
       const cfRes = await fetch(urlJson.uploadUrl, { method: 'POST', body: cfForm });
       if (!cfRes.ok) throw new Error('Image upload to Cloudflare failed');
 
@@ -499,7 +500,7 @@ export default function UploadForm() {
 
         // Step 2: upload directly to Cloudflare
         const cfForm = new FormData();
-        cfForm.append('file', item.file);
+        cfForm.append('file', item.file.slice(0, item.file.size, item.file.type || 'image/jpeg'), item.file.name || 'cover.jpg');
         const cfRes = await fetch(urlJson.uploadUrl, { method: 'POST', body: cfForm });
         if (!cfRes.ok) throw new Error('Image upload to Cloudflare failed');
 
