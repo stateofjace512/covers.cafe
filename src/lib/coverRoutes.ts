@@ -10,6 +10,21 @@ export function parseArtists(artist: string): string[] {
   return parts.length >= 1 ? parts : [trimmed];
 }
 
+/**
+ * Split a compound official artist_name and resolve each token via the provided alias map.
+ *
+ * Example: "テイラー・スウィフト & ILLENIUM" with aliases {"テイラー・スウィフト": "Taylor Swift"}
+ *   → ["Taylor Swift", "ILLENIUM"]
+ *
+ * This is only applied to official art — fan art uses parseArtists without alias resolution.
+ */
+export function splitAndResolveOfficialArtist(
+  artistName: string,
+  aliases: Record<string, string>,
+): string[] {
+  return parseArtists(artistName).map((part) => aliases[part] ?? part);
+}
+
 function slugifyPart(value: string): string {
   const slug = value
     .toLowerCase()

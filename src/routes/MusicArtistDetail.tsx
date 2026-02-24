@@ -125,9 +125,11 @@ export default function MusicArtistDetail() {
   const [mergeCanonical, setMergeCanonical] = useState('');
   const [merging, setMerging] = useState(false);
   // Undo state
-  const [undoSnapshot, setUndoSnapshot] = useState<{ album_cover_url: string; artist_name: string }[] | null>(null);
+  const [undoSnapshot, setUndoSnapshot] = useState<{ records: { album_cover_url: string; artist_name: string }[]; aliases: string[] } | null>(null);
   const [undoCountdown, setUndoCountdown] = useState(0);
   const undoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Known aliases for this artist (alias → this artistName) — used to expand official cover queries.
+  const [artistAliases, setArtistAliases] = useState<string[]>([]);
 
   // Artist photo state
   const [avatarSrc, setAvatarSrc] = useState('');
@@ -174,10 +176,24 @@ export default function MusicArtistDetail() {
     setOfficialPage(0);
 
     const fetchOfficial = async () => {
+      // Load aliases where this artist is the canonical name (e.g. テイラー・スウィフト for Taylor Swift).
+      // These are used to also surface covers recorded under alternate name spellings or localisations.
+      const { data: aliasData } = await supabase
+        .from('covers_cafe_artist_aliases')
+        .select('alias')
+        .eq('canonical', artistName);
+      const aliases = (aliasData ?? []).map((r) => r.alias as string).filter(Boolean);
+      setArtistAliases(aliases);
+
+      // Build an OR filter that matches the canonical name and any known aliases so compound
+      // strings like "テイラー・スウィフト & ILLENIUM" appear on Taylor Swift's page.
+      const allNames = [artistName, ...aliases];
+      const orFilter = allNames.map((n) => `artist_name.ilike.%${n}%`).join(',');
+
       const { data } = await supabase
         .from('covers_cafe_official_covers')
         .select('artist_name, album_title, release_year, album_cover_url')
-        .ilike('artist_name', `%${artistName}%`)
+        .or(orFilter)
         .order('release_year', { ascending: false })
         .range(0, PAGE_SIZE);
 
@@ -225,10 +241,12 @@ export default function MusicArtistDetail() {
     setOfficialLoadingMore(true);
     const nextPage = officialPage + 1;
     const from = nextPage * PAGE_SIZE;
+    const allNames = [artistName, ...artistAliases];
+    const orFilter = allNames.map((n) => `artist_name.ilike.%${n}%`).join(',');
     const { data } = await supabase
       .from('covers_cafe_official_covers')
       .select('artist_name, album_title, release_year, album_cover_url')
-      .ilike('artist_name', `%${artistName}%`)
+      .or(orFilter)
       .order('release_year', { ascending: false })
       .range(from, from + PAGE_SIZE);
     const raw = (data as OfficialCover[] | null) ?? [];
@@ -239,8 +257,8 @@ export default function MusicArtistDetail() {
     setOfficialLoadingMore(false);
   };
 
-  const startUndoCountdown = useCallback((snapshot: { album_cover_url: string; artist_name: string }[]) => {
-    setUndoSnapshot(snapshot);
+  const startUndoCountdown = useCallback((records: { album_cover_url: string; artist_name: string }[], aliases: string[]) => {
+    setUndoSnapshot({ records, aliases });
     setUndoCountdown(3);
     if (undoTimerRef.current) clearInterval(undoTimerRef.current);
     undoTimerRef.current = setInterval(() => {
@@ -270,27 +288,29 @@ export default function MusicArtistDetail() {
     });
     setMerging(false);
     if (res.ok) {
+      const resJson = await res.json().catch(() => ({})) as { aliases?: string[] };
+      const createdAliases: string[] = resJson.aliases ?? [];
       setOfficialCovers((prev) => prev.map((c) => selectedArtists.has(c.artist_name ?? '') ? { ...c, artist_name: canonical } : c));
       setSelectedArtists(new Set());
       setMergeCanonical('');
       setSelectMode(false);
-      startUndoCountdown(snapshot);
+      startUndoCountdown(snapshot, createdAliases);
     }
   };
 
   const handleUndo = async () => {
     if (!undoSnapshot || !session?.access_token) return;
     if (undoTimerRef.current) clearInterval(undoTimerRef.current);
-    const snapshot = undoSnapshot;
+    const { records, aliases } = undoSnapshot;
     setUndoSnapshot(null);
     setUndoCountdown(0);
     await fetch('/api/official/undo-merge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ records: snapshot }),
+      body: JSON.stringify({ records, aliases }),
     });
     // Restore state: re-map covers back to original names
-    const urlToName = new Map(snapshot.map((r) => [r.album_cover_url, r.artist_name]));
+    const urlToName = new Map(records.map((r) => [r.album_cover_url, r.artist_name]));
     setOfficialCovers((prev) => prev.map((c) => urlToName.has(c.album_cover_url) ? { ...c, artist_name: urlToName.get(c.album_cover_url)! } : c));
   };
 

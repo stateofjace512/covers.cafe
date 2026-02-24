@@ -28,7 +28,20 @@ export const POST: APIRoute = async ({ request }) => {
 
   if (officialError) return new Response(officialError.message, { status: 500 });
 
-  return new Response(JSON.stringify({ ok: true }), {
+  // Persist alias mappings so compound names (e.g. "テイラー・スウィフト & ILLENIUM") can later
+  // be split and each token resolved without incorrectly merging co-artists together.
+  const newAliases = artistNames.filter((n) => n !== canonicalName);
+  if (newAliases.length > 0) {
+    const { error: aliasError } = await sb
+      .from('covers_cafe_artist_aliases')
+      .upsert(
+        newAliases.map((alias) => ({ alias, canonical: canonicalName })),
+        { onConflict: 'alias' },
+      );
+    if (aliasError) return new Response(aliasError.message, { status: 500 });
+  }
+
+  return new Response(JSON.stringify({ ok: true, aliases: newAliases }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   });

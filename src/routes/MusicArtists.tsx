@@ -5,7 +5,7 @@ import LoadingIcon from '../components/LoadingIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { getCoverImageSrc } from '../lib/media';
-import { slugifyArtist, parseArtists } from '../lib/coverRoutes';
+import { slugifyArtist, splitAndResolveOfficialArtist } from '../lib/coverRoutes';
 
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
 
@@ -59,7 +59,7 @@ export default function MusicArtists() {
   const [selectedArtists, setSelectedArtists] = useState<Set<string>>(new Set());
   const [mergeCanonical, setMergeCanonical] = useState('');
   const [merging, setMerging] = useState(false);
-  const [undoSnapshot, setUndoSnapshot] = useState<{ album_cover_url: string; artist_name: string }[] | null>(null);
+  const [undoSnapshot, setUndoSnapshot] = useState<{ records: { album_cover_url: string; artist_name: string }[]; aliases: string[] } | null>(null);
   const [undoCountdown, setUndoCountdown] = useState(0);
   const undoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const navigate = useNavigate();
@@ -101,27 +101,38 @@ export default function MusicArtists() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('covers_cafe_official_covers')
-        .select('artist_name, album_cover_url')
-        .limit(50000);
+      // Load official covers and alias mappings concurrently.
+      const [{ data: coversData }, { data: aliasData }] = await Promise.all([
+        supabase.from('covers_cafe_official_covers').select('artist_name, album_cover_url').limit(50000),
+        supabase.from('covers_cafe_artist_aliases').select('alias, canonical'),
+      ]);
+
+      // Build alias lookup: alias → canonical (e.g. "テイラー・スウィフト" → "Taylor Swift").
+      const aliasMap: Record<string, string> = {};
+      for (const row of aliasData ?? []) {
+        if (row.alias && row.canonical) aliasMap[row.alias] = row.canonical;
+      }
 
       const map = new Map<string, ArtistEntry>();
-      for (const row of data ?? []) {
-        const name = row.artist_name?.trim();
-        if (!name) continue;
-        if (!map.has(name)) {
-          map.set(name, {
-            name,
-            coverCount: 0,
-            officialCoverCount: 0,
-            fanCoverCount: 0,
-            sampleCover: { storage_path: '', image_url: row.album_cover_url },
-          });
+      for (const row of coversData ?? []) {
+        // Split compound names ("テイラー・スウィフト & ILLENIUM") and resolve each token via
+        // aliases so co-artists are never merged into each other.
+        const names = splitAndResolveOfficialArtist(row.artist_name?.trim() ?? '', aliasMap);
+        for (const name of names) {
+          if (!name) continue;
+          if (!map.has(name)) {
+            map.set(name, {
+              name,
+              coverCount: 0,
+              officialCoverCount: 0,
+              fanCoverCount: 0,
+              sampleCover: { storage_path: '', image_url: row.album_cover_url },
+            });
+          }
+          const entry = map.get(name)!;
+          entry.coverCount++;
+          entry.officialCoverCount++;
         }
-        const entry = map.get(name)!;
-        entry.coverCount++;
-        entry.officialCoverCount++;
       }
 
       const sorted = Array.from(map.values()).sort((a, b) => b.officialCoverCount - a.officialCoverCount);
@@ -130,8 +141,8 @@ export default function MusicArtists() {
     })();
   }, []);
 
-  const startUndoCountdown = useCallback((snapshot: { album_cover_url: string; artist_name: string }[]) => {
-    setUndoSnapshot(snapshot);
+  const startUndoCountdown = useCallback((records: { album_cover_url: string; artist_name: string }[], aliases: string[]) => {
+    setUndoSnapshot({ records, aliases });
     setUndoCountdown(3);
     if (undoTimerRef.current) clearInterval(undoTimerRef.current);
     undoTimerRef.current = setInterval(() => {
@@ -160,6 +171,8 @@ export default function MusicArtists() {
     });
     setMerging(false);
     if (res.ok) {
+      const resJson = await res.json().catch(() => ({})) as { aliases?: string[] };
+      const createdAliases: string[] = resJson.aliases ?? [];
       setOfficialArtists((prev) => {
         const mergedCount = prev.filter((a) => selectedArtists.has(a.name)).reduce((s, a) => s + a.officialCoverCount, 0);
         const sampleCover = prev.find((a) => selectedArtists.has(a.name) && a.sampleCover?.image_url)?.sampleCover ?? null;
@@ -176,33 +189,39 @@ export default function MusicArtists() {
       setSelectedArtists(new Set());
       setMergeCanonical('');
       setSelectMode(false);
-      startUndoCountdown(snapshot);
+      startUndoCountdown(snapshot, createdAliases);
     }
   };
 
   const handleUndo = async () => {
     if (!undoSnapshot || !session?.access_token) return;
     if (undoTimerRef.current) clearInterval(undoTimerRef.current);
-    const snapshot = undoSnapshot;
+    const { records, aliases } = undoSnapshot;
     setUndoSnapshot(null);
     setUndoCountdown(0);
     await fetch('/api/official/undo-merge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify({ records: snapshot }),
+      body: JSON.stringify({ records, aliases }),
     });
-    // Re-fetch to get accurate state after undo
-    const { data } = await supabase
-      .from('covers_cafe_official_covers')
-      .select('artist_name, album_cover_url')
-      .limit(50000);
+    // Re-fetch covers and aliases to get accurate state after undo.
+    const [{ data: coversData }, { data: aliasData }] = await Promise.all([
+      supabase.from('covers_cafe_official_covers').select('artist_name, album_cover_url').limit(50000),
+      supabase.from('covers_cafe_artist_aliases').select('alias, canonical'),
+    ]);
+    const aliasMap: Record<string, string> = {};
+    for (const row of aliasData ?? []) {
+      if (row.alias && row.canonical) aliasMap[row.alias] = row.canonical;
+    }
     const map = new Map<string, ArtistEntry>();
-    for (const row of data ?? []) {
-      const name = (row.artist_name as string | null)?.trim();
-      if (!name) continue;
-      if (!map.has(name)) map.set(name, { name, coverCount: 0, officialCoverCount: 0, fanCoverCount: 0, sampleCover: { storage_path: '', image_url: row.album_cover_url as string } });
-      map.get(name)!.coverCount++;
-      map.get(name)!.officialCoverCount++;
+    for (const row of coversData ?? []) {
+      const names = splitAndResolveOfficialArtist((row.artist_name as string | null)?.trim() ?? '', aliasMap);
+      for (const name of names) {
+        if (!name) continue;
+        if (!map.has(name)) map.set(name, { name, coverCount: 0, officialCoverCount: 0, fanCoverCount: 0, sampleCover: { storage_path: '', image_url: row.album_cover_url as string } });
+        map.get(name)!.coverCount++;
+        map.get(name)!.officialCoverCount++;
+      }
     }
     setOfficialArtists(Array.from(map.values()).sort((a, b) => b.officialCoverCount - a.officialCoverCount));
   };
