@@ -47,6 +47,15 @@ async function uploadToCf(token, accountId, fileBuffer, filename, metadata = {})
   return json.result.id;
 }
 
+function artistPhotoCustomId(artistName) {
+  return 'artist-photo-' + artistName
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 220);
+}
+
 function cfDeliveryUrl(hash, imageId) {
   return `https://imagedelivery.net/${hash}/${imageId}/public`;
 }
@@ -184,7 +193,58 @@ export default {
       }
     }
 
-    // ── 3. Summary ──────────────────────────────────────────────────────────
+    // ── 3. Migrate artist photos ──────────────────────────────────────────────
+
+    console.log(`[migrate-to-cloudflare] Fetching up to ${BATCH_SIZE} artist photos from Supabase bucket...`);
+
+    const { data: artistFiles, error: artistListErr } = await sb.storage
+      .from('covers_cafe_artist_photos')
+      .list('', { limit: BATCH_SIZE, sortBy: { column: 'name', order: 'asc' } });
+
+    if (artistListErr) {
+      console.error('[migrate-to-cloudflare] Artist photo list error:', artistListErr.message);
+    } else if (!artistFiles || artistFiles.length === 0) {
+      console.log('[migrate-to-cloudflare] No artist photos found in Supabase bucket.');
+    } else {
+      console.log(`[migrate-to-cloudflare] Migrating ${artistFiles.length} artist photo(s)...`);
+      for (const file of artistFiles) {
+        const artistName = decodeURIComponent(file.name.replace(/\.jpg$/i, ''));
+        const customId = artistPhotoCustomId(artistName);
+        try {
+          const { data: fileData, error: dlErr } = await sb.storage
+            .from('covers_cafe_artist_photos')
+            .download(file.name);
+          if (dlErr || !fileData) throw new Error(dlErr?.message ?? 'download failed');
+
+          // Delete existing CF image with this custom ID first
+          await fetch(
+            \`https://api.cloudflare.com/client/v4/accounts/\${cfAccountId}/images/v1/\${encodeURIComponent(customId)}\`,
+            { method: 'DELETE', headers: { Authorization: \`Bearer \${cfToken}\` } },
+          ).catch(() => {});
+
+          const arrayBuffer = await fileData.arrayBuffer();
+          const form = new FormData();
+          form.append('file', new Blob([arrayBuffer]), file.name);
+          form.append('id', customId);
+          form.append('metadata', JSON.stringify({ artist_name: artistName, type: 'artist-photo' }));
+
+          const res = await fetch(
+            \`https://api.cloudflare.com/client/v4/accounts/\${cfAccountId}/images/v1\`,
+            { method: 'POST', headers: { Authorization: \`Bearer \${cfToken}\` }, body: form },
+          );
+          const json = await res.json();
+          if (!json.success || !json.result?.id) throw new Error(json.errors?.[0]?.message ?? 'CF upload failed');
+
+          console.log(\`  ok artist photo "\${artistName}" → \${json.result.id}\`);
+          success++;
+        } catch (err) {
+          console.error(\`  fail artist photo "\${artistName}": \${err.message}\`);
+          failed++;
+        }
+      }
+    }
+
+    // ── 4. Summary ──────────────────────────────────────────────────────────
     console.log(`[migrate-to-cloudflare] Done. ${totalSuccess} migrated, ${totalFailed} failed.`);
 
     // Check if there are more images left to migrate

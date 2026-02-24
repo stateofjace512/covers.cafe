@@ -371,19 +371,23 @@ export default function MusicArtistDetail() {
   };
 
   const uploadArtistPhoto = async (file: File) => {
-    if (!user || !artistName) return;
+    if (!user || !session || !artistName) return;
     setUploading(true);
     setUploadError('');
-    const path = `${encodeURIComponent(artistName)}.jpg`;
-    const { error } = await supabase.storage
-      .from('covers_cafe_artist_photos')
-      .upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
-    if (error) {
-      setUploadError('Upload failed. Check storage bucket permissions.');
-    } else {
-      const bust = Date.now();
-      setPhotoBust(bust);
-      setAvatarSrc(artistPhotoTransformUrl(artistName, bust));
+    const form = new FormData();
+    form.append('file', file);
+    form.append('artist_name', artistName);
+    try {
+      const res = await fetch('/api/upload-artist-photo', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: form,
+      });
+      const json = await res.json() as { ok: boolean; url?: string; message?: string };
+      if (!json.ok || !json.url) throw new Error(json.message ?? 'Upload failed');
+      setAvatarSrc(`${json.url}?t=${Date.now()}`);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Upload failed.');
     }
     setUploading(false);
   };
