@@ -36,28 +36,31 @@ async function deleteCfById(id: string): Promise<void> {
   );
 }
 
+const jsonRes = (body: object, status: number) =>
+  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+
 export const POST: APIRoute = async ({ request }) => {
   const auth = request.headers.get('authorization');
   const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
-  if (!token) return new Response('Unauthorized', { status: 401 });
+  if (!token) return jsonRes({ ok: false, message: 'Unauthorized' }, 401);
 
   const sb = getSupabaseServer();
-  if (!sb) return new Response('Server misconfigured', { status: 503 });
+  if (!sb) return jsonRes({ ok: false, message: 'Server misconfigured' }, 503);
 
   const { data: userData, error: userError } = await sb.auth.getUser(token);
-  if (userError || !userData.user) return new Response('Unauthorized', { status: 401 });
+  if (userError || !userData.user) return jsonRes({ ok: false, message: 'Unauthorized' }, 401);
 
   let formData: FormData;
   try {
     formData = await request.formData();
   } catch {
-    return new Response('Invalid form data', { status: 400 });
+    return jsonRes({ ok: false, message: 'Invalid form data' }, 400);
   }
 
   const file = formData.get('file') as File | null;
   const artistName = (formData.get('artist_name') as string | null)?.trim();
-  if (!file) return new Response('Missing file', { status: 400 });
-  if (!artistName) return new Response('Missing artist_name', { status: 400 });
+  if (!file) return jsonRes({ ok: false, message: 'Missing file' }, 400);
+  if (!artistName) return jsonRes({ ok: false, message: 'Missing artist_name' }, 400);
 
   const customId = artistPhotoCustomId(artistName);
 
@@ -79,21 +82,15 @@ export const POST: APIRoute = async ({ request }) => {
       `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/images/v1`,
       { method: 'POST', headers: { Authorization: `Bearer ${CLOUDFLARE_API}` }, body: form },
     );
-    const json = (await res.json()) as { success: boolean; result?: { id: string }; errors?: Array<{ message: string }> };
-    if (!json.success || !json.result?.id) {
-      throw new Error(json.errors?.[0]?.message ?? 'CF upload failed');
+    const cfJson = (await res.json()) as { success: boolean; result?: { id: string }; errors?: Array<{ message: string }> };
+    if (!cfJson.success || !cfJson.result?.id) {
+      throw new Error(cfJson.errors?.[0]?.message ?? 'CF upload failed');
     }
-    cfImageId = json.result.id;
+    cfImageId = cfJson.result.id;
   } catch (err) {
-    return new Response(
-      JSON.stringify({ ok: false, message: err instanceof Error ? err.message : 'Upload failed' }),
-      { status: 502, headers: { 'Content-Type': 'application/json' } },
-    );
+    return jsonRes({ ok: false, message: err instanceof Error ? err.message : 'Upload failed' }, 502);
   }
 
   const url = `https://imagedelivery.net/${CF_IMAGES_HASH}/${cfImageId}/public`;
-  return new Response(JSON.stringify({ ok: true, url }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return jsonRes({ ok: true, url }, 200);
 };

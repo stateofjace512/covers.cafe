@@ -15,7 +15,7 @@ import ChevronDownIcon from '../components/ChevronDownIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Cover } from '../lib/types';
-import { getCoverImageSrc, getCoverDownloadSrc } from '../lib/media';
+import { getCoverImageSrc, getCoverDownloadUrl } from '../lib/media';
 import { getCoverPath, parseArtists, slugifyArtist } from '../lib/coverRoutes';
 import CoverComments from '../components/CoverComments';
 
@@ -157,16 +157,9 @@ export default function CoverDetail() {
     setShowSizeMenu(false);
     await supabase.from('covers_cafe_downloads').insert({ cover_id: cover.id, user_id: user.id });
     await supabase.rpc('covers_cafe_increment_downloads', { p_cover_id: cover.id });
-    const src = getCoverDownloadSrc(cover, size);
-    const res = await fetch(src);
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    const suffix = size ? `_${size}px` : '';
-    a.download = `${cover.artist} - ${cover.title}${suffix}.jpg`;
+    a.href = getCoverDownloadUrl(cover.id, size);
     a.click();
-    URL.revokeObjectURL(url);
     setDownloading(false);
   };
 

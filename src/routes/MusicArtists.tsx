@@ -7,11 +7,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { getCoverImageSrc } from '../lib/media';
 import { slugifyArtist, parseArtists, splitAndResolveOfficialArtist } from '../lib/coverRoutes';
 
-const CF_IMAGES_HASH = import.meta.env.PUBLIC_CF_IMAGES_HASH as string;
-
 function artistPhotoCfUrl(artistName: string): string {
   const id = 'artist-photo-' + artistName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 220);
-  return `https://imagedelivery.net/${CF_IMAGES_HASH}/${id}/public`;
+  return `/api/cover-media?path=${encodeURIComponent(`cf:${id}`)}`;
 }
 
 type ArtType = 'fan' | 'official';

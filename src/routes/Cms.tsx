@@ -3,11 +3,9 @@ import { useAuth } from '../contexts/AuthContext';
 
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
 
-const CF_IMAGES_HASH = import.meta.env.PUBLIC_CF_IMAGES_HASH as string;
-
 function coverThumbUrl(storagePath: string) {
   if (storagePath.startsWith('cf:')) {
-    return `https://imagedelivery.net/${CF_IMAGES_HASH}/${storagePath.slice(3)}/public`;
+    return `/api/cover-media?path=${encodeURIComponent(storagePath)}`;
   }
   return `${SUPABASE_URL}/storage/v1/render/image/public/covers_cafe_covers/${storagePath}?width=80&height=80&resize=cover&quality=70`;
 }
