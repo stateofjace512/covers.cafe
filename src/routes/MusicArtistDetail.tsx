@@ -84,6 +84,8 @@ function artistPhotoTransformUrl(artistName: string, bust?: number): string {
   return `${SUPABASE_URL}/storage/v1/render/image/public/covers_cafe_artist_photos/${path}?width=850&height=850&resize=cover&quality=85${t}`;
 }
 
+type ArtType = 'all' | 'fan' | 'official';
+
 export default function MusicArtistDetail() {
   const { artistName: slugParam } = useParams<{ artistName: string }>();
   const location = useLocation();
@@ -101,6 +103,7 @@ export default function MusicArtistDetail() {
   const [selectedCover, setSelectedCover] = useState<Cover | null>(null);
   const [favoritedIds, setFavoritedIds] = useState<Set<string>>(new Set());
   const [headerCover, setHeaderCover] = useState<Cover | null>(null);
+  const [artType, setArtType] = useState<ArtType>('all');
 
   // Artist photo state
   const [avatarSrc, setAvatarSrc] = useState('');
@@ -127,6 +130,7 @@ export default function MusicArtistDetail() {
         .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
         .or(`artists.cs.{${artistName}},artist.ilike.%${artistName}%`)
         .eq('is_public', true)
+        .eq('is_private', false)
         .order('favorite_count', { ascending: false })
         .range(0, PAGE_SIZE - 1);
 
@@ -160,6 +164,7 @@ export default function MusicArtistDetail() {
       .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
       .ilike('artist', `%${artistName}%`)
       .eq('is_public', true)
+      .eq('is_private', false)
       .order('favorite_count', { ascending: false })
       .range(from, from + PAGE_SIZE - 1);
     const d = (data as Cover[]) ?? [];
@@ -190,6 +195,13 @@ export default function MusicArtistDetail() {
   const handleAvatarError = () => {
     if (headerCover) setAvatarSrc(getCoverImageSrc(headerCover, 200));
   };
+
+  const visibleCovers = covers.filter((cover) => {
+    const isOfficial = (cover.tags ?? []).includes('official');
+    if (artType === 'official') return isOfficial;
+    if (artType === 'fan') return !isOfficial;
+    return true;
+  });
 
   const handleCoverClick = (cover: Cover) => {
     if (getPreferModalOverPagePreference()) {
@@ -321,7 +333,7 @@ export default function MusicArtistDetail() {
             <h1 className="ma-artist-name">{artistName}</h1>
             {!loading && (
               <p className="ma-cover-count">
-                {covers.length}{hasMore ? '+' : ''} cover{covers.length !== 1 ? 's' : ''}
+                {visibleCovers.length}{hasMore && artType === 'all' ? '+' : ''} cover{visibleCovers.length !== 1 ? 's' : ''}
               </p>
             )}
             {uploadError && <p className="ma-upload-error">{uploadError}</p>}
@@ -329,16 +341,22 @@ export default function MusicArtistDetail() {
         </div>
       </div>
 
+      <div className="ma-type-tabs" role="tablist" aria-label="Artist cover type">
+        <button role="tab" aria-selected={artType === 'all'} className={`ma-type-tab${artType === 'all' ? ' ma-type-tab--active' : ''}`} onClick={() => setArtType('all')}>All</button>
+        <button role="tab" aria-selected={artType === 'fan'} className={`ma-type-tab${artType === 'fan' ? ' ma-type-tab--active' : ''}`} onClick={() => setArtType('fan')}>Fan Art</button>
+        <button role="tab" aria-selected={artType === 'official'} className={`ma-type-tab${artType === 'official' ? ' ma-type-tab--active' : ''}`} onClick={() => setArtType('official')}>Album Art</button>
+      </div>
+
       {loading ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '40px 0', color: 'var(--body-text-muted)' }}>
           <LoadingIcon size={22} className="ma-spinner" /> Loading covers…
         </div>
-      ) : covers.length === 0 ? (
-        <p className="text-muted" style={{ marginTop: 24 }}>No public covers found for "{artistName}".</p>
+      ) : visibleCovers.length === 0 ? (
+        <p className="text-muted" style={{ marginTop: 24 }}>No {artType === 'official' ? 'official' : artType === 'fan' ? 'fan' : 'public'} covers found for "{artistName}".</p>
       ) : (
         <>
           <div className="album-grid" style={{ marginTop: 24 }}>
-            {covers.map((cover) => (
+            {visibleCovers.map((cover) => (
               <CoverCard
                 key={cover.id}
                 cover={cover}
@@ -424,6 +442,9 @@ export default function MusicArtistDetail() {
         }
         .ma-cover-count { font-size: 20px; color: rgba(255,255,255,0.65); margin: 0; }
         .ma-upload-error { font-size: 18px; color: #f87171; margin: 0; }
+.ma-type-tabs { display: inline-flex; gap: 8px; margin-top: 16px; }
+        .ma-type-tab { border: 1px solid var(--body-card-border); background: var(--body-card-bg); color: var(--body-text-muted); border-radius: 999px; padding: 4px 10px; font-size: 14px; }
+        .ma-type-tab--active { background: var(--accent); border-color: var(--accent); color: #fff; }
         .ma-spinner { animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>

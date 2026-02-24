@@ -17,9 +17,17 @@ interface OfficialCoverRow {
 }
 const PAGE_SIZE = 24;
 
+function slugifySegment(value: string): string {
+  const slug = value
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '');
+  return slug || 'item';
+}
+
 function coverPath(publicId: number | null | undefined, artist: string | null, album: string | null): string | null {
   if (!publicId) return null;
-  return `/cover/${String(publicId).padStart(6, '0')}-${slugifyArtist(artist ?? 'unknown')}-${(album ?? 'untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 20)}`;
+  return `/cover/${String(publicId).padStart(6, '0')}-${slugifyArtist(artist ?? 'unknown')}-${slugifySegment(album ?? 'untitled').slice(0, 20)}`;
 }
 
 export default function OfficialGallery() {
@@ -129,7 +137,7 @@ export default function OfficialGallery() {
             {covers.map((cover) => {
               const path = coverPath(cover.cover_public_id, cover.artist_name, cover.album_title);
               return (
-                <article className={`album-card official-card${path ? ' official-card--clickable' : ''}`} key={`${cover.album_cover_url}-${cover.album_title ?? ''}`} onClick={() => path && navigate(path)}>
+                <article className="album-card official-card official-card--clickable" key={`${cover.album_cover_url}-${cover.album_title ?? ''}`} onClick={() => (path ? navigate(path) : window.open(cover.album_cover_url, '_blank', 'noopener,noreferrer'))}>
                   <div className="album-card-cover">
                     <img src={cover.album_cover_url} alt={`${cover.album_title ?? 'Album'} by ${cover.artist_name ?? 'Unknown'}`} className="official-card-img" loading="lazy" />
                     <div className="official-badge">Official</div>
