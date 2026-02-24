@@ -183,6 +183,9 @@ a:hover {
   grid-template-rows: var(--header-h) 1fr;
   grid-template-columns: var(--sidebar-w) 1fr;
   min-height: 100vh;
+  /* Stacking context above weather canvas (z-index:0) so all UI content is in front */
+  position: relative;
+  z-index: 1;
 }
 
 /* ---------- Header ---------- */
