@@ -356,7 +356,8 @@ export default function ArtistDetail() {
 
   const isOwnProfile = user?.id === profile?.id;
   const bannerStyle = profile ? bannerStyleFromProfile(profile) : {};
-  const headerBgStyle: React.CSSProperties = profile?.banner_url
+  const hasBanner = !!(profile?.banner_url || profile?.profile_theme);
+  const bannerBgStyle: React.CSSProperties = profile?.banner_url
     ? { backgroundImage: 'url(' + profile.banner_url + ')', backgroundSize: 'cover', backgroundPosition: 'center' }
     : bannerStyle;
 
@@ -366,7 +367,8 @@ export default function ArtistDetail() {
         <BackIcon size={14} /> All Users
       </button>
 
-      <div className="artist-detail-header card" style={headerBgStyle}>
+      <div className="artist-detail-header card">
+        {hasBanner && <div className="artist-profile-banner" style={bannerBgStyle} />}
         <div className="artist-detail-content">
           <div className="artist-detail-avatar">
             {profile && getAvatarSrc(profile)
