@@ -2872,4 +2872,113 @@
           display: flex; flex-direction: column; gap: 4px;
         }
         .legal-dmca-box p { margin: 0 !important; }
-      
+
+
+/* ============================================================
+   PUREBLACK THEME — component-level hardcoded color overrides
+   ============================================================ */
+
+/* Auth modal */
+[data-theme="pureblack"] .auth-input { background: #111111; color: #ffffff; border-color: #000000 #444444 #444444 #000000; }
+[data-theme="pureblack"] .auth-input::placeholder { color: #777777; opacity: 1; }
+[data-theme="pureblack"] .auth-input:focus { outline-color: #888888; }
+[data-theme="pureblack"] .modal-close-btn { background: #222222; color: #ffffff; border-color: #555555 #111111 #111111 #555555; }
+[data-theme="pureblack"] .modal-close-btn:hover { background: #333333; }
+
+/* Context menu */
+[data-theme="pureblack"] .ctx-menu { background: #111111; border-color: #2e2e2e #000000 #000000 #2e2e2e; }
+
+/* Cover card */
+[data-theme="pureblack"] .cover-card-action-btn { background: #222222; color: #ffffff; border-color: #555555 #111111 #111111 #555555; }
+[data-theme="pureblack"] .cover-card-action-btn:hover { background: #333333; }
+[data-theme="pureblack"] .cover-card-year { background: #1a1a1a; color: #888888; border-color: #2e2e2e; }
+
+/* Cover modal */
+[data-theme="pureblack"] .cover-modal-close { background: #222222; color: #ffffff; border-color: #555555 #111111 #111111 #555555; }
+[data-theme="pureblack"] .cover-modal-close:hover { background: #333333; }
+[data-theme="pureblack"] .cover-modal-fav-btn { background: #222222; color: #ffffff; }
+[data-theme="pureblack"] .cover-modal-collection-btn,
+[data-theme="pureblack"] .cover-modal-edit-btn,
+[data-theme="pureblack"] .cover-modal-report-btn,
+[data-theme="pureblack"] .cover-modal-delete-btn { background: #222222; border-color: #555555 #111111 #111111 #555555; }
+[data-theme="pureblack"] .cover-modal-delete-btn { color: #ff8080; }
+[data-theme="pureblack"] .cover-download-menu { background: #111111; border-color: #2e2e2e #000000 #000000 #2e2e2e; }
+[data-theme="pureblack"] .cover-comment-action { background: #222222; color: #ffffff; border-color: #555555 #111111 #111111 #555555; }
+
+/* Form inputs */
+[data-theme="pureblack"] .form-input { background: #111111; color: #ffffff; border-color: #000000 #444444 #444444 #000000; }
+[data-theme="pureblack"] .gallery-sort-select { background: #111111; color: #ffffff; border-color: #000000 #444444 #444444 #000000; }
+[data-theme="pureblack"] .gallery-refresh-banner { border-color: #000000 #444444 #444444 #000000; }
+
+/* Settings */
+[data-theme="pureblack"] .settings-input { background: #111111 !important; color: #ffffff !important; border-color: #000000 #444444 #444444 #000000 !important; }
+[data-theme="pureblack"] .settings-select { background: #111111 !important; color: #ffffff !important; }
+
+/* ============================================================
+   CRISP THEME — component-level hardcoded color overrides
+   ============================================================ */
+
+/* Auth modal */
+[data-theme="crisp"] .auth-input { background: #ffffff; color: #111111; border-color: #aaaaaa #eeeeee #eeeeee #aaaaaa; }
+[data-theme="crisp"] .auth-input::placeholder { color: #999999; opacity: 1; }
+[data-theme="crisp"] .auth-input:focus { outline-color: #222222; }
+[data-theme="crisp"] .modal-close-btn { background: #e8e8e8; color: #111111; border-color: #f5f5f5 #aaaaaa #aaaaaa #f5f5f5; }
+[data-theme="crisp"] .modal-close-btn:hover { background: #d0d0d0; }
+
+/* Context menu */
+[data-theme="crisp"] .ctx-menu { background: #ffffff; border-color: #f5f5f5 #aaaaaa #aaaaaa #f5f5f5; }
+
+/* Cover card */
+[data-theme="crisp"] .cover-card-action-btn { background: #e8e8e8; color: #111111; border-color: #f5f5f5 #aaaaaa #aaaaaa #f5f5f5; }
+[data-theme="crisp"] .cover-card-action-btn:hover { background: #d0d0d0; }
+[data-theme="crisp"] .cover-card-year { background: #f0f0f0; color: #555555; border-color: #cccccc; }
+
+/* Cover modal */
+[data-theme="crisp"] .cover-modal-close { background: #e8e8e8; color: #111111; border-color: #f5f5f5 #aaaaaa #aaaaaa #f5f5f5; }
+[data-theme="crisp"] .cover-modal-close:hover { background: #d0d0d0; }
+[data-theme="crisp"] .cover-modal-fav-btn { background: #e8e8e8; color: #111111; }
+[data-theme="crisp"] .cover-modal-collection-btn,
+[data-theme="crisp"] .cover-modal-edit-btn,
+[data-theme="crisp"] .cover-modal-report-btn,
+[data-theme="crisp"] .cover-modal-delete-btn { background: #e8e8e8; border-color: #f5f5f5 #aaaaaa #aaaaaa #f5f5f5; }
+[data-theme="crisp"] .cover-download-menu { background: #ffffff; border-color: #f5f5f5 #aaaaaa #aaaaaa #f5f5f5; }
+[data-theme="crisp"] .cover-comment-action { background: #e8e8e8; color: #111111; border-color: #f5f5f5 #aaaaaa #aaaaaa #f5f5f5; }
+
+/* Form inputs */
+[data-theme="crisp"] .form-input { background: #ffffff; color: #111111; border-color: #aaaaaa #eeeeee #eeeeee #aaaaaa; }
+[data-theme="crisp"] .gallery-sort-select { background: #ffffff; color: #111111; border-color: #aaaaaa #eeeeee #eeeeee #aaaaaa; }
+[data-theme="crisp"] .gallery-refresh-banner { border-color: #aaaaaa #eeeeee #eeeeee #aaaaaa; }
+
+/* ============================================================
+   GRADIENT THEME — component-level overrides
+   ============================================================ */
+
+/* Auth modal */
+[data-theme="gradient"] .auth-input { background: rgba(0,0,0,0.3); color: var(--gradient-text); border-color: rgba(0,0,0,0.2) rgba(255,255,255,0.2) rgba(255,255,255,0.2) rgba(0,0,0,0.2); }
+[data-theme="gradient"] .auth-input::placeholder { color: var(--gradient-text-muted); opacity: 1; }
+[data-theme="gradient"] .auth-input:focus { outline-color: var(--gradient-text); }
+[data-theme="gradient"] .modal-close-btn { background: rgba(0,0,0,0.3); color: var(--gradient-text); border-color: rgba(255,255,255,0.3) rgba(0,0,0,0.2) rgba(0,0,0,0.2) rgba(255,255,255,0.3); }
+[data-theme="gradient"] .modal-header { background: rgba(0,0,0,0.35); }
+
+/* Context menu */
+[data-theme="gradient"] .ctx-menu { background: var(--gradient-panel-bg); border-color: rgba(255,255,255,0.2) rgba(0,0,0,0.15) rgba(0,0,0,0.15) rgba(255,255,255,0.2); }
+
+/* Cover card */
+[data-theme="gradient"] .cover-card-action-btn { background: rgba(0,0,0,0.35); color: var(--gradient-text); border-color: rgba(255,255,255,0.25) rgba(0,0,0,0.2) rgba(0,0,0,0.2) rgba(255,255,255,0.25); }
+[data-theme="gradient"] .cover-card-year { background: rgba(0,0,0,0.25); color: var(--gradient-text-muted); border-color: rgba(255,255,255,0.15); }
+
+/* Cover modal */
+[data-theme="gradient"] .cover-modal::before { background: rgba(0,0,0,0.4); }
+[data-theme="gradient"] .cover-modal-close { background: rgba(0,0,0,0.3); color: var(--gradient-text); border-color: rgba(255,255,255,0.3) rgba(0,0,0,0.2) rgba(0,0,0,0.2) rgba(255,255,255,0.3); }
+[data-theme="gradient"] .cover-modal-fav-btn,
+[data-theme="gradient"] .cover-modal-collection-btn,
+[data-theme="gradient"] .cover-modal-edit-btn,
+[data-theme="gradient"] .cover-modal-report-btn,
+[data-theme="gradient"] .cover-modal-delete-btn { background: rgba(0,0,0,0.25); border-color: rgba(255,255,255,0.25) rgba(0,0,0,0.2) rgba(0,0,0,0.2) rgba(255,255,255,0.25); color: var(--gradient-text); }
+[data-theme="gradient"] .cover-download-menu { background: var(--gradient-panel-bg); border-color: rgba(255,255,255,0.2) rgba(0,0,0,0.15) rgba(0,0,0,0.15) rgba(255,255,255,0.2); }
+[data-theme="gradient"] .cover-comment-action { background: rgba(0,0,0,0.22); color: var(--gradient-text); border-color: rgba(255,255,255,0.2) rgba(0,0,0,0.15) rgba(0,0,0,0.15) rgba(255,255,255,0.2); }
+
+/* Form inputs */
+[data-theme="gradient"] .form-input { background: rgba(0,0,0,0.3); color: var(--gradient-text); border-color: rgba(0,0,0,0.2) rgba(255,255,255,0.2) rgba(255,255,255,0.2) rgba(0,0,0,0.2); }
+[data-theme="gradient"] .gallery-sort-select { background: rgba(0,0,0,0.3); color: var(--gradient-text); border-color: rgba(0,0,0,0.2) rgba(255,255,255,0.2) rgba(255,255,255,0.2) rgba(0,0,0,0.2); }
+[data-theme="gradient"] .gallery-refresh-banner { border-color: rgba(255,255,255,0.15) rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(255,255,255,0.15); }

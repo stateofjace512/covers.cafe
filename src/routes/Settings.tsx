@@ -15,10 +15,14 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import {
   applyUserPreferencesToDocument,
+  applyGradientColorsToDocument,
   getCoverGridMinWidthPreference,
+  getGradientPreference,
   getPreferModalOverPagePreference,
   setCoverGridMinWidthPreference,
+  setGradientPreference,
   setPreferModalOverPagePreference,
+  type ThemeName,
 } from '../lib/userPreferences';
 
 interface SessionInfo {
@@ -463,11 +467,28 @@ export default function Settings() {
   const [activeForm, setActiveForm] = useState<ActiveForm>(null);
   const [coverGridMinWidth, setCoverGridMinWidth] = useState<number>(() => getCoverGridMinWidthPreference());
   const [preferModalOverPage, setPreferModalOverPage] = useState<boolean>(() => getPreferModalOverPagePreference());
+  const [currentTheme, setCurrentTheme] = useState<ThemeName>(() => {
+    if (typeof document === 'undefined') return 'light';
+    return (document.documentElement.getAttribute('data-theme') ?? 'light') as ThemeName;
+  });
+  const [gradientStart, setGradientStart] = useState<string>(() => getGradientPreference().start);
+  const [gradientEnd, setGradientEnd] = useState<string>(() => getGradientPreference().end);
 
-  const setTheme = (theme: 'light' | 'dark') => {
+  const applyTheme = (theme: ThemeName) => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
+    if (theme === 'gradient') {
+      applyGradientColorsToDocument(gradientStart, gradientEnd);
+    }
+    setCurrentTheme(theme);
     window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: theme }));
+  };
+
+  const applyGradient = (start: string, end: string) => {
+    setGradientStart(start);
+    setGradientEnd(end);
+    setGradientPreference(start, end);
+    applyGradientColorsToDocument(start, end);
   };
 
   useEffect(() => {
@@ -479,9 +500,14 @@ export default function Settings() {
     setPreferModalOverPagePreference(preferModalOverPage);
   }, [preferModalOverPage]);
 
-  const currentTheme = typeof document !== 'undefined'
-    ? (document.documentElement.getAttribute('data-theme') ?? 'light')
-    : 'light';
+  // Sync theme state if changed from Header toggle
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'theme' && e.newValue) setCurrentTheme(e.newValue as ThemeName);
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   return (
     <div>
@@ -523,17 +549,72 @@ export default function Settings() {
           <div className="settings-row">
             <div className="settings-row-info">
               <span className="settings-row-label">Theme</span>
-              <span className="settings-row-desc">Choose light or dark mode for the interface.</span>
+              <span className="settings-row-desc">Choose a colour scheme for the interface.</span>
             </div>
-            <div className="settings-row-control">
-              <button className={`btn${currentTheme === 'light' ? ' btn-primary' : ' btn-secondary'}`} onClick={() => setTheme('light')}>
-                <SunIcon size={14} /> Light
+            <div className="settings-row-control" style={{ flexWrap: 'wrap', gap: '4px' }}>
+              <button className={`btn${currentTheme === 'light' ? ' btn-primary' : ' btn-secondary'}`} onClick={() => applyTheme('light')}>
+                <SunIcon size={13} /> Light
               </button>
-              <button className={`btn${currentTheme === 'dark' ? ' btn-primary' : ' btn-secondary'}`} onClick={() => setTheme('dark')}>
-                <MoonIcon size={14} /> Dark
+              <button className={`btn${currentTheme === 'dark' ? ' btn-primary' : ' btn-secondary'}`} onClick={() => applyTheme('dark')}>
+                <MoonIcon size={13} /> Dark
+              </button>
+              <button className={`btn${currentTheme === 'pureblack' ? ' btn-primary' : ' btn-secondary'}`} onClick={() => applyTheme('pureblack')}>
+                ◼ Black
+              </button>
+              <button className={`btn${currentTheme === 'crisp' ? ' btn-primary' : ' btn-secondary'}`} onClick={() => applyTheme('crisp')}>
+                ◻ Crisp
+              </button>
+              <button className={`btn${currentTheme === 'gradient' ? ' btn-primary' : ' btn-secondary'}`} onClick={() => applyTheme('gradient')}>
+                ◈ Gradient
               </button>
             </div>
           </div>
+
+          {/* Gradient colour picker — only shown when gradient theme is active */}
+          {currentTheme === 'gradient' && (
+            <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '10px' }}>
+              <div className="settings-row-info">
+                <span className="settings-row-label">Gradient colours</span>
+                <span className="settings-row-desc">
+                  Pick your start and end colours. Text colours are computed automatically to stay readable on any gradient.
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--body-text)' }}>
+                  Start
+                  <input
+                    type="color"
+                    value={gradientStart}
+                    onChange={(e) => applyGradient(e.target.value, gradientEnd)}
+                    style={{ width: '36px', height: '26px', border: '2px solid', borderColor: 'var(--body-border)', padding: '1px', cursor: 'pointer', background: 'none' }}
+                  />
+                  <span style={{ fontSize: '11px', color: 'var(--body-text-muted)', fontFamily: 'monospace' }}>{gradientStart}</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--body-text)' }}>
+                  End
+                  <input
+                    type="color"
+                    value={gradientEnd}
+                    onChange={(e) => applyGradient(gradientStart, e.target.value)}
+                    style={{ width: '36px', height: '26px', border: '2px solid', borderColor: 'var(--body-border)', padding: '1px', cursor: 'pointer', background: 'none' }}
+                  />
+                  <span style={{ fontSize: '11px', color: 'var(--body-text-muted)', fontFamily: 'monospace' }}>{gradientEnd}</span>
+                </label>
+              </div>
+              {/* Live gradient preview bar */}
+              <div
+                aria-label="Gradient preview"
+                style={{
+                  width: '100%',
+                  maxWidth: '320px',
+                  height: '28px',
+                  background: `linear-gradient(90deg, ${gradientStart} 0%, ${gradientEnd} 100%)`,
+                  border: '2px solid var(--body-border)',
+                  borderRadius: '0',
+                }}
+              />
+            </div>
+          )}
         </section>
 
         {/* ── Account ────────────────────────────────────────── */}
