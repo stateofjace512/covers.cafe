@@ -12,22 +12,36 @@ import { getSupabaseServer } from './_supabase';
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
+/** Decode a Supabase JWT locally to get the user's UUID without a network call. */
+function getViewerIdFromToken(token: string | null): string | null {
+  if (!token) return null;
+  try {
+    // JWT payload is URL-safe base64; fix padding and alphabet before decoding
+    const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(b64)) as { sub?: unknown };
+    return typeof payload.sub === 'string' ? payload.sub : null;
+  } catch {
+    return null;
+  }
+}
+
 // ── GET ───────────────────────────────────────────────────────────────────────
 export const GET: APIRoute = async ({ url, request }) => {
-  const sb = getSupabaseServer();
+  // Extract token FIRST so it can be passed to getSupabaseServer.
+  // Without it, anon-key clients have auth.uid()=null and RLS blocks every read.
+  const authHeader = request.headers.get('authorization');
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  const sb = getSupabaseServer(token ?? undefined);
   if (!sb) return json({ error: 'Supabase not configured' }, 500);
 
   const targetUserId = url.searchParams.get('userId');
   if (!targetUserId) return json({ error: 'userId required' }, 400);
 
-  // Get authenticated user (optional — unauthenticated users just see the friend list)
-  const auth = request.headers.get('authorization');
-  const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
-  let viewerId: string | null = null;
-  if (token) {
-    const { data } = await sb.auth.getUser(token);
-    viewerId = data?.user?.id ?? null;
-  }
+  // Get authenticated viewer ID by decoding the JWT locally (no network call).
+  // auth.getUser(token) makes a roundtrip to Supabase Auth which can silently
+  // return null in Netlify's SSR runtime.
+  const viewerId = getViewerIdFromToken(token);
 
   // Fetch accepted friends of the target user
   const { data: friendRows } = await sb
@@ -68,7 +82,30 @@ export const GET: APIRoute = async ({ url, request }) => {
     }
   }
 
-  return json({ friends: friendProfiles, viewerStatus, friendCount: friendProfiles.length });
+  // If viewer is looking at their own profile, return incoming and outgoing pending requests
+  let pendingReceived: { id: string; username: string; display_name: string | null; avatar_url: string | null }[] = [];
+  let pendingSent: { id: string; username: string; display_name: string | null; avatar_url: string | null }[] = [];
+  if (viewerId && viewerId === targetUserId) {
+    const [{ data: receivedRows }, { data: sentRows }] = await Promise.all([
+      sb.from('covers_cafe_friends').select('user_id').eq('friend_id', targetUserId).eq('status', 'pending'),
+      sb.from('covers_cafe_friends').select('friend_id').eq('user_id', targetUserId).eq('status', 'pending'),
+    ]);
+
+    const receivedIds = (receivedRows as { user_id: string }[] ?? []).map((r) => r.user_id);
+    const sentIds = (sentRows as { friend_id: string }[] ?? []).map((r) => r.friend_id);
+    const allIds = [...new Set([...receivedIds, ...sentIds])];
+
+    let allProfiles: { id: string; username: string; display_name: string | null; avatar_url: string | null }[] = [];
+    if (allIds.length > 0) {
+      const { data } = await sb.from('covers_cafe_profiles').select('id, username, display_name, avatar_url').in('id', allIds);
+      allProfiles = (data ?? []) as typeof allProfiles;
+    }
+
+    pendingReceived = allProfiles.filter((p) => receivedIds.includes(p.id));
+    pendingSent = allProfiles.filter((p) => sentIds.includes(p.id));
+  }
+
+  return json({ friends: friendProfiles, viewerStatus, friendCount: friendProfiles.length, pendingReceived, pendingSent });
 };
 
 // ── POST ──────────────────────────────────────────────────────────────────────
