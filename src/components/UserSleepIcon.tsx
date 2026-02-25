@@ -25,7 +25,7 @@ export default function UserSleepIcon({ size = 18, className, style }: Props) {
         <path d="M14.475 15.23h1.53v9.15h-1.53Z" fill="currentColor" stroke-width="1"></path>
         <path d="M12.955 13.71h1.52v1.52h-1.52Z" fill="currentColor" stroke-width="1"></path>
         <path d="M12.955 3.04h1.52v6.1h-1.52Z" fill="currentColor" stroke-width="1"></path>
-        <path d="m12.955 18.28 -1.53 0 0 12.19 -1.52 0 0 -6.09 -1.52 0 0 6.09 -1.53 0 0 -12.19 -1.52 0 0 6.1 -1.53 0 0 1.52 1.53 0 0 6.1 7.62 0 0 -6.1 1.52 0 0 -1.52 -1.52 0 0 -6.1z" fill="#000000" stroke-width="1"></path>
+        <path d="m12.955 18.28 -1.53 0 0 12.19 -1.52 0 0 -6.09 -1.52 0 0 6.09 -1.53 0 0 -12.19 -1.52 0 0 6.1 -1.53 0 0 1.52 1.53 0 0 6.1 7.62 0 0 -6.1 1.52 0 0 -1.52 -1.52 0 0 -6.1z" fill="currentColor" stroke-width="1"></path>
         <path d="M11.425 12.19h1.53v1.52h-1.53Z" fill="currentColor" stroke-width="1"></path>
         <path d="M11.425 9.14h1.53v1.52h-1.53Z" fill="currentColor" stroke-width="1"></path>
         <path d="M11.425 1.52h1.53v1.52h-1.53Z" fill="currentColor" stroke-width="1"></path>
@@ -41,5 +41,6 @@ export default function UserSleepIcon({ size = 18, className, style }: Props) {
     </svg>
   );
 }
+
 
 
