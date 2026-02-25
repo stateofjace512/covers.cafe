@@ -153,7 +153,9 @@ export default function OfficialCoverDetail() {
           {cover.release_year && (
             <span className="cover-meta-chip"><CalendarIcon size={11} /> {cover.release_year}</span>
           )}
-          <span className="cover-meta-chip"><FavoritesIcon size={11} /> {favoriteCount} favorite{favoriteCount === 1 ? '' : 's'}</span>
+          {favoriteCount > 0 && (
+            <span className="cover-meta-chip"><FavoritesIcon size={11} /> {favoriteCount} favorite{favoriteCount === 1 ? '' : 's'}</span>
+          )}
         </div>
       </div>
 
