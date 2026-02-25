@@ -6,7 +6,7 @@ interface Props {
 
 export default function UserSleepIcon({ size = 18, className, style }: Props) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" id="User-Sleep--Streamline-Pixel" height="32" width="32">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" id="User-Sleep--Streamline-Pixel" width={size} height={size} aria-hidden="true" className={className} style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}>
       <desc>
         User Sleep Streamline Icon: https://streamlinehq.com
       </desc>
