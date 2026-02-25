@@ -18,6 +18,12 @@
 [data-theme="gradient"] .search-source-toggle,
 [data-theme="gradient"] .ma-type-tabs { border-color: rgba(255,255,255,0.2) rgba(0,0,0,0.15) rgba(0,0,0,0.15) rgba(255,255,255,0.2); }
 
+[data-theme="gradient"] .search-source-btn--active,
+[data-theme="gradient"] .ma-type-tab--active {
+  background: rgba(255, 255, 255, 0.28);
+  color: var(--gradient-text);
+}
+
 .search-source-toggle {
   margin-bottom: 10px;
 }

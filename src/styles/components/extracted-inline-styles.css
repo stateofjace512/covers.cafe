@@ -3135,12 +3135,63 @@
   height: 36px; width: 100%; border: 2px solid;
   border-color: #808080 #fff #fff #808080;
   display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
 }
 .gta-preview-text { font-size: 11px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
-.gta-color-swatch {
-  width: 32px; height: 20px; padding: 1px; cursor: pointer;
-  border: 2px solid; border-color: #808080 #fff #fff #808080;
-  background: none; flex-shrink: 0;
-}
-.gta-hex { font-family: monospace; font-size: 10px; width: 52px; }
 .gta-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.gta-divider { height: 1px; background: #808080; margin: 4px 0; opacity: 0.4; }
+
+/* Custom color picker rows */
+.gta-picker { display: flex; flex-direction: column; gap: 4px; }
+.gta-picker-top { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.gta-swatch {
+  width: 28px; height: 18px; flex-shrink: 0;
+  border: 2px solid; border-color: #808080 #fff #fff #808080;
+}
+.gta-picker-label { font-size: 10px; font-weight: bold; width: 30px; flex-shrink: 0; }
+.gta-hex-input {
+  flex: 1; font-family: monospace; font-size: 10px;
+  border: 2px solid; border-color: #808080 #fff #fff #808080;
+  background: #ffffff; color: #000000;
+  padding: 1px 4px; height: 18px;
+  min-width: 0;
+}
+.gta-hex-input:focus { outline: 1px dotted #000; outline-offset: 1px; }
+
+.gta-slider-row { display: flex; align-items: center; gap: 5px; }
+.gta-slider-lbl { font-size: 10px; font-weight: bold; width: 12px; flex-shrink: 0; text-align: center; }
+.gta-slider-val { font-size: 10px; font-family: monospace; width: 24px; text-align: right; flex-shrink: 0; }
+
+/* Win95-style range sliders */
+.gta-range {
+  flex: 1; height: 16px; min-width: 0;
+  -webkit-appearance: none; appearance: none;
+  background: transparent; cursor: pointer;
+}
+.gta-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border: 1px solid #808080;
+  border-color: #808080 #fff #fff #808080;
+}
+.gta-range-r::-webkit-slider-runnable-track { background: linear-gradient(to right, #000 0%, #ff0000 100%); }
+.gta-range-g::-webkit-slider-runnable-track { background: linear-gradient(to right, #000 0%, #00ff00 100%); }
+.gta-range-b::-webkit-slider-runnable-track { background: linear-gradient(to right, #000 0%, #0000ff 100%); }
+.gta-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 12px; height: 14px; margin-top: -5px;
+  background: #c0c0c0;
+  border: 2px solid; border-color: #fff #808080 #808080 #fff;
+  cursor: pointer;
+}
+.gta-range::-moz-range-track {
+  height: 6px; border: 1px solid #808080;
+}
+.gta-range-r::-moz-range-track { background: linear-gradient(to right, #000 0%, #ff0000 100%); }
+.gta-range-g::-moz-range-track { background: linear-gradient(to right, #000 0%, #00ff00 100%); }
+.gta-range-b::-moz-range-track { background: linear-gradient(to right, #000 0%, #0000ff 100%); }
+.gta-range::-moz-range-thumb {
+  width: 12px; height: 14px;
+  background: #c0c0c0;
+  border: 2px solid; border-color: #fff #808080 #808080 #fff;
+  border-radius: 0; cursor: pointer;
+}

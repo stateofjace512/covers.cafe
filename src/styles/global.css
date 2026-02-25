@@ -781,11 +781,11 @@ textarea {
     box-shadow: 4px 0 8px rgba(0, 0, 0, 0.4);
   }
 
-  /* Gradient theme mobile sidebar needs solid background — var(--sidebar-bg) is semi-transparent */
+  /* Gradient theme mobile sidebar: frosted glass so gradient shows through */
   [data-theme="gradient"] .site-sidebar {
-    background: rgba(0, 0, 0, 0.82);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
   .site-sidebar.site-sidebar--mobile-open {
@@ -924,7 +924,9 @@ textarea {
 }
 [data-theme="gradient"] .album-card:hover { outline-color: var(--gradient-text); }
 [data-theme="gradient"] .modal-box {
-  background: var(--gradient-panel-bg);
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-color: rgba(255, 255, 255, 0.25) rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.2) rgba(255, 255, 255, 0.25);
 }
 [data-theme="gradient"] .modal-box,
