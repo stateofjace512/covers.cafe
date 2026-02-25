@@ -160,14 +160,14 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
     }
   }
 
-  const fetchFavorites = useCallback(async () => {
-    if (!user) { setFavoritedIds(new Set()); return; }
+  const fetchFavorites = useCallback(async (userId: string | undefined) => {
+    if (!userId) { setFavoritedIds(new Set()); return; }
     const { data } = await supabase
       .from('covers_cafe_favorites')
       .select('cover_id')
-      .eq('user_id', user.id);
+      .eq('user_id', userId);
     setFavoritedIds(new Set((data ?? []).map((f: { cover_id: string }) => f.cover_id)));
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -191,11 +191,11 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
         setLoading(false);
       });
 
-    fetchFavorites();
+    fetchFavorites(capturedUser?.id);
 
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, tab, user?.id, searchQuery, artistUserId, sort, fetchFavorites]);
+  }, [filter, tab, user?.id, searchQuery, artistUserId, sort]);
 
   const handleLoadMore = async () => {
     if (loadingMoreRef.current || !hasMore) return;
@@ -260,7 +260,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
     if (coversChangesChannelRef.current) return;
     const channel = supabase
       .channel('gallery-covers-upsert-watch')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'covers_cafe_covers' }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'covers_cafe_covers' }, () => {
         setRefreshPending(true);
         if (coversChangesChannelRef.current) {
           supabase.removeChannel(coversChangesChannelRef.current);
