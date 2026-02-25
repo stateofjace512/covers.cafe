@@ -6,38 +6,39 @@ interface Props {
 
 export default function UserSleepIcon({ size = 18, className, style }: Props) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 32 32"
-      aria-hidden="true"
-      className={className}
-      style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
-    >
-      {/* Person figure — left side */}
-      {/* Head */}
-      <path fill="currentColor" d="M4 10h4v4H4Z" />
-      {/* Body */}
-      <path fill="currentColor" d="M2 14h8v8H2Z" />
-      {/* Left leg */}
-      <path fill="currentColor" d="M2 22h2v6H2Z" />
-      {/* Right leg */}
-      <path fill="currentColor" d="M8 22h2v6H8Z" />
-
-      {/* ZZZ — upper right, ascending */}
-      {/* Z1 small */}
-      <path fill="currentColor" d="M14 0h4v2h-4Z" />
-      <path fill="currentColor" d="M16 2h2v2h-2Z" />
-      <path fill="currentColor" d="M14 4h4v2h-4Z" />
-      {/* Z2 medium */}
-      <path fill="currentColor" d="M16 8h6v2h-6Z" />
-      <path fill="currentColor" d="M20 10h2v2h-2Z" />
-      <path fill="currentColor" d="M16 12h6v2h-6Z" />
-      {/* Z3 large */}
-      <path fill="currentColor" d="M18 16h8v2h-8Z" />
-      <path fill="currentColor" d="M24 18h2v2h-2Z" />
-      <path fill="currentColor" d="M18 20h8v2h-8Z" />
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" id="User-Sleep--Streamline-Pixel" height="32" width="32">
+      <desc>
+        User Sleep Streamline Icon: https://streamlinehq.com
+      </desc>
+      <title>user-sleep</title>
+      <g>
+        <path d="M28.195 1.52h1.52v1.52h-1.52Z" fill="#000000" stroke-width="1"></path>
+        <path d="M26.665 6.09h3.05v1.53h-3.05Z" fill="#000000" stroke-width="1"></path>
+        <path d="M26.665 3.04h1.53v1.53h-1.53Z" fill="#000000" stroke-width="1"></path>
+        <path d="M25.145 0h3.05v1.52h-3.05Z" fill="#000000" stroke-width="1"></path>
+        <path d="M25.145 4.57h1.52v1.52h-1.52Z" fill="#000000" stroke-width="1"></path>
+        <path d="M22.095 7.62h1.52v1.52h-1.52Z" fill="#000000" stroke-width="1"></path>
+        <path d="M20.575 12.19h3.04v1.52h-3.04Z" fill="#000000" stroke-width="1"></path>
+        <path d="M20.575 9.14h1.52v1.52h-1.52Z" fill="#000000" stroke-width="1"></path>
+        <path d="M19.045 6.09h3.05v1.53h-3.05Z" fill="#000000" stroke-width="1"></path>
+        <path d="M19.045 10.66h1.53v1.53h-1.53Z" fill="#000000" stroke-width="1"></path>
+        <path d="M14.475 15.23h1.53v9.15h-1.53Z" fill="#000000" stroke-width="1"></path>
+        <path d="M12.955 13.71h1.52v1.52h-1.52Z" fill="#000000" stroke-width="1"></path>
+        <path d="M12.955 3.04h1.52v6.1h-1.52Z" fill="#000000" stroke-width="1"></path>
+        <path d="m12.955 18.28 -1.53 0 0 12.19 -1.52 0 0 -6.09 -1.52 0 0 6.09 -1.53 0 0 -12.19 -1.52 0 0 6.1 -1.53 0 0 1.52 1.53 0 0 6.1 7.62 0 0 -6.1 1.52 0 0 -1.52 -1.52 0 0 -6.1z" fill="#000000" stroke-width="1"></path>
+        <path d="M11.425 12.19h1.53v1.52h-1.53Z" fill="#000000" stroke-width="1"></path>
+        <path d="M11.425 9.14h1.53v1.52h-1.53Z" fill="#000000" stroke-width="1"></path>
+        <path d="M11.425 1.52h1.53v1.52h-1.53Z" fill="#000000" stroke-width="1"></path>
+        <path d="M6.855 10.66h4.57v1.53h-4.57Z" fill="#000000" stroke-width="1"></path>
+        <path d="M6.855 0h4.57v1.52h-4.57Z" fill="#000000" stroke-width="1"></path>
+        <path d="M5.335 12.19h1.52v1.52h-1.52Z" fill="#000000" stroke-width="1"></path>
+        <path d="M5.335 9.14h1.52v1.52h-1.52Z" fill="#000000" stroke-width="1"></path>
+        <path d="M5.335 1.52h1.52v1.52h-1.52Z" fill="#000000" stroke-width="1"></path>
+        <path d="M3.805 13.71h1.53v1.52h-1.53Z" fill="#000000" stroke-width="1"></path>
+        <path d="M3.805 3.04h1.53v6.1h-1.53Z" fill="#000000" stroke-width="1"></path>
+        <path d="M2.285 15.23h1.52v9.15h-1.52Z" fill="#000000" stroke-width="1"></path>
+      </g>
     </svg>
   );
 }
+
