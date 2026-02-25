@@ -27,6 +27,94 @@ function wcagTextColor(start: string, end: string): '#ffffff' | '#000000' {
   return (1.05 / (mid + 0.05)) >= ((mid + 0.05) / 0.05) ? '#ffffff' : '#000000';
 }
 
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '');
+  if (h.length !== 6) return [0, 0, 0];
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  return '#' + [r, g, b].map(v => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0')).join('');
+}
+
+function isValidHex(s: string): boolean {
+  return /^#[0-9a-fA-F]{6}$/.test(s);
+}
+
+interface ColorPickerProps {
+  label: string;
+  value: string;
+  onChange: (hex: string) => void;
+}
+
+function ColorPicker({ label, value, onChange }: ColorPickerProps) {
+  const [hexInput, setHexInput] = useState(value);
+  const [r, g, b] = hexToRgb(value);
+
+  // Keep hex input in sync when value changes externally (e.g. Reset)
+  useEffect(() => { setHexInput(value); }, [value]);
+
+  function handleHexChange(raw: string) {
+    setHexInput(raw);
+    const norm = raw.startsWith('#') ? raw : '#' + raw;
+    if (isValidHex(norm)) onChange(norm.toLowerCase());
+  }
+
+  function handleHexBlur() {
+    const norm = hexInput.startsWith('#') ? hexInput : '#' + hexInput;
+    if (isValidHex(norm)) {
+      setHexInput(norm.toLowerCase());
+      onChange(norm.toLowerCase());
+    } else {
+      setHexInput(value); // revert
+    }
+  }
+
+  function handleSlider(channel: 'r' | 'g' | 'b', val: number) {
+    const nr = channel === 'r' ? val : r;
+    const ng = channel === 'g' ? val : g;
+    const nb = channel === 'b' ? val : b;
+    const hex = rgbToHex(nr, ng, nb);
+    setHexInput(hex);
+    onChange(hex);
+  }
+
+  return (
+    <div className="gta-picker">
+      <div className="gta-picker-top">
+        <div className="gta-swatch" style={{ background: value }} />
+        <span className="gta-picker-label">{label}</span>
+        <input
+          className="gta-hex-input"
+          value={hexInput}
+          onChange={e => handleHexChange(e.target.value)}
+          onBlur={handleHexBlur}
+          spellCheck={false}
+          maxLength={7}
+        />
+      </div>
+      <div className="gta-slider-row">
+        <span className="gta-slider-lbl">R</span>
+        <input type="range" className="gta-range gta-range-r" min={0} max={255} value={r}
+          onChange={e => handleSlider('r', +e.target.value)} style={{ '--gta-v': r } as React.CSSProperties} />
+        <span className="gta-slider-val">{r}</span>
+      </div>
+      <div className="gta-slider-row">
+        <span className="gta-slider-lbl">G</span>
+        <input type="range" className="gta-range gta-range-g" min={0} max={255} value={g}
+          onChange={e => handleSlider('g', +e.target.value)} style={{ '--gta-v': g } as React.CSSProperties} />
+        <span className="gta-slider-val">{g}</span>
+      </div>
+      <div className="gta-slider-row">
+        <span className="gta-slider-lbl">B</span>
+        <input type="range" className="gta-range gta-range-b" min={0} max={255} value={b}
+          onChange={e => handleSlider('b', +e.target.value)} style={{ '--gta-v': b } as React.CSSProperties} />
+        <span className="gta-slider-val">{b}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function GradientTuner({ onClose }: GradientTunerProps) {
   const saved = getGradientPreference();
   const [start, setStart] = useState(saved.start);
@@ -38,15 +126,16 @@ export default function GradientTuner({ onClose }: GradientTunerProps) {
   const resizeRef = useRef<{ sx: number; sy: number; sw: number; sh: number; dir: string } | null>(null);
   const winRef    = useRef<HTMLDivElement>(null);
 
-  // Live-preview while user drags the colour pickers
   function preview(s: string, e: string) {
     const theme = localStorage.getItem('theme') as ThemeName | null;
     if (theme === 'gradient') applyGradientColorsToDocument(s, e);
   }
 
+  function handleStart(hex: string) { setStart(hex); preview(hex, end); }
+  function handleEnd(hex: string)   { setEnd(hex);   preview(start, hex); }
+
   function handleSave() {
     setGradientPreference(start, end);
-    // Apply gradient theme
     document.documentElement.setAttribute('data-theme', 'gradient');
     localStorage.setItem('theme', 'gradient');
     applyGradientColorsToDocument(start, end);
@@ -60,14 +149,12 @@ export default function GradientTuner({ onClose }: GradientTunerProps) {
     preview(DEFAULT_START, DEFAULT_END);
   }
 
-  // Titlebar drag
   const onTitleDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.wma-close')) return;
     dragRef.current = { sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y };
     e.preventDefault();
   }, [pos]);
 
-  // Resize handle mousedown
   const onResizeDown = useCallback((e: React.MouseEvent, dir: string) => {
     e.preventDefault(); e.stopPropagation();
     const el = winRef.current;
@@ -79,8 +166,8 @@ export default function GradientTuner({ onClose }: GradientTunerProps) {
     function onMove(e: MouseEvent) {
       if (resizeRef.current) {
         const r = resizeRef.current;
-        if (r.dir.includes('r')) setSize(s => ({ ...s, w: Math.max(240, r.sw + (e.clientX - r.sx)) }));
-        if (r.dir.includes('b')) setSize(s => ({ ...s, h: Math.max(160, r.sh + (e.clientY - r.sy)) }));
+        if (r.dir.includes('r')) setSize(s => ({ ...s, w: Math.max(260, r.sw + (e.clientX - r.sx)) }));
+        if (r.dir.includes('b')) setSize(s => ({ ...s, h: Math.max(200, r.sh + (e.clientY - r.sy)) }));
       } else if (dragRef.current) {
         const d = dragRef.current;
         setPos({ x: Math.max(0, d.ox + (e.clientX - d.sx)), y: Math.max(0, d.oy + (e.clientY - d.sy)) });
@@ -101,13 +188,11 @@ export default function GradientTuner({ onClose }: GradientTunerProps) {
       className="wma-window"
       style={{ left: pos.x, top: pos.y, width: size.w, ...(size.h ? { height: size.h } : {}) }}
     >
-      {/* Titlebar */}
       <div className="wma-titlebar" onMouseDown={onTitleDown}>
-        <span>🎨 Gradient Tuner</span>
+        <span>Gradient Tuner</span>
         <button className="wma-close" onClick={onClose}>✕</button>
       </div>
 
-      {/* Content */}
       <div className="wma-body">
         {/* Gradient preview bar */}
         <div
@@ -120,38 +205,19 @@ export default function GradientTuner({ onClose }: GradientTunerProps) {
           </span>
         </div>
 
-        {/* Colour rows */}
+        {/* Custom colour pickers */}
         <div className="wma-inset">
-          <div className="wma-row">
-            <span className="wma-lbl">Start:</span>
-            <input
-              type="color"
-              value={start}
-              className="gta-color-swatch"
-              onChange={e => { setStart(e.target.value); preview(e.target.value, end); }}
-            />
-            <span className="wma-val gta-hex">{start}</span>
-          </div>
-          <div className="wma-row">
-            <span className="wma-lbl">End:</span>
-            <input
-              type="color"
-              value={end}
-              className="gta-color-swatch"
-              onChange={e => { setEnd(e.target.value); preview(start, e.target.value); }}
-            />
-            <span className="wma-val gta-hex">{end}</span>
-          </div>
+          <ColorPicker label="Start" value={start} onChange={handleStart} />
+          <div className="gta-divider" />
+          <ColorPicker label="End"   value={end}   onChange={handleEnd} />
         </div>
 
-        {/* Action row */}
         <div className="gta-actions">
           <button className="wma-btn" onClick={handleReset}>Reset</button>
           <button className="wma-btn wma-btn-active" onClick={handleSave}>Apply &amp; Save</button>
         </div>
       </div>
 
-      {/* Resize handles */}
       <div className="wma-rsz wma-rsz-r"  onMouseDown={e => onResizeDown(e, 'r')}  />
       <div className="wma-rsz wma-rsz-b"  onMouseDown={e => onResizeDown(e, 'b')}  />
       <div className="wma-rsz wma-rsz-rb" onMouseDown={e => onResizeDown(e, 'rb')} />

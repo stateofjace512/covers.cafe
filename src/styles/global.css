@@ -478,6 +478,13 @@ a:hover {
   border-color: rgba(0, 0, 0, 0.3) rgba(255, 255, 255, 0.5) rgba(255, 255, 255, 0.5) rgba(0, 0, 0, 0.3);
 }
 
+/* header-menu-btn: hidden on desktop, shown on mobile only.
+   Must come after .btn { display: inline-flex } to win the cascade. */
+.header-menu-btn { display: none; }
+@media (max-width: 640px) {
+  .header-menu-btn { display: inline-flex; }
+}
+
 [data-theme="dark"] .btn {
   background: #3d1a05;
   color: #ffffff;
@@ -669,10 +676,16 @@ textarea {
   backdrop-filter: none;
   z-index: 200;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 20px;
+  overflow-y: auto;
   animation: overlay-in 0.08s ease;
+}
+
+/* Center modal-box vertically when it fits in viewport; scroll when too tall */
+.modal-box {
+  margin: auto;
 }
 
 @keyframes overlay-in {
@@ -766,6 +779,11 @@ textarea {
     transform: translateX(-102%);
     transition: transform 0.15s ease;
     box-shadow: 4px 0 8px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Gradient theme mobile sidebar: actual gradient (same as desktop) */
+  [data-theme="gradient"] .site-sidebar {
+    background: linear-gradient(180deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
   }
 
   .site-sidebar.site-sidebar--mobile-open {
@@ -895,6 +913,13 @@ textarea {
   background-attachment: fixed;
 }
 [data-theme="gradient"] .site-main { background: transparent; }
+[data-theme="gradient"] .site-header {
+  background: linear-gradient(90deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+}
+[data-theme="gradient"] .site-sidebar {
+  background: linear-gradient(180deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  border-right-color: rgba(255, 255, 255, 0.25);
+}
 [data-theme="gradient"] .card {
   background: var(--gradient-card-bg);
   border-color: rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.15) rgba(255, 255, 255, 0.2);
@@ -904,8 +929,8 @@ textarea {
 }
 [data-theme="gradient"] .album-card:hover { outline-color: var(--gradient-text); }
 [data-theme="gradient"] .modal-box {
-  background: var(--gradient-panel-bg);
-  border-color: rgba(255, 255, 255, 0.25) rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.2) rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  border-color: rgba(255, 255, 255, 0.35) rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.2) rgba(255, 255, 255, 0.35);
 }
 [data-theme="gradient"] .modal-box,
 [data-theme="gradient"] .modal-box input,
@@ -958,6 +983,27 @@ textarea {
 [data-theme="gradient"] ::-webkit-scrollbar-button {
   background: rgba(0, 0, 0, 0.25);
   border-color: rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.2) rgba(255, 255, 255, 0.3);
+}
+
+/* --accent = var(--gradient-text) = white in gradient mode, so any element using
+   "background: var(--accent); color: #fff" becomes white-on-white.
+   Override all toggle/active/hover-highlight patterns with a dark translucent bg. */
+[data-theme="gradient"] .upload-mode-btn--active,
+[data-theme="gradient"] .osg-select-btn--active,
+[data-theme="gradient"] .osr-select-btn--active,
+[data-theme="gradient"] .ma-select-btn--active,
+[data-theme="gradient"] .col-visibility-btn--active,
+[data-theme="gradient"] .col-set-cover-btn--active,
+[data-theme="gradient"] .ctx-item:hover,
+[data-theme="gradient"] .cover-size-option:hover,
+[data-theme="gradient"] .cover-download-option:hover,
+[data-theme="gradient"] .cover-tag--clickable:hover,
+[data-theme="gradient"] .cover-tag:hover,
+[data-theme="gradient"] .notif-item:hover,
+[data-theme="gradient"] .header-theme-dropdown-item:hover {
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--gradient-text);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 #root {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import UserIcon from './UserIcon';
 import UsersIcon from './UsersIcon';
@@ -81,6 +82,7 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
   }, [user]);
 
   return (
+    <>
     <aside
       id="main-sidebar"
       className={`site-sidebar${isMobileNavOpen ? ' site-sidebar--mobile-open' : ''}`}
@@ -163,15 +165,17 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
         </div>
       </div>
 
-      {/* Rendered microapp windows */}
-      {openApps.has('weather') && (
-        <WeatherMicroApp onClose={() => toggleApp('weather')} />
-      )}
-      {openApps.has('gradient') && (
-        <GradientTuner onClose={() => toggleApp('gradient')} />
-      )}
-
-      
     </aside>
+
+      {/* Microapp windows portalled to document.body so sidebar transforms don't clip them */}
+      {openApps.has('weather') && createPortal(
+        <WeatherMicroApp onClose={() => toggleApp('weather')} />,
+        document.body
+      )}
+      {openApps.has('gradient') && createPortal(
+        <GradientTuner onClose={() => toggleApp('gradient')} />,
+        document.body
+      )}
+    </>
   );
 }
