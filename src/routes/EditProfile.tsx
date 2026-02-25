@@ -135,8 +135,21 @@ export default function EditProfile() {
 
   const uploadBanner = async (): Promise<string | null> => {
     if (!user || !session || !bannerPreview) return null;
-    // Server resizes to 1200×700 before pushing to Cloudflare (raw images can be huge)
-    const blob = await fetch(bannerPreview).then((r) => r.blob());
+    // Canvas pre-resize to ≤1200×700 so the payload fits within Netlify's body limit.
+    // The server then does the final sharp pass for best quality.
+    const img = new Image();
+    img.src = bannerPreview;
+    await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
+    const TARGET_W = 1200, TARGET_H = 700;
+    const scale = Math.min(TARGET_W / img.width, TARGET_H / img.height, 1);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas unavailable');
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.88));
+    if (!blob) throw new Error('Could not encode image');
     const form = new FormData();
     form.append('file', blob, 'banner.jpg');
     const apiRes = await fetch('/api/upload-banner', {
