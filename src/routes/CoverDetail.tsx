@@ -167,10 +167,16 @@ export default function CoverDetail() {
     if (!checkRateLimit('cover_detail_favorite', 8, 5000)) { setRateLimitedAction('cover_detail_favorite'); return; }
     if (isFavorited) {
       const { error } = await supabase.from('covers_cafe_favorites').delete().eq('user_id', user.id).eq('cover_id', cover.id);
-      if (!error) setIsFavorited(false);
+      if (!error) {
+        setIsFavorited(false);
+        setCover(prev => prev ? { ...prev, favorite_count: Math.max(0, (prev.favorite_count ?? 0) - 1) } : prev);
+      }
     } else {
       const { error } = await supabase.from('covers_cafe_favorites').insert({ user_id: user.id, cover_id: cover.id });
-      if (!error) setIsFavorited(true);
+      if (!error) {
+        setIsFavorited(true);
+        setCover(prev => prev ? { ...prev, favorite_count: (prev.favorite_count ?? 0) + 1 } : prev);
+      }
     }
   };
 
