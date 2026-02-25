@@ -9,7 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface Notification {
   id: string;
-  type: 'favorite' | 'comment' | 'comment_like' | 'comment_reply';
+  type: 'favorite' | 'comment' | 'comment_like' | 'comment_reply' | 'cover_removed';
   cover_id: string;
   cover_title: string;
   cover_artist: string;
@@ -166,29 +166,39 @@ export default function NotificationBell() {
                 return (
                   <div key={n.id} className={`notif-item${isNew ? ' notif-item--new' : ''}`}>
                     <span className="notif-num">{idx + 1}</span>
-                    <span className={`notif-icon ${(n.type === 'favorite' || n.type === 'comment_like') ? 'notif-icon--fav' : 'notif-icon--cmt'}`}>
-                      {(n.type === 'favorite' || n.type === 'comment_like') ? <FavoritesIcon size={12} /> : <CommentIcon size={12} />}
+                    <span className={`notif-icon ${n.type === 'cover_removed' ? 'notif-icon--removed' : (n.type === 'favorite' || n.type === 'comment_like') ? 'notif-icon--fav' : 'notif-icon--cmt'}`}>
+                      {n.type === 'cover_removed' ? <XIcon size={12} /> : (n.type === 'favorite' || n.type === 'comment_like') ? <FavoritesIcon size={12} /> : <CommentIcon size={12} />}
                     </span>
                     <div className="notif-body">
-                      <p className="notif-text">
-                        <button
-                          className="notif-user-link"
-                          onClick={() => {
-                            if (n.actor_username) navigate(`/users/${encodeURIComponent(n.actor_username)}`);
-                            setOpen(false);
-                          }}
-                        >
-                          {n.actor_name}
-                        </button>{' '}
-                        {n.type === 'favorite' && 'favorited'}
-                        {n.type === 'comment' && 'commented on'}
-                        {n.type === 'comment_like' && 'liked your comment on'}
-                        {n.type === 'comment_reply' && 'replied to your comment on'}{' '}
-                        <button className="notif-cover-link" onClick={() => { navigate(`/?open=${n.cover_id}`); setOpen(false); }}>
-                          {n.cover_title}
-                        </button>
-                      </p>
-                      {n.content && (
+                      {n.type === 'cover_removed' ? (
+                        <p className="notif-text">
+                          Your upload{' '}
+                          <button className="notif-cover-link" onClick={() => { navigate(`/?open=${n.cover_id}`); setOpen(false); }}>
+                            {n.cover_title}
+                          </button>
+                          {' '}has been removed for the following reason(s): <strong>{n.content}</strong>
+                        </p>
+                      ) : (
+                        <p className="notif-text">
+                          <button
+                            className="notif-user-link"
+                            onClick={() => {
+                              if (n.actor_username) navigate(`/users/${encodeURIComponent(n.actor_username)}`);
+                              setOpen(false);
+                            }}
+                          >
+                            {n.actor_name}
+                          </button>{' '}
+                          {n.type === 'favorite' && 'favorited'}
+                          {n.type === 'comment' && 'commented on'}
+                          {n.type === 'comment_like' && 'liked your comment on'}
+                          {n.type === 'comment_reply' && 'replied to your comment on'}{' '}
+                          <button className="notif-cover-link" onClick={() => { navigate(`/?open=${n.cover_id}`); setOpen(false); }}>
+                            {n.cover_title}
+                          </button>
+                        </p>
+                      )}
+                      {n.content && n.type !== 'cover_removed' && (
                         <p className="notif-comment-preview">"{n.content}{n.content.length >= 100 ? '…' : ''}"</p>
                       )}
                       {n.type === 'comment_reply' && (

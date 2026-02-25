@@ -98,12 +98,8 @@ export default function Cms() {
   const [coverLookupInput, setCoverLookupInput] = useState('');
   const [coverLookupResult, setCoverLookupResult] = useState<CoverLookupResult | null>(null);
 
-  // Cloudflare migration
-  const [migrating, setMigrating] = useState(false);
-  const [migrateLog, setMigrateLog] = useState<string[]>([]);
-  const [migrateDone, setMigrateDone] = useState<{ migrated: number; failed: number; remaining: number } | null>(null);
-  const [migrateBatch, setMigrateBatch] = useState(50);
-  const [migrateType, setMigrateType] = useState<'all' | 'covers' | 'avatars' | 'artist-photos'>('all');
+  // Perma-unpublish reason
+  const [permaUnpublishReason, setPermaUnpublishReason] = useState('DMCA/compliance');
 
   const token = session?.access_token;
 
@@ -169,6 +165,14 @@ export default function Cms() {
 
   // ── Cover actions ──────────────────────────────────────────────────────────
 
+  async function refreshLookupResult() {
+    if (!token || !coverLookupInput.trim()) return;
+    const res = await fetch(`/api/cms/cover-lookup?q=${encodeURIComponent(coverLookupInput.trim())}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) setCoverLookupResult(await res.json() as CoverLookupResult);
+  }
+
   async function deleteCover(coverId: string) {
     if (!token) return;
     setBusyId(coverId);
@@ -192,21 +196,22 @@ export default function Cms() {
     if (!res.ok) setError('Could not update visibility.');
     else flash('Visibility updated.');
     await loadDashboard();
+    await refreshLookupResult();
     setBusyId(null);
   }
 
 
-  async function setCoverPermaUnpublished(coverId: string, enabled: boolean) {
+  async function setCoverPermaUnpublished(coverId: string, enabled: boolean, reason?: string) {
     if (!token) return;
     setBusyId(`perma-${coverId}`);
     setError(null);
     const res = await fetch('/api/cms/perma-unpublish', {
-      method: 'POST', headers: authHeaders, body: JSON.stringify({ coverId, enabled }),
+      method: 'POST', headers: authHeaders, body: JSON.stringify({ coverId, enabled, reason }),
     });
     if (!res.ok) setError('Could not update perma-unpublish status.');
     else flash(enabled ? 'Cover permanently unpublished.' : 'Perma-unpublish removed.');
     await loadDashboard();
-    if (coverLookupResult && coverLookupResult.cover.id === coverId) await lookupCoverByUrl();
+    await refreshLookupResult();
     setBusyId(null);
   }
 
@@ -621,6 +626,15 @@ export default function Cms() {
           <input className="form-input" placeholder="https://covers.cafe/covers/fan/..." value={coverLookupInput} onChange={(e) => setCoverLookupInput(e.target.value)} style={{ minWidth: 380, flex: 1 }} />
           <button className="btn btn-primary" onClick={lookupCoverByUrl} disabled={busyId === 'cover-lookup'}>Lookup</button>
         </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 6 }}>
+          <label className="cms-label">Removal reason:</label>
+          <select className="form-input" style={{ width: 'auto' }} value={permaUnpublishReason} onChange={(e) => setPermaUnpublishReason(e.target.value)}>
+            <option value="DMCA/compliance">DMCA/compliance</option>
+            <option value="Spam/duplicate content">Spam/duplicate content</option>
+            <option value="Inappropriate content">Inappropriate content</option>
+            <option value="Other violation">Other violation</option>
+          </select>
+        </div>
         {coverLookupResult && (
           <div className="cms-ban-list" style={{ marginTop: 10 }}>
             <div className="cms-ban-row">
@@ -628,15 +642,17 @@ export default function Cms() {
                 <span className="cms-ban-user">{coverLookupResult.cover.artist} — {coverLookupResult.cover.title}</span>
                 <span className="cms-ban-reason">/{coverLookupResult.cover.page_slug}{coverLookupResult.cover.perma_unpublished ? ' · perma-unpublished' : ''}</span>
               </div>
+              <button className="btn" onClick={() => setCoverVisibility(coverLookupResult.cover.id, !coverLookupResult.cover.is_public)} disabled={coverLookupResult.cover.perma_unpublished || busyId === `visibility-${coverLookupResult.cover.id}`} title={coverLookupResult.cover.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}>{coverLookupResult.cover.is_public ? 'Unpublish' : 'Publish'}</button>
+              <button className="btn" onClick={() => setCoverPermaUnpublished(coverLookupResult.cover.id, !coverLookupResult.cover.perma_unpublished, permaUnpublishReason)} disabled={busyId === `perma-${coverLookupResult.cover.id}`}>{coverLookupResult.cover.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}</button>
             </div>
             {coverLookupResult.nextByUser.map((c) => (
               <div key={c.id} className="cms-ban-row">
                 <div className="cms-ban-details">
                   <span className="cms-ban-user">{c.artist} — {c.title}</span>
-                  <span className="cms-ban-reason">/{c.page_slug}</span>
+                  <span className="cms-ban-reason">/{c.page_slug}{c.perma_unpublished ? ' · perma-unpublished' : ''}</span>
                 </div>
-                <button className="btn" onClick={() => setCoverVisibility(c.id, !c.is_public)} disabled={c.perma_unpublished} title={c.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}>{c.is_public ? 'Unpublish' : 'Publish'}</button>
-                <button className="btn" onClick={() => setCoverPermaUnpublished(c.id, !c.perma_unpublished)}>{c.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}</button>
+                <button className="btn" onClick={() => setCoverVisibility(c.id, !c.is_public)} disabled={c.perma_unpublished || busyId === `visibility-${c.id}`} title={c.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}>{c.is_public ? 'Unpublish' : 'Publish'}</button>
+                <button className="btn" onClick={() => setCoverPermaUnpublished(c.id, !c.perma_unpublished, permaUnpublishReason)} disabled={busyId === `perma-${c.id}`}>{c.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}</button>
               </div>
             ))}
           </div>
@@ -661,104 +677,6 @@ export default function Cms() {
         </div>
       </section>
 
-      {/* ── Cloudflare Image Migration ──────────────────────────────────── */}
-      <section className="surface cms-section">
-        <h2 className="cms-h2">Cloudflare Image Migration</h2>
-        <p className="cms-desc">
-          Migrate images from Supabase storage to Cloudflare Images. Process {migrateBatch} items per run.
-          {migrateDone && !migrating && (
-            <> Last run: <strong>{migrateDone.migrated}</strong> migrated, <strong>{migrateDone.failed}</strong> failed, <strong>{migrateDone.remaining}</strong> remaining.</>
-          )}
-        </p>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 10 }}>
-          <select
-            className="form-input"
-            style={{ width: 'auto' }}
-            value={migrateType}
-            onChange={(e) => setMigrateType(e.target.value as typeof migrateType)}
-            disabled={migrating}
-          >
-            <option value="all">All (covers + avatars + artist photos)</option>
-            <option value="covers">Covers only</option>
-            <option value="avatars">Avatars only</option>
-            <option value="artist-photos">Artist photos only</option>
-          </select>
-          <input
-            type="number"
-            className="form-input"
-            style={{ width: 90 }}
-            min={1}
-            max={200}
-            value={migrateBatch}
-            onChange={(e) => setMigrateBatch(Math.max(1, Math.min(200, parseInt(e.target.value, 10) || 50)))}
-            disabled={migrating}
-            title="Batch size (1–200)"
-          />
-          <button
-            className="btn btn-primary"
-            disabled={migrating || !token}
-            onClick={async () => {
-              if (!token) return;
-              setMigrating(true);
-              setMigrateLog([]);
-              setMigrateDone(null);
-              const params = new URLSearchParams({ batch: String(migrateBatch), type: migrateType });
-              const es = new EventSource(`/api/cms/migrate-images?${params.toString()}`);
-              // SSE doesn't support custom headers; need to append token as query param
-              // Actually use fetch-based SSE workaround via a streaming fetch
-              es.close();
-
-              // Use fetch streaming instead (EventSource doesn't support Authorization header)
-              const res = await fetch(`/api/cms/migrate-images?${params.toString()}`, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              if (!res.ok || !res.body) {
-                setMigrateLog(['Error: could not start migration.']);
-                setMigrating(false);
-                return;
-              }
-              const reader = res.body.getReader();
-              const dec = new TextDecoder();
-              let buf = '';
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                buf += dec.decode(value, { stream: true });
-                const lines = buf.split('\n');
-                buf = lines.pop() ?? '';
-                for (const line of lines) {
-                  if (!line.startsWith('data: ')) continue;
-                  try {
-                    const evt = JSON.parse(line.slice(6)) as { type: string; message?: string; migrated?: number; failed?: number; remaining?: number };
-                    if (evt.type === 'log' && evt.message) {
-                      setMigrateLog((prev) => [...prev, evt.message!]);
-                    } else if (evt.type === 'done') {
-                      setMigrateDone({ migrated: evt.migrated ?? 0, failed: evt.failed ?? 0, remaining: evt.remaining ?? 0 });
-                    }
-                  } catch { /* ignore parse errors */ }
-                }
-              }
-              setMigrating(false);
-            }}
-          >
-            {migrating ? '⏳ Migrating…' : '🚀 Start Migration'}
-          </button>
-          {migrating && (
-            <button className="btn btn-secondary" onClick={() => setMigrating(false)}>
-              Stop
-            </button>
-          )}
-        </div>
-        {(migrateLog.length > 0 || migrating) && (
-          <textarea
-            readOnly
-            className="form-input"
-            style={{ fontFamily: 'monospace', fontSize: 15, height: 280, resize: 'vertical', whiteSpace: 'pre' }}
-            value={migrateLog.join('\n') + (migrating ? '\n\u2026' : migrateDone ? `\n\n\u2705 Done — ${migrateDone.migrated} migrated, ${migrateDone.failed} failed, ${migrateDone.remaining} still remaining.` : '')}
-            ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}
-          />
-        )}
-      </section>
 
       
     </div>
