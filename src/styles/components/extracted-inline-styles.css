@@ -3333,3 +3333,146 @@
 [data-theme="dark"] .pinned-card { border-color: #6b3d1f; background: #3d1a05; }
 [data-theme="pureblack"] .pinned-card { border-color: #2e2e2e; background: #1a1a1a; }
 [data-theme="crisp"] .pinned-card { border-color: #cccccc; background: #f8f8f8; }
+
+/* ── Achievement descriptors ── */
+.ach-descriptor {
+  font-size: 11px;
+  color: var(--body-text-muted);
+  line-height: 1.45;
+  margin-top: 2px;
+  display: block;
+}
+
+/* ── Certified Loner achievement badge ── */
+.ach-badge--loner {
+  background: linear-gradient(135deg, rgba(120,80,160,0.12) 0%, rgba(60,60,120,0.08) 100%);
+  border-color: rgba(120,80,160,0.35);
+}
+[data-theme="dark"] .ach-badge--loner {
+  background: linear-gradient(135deg, rgba(100,60,140,0.15) 0%, rgba(50,50,100,0.12) 100%);
+  border-color: rgba(120,80,160,0.3);
+}
+
+/* ── Friends section on ArtistDetail ── */
+.artist-friends-section {
+  margin-top: 24px;
+}
+.artist-friends-count {
+  font-size: 13px;
+  font-weight: normal;
+  color: var(--body-text-muted);
+  margin-left: 6px;
+}
+.artist-friends-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px 0;
+}
+.artist-friends-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.artist-friend-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px 5px 6px;
+  border: 1px solid var(--body-card-border);
+  background: var(--body-card-bg);
+  color: var(--body-text);
+  cursor: pointer;
+  font-size: 13px;
+  transition: border-color 0.1s;
+}
+.artist-friend-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.artist-friend-avatar {
+  width: 22px;
+  height: 22px;
+  object-fit: cover;
+  display: block;
+}
+.artist-friend-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Add Friend button ── */
+.artist-friend-btn {
+  font-size: 12px;
+}
+
+/* ── Easter egg message ── */
+.artist-easter-egg {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: 1px solid rgba(120,80,160,0.4);
+  background: rgba(120,80,160,0.08);
+  color: var(--body-text);
+  font-size: 13px;
+  font-style: italic;
+  max-width: 400px;
+}
+
+/* ── Friends page ── */
+.friends-page-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.friends-page-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 14px;
+  border: 1px solid var(--body-card-border);
+  background: var(--body-card-bg);
+  cursor: pointer;
+  color: var(--body-text);
+  transition: border-color 0.1s;
+  text-align: center;
+}
+.friends-page-card:hover {
+  border-color: var(--accent);
+}
+.friends-page-avatar {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.friends-page-avatar-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  display: block;
+}
+.friends-page-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.friends-page-name {
+  font-weight: 600;
+  font-size: 14px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.friends-page-username {
+  font-size: 12px;
+  color: var(--body-text-muted);
+}

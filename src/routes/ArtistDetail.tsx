@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import UserIcon from '../components/UserIcon';
+import UserSleepIcon from '../components/UserSleepIcon';
 import BackIcon from '../components/BackIcon';
 import GalleryIcon from '../components/GalleryIcon';
 import FolderIcon from '../components/FolderIcon';
@@ -16,6 +17,7 @@ import AchievementBadges from '../components/AchievementBadges';
 import type { Profile, Cover } from '../lib/types';
 import { getAvatarSrc, getCoverImageSrc } from '../lib/media';
 import { getCoverPath } from '../lib/coverRoutes';
+import { applyGradientColorsToDocument } from '../lib/userPreferences';
 
 // ── Theme helpers ─────────────────────────────────────────────────────────────
 
@@ -77,6 +79,11 @@ export default function ArtistDetail() {
   const [followerCount, setFollowerCount] = useState(0);
   const [followBusy, setFollowBusy] = useState(false);
   const [pinnedCovers, setPinnedCovers] = useState<PinnedRow[]>([]);
+  const [friends, setFriends] = useState<{ id: string; username: string; display_name: string | null; avatar_url: string | null }[]>([]);
+  const [viewerFriendStatus, setViewerFriendStatus] = useState<'none' | 'pending_sent' | 'pending_received' | 'accepted'>('none');
+  const [friendBusy, setFriendBusy] = useState(false);
+  const [easterEggMsg, setEasterEggMsg] = useState<string | null>(null);
+  const themeRestoredRef = useRef(false);
   const [collections, setCollections] = useState<{
     id: string;
     name: string;
@@ -193,9 +200,52 @@ export default function ArtistDetail() {
         setFollowerCount(followData.followerCount);
       }
 
+      // Friends list + viewer friendship status
+      const friendsHeaders: HeadersInit = session?.access_token
+        ? { Authorization: 'Bearer ' + session.access_token }
+        : {};
+      const friendsRes = await fetch('/api/friends?userId=' + profileData.id, { headers: friendsHeaders });
+      if (friendsRes.ok) {
+        const fd = await friendsRes.json() as {
+          friends: { id: string; username: string; display_name: string | null; avatar_url: string | null }[];
+          viewerStatus: 'none' | 'pending_sent' | 'pending_received' | 'accepted';
+        };
+        setFriends(fd.friends ?? []);
+        setViewerFriendStatus(fd.viewerStatus ?? 'none');
+      }
+
       setLoading(false);
     })();
-  }, [username, user?.id, authLoading]);
+  }, [username, user?.id, authLoading, session?.access_token]);
+
+  // ── Full-page profile theme ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!profile?.profile_theme) return;
+    const html = document.documentElement;
+    const prevTheme = html.getAttribute('data-theme');
+    const prevGradStart = html.style.getPropertyValue('--gradient-start');
+    const prevGradEnd = html.style.getPropertyValue('--gradient-end');
+    themeRestoredRef.current = false;
+
+    html.setAttribute('data-theme', profile.profile_theme);
+    if (
+      profile.profile_theme === 'gradient' &&
+      profile.profile_gradient_start &&
+      profile.profile_gradient_end
+    ) {
+      applyGradientColorsToDocument(profile.profile_gradient_start, profile.profile_gradient_end);
+    }
+
+    return () => {
+      if (!themeRestoredRef.current) {
+        themeRestoredRef.current = true;
+        if (prevTheme) html.setAttribute('data-theme', prevTheme);
+        else html.removeAttribute('data-theme');
+        if (prevGradStart) html.style.setProperty('--gradient-start', prevGradStart);
+        if (prevGradEnd) html.style.setProperty('--gradient-end', prevGradEnd);
+      }
+    };
+  }, [profile?.profile_theme, profile?.profile_gradient_start, profile?.profile_gradient_end]);
 
   async function toggleFollow() {
     if (!profile || !session?.access_token) return;
@@ -214,6 +264,55 @@ export default function ArtistDetail() {
       setFollowerCount((c) => c + (next ? -1 : 1));
     }
     setFollowBusy(false);
+  }
+
+  async function handleAddFriend() {
+    if (!profile || !session?.access_token) return;
+    setFriendBusy(true);
+
+    // Self-friend easter egg
+    if (user?.id === profile.id) {
+      const res = await fetch('/api/friends', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ userId: profile.id, action: 'request' }),
+      });
+      if (res.ok) {
+        const d = await res.json() as { easter_egg?: boolean; message?: string };
+        if (d.easter_egg) {
+          setEasterEggMsg(d.message ?? 'You have friended yourself, auto approved!');
+        }
+      }
+      setFriendBusy(false);
+      return;
+    }
+
+    const action =
+      viewerFriendStatus === 'none' ? 'request' :
+      viewerFriendStatus === 'pending_received' ? 'accept' :
+      'remove';
+
+    const res = await fetch('/api/friends', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+      body: JSON.stringify({ userId: profile.id, action }),
+    });
+    if (res.ok) {
+      const d = await res.json() as { status?: string };
+      const newStatus = (d.status ?? 'none') as typeof viewerFriendStatus;
+      setViewerFriendStatus(newStatus);
+      if (newStatus === 'accepted') {
+        // Refresh friends list
+        const fr = await fetch('/api/friends?userId=' + profile.id, {
+          headers: { Authorization: 'Bearer ' + session.access_token },
+        });
+        if (fr.ok) {
+          const fd = await fr.json() as { friends: typeof friends };
+          setFriends(fd.friends ?? []);
+        }
+      }
+    }
+    setFriendBusy(false);
   }
 
   async function togglePin(coverId: string, currentlyPinned: boolean) {
@@ -307,13 +406,69 @@ export default function ArtistDetail() {
                   {following ? 'Following' : 'Follow'}
                 </button>
               )}
+              {user && (
+                <button
+                  className={'btn artist-friend-btn' + (viewerFriendStatus === 'accepted' ? ' btn-secondary' : ' btn-secondary')}
+                  onClick={handleAddFriend}
+                  disabled={friendBusy || viewerFriendStatus === 'pending_sent'}
+                  title={
+                    isOwnProfile ? 'Add yourself as a friend' :
+                    viewerFriendStatus === 'accepted' ? 'Friends — click to unfriend' :
+                    viewerFriendStatus === 'pending_sent' ? 'Friend request sent' :
+                    viewerFriendStatus === 'pending_received' ? 'Accept friend request' :
+                    'Add Friend'
+                  }
+                >
+                  {isOwnProfile ? '+ Add Friend' :
+                    viewerFriendStatus === 'accepted' ? 'Friends ✓' :
+                    viewerFriendStatus === 'pending_sent' ? 'Requested' :
+                    viewerFriendStatus === 'pending_received' ? 'Accept Request' :
+                    '+ Add Friend'}
+                </button>
+              )}
             </div>
+            {easterEggMsg && (
+              <div className="artist-easter-egg">
+                {easterEggMsg}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Achievements */}
       {profile && <AchievementBadges userId={profile.id} />}
+
+      {/* Friends */}
+      <section className="artist-friends-section">
+        <h2 className="section-title">
+          <UserIcon size={18} />
+          Friends {friends.length > 0 && <span className="artist-friends-count">{friends.length}</span>}
+        </h2>
+        {friends.length === 0 ? (
+          <div className="artist-friends-empty">
+            <UserSleepIcon size={40} style={{ opacity: 0.3 }} />
+            <p className="text-muted">{isOwnProfile ? 'You have no friends yet.' : 'No friends yet.'}</p>
+          </div>
+        ) : (
+          <div className="artist-friends-list">
+            {friends.map((f) => (
+              <button
+                key={f.id}
+                className="artist-friend-chip"
+                onClick={() => navigate('/users/' + f.username)}
+                title={f.display_name ?? f.username}
+              >
+                {f.avatar_url
+                  ? <img src={f.avatar_url} alt={f.display_name ?? f.username} className="artist-friend-avatar" loading="lazy" />
+                  : <UserIcon size={20} style={{ opacity: 0.5 }} />
+                }
+                <span className="artist-friend-name">{f.display_name ?? f.username}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Pinned Covers */}
       {(pinnedCovers.length > 0 || isOwnProfile) && (
