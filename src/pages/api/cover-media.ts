@@ -16,7 +16,7 @@ import { isCfPath, cfImageIdFromPath } from '../../lib/cloudflare';
 
 const CF_IMAGES_HASH = import.meta.env.PUBLIC_CF_IMAGES_HASH as string;
 // Aggressively cache proxied images — CF Images content is immutable per image ID.
-const CACHE_HEADERS = 'public, max-age=2678400, immutable'; // 31 days
+const CACHE_HEADERS = 'public, max-age=31536000, s-maxage=31536000, immutable'; // 1 year
 
 export const GET: APIRoute = async ({ url }) => {
   const sb = getSupabaseServer();

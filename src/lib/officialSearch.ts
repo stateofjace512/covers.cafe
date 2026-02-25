@@ -17,6 +17,7 @@ export interface OfficialUpsertRow {
   search_album: string | null;
   tags: string[];
   source_payload: Record<string, unknown>;
+  official_phash: string | null;
 }
 
 interface RankedOfficialRow extends OfficialUpsertRow {
@@ -29,6 +30,26 @@ function getFullResAppleCover(url: string | undefined): string | undefined {
     .replace(/https:\/\/is\d-ssl\.mzstatic\.com\/image\/thumb\//, 'https://a1.mzstatic.com/r40/')
     .replace(/https:\/\/is\d-ssl\.mzstatic\.com\/image\//, 'https://a1.mzstatic.com/r40/')
     .replace(/\/\d+x\d+[^/]*\.(jpg|webp|png|tif)$/, '');
+}
+
+
+function getItunes100CoverForPhash(url: string | undefined): string | null {
+  if (!url || !url.includes('mzstatic.com')) return null;
+
+  // Preferred canonical iTunes thumb URL with explicit bb suffix.
+  const thumbMatch = url.match(/^https:\/\/is\d-ssl\.mzstatic\.com\/image\/thumb\/(.+)$/i);
+  if (thumbMatch) {
+    const path = thumbMatch[1].replace(/\/\d+x\d+bb\.jpg$/i, '');
+    return `https://is1-ssl.mzstatic.com/image/thumb/${path}/100x100bb.jpg`;
+  }
+
+  // Full-size URL shown in-app can be converted back to thumb form for 100x100 pHash fetches.
+  const fullMatch = url.match(/^https:\/\/a1\.mzstatic\.com\/r40\/(.+)$/i);
+  if (fullMatch) {
+    return `https://is1-ssl.mzstatic.com/image/thumb/${fullMatch[1]}/100x100bb.jpg`;
+  }
+
+  return null;
 }
 
 function hasCJK(text: string): boolean {
@@ -45,6 +66,44 @@ async function getImageMetrics(url: string): Promise<{ score: number; dimensions
     };
     img.onerror = () => resolve({ score: 0, dimensions: null });
     setTimeout(() => resolve({ score: 0, dimensions: null }), 5000);
+  });
+}
+
+
+async function computeOfficialPhashFrom100(url: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = url;
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 8;
+        canvas.height = 8;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(null); return; }
+        ctx.drawImage(img, 0, 0, 8, 8);
+        const data = ctx.getImageData(0, 0, 8, 8).data;
+
+        const gray: number[] = [];
+        for (let i = 0; i < 64; i++) {
+          gray.push(0.299 * data[i * 4] + 0.587 * data[i * 4 + 1] + 0.114 * data[i * 4 + 2]);
+        }
+
+        const avg = gray.reduce((a, b) => a + b, 0) / gray.length;
+        const bits = gray.map((v) => (v >= avg ? '1' : '0')).join('');
+
+        let hex = '';
+        for (let i = 0; i < bits.length; i += 4) {
+          hex += parseInt(bits.slice(i, i + 4), 2).toString(16);
+        }
+        resolve(hex);
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    setTimeout(() => resolve(null), 5000);
   });
 }
 
@@ -71,16 +130,23 @@ async function searchOneCountry(artist: string, album: string, country: string):
           search_album: album || null,
           tags: ['official'],
           source_payload: item as Record<string, unknown>,
+          official_phash: null,
           quality_score: 0,
         };
       })
       .filter((row): row is RankedOfficialRow => Boolean(row));
 
-    const imageData = await Promise.all(rows.map((row) => getImageMetrics(row.album_cover_url)));
+    const imageData = await Promise.all(rows.map(async (row) => {
+      const metrics = await getImageMetrics(row.album_cover_url);
+      const phashSourceUrl = getItunes100CoverForPhash((row.source_payload.artworkUrl100 as string | undefined) ?? row.album_cover_url);
+      const phash = phashSourceUrl ? await computeOfficialPhashFrom100(phashSourceUrl) : null;
+      return { ...metrics, phash };
+    }));
     return rows.map((row, index) => ({
       ...row,
       quality_score: imageData[index].score,
       pixel_dimensions: imageData[index].dimensions,
+      official_phash: imageData[index].phash,
     }));
   } catch {
     return [];

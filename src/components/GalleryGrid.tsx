@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import LoadingIcon from './LoadingIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { checkRateLimit } from '../lib/rateLimit';
+import { checkRateLimit, checkWeightedRateLimit } from '../lib/rateLimit';
 import CoverCard from './CoverCard';
 import CoverModal from './CoverModal';
 import RateLimitModal from './RateLimitModal';
@@ -45,6 +45,9 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
   const navigate = useNavigate();
   const [sort, setSort] = useState<SortOption>('newest');
   const [rateLimited, setRateLimited] = useState(false);
+  const [loadMoreRateLimited, setLoadMoreRateLimited] = useState(false);
+  const [refreshPending, setRefreshPending] = useState(false);
+  const coversChangesChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const [selectedCover, setSelectedCover] = useState<Cover | null>(null);
 
   const favIdsRef = useRef<string[]>([]);
@@ -196,6 +199,10 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
 
   const handleLoadMore = async () => {
     if (loadingMoreRef.current || !hasMore) return;
+    if (!checkRateLimit('load_more_clicks', 5, 10_000) || !checkWeightedRateLimit('load_more_items', 500, 30_000, PAGE_SIZE)) {
+      setLoadMoreRateLimited(true);
+      return;
+    }
     loadingMoreRef.current = true;
     setLoadingMore(true);
     const nextPage = currentPageRef.current + 1;
@@ -240,6 +247,42 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
     setCovers((prev) => prev.filter((c) => c.id !== coverId));
   };
 
+  const rearmCoverRealtime = useCallback(() => {
+    if (coversChangesChannelRef.current) return;
+    const channel = supabase
+      .channel('gallery-covers-upsert-watch')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'covers_cafe_covers' }, () => {
+        setRefreshPending(true);
+        if (coversChangesChannelRef.current) {
+          supabase.removeChannel(coversChangesChannelRef.current);
+          coversChangesChannelRef.current = null;
+        }
+      })
+      .subscribe();
+    coversChangesChannelRef.current = channel;
+  }, []);
+
+  useEffect(() => {
+    rearmCoverRealtime();
+    return () => {
+      if (coversChangesChannelRef.current) {
+        supabase.removeChannel(coversChangesChannelRef.current);
+        coversChangesChannelRef.current = null;
+      }
+    };
+  }, [rearmCoverRealtime]);
+
+  const handleManualRefresh = async () => {
+    setLoading(true);
+    currentPageRef.current = 0;
+    const { data, more } = await fetchPage(0, filter, tab, user, searchQuery, artistUserId, sort);
+    setCovers(data);
+    setHasMore(more);
+    setLoading(false);
+    setRefreshPending(false);
+    rearmCoverRealtime();
+  };
+
   if (loading) {
     return (
       <div className="gallery-loading">
@@ -251,6 +294,13 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
 
   return (
     <>
+      {refreshPending && (
+        <div className="gallery-refresh-banner">
+          <span>New covers are available.</span>
+          <button className="btn btn-secondary" onClick={handleManualRefresh}>Refresh</button>
+        </div>
+      )}
+
       <div className="gallery-toolbar">
         <div className="gallery-sort-wrap">
           <label className="gallery-sort-label">Sort:</label>
@@ -337,11 +387,12 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
                 className="btn btn-secondary gallery-load-more-btn"
                 onClick={handleLoadMore}
                 disabled={loadingMore}
-              >
+>
                 {loadingMore
                   ? <><LoadingIcon size={14} className="gallery-spinner" /> Loading…</>
                   : 'Load more'}
               </button>
+              <p className="gallery-load-more-hint">Tip: use search to jump to specific covers faster.</p>
             </div>
           )}
         </>
@@ -368,7 +419,12 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
         <RateLimitModal action="favorite" onClose={() => setRateLimited(false)} />
       )}
 
+      {loadMoreRateLimited && (
+        <RateLimitModal action="load_more_clicks" onClose={() => setLoadMoreRateLimited(false)} />
+      )}
+
       <style>{`
+        .gallery-refresh-banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; padding: 8px 10px; border: 2px solid; border-color: #c07f55 #ffffff #ffffff #c07f55; background: var(--body-card-bg); font-size: 11px; }
         .gallery-toolbar {
           display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap;
           margin-bottom: 10px;
@@ -396,7 +452,8 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
         .gallery-search-label { font-size: 12px; color: var(--body-text-muted); margin-bottom: 8px; }
         /* Win95 drag zone: flat dashed border, no rounding */
         .collection-drag-zone { margin-bottom: 10px; border: 2px dashed var(--body-border); padding: 10px; text-align: center; color: var(--body-text-muted); background: var(--body-card-bg); font-size: 11px; }
-        .gallery-load-more { display: flex; justify-content: center; padding: 16px 0 6px; }
+        .gallery-load-more { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 0 6px; }
+        .gallery-load-more-hint { font-size: 11px; color: var(--body-text-muted); }
         .gallery-load-more-btn {
           display: flex; align-items: center; gap: 6px;
           padding: 4px 20px; font-size: 12px;
