@@ -1203,7 +1203,7 @@
 
 /* ===== Extracted from src/components/WeatherMicroApp.tsx ===== */
         .wma-window {
-          position: fixed; z-index: 150;
+          position: fixed; z-index: 215;
           background: #c0c0c0;
           border: 2px solid; border-color: #fff #808080 #808080 #fff;
           box-shadow: 1px 1px 0 #000;
@@ -3123,7 +3123,7 @@
 [data-theme="crisp"] .wma-inset { background: #ffffff; border-color: #aaaaaa #ffffff #ffffff #aaaaaa; color: #111111; }
 [data-theme="crisp"] .wma-lbl, [data-theme="crisp"] .wma-val { color: #111111; }
 
-[data-theme="gradient"] .wma-window { background: var(--gradient-panel-bg); border-color: rgba(255,255,255,0.2) rgba(0,0,0,0.15) rgba(0,0,0,0.15) rgba(255,255,255,0.2); color: var(--gradient-text); }
+[data-theme="gradient"] .wma-window { background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%); border-color: rgba(255,255,255,0.35) rgba(0,0,0,0.2) rgba(0,0,0,0.2) rgba(255,255,255,0.35); color: var(--gradient-text); }
 [data-theme="gradient"] .wma-close { background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.25) rgba(0,0,0,0.2) rgba(0,0,0,0.2) rgba(255,255,255,0.25); color: var(--gradient-text); }
 [data-theme="gradient"] .wma-btn { background: rgba(0,0,0,0.25); border-color: rgba(255,255,255,0.25) rgba(0,0,0,0.2) rgba(0,0,0,0.2) rgba(255,255,255,0.25); color: var(--gradient-text); }
 [data-theme="gradient"] .wma-btn:active, [data-theme="gradient"] .wma-btn-active { background: rgba(0,0,0,0.4); border-color: rgba(0,0,0,0.2) rgba(255,255,255,0.25) rgba(255,255,255,0.25) rgba(0,0,0,0.2); color: var(--gradient-text); }
