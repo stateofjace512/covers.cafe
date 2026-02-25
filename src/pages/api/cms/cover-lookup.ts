@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request, url }) => {
 
   const { data: cover, error } = await sb
     .from('covers_cafe_covers')
-    .select('id, page_slug, title, artist, user_id, created_at, is_public, is_private, profiles:covers_cafe_profiles(username, display_name)')
+    .select('id, page_slug, title, artist, user_id, created_at, is_public, is_private, perma_unpublished, profiles:covers_cafe_profiles(username, display_name)')
     .eq('page_slug', slug)
     .maybeSingle();
 
@@ -37,7 +37,7 @@ export const GET: APIRoute = async ({ request, url }) => {
 
   const { data: nearby, error: nearbyErr } = await sb
     .from('covers_cafe_covers')
-    .select('id, page_slug, title, artist, created_at, is_public, is_private')
+    .select('id, page_slug, title, artist, created_at, is_public, is_private, perma_unpublished')
     .eq('user_id', cover.user_id)
     .neq('id', cover.id)
     .order('created_at', { ascending: false })

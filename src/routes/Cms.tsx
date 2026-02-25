@@ -28,6 +28,7 @@ type PublishedCover = {
   storage_path: string;
   is_public: boolean;
   is_private: boolean;
+  perma_unpublished: boolean;
   is_banned: boolean;
   is_operator: boolean;
 };
@@ -59,8 +60,8 @@ type BlacklistItem = {
 };
 
 type CoverLookupResult = {
-  cover: { id: string; page_slug: string; title: string; artist: string; is_public: boolean; is_private: boolean; profiles?: { username?: string | null; display_name?: string | null } | null };
-  nextByUser: Array<{ id: string; page_slug: string; title: string; artist: string; is_public: boolean; is_private: boolean; created_at: string }>;
+  cover: { id: string; page_slug: string; title: string; artist: string; is_public: boolean; is_private: boolean; perma_unpublished: boolean; profiles?: { username?: string | null; display_name?: string | null } | null };
+  nextByUser: Array<{ id: string; page_slug: string; title: string; artist: string; is_public: boolean; is_private: boolean; perma_unpublished: boolean; created_at: string }>;
 };
 
 type DashboardPayload = {
@@ -209,6 +210,21 @@ export default function Cms() {
     if (!res.ok) setError('Could not update visibility.');
     else flash('Visibility updated.');
     await loadDashboard();
+    setBusyId(null);
+  }
+
+
+  async function setCoverPermaUnpublished(coverId: string, enabled: boolean) {
+    if (!token) return;
+    setBusyId(`perma-${coverId}`);
+    setError(null);
+    const res = await fetch('/api/cms/perma-unpublish', {
+      method: 'POST', headers: authHeaders, body: JSON.stringify({ coverId, enabled }),
+    });
+    if (!res.ok) setError('Could not update perma-unpublish status.');
+    else flash(enabled ? 'Cover permanently unpublished.' : 'Perma-unpublish removed.');
+    await loadDashboard();
+    if (coverLookupResult && coverLookupResult.cover.id === coverId) await lookupCoverByUrl();
     setBusyId(null);
   }
 
@@ -549,12 +565,13 @@ export default function Cms() {
                     </div>
                     <div className="cms-cover-badges">
                       {cover.is_private && <span className="cms-badge cms-badge--private">Private</span>}
+                      {cover.perma_unpublished && <span className="cms-badge cms-badge--locked">Perma-unpublished</span>}
                     </div>
                     <div className="cms-actions cms-actions--inline">
                       {cover.is_private ? (
                         <button
                           className="btn"
-                          disabled={busyId === `privacy-${cover.id}`}
+                          disabled={busyId === `privacy-${cover.id}` || cover.perma_unpublished}
                           onClick={() => setCoverPrivacy(cover.id, false)}
                         >
                           Republish
@@ -562,12 +579,19 @@ export default function Cms() {
                       ) : (
                         <button
                           className="btn"
-                          disabled={busyId === `privacy-${cover.id}`}
+                          disabled={busyId === `privacy-${cover.id}` || cover.perma_unpublished}
                           onClick={() => setCoverPrivacy(cover.id, true)}
                         >
                           Unpublish
                         </button>
                       )}
+                      <button
+                        className="btn"
+                        disabled={busyId === `perma-${cover.id}`}
+                        onClick={() => setCoverPermaUnpublished(cover.id, !cover.perma_unpublished)}
+                      >
+                        {cover.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}
+                      </button>
                       <button
                         className="btn cms-btn-danger"
                         disabled={busyId === cover.id}
@@ -742,7 +766,7 @@ export default function Cms() {
             <div className="cms-ban-row">
               <div className="cms-ban-details">
                 <span className="cms-ban-user">{coverLookupResult.cover.artist} — {coverLookupResult.cover.title}</span>
-                <span className="cms-ban-reason">/{coverLookupResult.cover.page_slug}</span>
+                <span className="cms-ban-reason">/{coverLookupResult.cover.page_slug}{coverLookupResult.cover.perma_unpublished ? ' · perma-unpublished' : ''}</span>
               </div>
             </div>
             {coverLookupResult.nextByUser.map((c) => (
@@ -751,7 +775,8 @@ export default function Cms() {
                   <span className="cms-ban-user">{c.artist} — {c.title}</span>
                   <span className="cms-ban-reason">/{c.page_slug}</span>
                 </div>
-                <button className="btn" onClick={() => setCoverVisibility(c.id, !c.is_public)}>{c.is_public ? 'Unpublish' : 'Publish'}</button>
+                <button className="btn" onClick={() => setCoverVisibility(c.id, !c.is_public)} disabled={c.perma_unpublished}>{c.is_public ? 'Unpublish' : 'Publish'}</button>
+                <button className="btn" onClick={() => setCoverPermaUnpublished(c.id, !c.perma_unpublished)}>{c.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}</button>
               </div>
             ))}
           </div>

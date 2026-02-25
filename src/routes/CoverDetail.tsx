@@ -87,6 +87,12 @@ export default function CoverDetail() {
       if (cancelled) return;
       if (!data) { setCover(null); setLoading(false); return; }
       const c = data as Cover;
+      const isOwner = Boolean(user?.id && c.user_id === user.id);
+      if ((c.perma_unpublished || !c.is_public) && !isOwner) {
+        setCover(null);
+        setLoading(false);
+        return;
+      }
       setCover(c);
       document.title = `${c.artist} | ${c.title} | covers.cafe`;
 
