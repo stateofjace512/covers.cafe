@@ -795,6 +795,9 @@
         .notif-icon { flex-shrink: 0; margin-top: 1px; }
         .notif-icon--fav { color: #806800; }
         .notif-icon--cmt { color: var(--accent); }
+        .notif-icon--removed { color: #c0392b; }
+        .notif-icon--follow { color: #27ae60; }
+        .notif-icon--friend { color: #8e44ad; }
         .notif-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
         .notif-text { font-size: 11px; color: var(--body-text); line-height: 1.4; margin: 0; }
         .notif-user-link { color: var(--body-text); background: none; border: none; padding: 0; cursor: pointer; font-size: 11px; box-shadow: none; font-family: inherit; text-decoration: underline; }
@@ -1526,6 +1529,7 @@
         .artist-detail-website { font-size: 19px; color: var(--accent); text-decoration: none; }
         .artist-detail-website:hover { text-decoration: underline; }
         .artist-detail-count { font-size: 19px; color: var(--body-text-muted); margin-top: 4px; }
+        .artist-follow-btn { margin-top: 10px; }
         .artist-collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
         .artist-collection-card { padding: 0; overflow: hidden; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
         .artist-collection-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
@@ -1592,6 +1596,7 @@
 /* ===== Extracted from src/routes/Cms.tsx ===== */
         .cms-section { margin-bottom: 20px; padding: 20px 22px; }
         .cms-h2 { font-size: 21px; margin: 0 0 14px; color: var(--body-text); }
+        .cms-h3 { font-size: 15px; font-weight: 600; margin: 0 0 8px; color: var(--body-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
         .cms-desc { font-size: 19px; color: var(--body-text-muted); margin: 0 0 10px; }
         .cms-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
         .cms-count { font-size: 18px; color: var(--body-text-muted); background: var(--body-border); padding: 2px 7px; border-radius: 10px; }
