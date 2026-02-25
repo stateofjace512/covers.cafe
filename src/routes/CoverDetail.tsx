@@ -165,12 +165,12 @@ export default function CoverDetail() {
     if (!cover) return;
     if (!user) return openAuthModal('login');
     if (!checkRateLimit('cover_detail_favorite', 8, 5000)) { setRateLimitedAction('cover_detail_favorite'); return; }
-    if (isFavorited) {
-      await supabase.from('covers_cafe_favorites').delete().eq('user_id', user.id).eq('cover_id', cover.id);
-    } else {
-      await supabase.from('covers_cafe_favorites').insert({ user_id: user.id, cover_id: cover.id });
+    const { error } = await supabase.rpc('covers_cafe_toggle_favorite', { p_cover_id: cover.id });
+    if (!error) {
+      const nowFav = !isFavorited;
+      setIsFavorited(nowFav);
+      setCover(prev => prev ? { ...prev, favorite_count: Math.max(0, (prev.favorite_count ?? 0) + (nowFav ? 1 : -1)) } : prev);
     }
-    setIsFavorited(!isFavorited);
   };
 
   const download = async (size?: number) => {
@@ -375,7 +375,7 @@ export default function CoverDetail() {
 
         <div className="cover-meta-stats">
           {createdAt && <span className="cover-meta-chip" title={createdFullLabel}><CalendarIcon size={11} /> {createdLabel}</span>}
-          <span className="cover-meta-chip"><FavoritesIcon size={11} /> {cover.favorite_count ?? 0} favorite{(cover.favorite_count ?? 0) === 1 ? '' : 's'}</span>
+          <span className="cover-meta-chip"><FavoritesIcon size={11} /> {Math.max(cover.favorite_count ?? 0, isFavorited ? 1 : 0)} favorite{Math.max(cover.favorite_count ?? 0, isFavorited ? 1 : 0) === 1 ? '' : 's'}</span>
           <span className="cover-meta-chip"><DownloadIcon size={11} /> {cover.download_count ?? 0} download{(cover.download_count ?? 0) === 1 ? '' : 's'}</span>
         </div>
 

@@ -15,6 +15,7 @@ import UploadDownloadIcon from './UploadDownloadIcon';
 import GearIcon from './GearIcon';
 import ShieldIcon from './ShieldIcon';
 import WeatherIcon from './WeatherIcon';
+import WeatherCanvas, { type WeatherSettings } from './WeatherCanvas';
 import WeatherMicroApp from './WeatherMicroApp';
 import SettingSlideIcon from './SettingSlideIcon';
 import GradientTuner from './GradientTuner';
@@ -38,11 +39,23 @@ type SidebarProps = {
   onNavigate: () => void;
 };
 
-// Each microapp entry: { id, icon, label }
 const MICROAPPS = [
   { id: 'weather',  icon: <WeatherIcon size={14} />,       label: 'Weather' },
   { id: 'gradient', icon: <SettingSlideIcon size={14} />,  label: 'Gradient Tuner' },
 ] as const;
+
+const WEATHER_STORAGE_KEY = 'weatherMicroAppSettings';
+const WEATHER_DEFAULTS: WeatherSettings = { mode: 'off', isRising: false, cfg: { density: 400, speed: 25, wind: 0, extra: 50, jitter: 20 } };
+const WEATHER_PREVIEW_DEFAULT: WeatherSettings = { mode: 'snow', isRising: false, cfg: { density: 400, speed: 25, wind: 0, extra: 50, jitter: 20 } };
+
+function readSavedWeather(): WeatherSettings {
+  try {
+    if (typeof window === 'undefined') return WEATHER_DEFAULTS;
+    const raw = localStorage.getItem(WEATHER_STORAGE_KEY);
+    if (raw) return JSON.parse(raw) as WeatherSettings;
+  } catch {}
+  return WEATHER_DEFAULTS;
+}
 
 export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
   const location = useLocation();
@@ -51,6 +64,18 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
   const [isOperator, setIsOperator] = useState(false);
   const [openApps, setOpenApps] = useState<Set<string>>(new Set());
 
+  // ── Weather state ──────────────────────────────────────────────────
+  // liveWeather: what WeatherCanvas is currently rendering (null = off)
+  // Starts null; initialized from localStorage on mount to avoid SSR mismatch
+  const [liveWeather, setLiveWeather] = useState<WeatherSettings | null>(null);
+  const [savedWeather, setSavedWeather] = useState<WeatherSettings>(WEATHER_DEFAULTS);
+
+  useEffect(() => {
+    const s = readSavedWeather();
+    setSavedWeather(s);
+    if (s.mode !== 'off') setLiveWeather(s);
+  }, []);
+
   function toggleApp(id: string) {
     setOpenApps((prev) => {
       const next = new Set(prev);
@@ -58,6 +83,29 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
       else next.add(id);
       return next;
     });
+  }
+
+  function openWeatherControl() {
+    // Show a live preview while the control is open
+    if (!liveWeather) setLiveWeather(savedWeather.mode !== 'off' ? savedWeather : { ...WEATHER_PREVIEW_DEFAULT });
+    setOpenApps(prev => new Set([...prev, 'weather']));
+  }
+
+  function handleWeatherSettingsChange(s: WeatherSettings) {
+    setLiveWeather(s.mode !== 'off' ? s : null);
+  }
+
+  function handleWeatherSaveAndClose(s: WeatherSettings) {
+    try { localStorage.setItem(WEATHER_STORAGE_KEY, JSON.stringify(s)); } catch {}
+    setSavedWeather(s);
+    setLiveWeather(s.mode !== 'off' ? s : null);
+    setOpenApps(prev => { const next = new Set(prev); next.delete('weather'); return next; });
+  }
+
+  function handleWeatherClose() {
+    // Discard unsaved changes — revert canvas to last saved state
+    setLiveWeather(savedWeather.mode !== 'off' ? savedWeather : null);
+    setOpenApps(prev => { const next = new Set(prev); next.delete('weather'); return next; });
   }
 
   useEffect(() => {
@@ -151,25 +199,38 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
       <div className="sidebar-microapps">
         <div className="sidebar-section-label">Apps</div>
         <div className="microapp-grid">
-          {MICROAPPS.map(({ id, icon, label }) => (
-            <button
-              key={id}
-              className={`microapp-cell${openApps.has(id) ? ' microapp-cell--active' : ''}`}
-              onClick={() => toggleApp(id)}
-              title={label}
-              aria-pressed={openApps.has(id)}
-            >
-              {icon}
-            </button>
-          ))}
+          {MICROAPPS.map(({ id, icon, label }) => {
+            const isActive = id === 'weather'
+              ? openApps.has('weather') || liveWeather !== null
+              : openApps.has(id);
+            return (
+              <button
+                key={id}
+                className={`microapp-cell${isActive ? ' microapp-cell--active' : ''}`}
+                onClick={() => id === 'weather' ? (openApps.has('weather') ? handleWeatherClose() : openWeatherControl()) : toggleApp(id)}
+                title={label}
+                aria-pressed={isActive}
+              >
+                {icon}
+              </button>
+            );
+          })}
         </div>
       </div>
 
     </aside>
 
-      {/* Microapp windows portalled to document.body so sidebar transforms don't clip them */}
+      {/* Persistent weather canvas — survives control window close */}
+      {liveWeather !== null && <WeatherCanvas settings={liveWeather} />}
+
+      {/* Microapp windows portalled to document.body */}
       {openApps.has('weather') && createPortal(
-        <WeatherMicroApp onClose={() => toggleApp('weather')} />,
+        <WeatherMicroApp
+          initialSettings={savedWeather.mode !== 'off' ? savedWeather : WEATHER_PREVIEW_DEFAULT}
+          onSettingsChange={handleWeatherSettingsChange}
+          onSaveAndClose={handleWeatherSaveAndClose}
+          onClose={handleWeatherClose}
+        />,
         document.body
       )}
       {openApps.has('gradient') && createPortal(

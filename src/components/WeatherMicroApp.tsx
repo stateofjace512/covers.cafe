@@ -1,168 +1,55 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import type { WeatherSettings, WeatherCfg, WeatherMode } from './WeatherCanvas';
 
-type WeatherMode = 'rain' | 'snow' | 'off';
-
-interface Particle {
-  x: number; y: number;
-  z: number; v: number; o: number;
-  phase: number;
-  rot: number; rotS: number;
-  arms: number;
-}
-
-interface Cfg { density: number; speed: number; wind: number; extra: number; jitter: number; }
-
-const MODE_DEFAULTS: Record<'rain' | 'snow', Cfg> = {
+const MODE_DEFAULTS: Record<'rain' | 'snow', WeatherCfg> = {
   snow: { density: 400, speed: 25, wind: 0,  extra: 50, jitter: 20 },
   rain: { density: 400, speed: 15, wind: 5,  extra: 15, jitter: 15 },
 };
 
-interface WeatherMicroAppProps { onClose: () => void; }
+interface Props {
+  initialSettings: WeatherSettings;
+  /** Called on every slider / mode change so the live canvas updates in real-time. */
+  onSettingsChange: (s: WeatherSettings) => void;
+  /** Persist settings and close — canvas keeps running. */
+  onSaveAndClose: (s: WeatherSettings) => void;
+  /** Discard changes and close — caller reverts the canvas to saved state. */
+  onClose: () => void;
+}
 
-export default function WeatherMicroApp({ onClose }: WeatherMicroAppProps) {
-  const [mode, setModeState] = useState<WeatherMode>('snow');
-  const [isRising, setIsRising] = useState(false);
-  const [pos, setPos]   = useState({ x: 240, y: 110 });
-  const [size, setSize] = useState({ w: 320, h: 0 }); // h=0 → auto
-  const [cfg, setCfg]   = useState<Cfg>({ ...MODE_DEFAULTS.snow });
+export default function WeatherMicroApp({ initialSettings, onSettingsChange, onSaveAndClose, onClose }: Props) {
+  const [mode, setModeState] = useState<WeatherMode>(initialSettings.mode);
+  const [isRising, setIsRising] = useState(initialSettings.isRising);
+  const [pos, setPos] = useState(() => {
+    if (typeof window === 'undefined') return { x: 240, y: 110 };
+    if (window.innerWidth <= 640) {
+      return { x: Math.max(0, (window.innerWidth - 320) / 2), y: Math.max(0, (window.innerHeight - 400) / 2) };
+    }
+    return { x: 240, y: 110 };
+  });
+  const [size, setSize] = useState({ w: 320, h: 0 });
+  const [cfg, setCfg] = useState<WeatherCfg>(initialSettings.cfg);
 
-  // Refs so the rAF loop always reads latest values without restarts
-  const modeRef     = useRef<WeatherMode>('snow');
-  const cfgRef      = useRef<Cfg>(cfg);
-  const isRisingRef = useRef(false);
-  const canvasRef   = useRef<HTMLCanvasElement | null>(null);
-  const particlesRef = useRef<Particle[]>([]);
-  const rafRef      = useRef<number>(0);
+  // Propagate every change up so the live canvas stays in sync
+  useEffect(() => {
+    onSettingsChange({ mode, isRising, cfg });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, isRising, cfg]);
 
-  useEffect(() => { modeRef.current = mode; },     [mode]);
-  useEffect(() => { cfgRef.current = cfg; },       [cfg]);
-  useEffect(() => { isRisingRef.current = isRising; }, [isRising]);
-
-  // ── Drag ──────────────────────────────────────────────────────────
   const dragRef   = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null);
-  // ── Resize ────────────────────────────────────────────────────────
   const resizeRef = useRef<{ sx: number; sy: number; sw: number; sh: number; dir: string } | null>(null);
   const winRef    = useRef<HTMLDivElement>(null);
 
-  // ── Particle helpers ──────────────────────────────────────────────
-  function mkParticle(randomY = false): Particle {
-    const cw = canvasRef.current?.width  ?? window.innerWidth;
-    const ch = canvasRef.current?.height ?? window.innerHeight;
-    const z = Math.random();
-    return {
-      x: Math.random() * (cw + 600) - 300,
-      y: randomY ? Math.random() * ch : (isRisingRef.current ? ch + 100 : -100),
-      z, v: z * 0.8 + 0.2, o: z * 0.5 + 0.2,
-      phase: Math.random() * Math.PI * 2,
-      rot: Math.random() * Math.PI * 2,
-      rotS: (Math.random() - 0.5) * 0.05,
-      arms: Math.floor(Math.random() * 3) + 4,
-    };
-  }
-
-  function drawFlake(ctx: CanvasRenderingContext2D, p: Particle) {
-    const sz = (cfgRef.current.extra / 5) * p.v;
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate(p.rot);
-    ctx.strokeStyle = `rgba(255,255,255,${p.o})`;
-    ctx.lineWidth = 1;
-    for (let i = 0; i < p.arms; i++) {
-      ctx.rotate((Math.PI * 2) / p.arms);
-      ctx.beginPath();
-      ctx.moveTo(0, 0);     ctx.lineTo(0, -sz);
-      ctx.moveTo(0, -sz/2); ctx.lineTo(-sz/3, -sz/1.5);
-      ctx.moveTo(0, -sz/2); ctx.lineTo( sz/3, -sz/1.5);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  // ── Canvas mount (once) ───────────────────────────────────────────
-  useEffect(() => {
-    const canvas = document.createElement('canvas');
-    canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;';
-    // Mount inside .site-main so it participates in that element's isolation
-    // stacking context — above site-main's background but below site-main-content
-    const mount = document.querySelector('.site-main') ?? document.body;
-    mount.appendChild(canvas);
-    canvasRef.current = canvas;
-
-    function resize() {
-      if (!canvasRef.current) return;
-      canvasRef.current.width  = window.innerWidth;
-      canvasRef.current.height = window.innerHeight;
-    }
-    resize();
-    window.addEventListener('resize', resize);
-
-    particlesRef.current = Array.from({ length: cfgRef.current.density }, () => mkParticle(true));
-
-    const ctx = canvas.getContext('2d')!;
-
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const m = modeRef.current;
-      const c = cfgRef.current;
-      const rising = isRisingRef.current;
-
-      if (m !== 'off') {
-        while (particlesRef.current.length < c.density) particlesRef.current.push(mkParticle(true));
-        if (particlesRef.current.length > c.density) particlesRef.current.length = c.density;
-
-        for (const p of particlesRef.current) {
-          if (m === 'rain') {
-            const vSpd = (rising ? -c.speed : c.speed) * (p.v * 1.8);
-            const hSpd = c.wind * p.v;
-            ctx.beginPath();
-            ctx.strokeStyle = `rgba(200,225,255,${p.o})`;
-            ctx.lineWidth = p.z * 1.5;
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(p.x - hSpd * (c.extra / 15), p.y - vSpd * (c.extra / 15));
-            ctx.stroke();
-            p.x += hSpd + Math.sin(p.phase) * (c.jitter / 20);
-            p.y += vSpd;
-          } else {
-            const vSpd = (rising ? -c.speed : c.speed) * (p.v * 0.4);
-            const hSpd = c.wind * p.v + Math.sin(p.phase) * (c.jitter / 10);
-            drawFlake(ctx, p);
-            p.x += hSpd; p.y += vSpd; p.rot += p.rotS;
-          }
-          p.phase += 0.05;
-          if (
-            (rising ? p.y < -150 : p.y > canvas.height + 150) ||
-            p.x > canvas.width + 500 || p.x < -500
-          ) { Object.assign(p, mkParticle()); }
-        }
-      }
-      rafRef.current = requestAnimationFrame(animate);
-    }
-    animate();
-
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      window.removeEventListener('resize', resize);
-      canvasRef.current?.remove();
-      canvasRef.current = null;
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ── Mode switch ───────────────────────────────────────────────────
   function setMode(m: WeatherMode) {
     setModeState(m);
-    particlesRef.current = [];
     if (m !== 'off') setCfg({ ...MODE_DEFAULTS[m] });
   }
 
-  // ── Titlebar drag ─────────────────────────────────────────────────
   const onTitleDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.wma-close')) return;
     dragRef.current = { sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y };
     e.preventDefault();
   }, [pos]);
 
-  // ── Resize handle mousedown ───────────────────────────────────────
   const onResizeDown = useCallback((e: React.MouseEvent, dir: string) => {
     e.preventDefault(); e.stopPropagation();
     const el = winRef.current;
@@ -170,7 +57,6 @@ export default function WeatherMicroApp({ onClose }: WeatherMicroAppProps) {
     resizeRef.current = { sx: e.clientX, sy: e.clientY, sw: el.offsetWidth, sh: el.offsetHeight, dir };
   }, []);
 
-  // ── Global move / up ──────────────────────────────────────────────
   useEffect(() => {
     function onMove(e: MouseEvent) {
       if (resizeRef.current) {
@@ -188,7 +74,7 @@ export default function WeatherMicroApp({ onClose }: WeatherMicroAppProps) {
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
   }, []);
 
-  const sliders: { key: keyof Cfg; label: string; min: number; max: number }[] = [
+  const sliders: { key: keyof WeatherCfg; label: string; min: number; max: number }[] = [
     { key: 'density', label: 'Density',    min: 10,  max: 1000 },
     { key: 'speed',   label: 'Gravity',    min: 1,   max: 40   },
     { key: 'wind',    label: 'Wind Force', min: -40, max: 40   },
@@ -202,15 +88,12 @@ export default function WeatherMicroApp({ onClose }: WeatherMicroAppProps) {
       className="wma-window"
       style={{ left: pos.x, top: pos.y, width: size.w, ...(size.h ? { height: size.h } : {}) }}
     >
-      {/* Titlebar */}
       <div className="wma-titlebar" onMouseDown={onTitleDown}>
         <span>⛅ System Weather Tuner</span>
         <button className="wma-close" onClick={onClose}>✕</button>
       </div>
 
-      {/* Content */}
       <div className="wma-body">
-        {/* Mode row */}
         <div className="wma-modes">
           {(['rain', 'snow', 'off'] as WeatherMode[]).map(m => (
             <button
@@ -229,7 +112,6 @@ export default function WeatherMicroApp({ onClose }: WeatherMicroAppProps) {
           </button>
         </div>
 
-        {/* Sliders */}
         <div className="wma-inset">
           {sliders.map(({ key, label, min, max }) => (
             <div key={key} className="wma-row">
@@ -242,14 +124,17 @@ export default function WeatherMicroApp({ onClose }: WeatherMicroAppProps) {
             </div>
           ))}
         </div>
+
+        <div className="wma-actions">
+          <button className="wma-btn wma-btn-active" onClick={() => onSaveAndClose({ mode, isRising, cfg })}>
+            Save &amp; Close
+          </button>
+        </div>
       </div>
 
-      {/* Resize handles */}
       <div className="wma-rsz wma-rsz-r"  onMouseDown={e => onResizeDown(e, 'r')}  />
       <div className="wma-rsz wma-rsz-b"  onMouseDown={e => onResizeDown(e, 'b')}  />
       <div className="wma-rsz wma-rsz-rb" onMouseDown={e => onResizeDown(e, 'rb')} />
-
-      
     </div>
   );
 }
