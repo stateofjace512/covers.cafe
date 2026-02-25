@@ -4,8 +4,50 @@ import UserIcon from '../components/UserIcon';
 import LoadingIcon from '../components/LoadingIcon';
 import CheckCircleIcon from '../components/CheckCircleIcon';
 import UploadDownloadIcon from '../components/UploadDownloadIcon';
+import MilkIcon from '../components/MilkIcon';
+import TeaIcon from '../components/TeaIcon';
+import MoonIcon from '../components/MoonIcon';
+import SunIcon from '../components/SunIcon';
+import SettingSlideIcon from '../components/SettingSlideIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+
+// ── Gradient accessibility check ─────────────────────────────────────────────
+function parseHex(hex: string): [number, number, number] | null {
+  const clean = hex.replace('#', '');
+  if (clean.length !== 6) return null;
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return null;
+  return [r, g, b];
+}
+function relativeLuminance(r: number, g: number, b: number): number {
+  const c = (x: number) => { const s = x / 255; return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4); };
+  return 0.2126 * c(r) + 0.7152 * c(g) + 0.0722 * c(b);
+}
+/** Returns error message if the gradient pair is inaccessible, null if ok. */
+function gradientAccessibilityError(start: string, end: string): string | null {
+  const rgbS = parseHex(start);
+  const rgbE = parseHex(end);
+  if (!rgbS || !rgbE) return 'Invalid color format.';
+  const lumS = relativeLuminance(...rgbS);
+  const lumE = relativeLuminance(...rgbE);
+  if (Math.abs(lumS - lumE) > 0.5) {
+    return 'These colors are too far apart in brightness. Please choose two colors with similar lightness for an accessible gradient.';
+  }
+  return null;
+}
+
+// ── Theme options ─────────────────────────────────────────────────────────────
+const THEME_OPTIONS = [
+  { id: 'light',     label: 'Frappe',   icon: <MilkIcon size={16} /> },
+  { id: 'dark',      label: 'Mocha',    icon: <TeaIcon size={16} /> },
+  { id: 'pureblack', label: 'Black',    icon: <MoonIcon size={16} /> },
+  { id: 'crisp',     label: 'Crisp',    icon: <SunIcon size={16} /> },
+  { id: 'gradient',  label: 'Gradient', icon: <SettingSlideIcon size={16} /> },
+  { id: null,        label: 'None',     icon: <span style={{ fontSize: 12, opacity: 0.5 }}>—</span> },
+] as const;
 
 export default function EditProfile() {
   const { user, session, profile, refreshProfile, openAuthModal, updateProfilePicture } = useAuth();
@@ -20,7 +62,6 @@ export default function EditProfile() {
   const [error, setError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<{ field: string; message: string } | null>(null);
 
-  // Remaining-changes counters derived from the profile change-log columns
   const [usernameChangesRemaining, setUsernameChangesRemaining] = useState<number | null>(null);
   const [displayNameChangesRemaining, setDisplayNameChangesRemaining] = useState<number | null>(null);
 
@@ -28,12 +69,25 @@ export default function EditProfile() {
   const [avatarZoom, setAvatarZoom] = useState(1);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
+  // Banner
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  // Profile theme
+  const [profileTheme, setProfileTheme] = useState<string | null>(null);
+  const [gradientStart, setGradientStart] = useState('#4f46e5');
+  const [gradientEnd, setGradientEnd] = useState('#db2777');
+  const [gradientError, setGradientError] = useState<string | null>(null);
+
   useEffect(() => {
     if (profile) {
       setUsername(profile.username ?? '');
       setDisplayName(profile.display_name ?? '');
       setBio(profile.bio ?? '');
       setWebsite(profile.website ?? '');
+      setProfileTheme(profile.profile_theme ?? null);
+      if (profile.profile_gradient_start) setGradientStart(profile.profile_gradient_start);
+      if (profile.profile_gradient_end) setGradientEnd(profile.profile_gradient_end);
 
       const now = Date.now();
       const usernameWindowMs = 14 * 24 * 60 * 60 * 1000;
@@ -41,16 +95,12 @@ export default function EditProfile() {
 
       const rawUsernameLog = (profile as unknown as Record<string, unknown>).username_change_log;
       const usernameLog: string[] = Array.isArray(rawUsernameLog) ? rawUsernameLog : [];
-      const recentUsernameChanges = usernameLog.filter(
-        (ts) => now - new Date(ts).getTime() < usernameWindowMs,
-      );
+      const recentUsernameChanges = usernameLog.filter((ts) => now - new Date(ts).getTime() < usernameWindowMs);
       setUsernameChangesRemaining(Math.max(0, 2 - recentUsernameChanges.length));
 
       const rawDisplayLog = (profile as unknown as Record<string, unknown>).display_name_change_log;
       const displayLog: string[] = Array.isArray(rawDisplayLog) ? rawDisplayLog : [];
-      const recentDisplayChanges = displayLog.filter(
-        (ts) => now - new Date(ts).getTime() < displayNameWindowMs,
-      );
+      const recentDisplayChanges = displayLog.filter((ts) => now - new Date(ts).getTime() < displayNameWindowMs);
       setDisplayNameChangesRemaining(Math.max(0, 5 - recentDisplayChanges.length));
     }
   }, [profile]);
@@ -60,10 +110,8 @@ export default function EditProfile() {
     const img = new Image();
     img.src = avatarPreview;
     await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
-
     const canvas = document.createElement('canvas');
-    canvas.width = 500;
-    canvas.height = 500;
+    canvas.width = 500; canvas.height = 500;
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
     const minSide = Math.min(img.width, img.height);
@@ -71,15 +119,13 @@ export default function EditProfile() {
     const sx = (img.width - cropSide) / 2;
     const sy = (img.height - cropSide) / 2;
     ctx.drawImage(img, sx, sy, cropSide, cropSide, 0, 0, 500, 500);
-
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
     if (!blob) return null;
-
     const form = new FormData();
     form.append('file', blob, 'avatar.jpg');
     const res = await fetch('/api/upload-avatar', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${session.access_token}` },
+      headers: { Authorization: 'Bearer ' + session.access_token },
       body: form,
     });
     const json = await res.json() as { ok: boolean; url?: string; message?: string };
@@ -87,98 +133,97 @@ export default function EditProfile() {
     return json.url;
   };
 
+  const uploadBanner = async (): Promise<string | null> => {
+    if (!user || !session || !bannerPreview) return null;
+    const res = await fetch(bannerPreview);
+    const blob = await res.blob();
+    const form = new FormData();
+    form.append('file', blob, 'banner.jpg');
+    const apiRes = await fetch('/api/upload-banner', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + session.access_token },
+      body: form,
+    });
+    const json = await apiRes.json() as { ok: boolean; url?: string; message?: string };
+    if (!json.ok || !json.url) throw new Error(json.message ?? 'Banner upload failed');
+    return json.url;
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    setSaving(true);
-    setError(null);
-    setFieldError(null);
-    setSaveMessage(null);
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      setError('Session expired. Please sign in again.');
-      setSaving(false);
-      return;
+    // Validate gradient before saving
+    if (profileTheme === 'gradient') {
+      const err = gradientAccessibilityError(gradientStart, gradientEnd);
+      if (err) { setGradientError(err); return; }
     }
 
-    // ── Step 1: handle username change ────────────────────────────────────
+    setSaving(true); setError(null); setFieldError(null); setSaveMessage(null);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setError('Session expired. Please sign in again.'); setSaving(false); return; }
+
+    // Username change
     const trimmedUsername = username.trim().toLowerCase();
     if (trimmedUsername !== (profile?.username ?? '')) {
       const res = await fetch('/api/account/update-username', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
         body: JSON.stringify({ username: trimmedUsername }),
       });
       const json = await res.json() as { ok: boolean; message?: string; remaining?: number };
       if (!json.ok) {
         setFieldError({ field: 'username', message: json.message ?? 'Username change failed.' });
-        setSaving(false);
-        return;
+        setSaving(false); return;
       }
-      if (json.remaining !== undefined) {
-        setUsernameChangesRemaining(json.remaining);
-      }
+      if (json.remaining !== undefined) setUsernameChangesRemaining(json.remaining);
     }
 
-    // ── Step 2: upload avatar if a new one was selected ───────────────────
+    // Avatar upload
     let avatarUrl: string | null = null;
-    try {
-      avatarUrl = await uploadAvatar();
-    } catch (err) {
+    try { avatarUrl = await uploadAvatar(); } catch (err) {
       setError(err instanceof Error ? err.message : 'Avatar upload failed.');
-      setSaving(false);
-      return;
+      setSaving(false); return;
     }
 
-    // ── Step 3: update display_name, bio, website (+ optional avatar_url) ─
+    // Banner upload
+    let bannerUrl: string | null = null;
+    try { bannerUrl = await uploadBanner(); } catch (err) {
+      setError(err instanceof Error ? err.message : 'Banner upload failed.');
+      setSaving(false); return;
+    }
+
+    // Build profile update body
     const body: Record<string, string | null> = {
       display_name: displayName.trim() || null,
       bio: bio.trim() || null,
       website: website.trim() || null,
+      profile_theme: profileTheme,
+      profile_gradient_start: profileTheme === 'gradient' ? gradientStart : null,
+      profile_gradient_end: profileTheme === 'gradient' ? gradientEnd : null,
     };
     if (avatarUrl) body.avatar_url = avatarUrl;
+    if (bannerUrl) body.banner_url = bannerUrl;
 
     const profileRes = await fetch('/api/account/update-profile', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`,
-      },
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
       body: JSON.stringify(body),
     });
-    const profileJson = await profileRes.json() as {
-      ok: boolean;
-      message?: string;
-      field?: string;
-      displayNameRemaining?: number;
-    };
+    const profileJson = await profileRes.json() as { ok: boolean; message?: string; field?: string; displayNameRemaining?: number };
 
     if (!profileJson.ok) {
-      if (profileJson.field) {
-        setFieldError({ field: profileJson.field, message: profileJson.message ?? 'Update failed.' });
-      } else {
-        setError(profileJson.message ?? 'Failed to save profile.');
-      }
-      setSaving(false);
-      return;
+      if (profileJson.field) setFieldError({ field: profileJson.field, message: profileJson.message ?? 'Update failed.' });
+      else setError(profileJson.message ?? 'Failed to save profile.');
+      setSaving(false); return;
     }
 
-    if (profileJson.displayNameRemaining !== undefined) {
-      setDisplayNameChangesRemaining(profileJson.displayNameRemaining);
-    }
-
+    if (profileJson.displayNameRemaining !== undefined) setDisplayNameChangesRemaining(profileJson.displayNameRemaining);
     if (avatarUrl) updateProfilePicture(avatarUrl);
     await refreshProfile();
     setSaved(true);
-    setSaveMessage(
-      avatarUrl
-        ? 'Profile saved. Your new profile picture is now live.'
-        : 'Profile saved successfully.',
-    );
+    setSaveMessage('Profile saved successfully.');
     setTimeout(() => setSaved(false), 2000);
     setSaving(false);
   };
@@ -208,28 +253,23 @@ export default function EditProfile() {
           <div className="form-label-row">
             <label className="form-label">Username</label>
             {usernameChangesRemaining !== null && (
-              <span className={`form-change-limit${usernameChangesRemaining === 0 ? ' form-change-limit--exhausted' : ''}`}>
+              <span className={'form-change-limit' + (usernameChangesRemaining === 0 ? ' form-change-limit--exhausted' : '')}>
                 {usernameChangesRemaining === 0
                   ? 'No changes left (14-day window)'
-                  : `${usernameChangesRemaining} change${usernameChangesRemaining !== 1 ? 's' : ''} left / 14 days`}
+                  : usernameChangesRemaining + ' change' + (usernameChangesRemaining !== 1 ? 's' : '') + ' left / 14 days'}
               </span>
             )}
           </div>
           <input
             type="text"
-            className={`form-input${fieldError?.field === 'username' ? ' form-input--error' : ''}`}
+            className={'form-input' + (fieldError?.field === 'username' ? ' form-input--error' : '')}
             placeholder="yourname"
             value={username}
-            onChange={(e) => {
-              setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''));
-              if (fieldError?.field === 'username') setFieldError(null);
-            }}
+            onChange={(e) => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')); if (fieldError?.field === 'username') setFieldError(null); }}
             disabled={usernameExhausted}
             maxLength={30}
           />
-          {fieldError?.field === 'username' && (
-            <span className="form-field-error">{fieldError.message}</span>
-          )}
+          {fieldError?.field === 'username' && <span className="form-field-error">{fieldError.message}</span>}
           <span className="form-hint">Lowercase letters, numbers, and underscores only.</span>
         </div>
 
@@ -238,28 +278,23 @@ export default function EditProfile() {
           <div className="form-label-row">
             <label className="form-label">Display Name</label>
             {displayNameChangesRemaining !== null && (
-              <span className={`form-change-limit${displayNameChangesRemaining === 0 ? ' form-change-limit--exhausted' : ''}`}>
+              <span className={'form-change-limit' + (displayNameChangesRemaining === 0 ? ' form-change-limit--exhausted' : '')}>
                 {displayNameChangesRemaining === 0
                   ? 'No changes left (30-day window)'
-                  : `${displayNameChangesRemaining} change${displayNameChangesRemaining !== 1 ? 's' : ''} left / 30 days`}
+                  : displayNameChangesRemaining + ' change' + (displayNameChangesRemaining !== 1 ? 's' : '') + ' left / 30 days'}
               </span>
             )}
           </div>
           <input
             type="text"
-            className={`form-input${fieldError?.field === 'display_name' ? ' form-input--error' : ''}`}
+            className={'form-input' + (fieldError?.field === 'display_name' ? ' form-input--error' : '')}
             placeholder="Your display name"
             value={displayName}
-            onChange={(e) => {
-              setDisplayName(e.target.value);
-              if (fieldError?.field === 'display_name') setFieldError(null);
-            }}
+            onChange={(e) => { setDisplayName(e.target.value); if (fieldError?.field === 'display_name') setFieldError(null); }}
             disabled={displayNameExhausted}
             maxLength={50}
           />
-          {fieldError?.field === 'display_name' && (
-            <span className="form-field-error">{fieldError.message}</span>
-          )}
+          {fieldError?.field === 'display_name' && <span className="form-field-error">{fieldError.message}</span>}
         </div>
 
         {/* Bio */}
@@ -273,17 +308,12 @@ export default function EditProfile() {
           <label className="form-label">Website</label>
           <input
             type="url"
-            className={`form-input${fieldError?.field === 'website' ? ' form-input--error' : ''}`}
+            className={'form-input' + (fieldError?.field === 'website' ? ' form-input--error' : '')}
             placeholder="https://yoursite.com"
             value={website}
-            onChange={(e) => {
-              setWebsite(e.target.value);
-              if (fieldError?.field === 'website') setFieldError(null);
-            }}
+            onChange={(e) => { setWebsite(e.target.value); if (fieldError?.field === 'website') setFieldError(null); }}
           />
-          {fieldError?.field === 'website' && (
-            <span className="form-field-error">{fieldError.message}</span>
-          )}
+          {fieldError?.field === 'website' && <span className="form-field-error">{fieldError.message}</span>}
         </div>
 
         {/* Profile Picture */}
@@ -298,12 +328,76 @@ export default function EditProfile() {
           {avatarPreview && (
             <>
               <div className="avatar-crop-preview">
-                <img src={avatarPreview} alt="Avatar crop preview" style={{ transform: `scale(${avatarZoom})` }} />
+                <img src={avatarPreview} alt="Avatar crop preview" style={{ transform: 'scale(' + avatarZoom + ')' }} />
               </div>
               <label className="form-hint">Zoom</label>
               <input type="range" min="1" max="2.5" step="0.1" value={avatarZoom} onChange={(e) => setAvatarZoom(parseFloat(e.target.value))} />
-              <p className="form-hint">Saved as 500x500 square.</p>
+              <p className="form-hint">Saved as 500×500 square.</p>
             </>
+          )}
+        </div>
+
+        {/* Banner */}
+        <div className="form-row">
+          <label className="form-label">Profile Banner</label>
+          <input ref={bannerInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => {
+            const picked = e.target.files?.[0];
+            if (!picked) return;
+            setBannerPreview(URL.createObjectURL(picked));
+          }} />
+          <button type="button" className="btn btn-secondary" onClick={() => bannerInputRef.current?.click()}><UploadDownloadIcon size={14} /> Upload banner</button>
+          {(bannerPreview || profile?.banner_url) && (
+            <div className="banner-preview">
+              <img
+                src={bannerPreview ?? profile?.banner_url ?? ''}
+                alt="Banner preview"
+                className="banner-preview-img"
+              />
+            </div>
+          )}
+          <span className="form-hint">Displayed at the top of your profile. Saved as 1200×400.</span>
+        </div>
+
+        {/* Profile Theme */}
+        <div className="form-row">
+          <label className="form-label">Profile Theme</label>
+          <span className="form-hint">Colors your profile banner and header area.</span>
+          <div className="profile-theme-picker">
+            {THEME_OPTIONS.map((opt) => (
+              <button
+                key={String(opt.id)}
+                type="button"
+                className={'profile-theme-option' + (profileTheme === opt.id ? ' profile-theme-option--active' : '')}
+                onClick={() => { setProfileTheme(opt.id as string | null); setGradientError(null); }}
+                title={opt.label}
+              >
+                {opt.icon}
+                <span>{opt.label}</span>
+              </button>
+            ))}
+          </div>
+          {profileTheme === 'gradient' && (
+            <div className="profile-gradient-row">
+              <div className="form-row">
+                <label className="form-hint">Start color</label>
+                <div className="gradient-color-row">
+                  <input type="color" value={gradientStart} onChange={(e) => { setGradientStart(e.target.value); setGradientError(null); }} className="color-swatch-input" />
+                  <input type="text" className="form-input gradient-hex-input" value={gradientStart} maxLength={7}
+                    onChange={(e) => { const v = e.target.value; setGradientStart(v); setGradientError(null); }} />
+                </div>
+              </div>
+              <div className="form-row">
+                <label className="form-hint">End color</label>
+                <div className="gradient-color-row">
+                  <input type="color" value={gradientEnd} onChange={(e) => { setGradientEnd(e.target.value); setGradientError(null); }} className="color-swatch-input" />
+                  <input type="text" className="form-input gradient-hex-input" value={gradientEnd} maxLength={7}
+                    onChange={(e) => { const v = e.target.value; setGradientEnd(v); setGradientError(null); }} />
+                </div>
+              </div>
+              {/* Live gradient preview */}
+              <div className="gradient-preview" style={{ background: 'linear-gradient(135deg, ' + gradientStart + ' 0%, ' + gradientEnd + ' 100%)' }} />
+              {gradientError && <p className="edit-error" style={{ marginTop: 6 }}>{gradientError}</p>}
+            </div>
           )}
         </div>
 
@@ -314,11 +408,9 @@ export default function EditProfile() {
           <button type="submit" className="btn btn-primary" disabled={saving}>
             {saving ? <><LoadingIcon size={14} className="upload-spinner" /> Saving…</> : saved ? <><CheckCircleIcon size={14} /> Saved!</> : 'Save Changes'}
           </button>
-          <button type="button" className="btn btn-secondary" onClick={() => navigate('/profile')}>Cancel</button>
+          <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>Cancel</button>
         </div>
       </form>
-
-      
     </div>
   );
 }

@@ -12,11 +12,17 @@ import { moderateDisplayName, moderateWebsite } from '../../../lib/moderation';
 const DISPLAY_NAME_LIMIT = 5;
 const DISPLAY_NAME_WINDOW_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
+const VALID_THEMES = new Set(['light', 'dark', 'pureblack', 'crisp', 'gradient']);
+
 interface UpdateBody {
   display_name?: string | null;
   bio?: string | null;
   website?: string | null;
   avatar_url?: string | null;
+  banner_url?: string | null;
+  profile_theme?: string | null;
+  profile_gradient_start?: string | null;
+  profile_gradient_end?: string | null;
 }
 
 export const POST: APIRoute = async ({ request }) => {
@@ -140,6 +146,34 @@ export const POST: APIRoute = async ({ request }) => {
   // ── Avatar URL (already uploaded to storage by client) ──────────────────
   if (body.avatar_url !== undefined) {
     updates.avatar_url = body.avatar_url;
+  }
+
+  // ── Banner URL ────────────────────────────────────────────────────────────
+  if (body.banner_url !== undefined) {
+    updates.banner_url = body.banner_url;
+  }
+
+  // ── Profile theme ─────────────────────────────────────────────────────────
+  if (body.profile_theme !== undefined) {
+    const t = body.profile_theme;
+    if (t !== null && !VALID_THEMES.has(t)) {
+      return new Response(
+        JSON.stringify({ ok: false, message: 'Invalid theme.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+    updates.profile_theme = t;
+    // If clearing theme, also clear gradient colors
+    if (t === null) {
+      updates.profile_gradient_start = null;
+      updates.profile_gradient_end = null;
+    }
+  }
+  if (body.profile_gradient_start !== undefined) {
+    updates.profile_gradient_start = body.profile_gradient_start;
+  }
+  if (body.profile_gradient_end !== undefined) {
+    updates.profile_gradient_end = body.profile_gradient_end;
   }
 
   if (Object.keys(updates).length === 0) {
