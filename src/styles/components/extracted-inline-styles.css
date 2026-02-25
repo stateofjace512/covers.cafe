@@ -1504,8 +1504,9 @@
 /* ===== Extracted from src/routes/ArtistDetail.tsx ===== */
         .artist-back-btn { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; }
         .artist-detail-header {
-          display: flex; align-items: flex-start; gap: 20px;
+          display: flex; flex-direction: column;
           padding: 24px;
+          overflow: hidden;
         }
         .artist-detail-avatar {
           width: 80px; height: 80px; border-radius: 0; flex-shrink: 0;
@@ -1530,7 +1531,7 @@
         .artist-detail-website { font-size: 19px; color: var(--accent); text-decoration: none; }
         .artist-detail-website:hover { text-decoration: underline; }
         .artist-detail-count { font-size: 19px; color: var(--body-text-muted); margin-top: 4px; }
-        .artist-follow-btn { margin-top: 10px; }
+        .artist-follow-btn { }
         .artist-collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
         .artist-collection-card { padding: 0; overflow: hidden; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
         .artist-collection-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
@@ -3224,9 +3225,10 @@
 
 /* ── Banner ── */
 .artist-profile-banner {
-  width: calc(100% + 48px); margin: -24px -24px 16px -24px;
+  /* Bleed out of the card's 24px padding on all sides, bottom margin before body */
+  width: calc(100% + 48px); margin: -24px -24px 20px -24px;
   height: 140px; background-size: cover; background-position: center;
-  border-radius: 0;
+  flex-shrink: 0;
 }
 .artist-profile-banner--theme { background-size: cover; }
 .artist-detail-body { display: flex; align-items: flex-start; gap: 20px; }

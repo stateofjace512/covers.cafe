@@ -144,7 +144,12 @@ export default function EditProfile() {
       headers: { Authorization: 'Bearer ' + session.access_token },
       body: form,
     });
-    const json = await apiRes.json() as { ok: boolean; url?: string; message?: string };
+    let json: { ok: boolean; url?: string; message?: string };
+    try {
+      json = await apiRes.json() as typeof json;
+    } catch {
+      throw new Error(`Banner upload failed (server error ${apiRes.status})`);
+    }
     if (!json.ok || !json.url) throw new Error(json.message ?? 'Banner upload failed');
     return json.url;
   };

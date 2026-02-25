@@ -83,6 +83,7 @@ export default function ArtistDetail() {
   const [viewerFriendStatus, setViewerFriendStatus] = useState<'none' | 'pending_sent' | 'pending_received' | 'accepted'>('none');
   const [friendBusy, setFriendBusy] = useState(false);
   const [easterEggMsg, setEasterEggMsg] = useState<string | null>(null);
+  const [selfFriended, setSelfFriended] = useState(false);
   const themeRestoredRef = useRef(false);
   const [collections, setCollections] = useState<{
     id: string;
@@ -214,6 +215,18 @@ export default function ArtistDetail() {
         setViewerFriendStatus(fd.viewerStatus ?? 'none');
       }
 
+      // Check if own profile has already self-friended (certified loner)
+      if (user?.id === profileData.id) {
+        const { data: lonerRow } = await supabase
+          .from('covers_cafe_achievements')
+          .select('id')
+          .eq('user_id', profileData.id)
+          .eq('type', 'certified_loner')
+          .is('reference_id', null)
+          .maybeSingle();
+        setSelfFriended(!!lonerRow);
+      }
+
       setLoading(false);
     })();
   }, [username, user?.id, authLoading, session?.access_token]);
@@ -270,8 +283,9 @@ export default function ArtistDetail() {
     if (!profile || !session?.access_token) return;
     setFriendBusy(true);
 
-    // Self-friend easter egg
+    // Self-friend easter egg — one time only, no unfriending
     if (user?.id === profile.id) {
+      if (selfFriended) { setFriendBusy(false); return; }
       const res = await fetch('/api/friends', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
@@ -281,6 +295,7 @@ export default function ArtistDetail() {
         const d = await res.json() as { easter_egg?: boolean; message?: string };
         if (d.easter_egg) {
           setEasterEggMsg(d.message ?? 'You have friended yourself, auto approved!');
+          setSelfFriended(true);
         }
       }
       setFriendBusy(false);
@@ -290,7 +305,7 @@ export default function ArtistDetail() {
     const action =
       viewerFriendStatus === 'none' ? 'request' :
       viewerFriendStatus === 'pending_received' ? 'accept' :
-      'remove';
+      'remove'; // covers both pending_sent (cancel) and accepted (unfriend)
 
     const res = await fetch('/api/friends', {
       method: 'POST',
@@ -407,24 +422,33 @@ export default function ArtistDetail() {
                 </button>
               )}
               {user && (
-                <button
-                  className={'btn artist-friend-btn' + (viewerFriendStatus === 'accepted' ? ' btn-secondary' : ' btn-secondary')}
-                  onClick={handleAddFriend}
-                  disabled={friendBusy || viewerFriendStatus === 'pending_sent'}
-                  title={
-                    isOwnProfile ? 'Add yourself as a friend' :
-                    viewerFriendStatus === 'accepted' ? 'Friends — click to unfriend' :
-                    viewerFriendStatus === 'pending_sent' ? 'Friend request sent' :
-                    viewerFriendStatus === 'pending_received' ? 'Accept friend request' :
-                    'Add Friend'
-                  }
-                >
-                  {isOwnProfile ? '+ Add Friend' :
-                    viewerFriendStatus === 'accepted' ? 'Friends ✓' :
-                    viewerFriendStatus === 'pending_sent' ? 'Requested' :
-                    viewerFriendStatus === 'pending_received' ? 'Accept Request' :
-                    '+ Add Friend'}
-                </button>
+                isOwnProfile ? (
+                  <button
+                    className="btn btn-secondary artist-friend-btn"
+                    onClick={handleAddFriend}
+                    disabled={friendBusy || selfFriended}
+                    title={selfFriended ? 'Certified Loner — you already friended yourself' : 'Friend yourself for a special achievement'}
+                  >
+                    {selfFriended ? 'Certified Loner ✓' : '+ Add Friend'}
+                  </button>
+                ) : (
+                  <button
+                    className={'btn btn-secondary artist-friend-btn' + (viewerFriendStatus === 'accepted' ? ' artist-friend-btn--friended' : '')}
+                    onClick={handleAddFriend}
+                    disabled={friendBusy}
+                    title={
+                      viewerFriendStatus === 'accepted' ? 'Friends — click to unfriend' :
+                      viewerFriendStatus === 'pending_sent' ? 'Click to cancel request' :
+                      viewerFriendStatus === 'pending_received' ? 'Accept friend request' :
+                      'Send friend request'
+                    }
+                  >
+                    {viewerFriendStatus === 'accepted' ? 'Friends ✓' :
+                     viewerFriendStatus === 'pending_sent' ? 'Cancel Request' :
+                     viewerFriendStatus === 'pending_received' ? 'Accept Request' :
+                     '+ Add Friend'}
+                  </button>
+                )
               )}
             </div>
             {easterEggMsg && (

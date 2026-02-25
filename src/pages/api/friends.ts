@@ -96,23 +96,33 @@ export const POST: APIRoute = async ({ request }) => {
 
   // ── Self-friend easter egg ──────────────────────────────────────────────────
   if (targetId === viewerId) {
-    // Award "Certified Loner" achievement (idempotent)
-    await sb
+    // Check if already awarded (NULL reference_id means the standard unique constraint
+    // won't prevent duplicates — must check explicitly).
+    const { data: existingLoner } = await sb
       .from('covers_cafe_achievements')
-      .upsert(
-        {
-          user_id: viewerId,
-          type: 'certified_loner',
-          reference_id: null,
-          metadata: { note: 'You have friended yourself.' },
-          awarded_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id,type,reference_id', ignoreDuplicates: true },
-      );
+      .select('id')
+      .eq('user_id', viewerId)
+      .eq('type', 'certified_loner')
+      .is('reference_id', null)
+      .maybeSingle();
+
+    if (!existingLoner) {
+      await sb.from('covers_cafe_achievements').insert({
+        user_id: viewerId,
+        type: 'certified_loner',
+        reference_id: null,
+        metadata: { note: 'You have friended yourself.' },
+        awarded_at: new Date().toISOString(),
+      });
+    }
+
     return json({
       ok: true,
       easter_egg: true,
-      message: 'You have friended yourself, auto approved!',
+      already_loner: !!existingLoner,
+      message: existingLoner
+        ? 'Still a certified loner.'
+        : 'You have friended yourself, auto approved!',
       achievement: 'certified_loner',
     });
   }

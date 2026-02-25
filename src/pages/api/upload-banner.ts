@@ -44,9 +44,16 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ ok: false, message: 'Could not process image' }, 400);
   }
 
+  // Correctly slice the ArrayBuffer — Node.js Buffer may share a pooled ArrayBuffer,
+  // so we must use byteOffset/byteLength to extract only the image data.
+  const imageArrayBuffer = resizedBuffer.buffer.slice(
+    resizedBuffer.byteOffset,
+    resizedBuffer.byteOffset + resizedBuffer.byteLength,
+  );
+
   let cfImageId: string;
   try {
-    cfImageId = await uploadToCf(resizedBuffer.buffer as ArrayBuffer, `banner-${userId}.jpg`, {
+    cfImageId = await uploadToCf(imageArrayBuffer, `banner-${userId}.jpg`, {
       user_id: userId,
       type: 'banner',
     });
