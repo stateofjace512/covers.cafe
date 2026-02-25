@@ -368,14 +368,27 @@ export default function ArtistDetail() {
       </button>
 
       <div className="artist-detail-header card">
-        {hasBanner && <div className="artist-profile-banner" style={bannerBgStyle} />}
-        <div className="artist-detail-content">
-          <div className="artist-detail-avatar">
-            {profile && getAvatarSrc(profile)
-              ? <img src={getAvatarSrc(profile)!} alt={profile.display_name ?? profile.username} className="artist-detail-avatar-img" loading="lazy" />
-              : <UserIcon size={40} style={{ opacity: 0.3 }} />
-            }
+        {/* Banner strip — avatar is anchored to its bottom-left edge */}
+        {hasBanner ? (
+          <div className="artist-profile-banner" style={bannerBgStyle}>
+            <div className="artist-detail-avatar">
+              {profile && getAvatarSrc(profile)
+                ? <img src={getAvatarSrc(profile)!} alt={profile.display_name ?? profile.username} className="artist-detail-avatar-img" loading="lazy" />
+                : <UserIcon size={40} style={{ opacity: 0.3 }} />
+              }
+            </div>
           </div>
+        ) : null}
+        <div className={`artist-detail-content${hasBanner ? ' artist-detail-content--has-banner' : ''}`}>
+          {/* Avatar in normal row position when no banner */}
+          {!hasBanner && (
+            <div className="artist-detail-avatar">
+              {profile && getAvatarSrc(profile)
+                ? <img src={getAvatarSrc(profile)!} alt={profile.display_name ?? profile.username} className="artist-detail-avatar-img" loading="lazy" />
+                : <UserIcon size={40} style={{ opacity: 0.3 }} />
+              }
+            </div>
+          )}
           <div className="artist-detail-info">
             <h1 className="artist-detail-name">
               {profile?.display_name ?? profile?.username}
