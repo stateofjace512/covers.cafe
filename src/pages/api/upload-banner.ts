@@ -1,7 +1,7 @@
 /**
  * POST /api/upload-banner
  * Authenticated. Accepts a banner image (multipart/form-data),
- * resizes to 1200×400 and uploads to Cloudflare Images.
+ * resizes to 1200×700 and uploads to Cloudflare Images.
  * Returns: { ok: true, url: string }
  */
 import type { APIRoute } from 'astro';
@@ -43,7 +43,7 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const arrayBuffer = await file.arrayBuffer();
     resizedBuffer = await sharp(Buffer.from(arrayBuffer))
-      .resize(1200, 400, { fit: 'cover', position: 'centre' })
+      .resize(1200, 700, { fit: 'cover', position: 'centre' })
       .jpeg({ quality: 88 })
       .toBuffer();
   } catch {
