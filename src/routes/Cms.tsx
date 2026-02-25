@@ -50,6 +50,43 @@ type CoverLookupResult = {
   nextByUser: Array<{ id: string; page_slug: string; title: string; artist: string; is_public: boolean; is_private: boolean; perma_unpublished: boolean; created_at: string }>;
 };
 
+type CoverListItem = {
+  id: string;
+  page_slug: string;
+  title: string;
+  artist: string;
+  is_public: boolean;
+  is_private: boolean;
+  perma_unpublished: boolean;
+  created_at: string;
+};
+
+type PohPin = {
+  id: string;
+  comment_id: string;
+  comment_content: string;
+  author_username: string;
+  cover_title: string | null;
+  cover_artist: string | null;
+  page_slug: string | null;
+  pinned_at: string;
+};
+
+type RecentComment = {
+  id: string;
+  content: string;
+  author_username: string;
+  user_id: string | null;
+  page_slug: string;
+  created_at: string;
+  cover_id: string | null;
+  cover_title: string | null;
+  cover_artist: string | null;
+  cover_storage_path: string | null;
+  cover_image_url: string | null;
+  is_already_pinned: boolean;
+};
+
 type DashboardPayload = {
   reports: Report[];
   bans: Ban[];
@@ -100,6 +137,20 @@ export default function Cms() {
 
   // Perma-unpublish reason
   const [permaUnpublishReason, setPermaUnpublishReason] = useState('DMCA/compliance');
+
+  // User cover browser
+  const [userBrowserQuery, setUserBrowserQuery] = useState('');
+  const [userBrowserOptions, setUserBrowserOptions] = useState<UserOption[]>([]);
+  const [userBrowserSelected, setUserBrowserSelected] = useState<UserOption | null>(null);
+  const [userBrowserCovers, setUserBrowserCovers] = useState<CoverListItem[]>([]);
+  const [userBrowserTotal, setUserBrowserTotal] = useState(0);
+  const [userBrowserPage, setUserBrowserPage] = useState(1);
+  const [userBrowserLoading, setUserBrowserLoading] = useState(false);
+
+  // POH pins
+  const [pohPins, setPohPins] = useState<PohPin[]>([]);
+  const [recentComments, setRecentComments] = useState<RecentComment[]>([]);
+  const [pohLoading, setPohLoading] = useState(false);
 
   const token = session?.access_token;
 
@@ -158,6 +209,22 @@ export default function Cms() {
     return () => clearTimeout(handle);
   }, [userQuery, token]);
 
+  // User browser search autocomplete
+  useEffect(() => {
+    if (!token || userBrowserQuery.trim().length < 1) {
+      setUserBrowserOptions([]);
+      return;
+    }
+    const handle = setTimeout(async () => {
+      const res = await fetch(`/api/cms/users?q=${encodeURIComponent(userBrowserQuery.trim())}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      setUserBrowserOptions(await res.json() as UserOption[]);
+    }, 150);
+    return () => clearTimeout(handle);
+  }, [userBrowserQuery, token]);
+
   function flash(msg: string) {
     setSuccessMsg(msg);
     setTimeout(() => setSuccessMsg(null), 3000);
@@ -171,6 +238,108 @@ export default function Cms() {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) setCoverLookupResult(await res.json() as CoverLookupResult);
+  }
+
+  // ── User cover browser ─────────────────────────────────────────────────────
+
+  async function loadUserBrowserCovers(userId: string, page = 1) {
+    if (!token) return;
+    setUserBrowserLoading(true);
+    const res = await fetch(`/api/cms/user-covers?userId=${encodeURIComponent(userId)}&page=${page}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      const payload = await res.json() as { covers: CoverListItem[]; total: number; page: number };
+      setUserBrowserCovers(payload.covers);
+      setUserBrowserTotal(payload.total);
+      setUserBrowserPage(payload.page);
+    }
+    setUserBrowserLoading(false);
+  }
+
+  async function refreshUserBrowserCovers() {
+    if (!userBrowserSelected || !token) return;
+    await loadUserBrowserCovers(userBrowserSelected.id, userBrowserPage);
+  }
+
+  async function bulkPermaUnpublish(userId: string, enabled: boolean) {
+    if (!token) return;
+    setBusyId(`bulk-perma-${userId}`);
+    setError(null);
+    const res = await fetch('/api/cms/bulk-perma-unpublish', {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ userId, enabled, reason: permaUnpublishReason }),
+    });
+    if (!res.ok) {
+      setError('Could not bulk update covers.');
+    } else {
+      const payload = await res.json() as { count?: number };
+      flash(`${payload.count ?? 0} cover(s) ${enabled ? 'perma-unpublished' : 'restored'}.`);
+      await loadUserBrowserCovers(userId, userBrowserPage);
+    }
+    setBusyId(null);
+  }
+
+  // ── POH pins ───────────────────────────────────────────────────────────────
+
+  async function loadPohData() {
+    if (!token) return;
+    setPohLoading(true);
+    const [pinsRes, commentsRes] = await Promise.all([
+      fetch('/api/poh/pins', { headers: { Authorization: `Bearer ${token}` } }),
+      fetch('/api/cms/recent-comments', { headers: { Authorization: `Bearer ${token}` } }),
+    ]);
+    if (pinsRes.ok) {
+      const payload = await pinsRes.json() as { pins: PohPin[] };
+      setPohPins(payload.pins ?? []);
+    }
+    if (commentsRes.ok) {
+      setRecentComments(await commentsRes.json() as RecentComment[]);
+    }
+    setPohLoading(false);
+  }
+
+  async function pinComment(comment: RecentComment) {
+    if (!token) return;
+    setBusyId(`pin-${comment.id}`);
+    setError(null);
+    const res = await fetch('/api/cms/pin-comment', {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        commentId: comment.id,
+        commentContent: comment.content,
+        authorUsername: comment.author_username,
+        authorUserId: comment.user_id,
+        coverId: comment.cover_id,
+        coverTitle: comment.cover_title,
+        coverArtist: comment.cover_artist,
+        coverStoragePath: comment.cover_storage_path,
+        coverImageUrl: comment.cover_image_url,
+        pageType: 'music',
+        pageSlug: comment.page_slug,
+      }),
+    });
+    if (!res.ok) setError('Could not pin comment.');
+    else flash('Comment pinned to POH!');
+    await loadPohData();
+    setBusyId(null);
+  }
+
+  async function unpinComment(pinId: string) {
+    if (!token) return;
+    setBusyId(`unpin-${pinId}`);
+    setError(null);
+    const res = await fetch('/api/cms/unpin-comment', {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ pinId }),
+    });
+    if (!res.ok) setError('Could not unpin comment.');
+    else flash('Comment unpinned.');
+    await loadPohData();
+    setBusyId(null);
   }
 
   async function deleteCover(coverId: string) {
@@ -197,6 +366,7 @@ export default function Cms() {
     else flash('Visibility updated.');
     await loadDashboard();
     await refreshLookupResult();
+    await refreshUserBrowserCovers();
     setBusyId(null);
   }
 
@@ -212,6 +382,7 @@ export default function Cms() {
     else flash(enabled ? 'Cover permanently unpublished.' : 'Perma-unpublish removed.');
     await loadDashboard();
     await refreshLookupResult();
+    await refreshUserBrowserCovers();
     setBusyId(null);
   }
 
@@ -659,6 +830,110 @@ export default function Cms() {
         )}
       </section>
 
+      {/* ── User cover browser ─────────────────────────────────────────── */}
+      <section className="surface cms-section">
+        <h2 className="cms-h2">User cover browser</h2>
+        <p className="cms-desc">Search a user to browse and bulk-manage all their covers.</p>
+        <div style={{ position: 'relative' }}>
+          <input
+            className="form-input"
+            placeholder="Search username…"
+            value={userBrowserQuery}
+            onChange={(e) => { setUserBrowserQuery(e.target.value); setUserBrowserSelected(null); setUserBrowserCovers([]); }}
+          />
+          {userBrowserOptions.length > 0 && !userBrowserSelected && (
+            <div className="cms-dropdown">
+              {userBrowserOptions.map((option) => (
+                <button
+                  key={option.id}
+                  className="btn cms-dropdown-item"
+                  onClick={() => {
+                    setUserBrowserSelected(option);
+                    setUserBrowserQuery(option.username);
+                    setUserBrowserOptions([]);
+                    setUserBrowserPage(1);
+                    void loadUserBrowserCovers(option.id, 1);
+                  }}
+                >
+                  @{option.username}{option.display_name ? ` (${option.display_name})` : ''}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {userBrowserSelected && (
+          <div style={{ marginTop: 10 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
+              <strong>@{userBrowserSelected.username}</strong>
+              <span className="cms-count">{userBrowserTotal} covers</span>
+              <button
+                className="btn cms-btn-danger"
+                disabled={busyId === `bulk-perma-${userBrowserSelected.id}` || userBrowserTotal === 0}
+                onClick={() => {
+                  if (!window.confirm(`Perma-unpublish ALL ${userBrowserTotal} covers by @${userBrowserSelected.username}? This notifies the user.`)) return;
+                  void bulkPermaUnpublish(userBrowserSelected.id, true);
+                }}
+              >
+                Perma-unpublish all ({permaUnpublishReason})
+              </button>
+              <button
+                className="btn"
+                disabled={busyId === `bulk-perma-${userBrowserSelected.id}` || userBrowserTotal === 0}
+                onClick={() => {
+                  if (!window.confirm(`Allow republish for ALL covers by @${userBrowserSelected.username}?`)) return;
+                  void bulkPermaUnpublish(userBrowserSelected.id, false);
+                }}
+              >
+                Allow republish all
+              </button>
+            </div>
+
+            {userBrowserLoading ? (
+              <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>Loading…</p>
+            ) : (
+              <>
+                <div className="cms-ban-list">
+                  {userBrowserCovers.map((c) => (
+                    <div key={c.id} className="cms-ban-row">
+                      <div className="cms-ban-details">
+                        <span className="cms-ban-user">{c.artist} — {c.title}</span>
+                        <span className="cms-ban-reason">
+                          /{c.page_slug}
+                          {c.perma_unpublished ? ' · perma-unpublished' : c.is_public ? '' : ' · private'}
+                        </span>
+                      </div>
+                      <button
+                        className="btn"
+                        onClick={() => setCoverVisibility(c.id, !c.is_public)}
+                        disabled={c.perma_unpublished || busyId === `visibility-${c.id}`}
+                        title={c.perma_unpublished ? 'Permanently unpublished' : ''}
+                      >
+                        {c.is_public ? 'Unpublish' : 'Publish'}
+                      </button>
+                      <button
+                        className="btn"
+                        onClick={() => setCoverPermaUnpublished(c.id, !c.perma_unpublished, permaUnpublishReason)}
+                        disabled={busyId === `perma-${c.id}`}
+                      >
+                        {c.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {userBrowserTotal > 50 && (
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
+                    <button className="btn" disabled={userBrowserPage <= 1} onClick={() => { const p = userBrowserPage - 1; setUserBrowserPage(p); void loadUserBrowserCovers(userBrowserSelected.id, p); }}>← Prev</button>
+                    <span style={{ fontSize: 13 }}>Page {userBrowserPage} of {Math.ceil(userBrowserTotal / 50)}</span>
+                    <button className="btn" disabled={userBrowserPage >= Math.ceil(userBrowserTotal / 50)} onClick={() => { const p = userBrowserPage + 1; setUserBrowserPage(p); void loadUserBrowserCovers(userBrowserSelected.id, p); }}>Next →</button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </section>
+
       {/* ── Legal operations ───────────────────────────────────────────── */}
       <section className="surface cms-section">
         <h2 className="cms-h2">Legal operations</h2>
@@ -677,8 +952,63 @@ export default function Cms() {
         </div>
       </section>
 
+      {/* ── Hall of Fame pins ───────────────────────────────────────────── */}
+      <section className="surface cms-section">
+        <h2 className="cms-h2">Hall of Fame pins (POH)</h2>
+        <p className="cms-desc">Pin standout comments to the Hall of Fame. Awards the author a POH achievement badge.</p>
+        <button className="btn btn-primary" onClick={loadPohData} disabled={pohLoading}>
+          {pohLoading ? 'Loading…' : 'Load / refresh'}
+        </button>
 
-      
+        {(pohPins.length > 0 || recentComments.length > 0) && (
+          <div style={{ marginTop: 12, display: 'grid', gap: 16 }}>
+
+            {pohPins.length > 0 && (
+              <div>
+                <h3 className="cms-h3">Current pins ({pohPins.length})</h3>
+                <div className="cms-ban-list">
+                  {pohPins.map((pin) => (
+                    <div key={pin.id} className="cms-ban-row">
+                      <div className="cms-ban-details">
+                        <span className="cms-ban-user">@{pin.author_username}</span>
+                        <span className="cms-ban-reason" style={{ fontStyle: 'italic' }}>"{pin.comment_content.slice(0, 80)}{pin.comment_content.length > 80 ? '…' : ''}"</span>
+                        {pin.cover_title && <span className="cms-ban-reason">{pin.cover_title}{pin.cover_artist ? ` — ${pin.cover_artist}` : ''}</span>}
+                      </div>
+                      <button className="btn" disabled={busyId === `unpin-${pin.id}`} onClick={() => unpinComment(pin.id)}>Unpin</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {recentComments.length > 0 && (
+              <div>
+                <h3 className="cms-h3">Recent comments</h3>
+                <div className="cms-ban-list">
+                  {recentComments.map((c) => (
+                    <div key={c.id} className="cms-ban-row">
+                      <div className="cms-ban-details">
+                        <span className="cms-ban-user">@{c.author_username}</span>
+                        <span className="cms-ban-reason" style={{ fontStyle: 'italic' }}>"{c.content.slice(0, 100)}{c.content.length > 100 ? '…' : ''}"</span>
+                        {c.cover_title && <span className="cms-ban-reason">{c.cover_title}{c.cover_artist ? ` — ${c.cover_artist}` : ''}</span>}
+                      </div>
+                      {c.is_already_pinned ? (
+                        <span className="cms-badge cms-badge--op">Pinned</span>
+                      ) : (
+                        <button className="btn btn-primary" disabled={busyId === `pin-${c.id}`} onClick={() => pinComment(c)}>Pin to POH</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </div>
+        )}
+      </section>
+
+
+
     </div>
   );
 }

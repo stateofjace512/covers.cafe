@@ -15,11 +15,14 @@ import { getAvatarSrc, getCoverImageSrc } from '../lib/media';
 export default function ArtistDetail() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, session, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [coverCount, setCoverCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [following, setFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followBusy, setFollowBusy] = useState(false);
   const [collections, setCollections] = useState<{
     id: string;
     name: string;
@@ -114,9 +117,37 @@ export default function ArtistDetail() {
         item_count: itemCountMap[row.id] ?? 0,
       })));
 
+      // Follow status
+      const followRes = await fetch(`/api/follow?userId=${profileData.id}`);
+      if (followRes.ok) {
+        const followData = await followRes.json() as { following: boolean; followerCount: number };
+        setFollowing(followData.following);
+        setFollowerCount(followData.followerCount);
+      }
+
       setLoading(false);
     })();
   }, [username, user?.id, authLoading]);
+
+  async function toggleFollow() {
+    if (!profile || !session?.access_token) return;
+    setFollowBusy(true);
+    const next = !following;
+    setFollowing(next);
+    setFollowerCount((c) => c + (next ? 1 : -1));
+    try {
+      await fetch('/api/follow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ userId: profile.id, follow: next }),
+      });
+    } catch {
+      // revert on error
+      setFollowing(!next);
+      setFollowerCount((c) => c + (next ? -1 : 1));
+    }
+    setFollowBusy(false);
+  }
 
   if (loading) return <p className="text-muted">Loading…</p>;
   if (notFound) return (
@@ -164,7 +195,17 @@ export default function ArtistDetail() {
           )}
           <p className="artist-detail-count">
             {coverCount} cover{coverCount !== 1 ? 's' : ''} uploaded
+            {followerCount > 0 && <> · {followerCount} follower{followerCount !== 1 ? 's' : ''}</>}
           </p>
+          {user && !isOwnProfile && (
+            <button
+              className={`btn${following ? '' : ' btn-primary'} artist-follow-btn`}
+              onClick={toggleFollow}
+              disabled={followBusy}
+            >
+              {following ? 'Following' : 'Follow'}
+            </button>
+          )}
         </div>
       </div>
 

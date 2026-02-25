@@ -4,13 +4,15 @@ import BellSleepIcon from './BellSleepIcon';
 import FavoritesIcon from './FavoritesIcon';
 import CommentIcon from './CommentIcon';
 import XIcon from './XIcon';
+import GalleryIcon from './GalleryIcon';
+import UserIcon from './UserIcon';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface Notification {
   id: string;
-  type: 'favorite' | 'comment' | 'comment_like' | 'comment_reply' | 'cover_removed';
-  cover_id: string;
+  type: 'favorite' | 'comment' | 'comment_like' | 'comment_reply' | 'cover_removed' | 'friend_posted' | 'new_follower';
+  cover_id: string | null;
   cover_title: string;
   cover_artist: string;
   actor_name: string;
@@ -166,17 +168,43 @@ export default function NotificationBell() {
                 return (
                   <div key={n.id} className={`notif-item${isNew ? ' notif-item--new' : ''}`}>
                     <span className="notif-num">{idx + 1}</span>
-                    <span className={`notif-icon ${n.type === 'cover_removed' ? 'notif-icon--removed' : (n.type === 'favorite' || n.type === 'comment_like') ? 'notif-icon--fav' : 'notif-icon--cmt'}`}>
-                      {n.type === 'cover_removed' ? <XIcon size={12} /> : (n.type === 'favorite' || n.type === 'comment_like') ? <FavoritesIcon size={12} /> : <CommentIcon size={12} />}
+                    <span className={`notif-icon ${
+                      n.type === 'cover_removed' ? 'notif-icon--removed'
+                      : n.type === 'new_follower' ? 'notif-icon--follow'
+                      : n.type === 'friend_posted' ? 'notif-icon--friend'
+                      : (n.type === 'favorite' || n.type === 'comment_like') ? 'notif-icon--fav'
+                      : 'notif-icon--cmt'
+                    }`}>
+                      {n.type === 'cover_removed' ? <XIcon size={12} />
+                        : n.type === 'new_follower' ? <UserIcon size={12} />
+                        : n.type === 'friend_posted' ? <GalleryIcon size={12} />
+                        : (n.type === 'favorite' || n.type === 'comment_like') ? <FavoritesIcon size={12} />
+                        : <CommentIcon size={12} />}
                     </span>
                     <div className="notif-body">
                       {n.type === 'cover_removed' ? (
                         <p className="notif-text">
-                          Your upload{' '}
+                          {n.cover_id ? (
+                            <>Your upload{' '}<button className="notif-cover-link" onClick={() => { navigate(`/?open=${n.cover_id}`); setOpen(false); }}>{n.cover_title}</button>{' '}has</>
+                          ) : (
+                            <><strong>{n.cover_title}</strong> have</>
+                          )}{' '}been removed for the following reason(s): <strong>{n.content}</strong>
+                        </p>
+                      ) : n.type === 'new_follower' ? (
+                        <p className="notif-text">
+                          <button className="notif-user-link" onClick={() => { if (n.actor_username) navigate(`/users/${encodeURIComponent(n.actor_username)}`); setOpen(false); }}>
+                            {n.actor_name}
+                          </button>{' '}started following you
+                        </p>
+                      ) : n.type === 'friend_posted' ? (
+                        <p className="notif-text">
+                          <button className="notif-user-link" onClick={() => { if (n.actor_username) navigate(`/users/${encodeURIComponent(n.actor_username)}`); setOpen(false); }}>
+                            {n.actor_name}
+                          </button>{' '}posted{' '}
                           <button className="notif-cover-link" onClick={() => { navigate(`/?open=${n.cover_id}`); setOpen(false); }}>
                             {n.cover_title}
                           </button>
-                          {' '}has been removed for the following reason(s): <strong>{n.content}</strong>
+                          {n.cover_artist && <> by {n.cover_artist}</>}
                         </p>
                       ) : (
                         <p className="notif-text">
@@ -198,7 +226,7 @@ export default function NotificationBell() {
                           </button>
                         </p>
                       )}
-                      {n.content && n.type !== 'cover_removed' && (
+                      {n.content && (n.type === 'comment' || n.type === 'comment_like' || n.type === 'comment_reply') && (
                         <p className="notif-comment-preview">"{n.content}{n.content.length >= 100 ? '…' : ''}"</p>
                       )}
                       {n.type === 'comment_reply' && (
