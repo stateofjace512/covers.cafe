@@ -1504,8 +1504,10 @@
 /* ===== Extracted from src/routes/ArtistDetail.tsx ===== */
         .artist-back-btn { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; }
         .artist-detail-header {
-          padding: 0;
+          padding: 24px;
           overflow: hidden;
+          background-size: cover;
+          background-position: center;
         }
         .artist-detail-avatar {
           width: 80px; height: 80px; border-radius: 0; flex-shrink: 0;
@@ -3222,15 +3224,8 @@
 .artist-edit-btn { display: inline-flex; align-items: center; gap: 6px; }
 .artist-detail-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 
-/* ── Banner ── */
-.artist-profile-banner {
-  width: 100%; height: 140px;
-  background-size: cover; background-position: center;
-  flex-shrink: 0; display: block;
-}
-.artist-profile-banner--theme { background-size: cover; }
-.artist-detail-body { display: flex; flex-direction: column; }
-.artist-detail-content { display: flex; align-items: flex-start; gap: 20px; padding: 24px; }
+/* ── Content row inside header ── */
+.artist-detail-content { display: flex; align-items: flex-start; gap: 20px; }
 
 /* ── Pinned covers grid ── */
 .pinned-grid {

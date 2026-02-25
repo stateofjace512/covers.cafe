@@ -135,23 +135,29 @@ export default function EditProfile() {
 
   const uploadBanner = async (): Promise<string | null> => {
     if (!user || !session || !bannerPreview) return null;
-    const res = await fetch(bannerPreview);
-    const blob = await res.blob();
-    const form = new FormData();
-    form.append('file', blob, 'banner.jpg');
-    const apiRes = await fetch('/api/upload-banner', {
+
+    // Step 1: get a one-time direct upload URL from Cloudflare (file never touches Netlify)
+    const urlRes = await fetch('/api/cf-upload-url', {
       method: 'POST',
-      headers: { Authorization: 'Bearer ' + session.access_token },
-      body: form,
+      headers: { Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
     });
-    let json: { ok: boolean; url?: string; message?: string };
-    try {
-      json = await apiRes.json() as typeof json;
-    } catch {
-      throw new Error(`Banner upload failed (server error ${apiRes.status})`);
+    const urlJson = await urlRes.json() as { ok: boolean; uploadUrl?: string; cfImageId?: string; message?: string };
+    if (!urlJson.ok || !urlJson.uploadUrl || !urlJson.cfImageId) {
+      throw new Error(urlJson.message ?? 'Could not get upload URL');
     }
-    if (!json.ok || !json.url) throw new Error(json.message ?? 'Banner upload failed');
-    return json.url;
+
+    // Step 2: upload banner directly from browser to Cloudflare
+    const blob = await fetch(bannerPreview).then((r) => r.blob());
+    const cfForm = new FormData();
+    cfForm.append('file', blob, 'banner.jpg');
+    const cfRes = await fetch(urlJson.uploadUrl, { method: 'POST', body: cfForm });
+    if (!cfRes.ok) {
+      const cfErr = await cfRes.json().catch(() => null) as { errors?: Array<{ message?: string }> } | null;
+      throw new Error(cfErr?.errors?.[0]?.message ?? 'Banner upload to Cloudflare failed');
+    }
+
+    return `https://imagedelivery.net/${import.meta.env.PUBLIC_CF_IMAGES_HASH}/${urlJson.cfImageId}/public`;
   };
 
   const handleSave = async (e: React.FormEvent) => {
