@@ -67,32 +67,7 @@ export default function About() {
         </div>
       </div>
 
-      <style>{`
-        .about-page { max-width: 680px; }
-        .legal-body { display: flex; flex-direction: column; gap: 0; }
-        .legal-body p { font-size: 20px; color: var(--body-text); line-height: 1.75; margin: 0 0 14px; }
-        .about-lede {
-          font-size: 19px !important;
-          line-height: 1.6 !important;
-          margin-bottom: 20px !important;
-        }
-        .about-sign { margin-top: 12px; }
-        .about-meta {
-          margin-top: 32px;
-          padding: 16px 20px;
-          border: 1px solid var(--body-border);
-          border-radius: 8px;
-          background: var(--body-card-bg);
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-        .about-meta-row { display: flex; align-items: center; gap: 12px; font-size: 19px; }
-        .about-meta-key { color: var(--body-text-muted); min-width: 70px; }
-        .about-meta-val { color: var(--body-text); }
-        .about-meta-link { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
-        .about-meta-link:hover { color: var(--accent-light); }
-      `}</style>
+      
     </div>
   );
 }

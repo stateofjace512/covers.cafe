@@ -93,11 +93,7 @@ export default function Downloads() {
         />
       )}
 
-      <style>{`
-        .empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 60px 40px; max-width: 440px; }
-        .empty-title { font-size: 23px; color: var(--body-text); margin-bottom: 10px; }
-        .empty-body { font-size: 20px; color: var(--body-text-muted); line-height: 1.6; }
-      `}</style>
+      
     </div>
   );
 }

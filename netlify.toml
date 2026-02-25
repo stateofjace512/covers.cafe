@@ -11,9 +11,6 @@
     Cache-Control = "public, max-age=2592000, immutable"
 
 [[plugins]]
-  package = "./netlify/plugins/migrate-to-cloudflare"
-
-[[plugins]]
   package = "./netlify/plugins/backfill-thumbnails"
 
 [[headers]]

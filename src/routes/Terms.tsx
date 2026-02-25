@@ -159,30 +159,7 @@ export default function Terms() {
         </p>
       </div>
 
-      <style>{`
-        .legal-page { max-width: 720px; }
-        .legal-updated { font-size: 18px; color: var(--body-text-muted); margin-bottom: 24px; }
-        .legal-body { display: flex; flex-direction: column; gap: 0; }
-        .legal-body p, .legal-body ul { font-size: 20px; color: var(--body-text); line-height: 1.75; margin: 0 0 14px; }
-        .legal-body ul { padding-left: 20px; }
-        .legal-body li { margin-bottom: 6px; }
-        .legal-body h2 {
-          font-size: 19px; color: var(--body-text);
-          margin: 24px 0 10px;
-          padding-bottom: 6px; border-bottom: 1px solid var(--body-card-border);
-        }
-        [data-theme="dark"] .legal-body h2 { }
-        .legal-body strong { color: var(--body-text); }
-        .legal-dmca-box {
-          background: var(--sidebar-bg);
-          border: 1px solid var(--body-card-border);
-          border-left: 4px solid var(--accent);
-          border-radius: 4px; padding: 14px 18px;
-          margin: 0 0 14px;
-          display: flex; flex-direction: column; gap: 4px;
-        }
-        .legal-dmca-box p { margin: 0 !important; }
-      `}</style>
+      
     </div>
   );
 }

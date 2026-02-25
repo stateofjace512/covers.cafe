@@ -23,7 +23,7 @@ export default function Profile() {
             <button className="btn btn-secondary" onClick={() => openAuthModal('register')}>Create Account</button>
           </div>
         </div>
-        <style>{` .empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 60px 40px; max-width: 440px; } .empty-title { font-size: 23px; color: var(--body-text); margin-bottom: 10px; } .empty-body { font-size: 20px; color: var(--body-text-muted); line-height: 1.6; } `}</style>
+        
       </div>
     );
   }
@@ -58,47 +58,7 @@ export default function Profile() {
         <GalleryGrid filter="mine" />
       </section>
 
-      <style>{`
-        .profile-card { max-width: 640px; }
-        .profile-header { display: flex; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
-
-        .profile-info { flex: 1; min-width: 0; }
-        
-        .profile-name {
-          font-size: 25px;
-          color: var(--body-text);
-        }
-        
-        .profile-avatar {
-          width: 80px;
-          height: 80px;
-          border-radius: 0;
-          flex-shrink: 0;
-        
-          background: #c07f55;
-          border: 2px solid;
-          border-color: #c07f55 #ffffff #ffffff #c07f55;
-        
-          box-shadow: none;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        
-          color: #dea77d;
-          overflow: hidden;
-        }
-        
-        .profile-avatar-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        [data-theme="dark"] .profile-name { }
-        .profile-username { font-size: 19px; color: var(--body-text-muted); margin-top: 2px; }
-        .profile-bio { font-size: 20px; color: var(--body-text); margin-top: 8px; line-height: 1.5; }
-        .profile-website { font-size: 19px; color: var(--accent); margin-top: 6px; display: block; }
-        .profile-edit-btn { flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
-      `}</style>
+      
     </div>
   );
 }

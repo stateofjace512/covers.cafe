@@ -240,44 +240,7 @@ export default function OfficialGallery() {
 
       {loadMoreRateLimited && (<RateLimitModal action="official_gallery_load_more_clicks" onClose={() => setLoadMoreRateLimited(false)} />)}
 
-      <style>{`
-        .official-search-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
-        .official-search-bar input, .official-search-bar select { padding:7px 10px; border:1px solid var(--body-card-border); background:var(--body-card-bg); color:var(--body-text); border-radius:0; font-size:16px; font-family:var(--font-body); }
-        .osg-select-btn { border:1px solid var(--body-card-border); border-radius:0; background:var(--body-card-bg); color:var(--body-text-muted); padding:5px 14px; font-size:14px; cursor:pointer; font-family:var(--font-body); }
-        .osg-select-btn--active { background:var(--accent); border-color:var(--accent); color:#fff; }
-        .osg-merge-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; padding:10px 14px; border-radius:0; background:var(--body-card-bg); border:1px solid var(--body-card-border); }
-        .osg-merge-label { font-size:15px; color:var(--body-text-muted); flex-shrink:0; }
-        .osg-merge-input { padding:6px 10px; border-radius:0; border:1px solid var(--body-card-border); background:var(--sidebar-bg); color:var(--body-text); font-size:15px; font-family:var(--font-body); flex:1; min-width:180px; }
-        .osg-merge-confirm { font-size:14px; padding:6px 18px; }
-        .osg-undo-toast { display:flex; align-items:center; gap:10px; margin-bottom:12px; padding:10px 16px; border-radius:0; background:var(--body-card-bg); border:1px solid var(--body-card-border); font-size:14px; }
-        .osg-undo-btn { background:var(--accent); color:#fff; border:none; border-radius:0; padding:4px 14px; font-size:13px; cursor:pointer; font-family:var(--font-body); }
-        .osg-undo-countdown { color:var(--body-text-muted); font-size:13px; margin-left:auto; }
-        .official-card-img { width:100%; height:100%; object-fit:cover; display:block; }
-        .official-card--clickable { cursor:pointer; }
-        .official-card--selected .album-card-cover { outline:3px solid var(--accent); outline-offset:-3px; border-radius:0; }
-        .official-badge { position:absolute; right:8px; top:8px; background:rgba(0,0,0,0.72); border:1px solid rgba(255,255,255,0.25); color:#fff; font-size:12px; padding:2px 8px; border-radius:0; pointer-events:none; }
-        .official-select-check { position:absolute; left:8px; top:8px; width:20px; height:20px; border-radius:0; border:2px solid rgba(255,255,255,0.7); background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; pointer-events:none; }
-        .official-select-check--on { background:var(--accent); border-color:var(--accent); }
-        .cover-card-date-badge { display:inline-flex; align-items:center; font-size:12px; padding:1px 7px; border-radius:0; background:var(--body-card-border); color:var(--body-text-muted); border:1px solid var(--body-card-border); }
-        .osg-load-more { display:flex; justify-content:center; padding:24px 0 8px; }
-        .gallery-load-more-btn {
-          display:flex; align-items:center; gap:7px;
-          padding:9px 28px; font-size:19px;
-          background-image:
-            linear-gradient(180deg, rgba(234,187,149,0.7) 0%, rgba(222,167,125,0.7) 55%, rgba(200,147,92,0.7) 100%),
-            var(--skeu-hero);
-          background-size:100% 100%, cover;
-          background-position:center, center;
-        }
-        .gallery-load-more-btn::before { display:none; }
-        [data-theme="dark"] .gallery-load-more-btn {
-          background-image:
-            linear-gradient(180deg, rgba(126,90,71,0.7) 0%, rgba(111,78,60,0.7) 55%, rgba(90,61,46,0.7) 100%),
-            var(--skeu-hero);
-          background-size:100% 100%, cover;
-          background-position:center, center;
-        }
-      `}</style>
+      
     </div>
   );
 }

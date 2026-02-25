@@ -1,0 +1,88 @@
+/* Shared control patterns used across routes/components */
+
+.search-source-toggle,
+.ma-type-tabs {
+  display: inline-flex;
+  gap: 0;
+  border: 2px solid;
+  border-color: #c07f55 #ffffff #ffffff #c07f55;
+  background: var(--body-card-bg);
+}
+
+.search-source-toggle {
+  margin-bottom: 10px;
+}
+
+.search-source-btn,
+.ma-type-tab {
+  border: none;
+  border-right: 1px solid var(--body-border);
+  background: transparent;
+  color: var(--body-text-muted);
+  padding: 3px 10px;
+  font-size: 11px;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.search-source-btn:last-child,
+.ma-type-tab:last-child {
+  border-right: none;
+}
+
+.search-source-btn--active,
+.ma-type-tab--active {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.gallery-load-more-btn,
+.acotw-archive-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--body-card-border);
+  border-radius: 0;
+  cursor: pointer;
+  color: var(--body-text);
+  background-image:
+    linear-gradient(180deg, rgba(234,187,149,0.7) 0%, rgba(222,167,125,0.7) 55%, rgba(200,147,92,0.7) 100%),
+    var(--skeu-hero);
+  background-size: 100% 100%, cover;
+  background-position: center, center;
+}
+
+.gallery-load-more-btn {
+  padding: 9px 28px;
+  font-size: 19px;
+}
+
+.gallery-load-more-btn--compact {
+  padding: 4px 20px;
+  font-size: 12px;
+  gap: 6px;
+}
+
+.gallery-load-more-btn::before {
+  display: none;
+}
+
+.acotw-archive-toggle {
+  padding: 8px 14px;
+  font-size: 19px;
+  margin-bottom: 16px;
+}
+
+.gallery-load-more-btn:hover,
+.acotw-archive-toggle:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .gallery-load-more-btn,
+[data-theme="dark"] .acotw-archive-toggle {
+  background-image:
+    linear-gradient(180deg, rgba(126,90,71,0.7) 0%, rgba(111,78,60,0.7) 55%, rgba(90,61,46,0.7) 100%),
+    var(--skeu-hero);
+}

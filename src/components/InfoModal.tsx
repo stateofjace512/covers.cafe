@@ -72,42 +72,7 @@ export default function InfoModal({
         </div>
       </div>
 
-      <style>{`
-        .info-modal {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          padding: 40px 36px;
-          max-width: 360px;
-          gap: 10px;
-        }
-        .info-modal-icon { line-height: 0; margin-bottom: 4px; }
-        .info-modal-emoji {
-          font-size: 56px;
-          line-height: 1;
-          display: block;
-        }
-        .info-modal-title {
-          font-size: 13px;
-          font-weight: bold;
-          color: var(--body-text);
-          margin: 0;
-        }
-        .info-modal-body {
-          font-size: 12px;
-          color: var(--body-text-muted);
-          line-height: 1.5;
-          margin: 0;
-        }
-        .info-modal-actions {
-          display: flex;
-          gap: 10px;
-          margin-top: 8px;
-          flex-wrap: wrap;
-          justify-content: center;
-        }
-      `}</style>
+      
     </div>
   );
 }
