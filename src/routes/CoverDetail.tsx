@@ -72,6 +72,16 @@ export default function CoverDetail() {
   const [rateLimitedAction, setRateLimitedAction] = useState<string | null>(null);
   const [refreshPending, setRefreshPending] = useState(false);
 
+  // Tracks when the current user is the one writing to covers_cafe_covers so we
+  // don't show the "This cover was updated" banner for their own actions.
+  const selfWritePendingRef = useRef(false);
+  const selfWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function markSelfWrite() {
+    selfWritePendingRef.current = true;
+    if (selfWriteTimerRef.current) clearTimeout(selfWriteTimerRef.current);
+    selfWriteTimerRef.current = setTimeout(() => { selfWritePendingRef.current = false; }, 3000);
+  }
+
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -127,6 +137,7 @@ export default function CoverDetail() {
     const channel = supabase
       .channel(`cover-detail-watch-${cover.id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'covers_cafe_covers', filter: `id=eq.${cover.id}` }, () => {
+        if (selfWritePendingRef.current) return;
         setRefreshPending(true);
         supabase.removeChannel(channel);
       })
@@ -165,6 +176,7 @@ export default function CoverDetail() {
     if (!cover) return;
     if (!user) return openAuthModal('login');
     if (!checkRateLimit('cover_detail_favorite', 8, 5000)) { setRateLimitedAction('cover_detail_favorite'); return; }
+    markSelfWrite();
     const { error } = await supabase.rpc('covers_cafe_toggle_favorite', { p_cover_id: cover.id });
     if (!error) {
       const nowFav = !isFavorited;
@@ -179,6 +191,7 @@ export default function CoverDetail() {
     if (!checkRateLimit('cover_detail_download', 5, 10000)) { setRateLimitedAction('cover_detail_download'); return; }
     setDownloading(true);
     setShowSizeMenu(false);
+    markSelfWrite();
     await supabase.from('covers_cafe_downloads').insert({ cover_id: cover.id, user_id: user.id });
     await supabase.rpc('covers_cafe_increment_downloads', { p_cover_id: cover.id });
     const a = document.createElement('a');
@@ -265,6 +278,7 @@ export default function CoverDetail() {
     setEditSaving(true);
     const year = editYear.trim() ? parseInt(editYear.trim(), 10) : null;
     const tags = editTags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
+    markSelfWrite();
     const { data: updated, error } = await supabase
       .from('covers_cafe_covers')
       .update({ title, artist, year, tags, is_private: editIsPrivate })
