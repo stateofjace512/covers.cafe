@@ -68,25 +68,30 @@ export const GET: APIRoute = async ({ url, request }) => {
     }
   }
 
-  // If viewer is looking at their own profile, return incoming pending requests
+  // If viewer is looking at their own profile, return incoming and outgoing pending requests
   let pendingReceived: { id: string; username: string; display_name: string | null; avatar_url: string | null }[] = [];
+  let pendingSent: { id: string; username: string; display_name: string | null; avatar_url: string | null }[] = [];
   if (viewerId && viewerId === targetUserId) {
-    const { data: pendingRows } = await sb
-      .from('covers_cafe_friends')
-      .select('user_id')
-      .eq('friend_id', targetUserId)
-      .eq('status', 'pending');
-    if (pendingRows && pendingRows.length > 0) {
-      const pendingUserIds = (pendingRows as { user_id: string }[]).map((r) => r.user_id);
-      const { data: pendingProfiles } = await sb
-        .from('covers_cafe_profiles')
-        .select('id, username, display_name, avatar_url')
-        .in('id', pendingUserIds);
-      pendingReceived = (pendingProfiles ?? []) as typeof pendingReceived;
+    const [{ data: receivedRows }, { data: sentRows }] = await Promise.all([
+      sb.from('covers_cafe_friends').select('user_id').eq('friend_id', targetUserId).eq('status', 'pending'),
+      sb.from('covers_cafe_friends').select('friend_id').eq('user_id', targetUserId).eq('status', 'pending'),
+    ]);
+
+    const receivedIds = (receivedRows as { user_id: string }[] ?? []).map((r) => r.user_id);
+    const sentIds = (sentRows as { friend_id: string }[] ?? []).map((r) => r.friend_id);
+    const allIds = [...new Set([...receivedIds, ...sentIds])];
+
+    let allProfiles: { id: string; username: string; display_name: string | null; avatar_url: string | null }[] = [];
+    if (allIds.length > 0) {
+      const { data } = await sb.from('covers_cafe_profiles').select('id, username, display_name, avatar_url').in('id', allIds);
+      allProfiles = (data ?? []) as typeof allProfiles;
     }
+
+    pendingReceived = allProfiles.filter((p) => receivedIds.includes(p.id));
+    pendingSent = allProfiles.filter((p) => sentIds.includes(p.id));
   }
 
-  return json({ friends: friendProfiles, viewerStatus, friendCount: friendProfiles.length, pendingReceived });
+  return json({ friends: friendProfiles, viewerStatus, friendCount: friendProfiles.length, pendingReceived, pendingSent });
 };
 
 // ── POST ──────────────────────────────────────────────────────────────────────

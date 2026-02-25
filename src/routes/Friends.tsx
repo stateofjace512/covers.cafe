@@ -13,6 +13,7 @@ export default function Friends() {
   const navigate = useNavigate();
   const [friends, setFriends] = useState<FriendProfile[]>([]);
   const [pendingReceived, setPendingReceived] = useState<FriendProfile[]>([]);
+  const [pendingSent, setPendingSent] = useState<FriendProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
@@ -22,9 +23,10 @@ export default function Friends() {
       headers: { Authorization: 'Bearer ' + session.access_token },
     })
       .then((r) => r.json())
-      .then((d: { friends: FriendProfile[]; pendingReceived?: FriendProfile[] }) => {
+      .then((d: { friends: FriendProfile[]; pendingReceived?: FriendProfile[]; pendingSent?: FriendProfile[] }) => {
         setFriends(d.friends ?? []);
         setPendingReceived(d.pendingReceived ?? []);
+        setPendingSent(d.pendingSent ?? []);
         setLoading(false);
       })
       .catch(() => { setLoading(false); });
@@ -69,6 +71,8 @@ export default function Friends() {
   }
 
   if (loading) return <p className="text-muted">Loading…</p>;
+
+  const isEmpty = friends.length === 0 && pendingReceived.length === 0 && pendingSent.length === 0;
 
   return (
     <div>
@@ -120,7 +124,47 @@ export default function Friends() {
         </div>
       )}
 
-      {friends.length === 0 && pendingReceived.length === 0 ? (
+      {pendingSent.length > 0 && (
+        <div className="friend-requests-section">
+          <h2 className="friend-requests-title" style={{ color: 'var(--body-text-muted)' }}>
+            Pending
+            <span className="friend-requests-badge" style={{ background: 'var(--body-text-muted)' }}>{pendingSent.length}</span>
+          </h2>
+          <div className="friend-requests-list">
+            {pendingSent.map((p) => (
+              <div key={p.id} className="friend-request-item card">
+                <button
+                  className="friend-request-user"
+                  onClick={() => navigate('/users/' + p.username)}
+                >
+                  <div className="friends-page-avatar">
+                    {p.avatar_url
+                      ? <img src={getAvatarSrc(p as Profile)!} alt={p.display_name ?? p.username} className="friends-page-avatar-img" loading="lazy" />
+                      : <UserIcon size={28} style={{ opacity: 0.35 }} />
+                    }
+                  </div>
+                  <div className="friends-page-info">
+                    <span className="friends-page-name">{p.display_name ?? p.username}</span>
+                    {p.display_name && <span className="friends-page-username">@{p.username}</span>}
+                    <span className="friends-page-username">Request sent — awaiting response</span>
+                  </div>
+                </button>
+                <div className="friend-request-actions">
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    disabled={actionInProgress === p.id}
+                    onClick={() => void handleAction(p.id, 'remove')}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isEmpty ? (
         <div className="empty-state card">
           <UserSleepIcon size={48} style={{ opacity: 0.25, marginBottom: 14 }} />
           <h2 className="empty-title">No friends yet</h2>
