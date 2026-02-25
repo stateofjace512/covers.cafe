@@ -478,6 +478,13 @@ a:hover {
   border-color: rgba(0, 0, 0, 0.3) rgba(255, 255, 255, 0.5) rgba(255, 255, 255, 0.5) rgba(0, 0, 0, 0.3);
 }
 
+/* header-menu-btn: hidden on desktop, shown on mobile only.
+   Must come after .btn { display: inline-flex } to win the cascade. */
+.header-menu-btn { display: none; }
+@media (max-width: 640px) {
+  .header-menu-btn { display: inline-flex; }
+}
+
 [data-theme="dark"] .btn {
   background: #3d1a05;
   color: #ffffff;
@@ -669,10 +676,16 @@ textarea {
   backdrop-filter: none;
   z-index: 200;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 20px;
+  overflow-y: auto;
   animation: overlay-in 0.08s ease;
+}
+
+/* Center modal-box vertically when it fits in viewport; scroll when too tall */
+.modal-box {
+  margin: auto;
 }
 
 @keyframes overlay-in {
@@ -766,6 +779,13 @@ textarea {
     transform: translateX(-102%);
     transition: transform 0.15s ease;
     box-shadow: 4px 0 8px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Gradient theme mobile sidebar needs solid background — var(--sidebar-bg) is semi-transparent */
+  [data-theme="gradient"] .site-sidebar {
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
   .site-sidebar.site-sidebar--mobile-open {
