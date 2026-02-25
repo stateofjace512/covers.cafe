@@ -16,17 +16,12 @@ export const GET: APIRoute = async ({ request }) => {
 
   const { sb } = auth;
 
-  const [{ data: reports }, { data: published }, { data: bans }, { data: operators }] = await Promise.all([
+  const [{ data: reports }, { data: bans }, { data: operators }] = await Promise.all([
     sb
       .from('covers_cafe_reports')
       .select('id, reason, details, created_at, cover_id, reporter_id')
       .order('created_at', { ascending: false })
       .limit(200),
-    sb
-      .from('covers_cafe_covers')
-      .select('id, title, artist, created_at, is_public, is_private, perma_unpublished, is_acotw, user_id, storage_path')
-      .order('created_at', { ascending: false })
-      .limit(500),
     sb
       .from('covers_cafe_user_bans')
       .select('user_id, reason, banned_at, expires_at')
@@ -38,15 +33,9 @@ export const GET: APIRoute = async ({ request }) => {
   ]);
 
   const reportRows = (reports ?? []) as ReportRow[];
-  const publishedRows = (published ?? []) as {
-    id: string; title: string; artist: string; created_at: string;
-    is_public: boolean; is_private: boolean; perma_unpublished: boolean; is_acotw: boolean; user_id: string; storage_path: string;
-  }[];
-
   const ids = [
     ...new Set([
       ...reportRows.map((r) => r.reporter_id).filter(Boolean),
-      ...publishedRows.map((c) => c.user_id),
       ...(bans ?? []).map((b: { user_id: string }) => b.user_id),
     ]),
   ] as string[];
@@ -69,12 +58,6 @@ export const GET: APIRoute = async ({ request }) => {
       ...r,
       cover_title: coverMap.get(r.cover_id) ?? null,
       reporter_username: r.reporter_id ? usernameMap.get(r.reporter_id) ?? null : null,
-    })),
-    published: publishedRows.map((c) => ({
-      ...c,
-      username: usernameMap.get(c.user_id) ?? null,
-      is_banned: banMap.has(c.user_id),
-      is_operator: operatorSet.has(c.user_id),
     })),
     bans: (bans ?? []).map((b: { user_id: string; reason: string | null; banned_at: string; expires_at?: string | null }) => ({
       ...b,

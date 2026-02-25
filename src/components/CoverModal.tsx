@@ -190,6 +190,11 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
   };
 
   const saveEdit = async () => {
+    if (cover.perma_unpublished && editIsPrivate === false) {
+      setEditStatus('This cover is permanently unpublished and cannot be republished.');
+      setEditStatusIsError(true);
+      return;
+    }
     const title = editTitle.trim();
     const artist = editArtist.trim();
     if (!title || !artist) {
@@ -624,6 +629,8 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     <button
                       className={`btn${!editIsPrivate ? ' btn-primary' : ' btn-secondary'}`}
                       onClick={() => setEditIsPrivate(false)}
+                      disabled={Boolean(cover?.perma_unpublished)}
+                      title={cover?.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}
                     >Published</button>
                     <button
                       className={`btn${editIsPrivate ? ' btn-primary' : ' btn-secondary'}`}
@@ -632,13 +639,17 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                   </div>
                 </div>
 
+                {cover?.perma_unpublished && (
+                  <p className="collection-status collection-status--error">Permanently unpublished (DMCA/compliance): public republish disabled.</p>
+                )}
+
                 {editStatus && (
                   <p className={`collection-status${editStatusIsError ? ' collection-status--error' : ' collection-status--ok'}`}>
                     {editStatus}
                   </p>
                 )}
                 <div className="cover-report-actions">
-                  <button className="btn btn-primary" onClick={saveEdit} disabled={editSaving}>
+                  <button className="btn btn-primary" onClick={saveEdit} disabled={editSaving || Boolean(cover?.perma_unpublished && editIsPrivate === false)}>
                     {editSaving ? <><LoadingIcon size={13} className="upload-spinner" /> Saving…</> : 'Save Changes'}
                   </button>
                   <button className="btn btn-secondary" onClick={() => setPanelMode('details')}>Cancel</button>

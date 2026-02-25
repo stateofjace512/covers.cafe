@@ -489,13 +489,14 @@ export default function CoverDetail() {
             <input className="cover-panel-input" value={editTags} onChange={(e) => setEditTags(e.target.value)} placeholder="jazz, vinyl, 70s" />
             <label className="cover-panel-label">Visibility</label>
             <div className="cover-panel-row">
-              <button className={`btn${!editIsPrivate ? ' btn-primary' : ' btn-secondary'}`} onClick={() => setEditIsPrivate(false)}>Published</button>
+              <button className={`btn${!editIsPrivate ? ' btn-primary' : ' btn-secondary'}`} onClick={() => setEditIsPrivate(false)} disabled={Boolean(cover?.perma_unpublished)} title={cover?.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}>Published</button>
               <button className={`btn${editIsPrivate ? ' btn-primary' : ' btn-secondary'}`} onClick={() => setEditIsPrivate(true)}>Unpublished</button>
             </div>
           </div>
+          {cover?.perma_unpublished && <p className="cover-panel-status">Permanently unpublished (DMCA/compliance): public republish disabled.</p>}
           {editStatus && <p className="cover-panel-status">{editStatus}</p>}
           <div className="cover-panel-row">
-            <button className="btn btn-primary" onClick={() => void saveEdit()} disabled={editSaving}>
+            <button className="btn btn-primary" onClick={() => void saveEdit()} disabled={editSaving || Boolean(cover?.perma_unpublished && editIsPrivate === false)}>
               {editSaving ? 'Saving…' : 'Save Changes'}
             </button>
             <button className="btn btn-secondary" onClick={() => setActivePanel(null)}>Cancel</button>
