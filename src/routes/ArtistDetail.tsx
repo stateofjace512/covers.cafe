@@ -433,9 +433,9 @@ export default function ArtistDetail() {
                     className="btn btn-secondary artist-friend-btn"
                     onClick={handleAddFriend}
                     disabled={friendBusy || selfFriended}
-                    title={selfFriended ? 'Certified Loner — you already friended yourself' : 'Friend yourself for a special achievement'}
+                    title={selfFriended ? 'You already friended yourself' : 'Friend yourself for a special achievement'}
                   >
-                    {selfFriended ? 'Certified Loner ✓' : '+ Add Friend'}
+                    {selfFriended ? 'Certified Loner' : '+ Add Friend'}
                   </button>
                 ) : (
                   <button
