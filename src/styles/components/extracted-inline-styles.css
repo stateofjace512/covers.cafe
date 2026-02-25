@@ -1504,8 +1504,10 @@
 /* ===== Extracted from src/routes/ArtistDetail.tsx ===== */
         .artist-back-btn { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; }
         .artist-detail-header {
-          display: flex; align-items: flex-start; gap: 20px;
-          padding: 24px;
+          padding: 0;
+          overflow: visible;
+          display: flex;
+          flex-direction: column;
         }
         .artist-detail-avatar {
           width: 80px; height: 80px; border-radius: 0; flex-shrink: 0;
@@ -1523,14 +1525,14 @@
         [data-theme="dark"] .artist-detail-name { }
         .artist-detail-you {
           font-size: 17px; background: var(--accent);
-          color: white; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.3px;
+          color: white; padding: 2px 7px; border-radius: 0; letter-spacing: 0.3px;
         }
         .artist-detail-username { font-size: 19px; color: var(--body-text-muted); }
         .artist-detail-bio { font-size: 20px; color: var(--body-text); max-width: 480px; line-height: 1.5; }
         .artist-detail-website { font-size: 19px; color: var(--accent); text-decoration: none; }
         .artist-detail-website:hover { text-decoration: underline; }
         .artist-detail-count { font-size: 19px; color: var(--body-text-muted); margin-top: 4px; }
-        .artist-follow-btn { margin-top: 10px; }
+        .artist-follow-btn { }
         .artist-collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
         .artist-collection-card { padding: 0; overflow: hidden; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
         .artist-collection-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
@@ -1871,7 +1873,7 @@
         .avatar-crop-preview img { width: 100%; height: 100%; object-fit: cover; transform-origin: center; }
 
         .form-input {
-          width: 100%; padding: 8px 12px; border-radius: 4px;
+          width: 100%; padding: 8px 12px; border-radius: 0;
           border: 1px solid var(--body-card-border); background: var(--body-card-bg);
           color: var(--body-text); font-size: 19px; font-family: var(--font-body);
           box-shadow: var(--shadow-inset-sm); outline: none;
@@ -2896,6 +2898,7 @@
 [data-theme="gradient"] .cover-card-shimmer { background: rgba(0,0,0,0.3); }
 [data-theme="pureblack"] .cover-card-action-btn { background: #222222; color: #ffffff; border-color: #555555 #111111 #111111 #555555; }
 [data-theme="pureblack"] .cover-card-action-btn:hover { background: #333333; }
+[data-theme="dark"] .cover-card-year { background: #50280f; color: #dea77d; border-color: #6b3d1f; }
 [data-theme="pureblack"] .cover-card-year { background: #1a1a1a; color: #888888; border-color: #2e2e2e; }
 
 /* Cover modal */
@@ -3208,4 +3211,277 @@
   background: #c0c0c0;
   border: 2px solid; border-color: #fff #808080 #808080 #fff;
   border-radius: 0; cursor: pointer;
+}
+
+/* ===== Profile features (019) ===== */
+
+/* ── Brews count ── */
+.artist-detail-brews {
+  display: inline-flex; align-items: center; gap: 4px; color: var(--accent);
+}
+
+/* ── Edit profile button in artist detail ── */
+.artist-edit-btn { display: inline-flex; align-items: center; gap: 6px; }
+.artist-detail-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+
+/* ── Banner strip — avatar anchored to bottom-left ── */
+.artist-profile-banner {
+  width: 100%; height: 160px;
+  background-size: cover; background-position: center;
+  flex-shrink: 0; position: relative;
+}
+/* Avatar sits at the bottom-left of the banner, half overlapping into the content section */
+.artist-profile-banner .artist-detail-avatar {
+  position: absolute; left: 24px; bottom: -40px; z-index: 1;
+}
+
+/* ── Profile info row ── */
+.artist-detail-content { display: flex; align-items: flex-start; gap: 20px; padding: 24px; }
+/* When banner present: avatar overlaps from above, shift content down to clear it */
+.artist-detail-content--has-banner { padding-top: 52px; }
+
+/* ── Pinned covers grid ── */
+.pinned-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+.pinned-card {
+  position: relative; display: flex; flex-direction: column;
+  border: 1px solid var(--body-card-border); background: var(--body-card-bg);
+}
+.pinned-img-btn {
+  position: relative; width: 100%; aspect-ratio: 1 / 1;
+  background: none; border: none; padding: 0; cursor: pointer; overflow: hidden;
+}
+.pinned-img {
+  width: 100%; height: 100%; object-fit: cover;
+  display: block; transition: opacity 0.15s;
+}
+.pinned-img-btn:hover .pinned-img { opacity: 0.85; }
+.pinned-overlay {
+  position: absolute; bottom: 4px; right: 4px;
+  background: rgba(0,0,0,0.55); color: #fff;
+  padding: 2px 4px; display: flex; align-items: center;
+  opacity: 0; transition: opacity 0.15s;
+}
+.pinned-img-btn:hover .pinned-overlay { opacity: 1; }
+.pinned-info {
+  padding: 4px 6px; display: flex; flex-direction: column; gap: 1px;
+  min-width: 0;
+}
+.pinned-title {
+  font-size: 11px; color: var(--body-text); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; font-weight: bold;
+}
+.pinned-artist {
+  font-size: 10px; color: var(--body-text-muted); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.pinned-remove-btn {
+  position: absolute; top: 3px; right: 3px;
+  background: rgba(0,0,0,0.6); color: #fff; border: none;
+  width: 18px; height: 18px; font-size: 14px; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.15s;
+}
+.pinned-card:hover .pinned-remove-btn { opacity: 1; }
+.pinned-remove-btn:hover { background: #800000; }
+
+/* ── Milestone achievements ── */
+.ach-badge--welcome {
+  background: linear-gradient(135deg, rgba(255,182,193,0.3) 0%, rgba(255,105,180,0.15) 100%);
+  border-color: rgba(255,105,180,0.4);
+}
+.ach-badge--city {
+  background: linear-gradient(135deg, rgba(135,206,235,0.3) 0%, rgba(70,130,180,0.15) 100%);
+  border-color: rgba(70,130,180,0.4);
+}
+.ach-badge--crest {
+  background: linear-gradient(135deg, rgba(144,238,144,0.3) 0%, rgba(34,139,34,0.15) 100%);
+  border-color: rgba(34,139,34,0.4);
+}
+
+/* ── Profile theme picker (EditProfile) ── */
+.profile-theme-picker {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;
+}
+.profile-theme-option {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 10px; border: 1px solid var(--body-card-border);
+  background: var(--body-card-bg); color: var(--body-text);
+  cursor: pointer; font-size: 11px; min-width: 60px;
+  transition: border-color 0.1s;
+}
+.profile-theme-option:hover { border-color: var(--accent); }
+.profile-theme-option--active {
+  border-color: var(--accent); background: rgba(192,90,26,0.1);
+  color: var(--accent);
+}
+
+/* ── Gradient picker in EditProfile ── */
+.profile-gradient-row { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.gradient-color-row { display: flex; align-items: center; gap: 8px; }
+.color-swatch-input {
+  width: 36px; height: 36px; padding: 0; border: 1px solid var(--body-card-border);
+  cursor: pointer; flex-shrink: 0; border-radius: 0;
+}
+.gradient-hex-input { width: 100px !important; flex: none; }
+.gradient-preview {
+  height: 40px; width: 100%; border: 1px solid var(--body-card-border); margin-top: 4px;
+}
+
+/* ── Banner preview in EditProfile ── */
+.banner-preview {
+  margin-top: 8px; border: 1px solid var(--body-card-border);
+  overflow: hidden; max-width: 400px;
+}
+.banner-preview-img { width: 100%; height: 120px; object-fit: cover; display: block; }
+
+/* ── Dark-theme overrides ── */
+[data-theme="dark"] .pinned-card { border-color: #6b3d1f; background: #3d1a05; }
+[data-theme="pureblack"] .pinned-card { border-color: #2e2e2e; background: #1a1a1a; }
+[data-theme="crisp"] .pinned-card { border-color: #cccccc; background: #f8f8f8; }
+
+/* ── Achievement descriptors ── */
+.ach-descriptor {
+  font-size: 11px;
+  color: var(--body-text-muted);
+  line-height: 1.45;
+  margin-top: 2px;
+  display: block;
+}
+
+/* ── Certified Loner achievement badge ── */
+.ach-badge--loner {
+  background: linear-gradient(135deg, rgba(120,80,160,0.12) 0%, rgba(60,60,120,0.08) 100%);
+  border-color: rgba(120,80,160,0.35);
+}
+[data-theme="dark"] .ach-badge--loner {
+  background: linear-gradient(135deg, rgba(100,60,140,0.15) 0%, rgba(50,50,100,0.12) 100%);
+  border-color: rgba(120,80,160,0.3);
+}
+
+/* ── Friends section on ArtistDetail ── */
+.artist-friends-section {
+  margin-top: 24px;
+}
+.artist-friends-count {
+  font-size: 13px;
+  font-weight: normal;
+  color: var(--body-text-muted);
+  margin-left: 6px;
+}
+.artist-friends-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px 0;
+}
+.artist-friends-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.artist-friend-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px 5px 6px;
+  border: 1px solid var(--body-card-border);
+  background: var(--body-card-bg);
+  color: var(--body-text);
+  cursor: pointer;
+  font-size: 13px;
+  transition: border-color 0.1s;
+}
+.artist-friend-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.artist-friend-avatar {
+  width: 22px;
+  height: 22px;
+  object-fit: cover;
+  display: block;
+}
+.artist-friend-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Add Friend button ── */
+.artist-friend-btn {
+  font-size: 12px;
+}
+
+/* ── Easter egg message ── */
+.artist-easter-egg {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border: 1px solid rgba(120,80,160,0.4);
+  background: rgba(120,80,160,0.08);
+  color: var(--body-text);
+  font-size: 13px;
+  font-style: italic;
+  max-width: 400px;
+}
+
+/* ── Friends page ── */
+.friends-page-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.friends-page-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 14px;
+  border: 1px solid var(--body-card-border);
+  background: var(--body-card-bg);
+  cursor: pointer;
+  color: var(--body-text);
+  transition: border-color 0.1s;
+  text-align: center;
+}
+.friends-page-card:hover {
+  border-color: var(--accent);
+}
+.friends-page-avatar {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.friends-page-avatar-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  display: block;
+}
+.friends-page-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.friends-page-name {
+  font-weight: 600;
+  font-size: 14px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.friends-page-username {
+  font-size: 12px;
+  color: var(--body-text-muted);
 }

@@ -28,6 +28,7 @@ import Acotw from './routes/Acotw';
 import NotFound from './routes/NotFound';
 import CoverDetail from './routes/CoverDetail';
 import OfficialCoverDetail from './routes/OfficialCoverDetail';
+import Friends from './routes/Friends';
 
 
 interface SeoPayload {
@@ -259,6 +260,7 @@ function AppContent() {
           <Route path="/users/:username/collections/:collectionId" element={<CollectionDetail />} />
           <Route path="/artists" element={<MusicArtists />} />
           <Route path="/artists/:artistName" element={<MusicArtistDetail />} />
+          <Route path="/friends" element={<Friends />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/downloads" element={<Downloads />} />
           <Route path="/profile" element={<Profile />} />

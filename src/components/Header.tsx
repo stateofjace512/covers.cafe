@@ -6,6 +6,8 @@ import XIcon from './XIcon';
 import UserIcon from './UserIcon';
 import TeaIcon from './TeaIcon';
 import MilkIcon from './MilkIcon';
+import SunIcon from './SunIcon';
+import MoonIcon from './MoonIcon';
 import SettingSlideIcon from './SettingSlideIcon';
 import LogoutIcon from './LogoutIcon';
 import { useAuth } from '../contexts/AuthContext';
@@ -31,8 +33,8 @@ interface ThemeOption {
 const THEME_OPTIONS: ThemeOption[] = [
   { id: 'light',      label: 'Frappe',   icon: <MilkIcon size={14} /> },
   { id: 'dark',       label: 'Mocha',    icon: <TeaIcon size={14} /> },
-  { id: 'pureblack',  label: 'Black',    icon: <span style={{ fontSize: '11px', lineHeight: 1 }}>◼</span> },
-  { id: 'crisp',      label: 'Crisp',    icon: <span style={{ fontSize: '11px', lineHeight: 1 }}>◻</span> },
+  { id: 'pureblack',  label: 'Black',    icon: <MoonIcon size={14} /> },
+  { id: 'crisp',      label: 'Crisp',    icon: <SunIcon size={14} /> },
   { id: 'gradient',   label: 'Gradient', icon: <SettingSlideIcon size={14} /> },
 ];
 

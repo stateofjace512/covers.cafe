@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import UserIcon from './UserIcon';
 import UsersIcon from './UsersIcon';
+import SearchUserIcon from './SearchUserIcon';
 import DownloadIcon from './DownloadIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { getAvatarSrc } from '../lib/media';
@@ -24,7 +25,8 @@ const NAV = [
   { section: 'Discover', label: 'Gallery',   icon: <GalleryIcon size={18} />,        path: '/' },
   {                       label: 'ACOTW',     icon: <TrophyIcon size={18} />,         path: '/acotw' },
   {                       label: 'Artists',   icon: <ArtistsIcon size={18} />,        path: '/artists' },
-  {                       label: 'Users',     icon: <UsersIcon size={18} />,          path: '/users' },
+  {                       label: 'Users',     icon: <SearchUserIcon size={18} />,     path: '/users' },
+  {                       label: 'Friends',   icon: <UserIcon size={18} />,           path: '/friends' },
   {                       label: 'Favorites', icon: <FavoritesIcon size={18} />,      path: '/favorites' },
   { section: 'Account',  label: 'Upload',    icon: <UploadDownloadIcon size={18} />, path: '/upload' },
   {                       label: 'Downloads', icon: <DownloadIcon size={18} />,       path: '/downloads' },

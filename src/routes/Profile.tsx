@@ -1,14 +1,9 @@
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import UserIcon from '../components/UserIcon';
-import GearIcon from '../components/GearIcon';
 import { useAuth } from '../contexts/AuthContext';
-import GalleryGrid from '../components/GalleryGrid';
-import AchievementBadges from '../components/AchievementBadges';
-import { getAvatarSrc } from '../lib/media';
 
 export default function Profile() {
   const { user, profile, openAuthModal } = useAuth();
-  const navigate = useNavigate();
 
   if (!user) {
     return (
@@ -23,42 +18,15 @@ export default function Profile() {
             <button className="btn btn-secondary" onClick={() => openAuthModal('register')}>Create Account</button>
           </div>
         </div>
-        
       </div>
     );
   }
 
-  return (
-    <div>
-      <div className="profile-card card">
-        <div className="profile-header">
-          <div className="profile-avatar">
-            {profile && getAvatarSrc(profile)
-              ? <img src={getAvatarSrc(profile)!} alt="avatar" className="profile-avatar-img" />
-              : <UserIcon size={40} style={{ opacity: 0.4 }} />
-            }
-          </div>
-          <div className="profile-info">
-            <h1 className="profile-name">{profile?.display_name ?? profile?.username ?? user.email?.split('@')[0]}</h1>
-            {profile?.username && <p className="profile-username">@{profile.username}</p>}
-            {profile?.bio && <p className="profile-bio">{profile.bio}</p>}
-            {profile?.website && <a href={profile.website} className="profile-website" target="_blank" rel="noopener noreferrer">{profile.website}</a>}
-          </div>
-          <button className="btn btn-secondary profile-edit-btn" onClick={() => navigate('/profile/edit')}>
-            <GearIcon size={14} /> Edit Profile
-          </button>
-        </div>
+  // Redirect to the full user profile view so owners see exactly what others see
+  if (profile?.username) {
+    return <Navigate to={'/users/' + profile.username} replace />;
+  }
 
-        {/* Achievements */}
-        <AchievementBadges userId={user.id} />
-      </div>
-
-      <section style={{ marginTop: 28 }}>
-        <h2 className="section-title"><UserIcon size={20} /> My Uploads</h2>
-        <GalleryGrid filter="mine" />
-      </section>
-
-      
-    </div>
-  );
+  // Fallback while profile loads
+  return <p className="text-muted">Loading…</p>;
 }
