@@ -237,9 +237,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
       ? { ...c, favorite_count: Math.max(0, (c.favorite_count ?? 0) + (isFav ? -1 : 1)) }
       : c
     ));
-    const { error } = isFav
-      ? await supabase.from('covers_cafe_favorites').delete().eq('user_id', user.id).eq('cover_id', coverId)
-      : await supabase.from('covers_cafe_favorites').insert({ user_id: user.id, cover_id: coverId });
+    const { error } = await supabase.rpc('covers_cafe_toggle_favorite', { p_cover_id: coverId });
     if (error) {
       // Revert optimistic update on failure
       setFavoritedIds((prev) => {
