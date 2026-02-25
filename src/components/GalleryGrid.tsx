@@ -260,7 +260,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
     if (coversChangesChannelRef.current) return;
     const channel = supabase
       .channel('gallery-covers-upsert-watch')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'covers_cafe_covers' }, () => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'covers_cafe_covers' }, () => {
         setRefreshPending(true);
         if (coversChangesChannelRef.current) {
           supabase.removeChannel(coversChangesChannelRef.current);
