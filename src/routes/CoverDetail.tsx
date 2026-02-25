@@ -382,7 +382,7 @@ export default function CoverDetail() {
 
         <div className="cover-meta-stats">
           {createdAt && <span className="cover-meta-chip" title={createdFullLabel}><CalendarIcon size={11} /> {createdLabel}</span>}
-          <span className="cover-meta-chip"><FavoritesIcon size={11} /> {cover.favorite_count ?? 0} favorite{(cover.favorite_count ?? 0) === 1 ? '' : 's'}</span>
+          <span className="cover-meta-chip"><FavoritesIcon size={11} /> {Math.max(cover.favorite_count ?? 0, isFavorited ? 1 : 0)} favorite{Math.max(cover.favorite_count ?? 0, isFavorited ? 1 : 0) === 1 ? '' : 's'}</span>
           <span className="cover-meta-chip"><DownloadIcon size={11} /> {cover.download_count ?? 0} download{(cover.download_count ?? 0) === 1 ? '' : 's'}</span>
         </div>
 

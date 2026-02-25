@@ -45,7 +45,8 @@ const MICROAPPS = [
 ] as const;
 
 const WEATHER_STORAGE_KEY = 'weatherMicroAppSettings';
-const WEATHER_DEFAULTS: WeatherSettings = { mode: 'snow', isRising: false, cfg: { density: 400, speed: 25, wind: 0, extra: 50, jitter: 20 } };
+const WEATHER_DEFAULTS: WeatherSettings = { mode: 'off', isRising: false, cfg: { density: 400, speed: 25, wind: 0, extra: 50, jitter: 20 } };
+const WEATHER_PREVIEW_DEFAULT: WeatherSettings = { mode: 'snow', isRising: false, cfg: { density: 400, speed: 25, wind: 0, extra: 50, jitter: 20 } };
 
 function readSavedWeather(): WeatherSettings {
   try {
@@ -86,7 +87,7 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
 
   function openWeatherControl() {
     // Show a live preview while the control is open
-    if (!liveWeather) setLiveWeather(savedWeather.mode !== 'off' ? savedWeather : { ...WEATHER_DEFAULTS });
+    if (!liveWeather) setLiveWeather(savedWeather.mode !== 'off' ? savedWeather : { ...WEATHER_PREVIEW_DEFAULT });
     setOpenApps(prev => new Set([...prev, 'weather']));
   }
 
@@ -225,7 +226,7 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
       {/* Microapp windows portalled to document.body */}
       {openApps.has('weather') && createPortal(
         <WeatherMicroApp
-          initialSettings={savedWeather}
+          initialSettings={savedWeather.mode !== 'off' ? savedWeather : WEATHER_PREVIEW_DEFAULT}
           onSettingsChange={handleWeatherSettingsChange}
           onSaveAndClose={handleWeatherSaveAndClose}
           onClose={handleWeatherClose}
