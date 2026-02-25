@@ -12,6 +12,19 @@ import { getSupabaseServer } from './_supabase';
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
+/** Decode a Supabase JWT locally to get the user's UUID without a network call. */
+function getViewerIdFromToken(token: string | null): string | null {
+  if (!token) return null;
+  try {
+    // JWT payload is URL-safe base64; fix padding and alphabet before decoding
+    const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(b64)) as { sub?: unknown };
+    return typeof payload.sub === 'string' ? payload.sub : null;
+  } catch {
+    return null;
+  }
+}
+
 // ── GET ───────────────────────────────────────────────────────────────────────
 export const GET: APIRoute = async ({ url, request }) => {
   // Extract token FIRST so it can be passed to getSupabaseServer.
@@ -25,12 +38,10 @@ export const GET: APIRoute = async ({ url, request }) => {
   const targetUserId = url.searchParams.get('userId');
   if (!targetUserId) return json({ error: 'userId required' }, 400);
 
-  // Get authenticated user (optional — unauthenticated users just see the friend list)
-  let viewerId: string | null = null;
-  if (token) {
-    const { data } = await sb.auth.getUser(token);
-    viewerId = data?.user?.id ?? null;
-  }
+  // Get authenticated viewer ID by decoding the JWT locally (no network call).
+  // auth.getUser(token) makes a roundtrip to Supabase Auth which can silently
+  // return null in Netlify's SSR runtime.
+  const viewerId = getViewerIdFromToken(token);
 
   // Fetch accepted friends of the target user
   const { data: friendRows } = await sb
