@@ -364,19 +364,20 @@ export default function ArtistDetail() {
         <BackIcon size={14} /> All Users
       </button>
 
-      <div className="artist-detail-header card" style={hasBanner && !profile?.banner_url ? bannerStyle : undefined}>
-        {/* Banner image */}
-        {profile?.banner_url && (
-          <div
-            className="artist-profile-banner"
-            style={{ backgroundImage: 'url(' + profile.banner_url + ')', ...bannerStyle }}
-          />
-        )}
-        {!profile?.banner_url && hasBanner && (
-          <div className="artist-profile-banner artist-profile-banner--theme" style={bannerStyle} />
-        )}
-
+      <div className="artist-detail-header card">
         <div className="artist-detail-body">
+          {/* Banner — seated inside body, fills full row edge-to-edge */}
+          {profile?.banner_url && (
+            <div
+              className="artist-profile-banner"
+              style={{ backgroundImage: 'url(' + profile.banner_url + ')', ...bannerStyle }}
+            />
+          )}
+          {!profile?.banner_url && hasBanner && (
+            <div className="artist-profile-banner artist-profile-banner--theme" style={bannerStyle} />
+          )}
+
+          <div className="artist-detail-content">
           <div className="artist-detail-avatar">
             {profile && getAvatarSrc(profile)
               ? <img src={getAvatarSrc(profile)!} alt={profile.display_name ?? profile.username} className="artist-detail-avatar-img" loading="lazy" />
@@ -457,7 +458,8 @@ export default function ArtistDetail() {
               </div>
             )}
           </div>
-        </div>
+          </div>{/* end artist-detail-content */}
+        </div>{/* end artist-detail-body */}
       </div>
 
       {/* Achievements */}

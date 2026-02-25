@@ -5,7 +5,6 @@
  * Returns: { ok: true, url: string }
  */
 import type { APIRoute } from 'astro';
-import { getSupabaseServer } from './_supabase';
 import { uploadToCf } from '../../lib/cloudflare';
 import sharp from 'sharp';
 
@@ -14,17 +13,24 @@ const MAX_SIZE_BYTES = 10 * 1024 * 1024;
 const json = (body: object, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
+/** Decode a JWT payload without verifying the signature. */
+function jwtUserId(token: string): string | null {
+  try {
+    const [, payload] = token.split('.');
+    const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8')) as { sub?: string };
+    return typeof decoded.sub === 'string' && decoded.sub ? decoded.sub : null;
+  } catch {
+    return null;
+  }
+}
+
 export const POST: APIRoute = async ({ request }) => {
   const auth = request.headers.get('authorization');
   const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
   if (!token) return json({ ok: false, message: 'Unauthorized' }, 401);
 
-  const sb = getSupabaseServer();
-  if (!sb) return json({ ok: false, message: 'Server misconfigured' }, 503);
-
-  const { data: userData, error: userError } = await sb.auth.getUser(token);
-  if (userError || !userData.user) return json({ ok: false, message: 'Unauthorized' }, 401);
-  const userId = userData.user.id;
+  const userId = jwtUserId(token);
+  if (!userId) return json({ ok: false, message: 'Unauthorized' }, 401);
 
   let formData: FormData;
   try { formData = await request.formData(); } catch { return json({ ok: false, message: 'Invalid form data' }, 400); }
