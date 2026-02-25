@@ -14,15 +14,18 @@ const json = (body: unknown, status = 200) =>
 
 // ── GET ───────────────────────────────────────────────────────────────────────
 export const GET: APIRoute = async ({ url, request }) => {
-  const sb = getSupabaseServer();
+  // Extract token FIRST so it can be passed to getSupabaseServer.
+  // Without it, anon-key clients have auth.uid()=null and RLS blocks every read.
+  const authHeader = request.headers.get('authorization');
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  const sb = getSupabaseServer(token ?? undefined);
   if (!sb) return json({ error: 'Supabase not configured' }, 500);
 
   const targetUserId = url.searchParams.get('userId');
   if (!targetUserId) return json({ error: 'userId required' }, 400);
 
   // Get authenticated user (optional — unauthenticated users just see the friend list)
-  const auth = request.headers.get('authorization');
-  const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
   let viewerId: string | null = null;
   if (token) {
     const { data } = await sb.auth.getUser(token);
