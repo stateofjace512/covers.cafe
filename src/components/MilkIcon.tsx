@@ -1,0 +1,37 @@
+type Props = { size?: number; className?: string };
+
+export default function MilkIcon({ size = 16, className }: Props) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 32 32"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden="true"
+      style={{ display: 'inline-block', flexShrink: 0 }}
+    >
+      <g fill="currentColor">
+        <path d="M29.715 10.665h1.52v18.29h-1.52Z" />
+        <path d="M28.185 9.145h1.53v1.52h-1.53Z" />
+        <path d="M2.285 27.435h15.24v1.52H2.285v1.52h27.43v-1.52h-10.67v-18.29h-1.52V12.2H2.285v-1.53H0.765v18.29h1.52Zm0 -13.72h6.09v1.52H9.9v1.53h1.52v1.52h1.53v-1.52h1.52v1.52H16v-1.52h1.53v9.14h-4.57v-1.52H9.9v-3.05H8.375v1.52h-1.52v-1.52h-1.52v-1.52h-1.53v1.52h-1.52Z" />
+        <path d="M26.665 24.385h1.52v1.52h-1.52Z" />
+        <path d="M26.665 21.335h1.52v1.52h-1.52Z" />
+        <path d="M26.665 7.625h1.52v1.52h-1.52Z" />
+        <path d="M20.575 18.285h7.61v1.53h-7.61Z" />
+        <path d="M20.575 15.235h7.61v1.53h-7.61Z" />
+        <path d="M25.145 6.095h1.52v1.53h-1.52Z" />
+        <path d="M20.575 24.385h4.57v1.52h-4.57Z" />
+        <path d="M20.575 21.335h4.57v1.52h-4.57Z" />
+        <path d="M22.095 6.095h1.52v1.53h-1.52Z" />
+        <path d="M20.575 7.625h1.52v1.52h-1.52Z" />
+        <path d="M19.045 9.145h1.53v1.52h-1.53Z" />
+        <path d="M8.375 6.095h12.2v1.53h-12.2Z" />
+        <path d="m8.375 3.045 15.24 0 0 3.05 1.53 0 0 -4.57 -18.29 0 0 4.57 1.52 0 0 -3.05z" />
+        <path d="M5.335 6.095h1.52v1.53h-1.52Z" />
+        <path d="M3.805 7.625h1.53v1.52h-1.53Z" />
+        <path d="M2.285 9.145h1.52v1.52h-1.52Z" />
+      </g>
+    </svg>
+  );
+}

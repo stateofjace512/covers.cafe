@@ -103,6 +103,139 @@
   --shadow-inset-sm: inset 1px 1px #2a1505, inset -1px -1px #6b3d1f;
 }
 
+/* ---------- Pureblack theme (pure black, no orange) ---------- */
+[data-theme="pureblack"] {
+  --header-bg: #111111;
+  --header-bg-light: #1a1a1a;
+  --header-bg-dark: #000000;
+  --header-text: #ffffff;
+  --header-text-muted: rgba(255, 255, 255, 0.55);
+
+  --sidebar-bg: #0d0d0d;
+  --sidebar-bg-light: #1a1a1a;
+  --sidebar-bg-dark: #000000;
+  --sidebar-border: #2e2e2e;
+  --sidebar-text: #ffffff;
+  --sidebar-text-muted: #888888;
+  --sidebar-active-bg: #2e2e2e;
+  --sidebar-active-text: #ffffff;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.07);
+
+  --body-bg: #000000;
+  --body-text: #ffffff;
+  --body-text-muted: #888888;
+  --body-border: #2e2e2e;
+  --body-card-bg: #111111;
+  --body-card-border: #2e2e2e;
+
+  --accent: #aaaaaa;
+  --accent-light: #cccccc;
+  --accent-dark: #666666;
+  --accent-text: #000000;
+
+  --skeu-hero: none;
+  --skeu-card: none;
+  --skeu-btn: none;
+  --skeu-theme-btn: none;
+  --skeu-card-tint: rgba(0, 0, 0, 0);
+  --skeu-hero-tint: rgba(0, 0, 0, 0);
+
+  --shadow-inset: inset 2px 2px #2e2e2e, inset -2px -2px #000000;
+  --shadow-inset-sm: inset 1px 1px #2e2e2e, inset -1px -1px #000000;
+}
+
+/* ---------- Crisp theme (pure white, no orange) ---------- */
+[data-theme="crisp"] {
+  --header-bg: #eeeeee;
+  --header-bg-light: #f5f5f5;
+  --header-bg-dark: #e0e0e0;
+  --header-text: #111111;
+  --header-text-muted: rgba(17, 17, 17, 0.55);
+
+  --sidebar-bg: #f5f5f5;
+  --sidebar-bg-light: #fafafa;
+  --sidebar-bg-dark: #ebebeb;
+  --sidebar-border: #cccccc;
+  --sidebar-text: #111111;
+  --sidebar-text-muted: #555555;
+  --sidebar-active-bg: #222222;
+  --sidebar-active-text: #ffffff;
+  --sidebar-hover-bg: rgba(0, 0, 0, 0.06);
+
+  --body-bg: #ffffff;
+  --body-text: #111111;
+  --body-text-muted: #555555;
+  --body-border: #cccccc;
+  --body-card-bg: #fafafa;
+  --body-card-border: #cccccc;
+
+  --accent: #222222;
+  --accent-light: #444444;
+  --accent-dark: #000000;
+  --accent-text: #ffffff;
+
+  --skeu-hero: none;
+  --skeu-card: none;
+  --skeu-btn: none;
+  --skeu-theme-btn: none;
+  --skeu-card-tint: rgba(0, 0, 0, 0);
+  --skeu-hero-tint: rgba(0, 0, 0, 0);
+
+  --shadow-inset: inset 2px 2px #f0f0f0, inset -2px -2px #aaaaaa;
+  --shadow-inset-sm: inset 1px 1px #f0f0f0, inset -1px -1px #aaaaaa;
+}
+
+/* ---------- Gradient theme (user-chosen gradient) ---------- */
+[data-theme="gradient"] {
+  /* Set by JS from localStorage; defaults are a purple→pink gradient */
+  --gradient-start: #4f46e5;
+  --gradient-end: #db2777;
+  /* Computed by JS for accessibility; defaults assume dark gradient */
+  --gradient-text: #ffffff;
+  --gradient-text-muted: rgba(255, 255, 255, 0.65);
+  --gradient-border: rgba(255, 255, 255, 0.18);
+  --gradient-card-bg: rgba(0, 0, 0, 0.18);
+  --gradient-panel-bg: rgba(0, 0, 0, 0.22);
+
+  --header-bg: rgba(0, 0, 0, 0.22);
+  --header-bg-light: rgba(0, 0, 0, 0.16);
+  --header-bg-dark: rgba(0, 0, 0, 0.30);
+  --header-text: var(--gradient-text);
+  --header-text-muted: var(--gradient-text-muted);
+
+  --sidebar-bg: var(--gradient-panel-bg);
+  --sidebar-bg-light: rgba(0, 0, 0, 0.14);
+  --sidebar-bg-dark: rgba(0, 0, 0, 0.30);
+  --sidebar-border: var(--gradient-border);
+  --sidebar-text: var(--gradient-text);
+  --sidebar-text-muted: var(--gradient-text-muted);
+  --sidebar-active-bg: rgba(0, 0, 0, 0.30);
+  --sidebar-active-text: var(--gradient-text);
+  --sidebar-hover-bg: rgba(0, 0, 0, 0.12);
+
+  --body-bg: transparent;
+  --body-text: var(--gradient-text);
+  --body-text-muted: var(--gradient-text-muted);
+  --body-border: var(--gradient-border);
+  --body-card-bg: var(--gradient-card-bg);
+  --body-card-border: var(--gradient-border);
+
+  --accent: var(--gradient-text);
+  --accent-light: var(--gradient-text);
+  --accent-dark: var(--gradient-text-muted);
+  --accent-text: var(--gradient-start);
+
+  --skeu-hero: none;
+  --skeu-card: none;
+  --skeu-btn: none;
+  --skeu-theme-btn: none;
+  --skeu-card-tint: rgba(0, 0, 0, 0);
+  --skeu-hero-tint: rgba(0, 0, 0, 0);
+
+  --shadow-inset: inset 2px 2px rgba(255, 255, 255, 0.18), inset -2px -2px rgba(0, 0, 0, 0.25);
+  --shadow-inset-sm: inset 1px 1px rgba(255, 255, 255, 0.18), inset -1px -1px rgba(0, 0, 0, 0.25);
+}
+
 [data-no-theme-images="true"] {
   --skeu-hero: none;
   --skeu-card: none;
@@ -586,9 +719,10 @@ textarea {
   display: flex;
   flex-direction: column;
   background: #dea77d;
-  /* Own stacking context: weather canvas (z-index:0) sits above this
-     background but below .site-main-content (z-index:1) */
-  isolation: isolate;
+  /* NOTE: isolation: isolate was removed so that fixed modal overlays
+     (z-index:200) escape the site-main stacking context and correctly
+     paint above the sticky header (z-index:100). The weather canvas
+     keeps its place because .site-main-content has z-index:1 > canvas z-index:0. */
 }
 
 [data-theme="dark"] .site-main {
@@ -653,6 +787,177 @@ textarea {
     min-height: calc(100vh - var(--header-h));
     padding: 6px 8px;
   }
+}
+
+/* ============================================================
+   PUREBLACK THEME — component overrides for hardcoded colors
+   ============================================================ */
+[data-theme="pureblack"] .site-main { background: #000000; }
+[data-theme="pureblack"] .card { border-color: #2e2e2e #000000 #000000 #2e2e2e; }
+[data-theme="pureblack"] .album-card { border-color: #2e2e2e #000000 #000000 #2e2e2e; }
+[data-theme="pureblack"] .album-card:hover { outline-color: #aaaaaa; }
+[data-theme="pureblack"] .modal-box { background: #111111; border-color: #2e2e2e #000000 #000000 #2e2e2e; }
+[data-theme="pureblack"] .modal-box,
+[data-theme="pureblack"] .modal-box input,
+[data-theme="pureblack"] .modal-box textarea { color: #ffffff; }
+
+[data-theme="pureblack"] .btn {
+  background: #222222;
+  color: #ffffff;
+  border-color: #555555 #111111 #111111 #555555;
+}
+[data-theme="pureblack"] .btn:active { border-color: #111111 #555555 #555555 #111111; }
+[data-theme="pureblack"] .btn-primary {
+  background: #333333;
+  color: #ffffff;
+  border-color: #555555 #111111 #111111 #555555;
+  outline-color: #888888;
+}
+[data-theme="pureblack"] .btn-primary:hover { background: #444444; }
+[data-theme="pureblack"] .btn-primary:active { background: #1a1a1a; border-color: #111111 #555555 #555555 #111111; }
+[data-theme="pureblack"] .btn-secondary { background: #222222; color: #ffffff; }
+[data-theme="pureblack"] .badge { background: #333333; border-color: #555555; }
+
+[data-theme="pureblack"] input[type="text"],
+[data-theme="pureblack"] input[type="search"],
+[data-theme="pureblack"] input[type="email"],
+[data-theme="pureblack"] textarea,
+[data-theme="pureblack"] select {
+  background: #1a1a1a;
+  color: #ffffff;
+  border-color: #000000 #444444 #444444 #000000;
+}
+[data-theme="pureblack"] input:focus,
+[data-theme="pureblack"] textarea:focus,
+[data-theme="pureblack"] select:focus {
+  border-color: #000000 #444444 #444444 #000000;
+  outline-color: #888888;
+}
+
+[data-theme="pureblack"] ::-webkit-scrollbar-track { background: #111111; border-color: #2e2e2e; }
+[data-theme="pureblack"] ::-webkit-scrollbar-thumb { background: #333333; border-color: #555555 #111111 #111111 #555555; }
+[data-theme="pureblack"] ::-webkit-scrollbar-button { background: #222222; border-color: #555555 #111111 #111111 #555555; }
+
+/* ============================================================
+   CRISP THEME — component overrides for hardcoded colors
+   ============================================================ */
+[data-theme="crisp"] .site-main { background: #ffffff; }
+[data-theme="crisp"] .card { border-color: #f5f5f5 #aaaaaa #aaaaaa #f5f5f5; }
+[data-theme="crisp"] .album-card { border-color: #f5f5f5 #aaaaaa #aaaaaa #f5f5f5; }
+[data-theme="crisp"] .album-card:hover { outline-color: #222222; }
+[data-theme="crisp"] .modal-box { background: #ffffff; border-color: #f5f5f5 #aaaaaa #aaaaaa #f5f5f5; }
+[data-theme="crisp"] .modal-box,
+[data-theme="crisp"] .modal-box input,
+[data-theme="crisp"] .modal-box textarea { color: #111111; }
+
+[data-theme="crisp"] .btn {
+  background: #e8e8e8;
+  color: #111111;
+  border-color: #f5f5f5 #aaaaaa #aaaaaa #f5f5f5;
+}
+[data-theme="crisp"] .btn:active { border-color: #aaaaaa #f5f5f5 #f5f5f5 #aaaaaa; }
+[data-theme="crisp"] .btn-primary {
+  background: #222222;
+  color: #ffffff;
+  border-color: #f5f5f5 #aaaaaa #aaaaaa #f5f5f5;
+  outline-color: #111111;
+}
+[data-theme="crisp"] .btn-primary:hover { background: #000000; }
+[data-theme="crisp"] .btn-primary:active { background: #444444; border-color: #aaaaaa #f5f5f5 #f5f5f5 #aaaaaa; }
+[data-theme="crisp"] .btn-secondary { background: #e8e8e8; color: #111111; }
+[data-theme="crisp"] .badge { background: #222222; border-color: #111111; }
+
+[data-theme="crisp"] input[type="text"],
+[data-theme="crisp"] input[type="search"],
+[data-theme="crisp"] input[type="email"],
+[data-theme="crisp"] textarea,
+[data-theme="crisp"] select {
+  background: #ffffff;
+  color: #111111;
+  border-color: #aaaaaa #f0f0f0 #f0f0f0 #aaaaaa;
+}
+[data-theme="crisp"] input:focus,
+[data-theme="crisp"] textarea:focus,
+[data-theme="crisp"] select:focus {
+  border-color: #aaaaaa #f0f0f0 #f0f0f0 #aaaaaa;
+  outline-color: #222222;
+}
+
+[data-theme="crisp"] ::-webkit-scrollbar-track { background: #f0f0f0; border-color: #dddddd; }
+[data-theme="crisp"] ::-webkit-scrollbar-thumb { background: #cccccc; border-color: #e8e8e8 #aaaaaa #aaaaaa #e8e8e8; }
+[data-theme="crisp"] ::-webkit-scrollbar-button { background: #e0e0e0; border-color: #eeeeee #aaaaaa #aaaaaa #eeeeee; }
+
+/* ============================================================
+   GRADIENT THEME — full-page background + transparent panels
+   ============================================================ */
+[data-theme="gradient"] body {
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background-attachment: fixed;
+}
+[data-theme="gradient"] .site-main { background: transparent; }
+[data-theme="gradient"] .card {
+  background: var(--gradient-card-bg);
+  border-color: rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.15) rgba(255, 255, 255, 0.2);
+}
+[data-theme="gradient"] .album-card {
+  border-color: rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.15) rgba(255, 255, 255, 0.2);
+}
+[data-theme="gradient"] .album-card:hover { outline-color: var(--gradient-text); }
+[data-theme="gradient"] .modal-box {
+  background: var(--gradient-panel-bg);
+  border-color: rgba(255, 255, 255, 0.25) rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.2) rgba(255, 255, 255, 0.25);
+}
+[data-theme="gradient"] .modal-box,
+[data-theme="gradient"] .modal-box input,
+[data-theme="gradient"] .modal-box textarea { color: var(--gradient-text); }
+
+[data-theme="gradient"] .btn {
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--gradient-text);
+  border-color: rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.2) rgba(255, 255, 255, 0.3);
+}
+[data-theme="gradient"] .btn:active {
+  border-color: rgba(0, 0, 0, 0.2) rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.2);
+}
+[data-theme="gradient"] .btn-primary {
+  background: rgba(0, 0, 0, 0.40);
+  color: var(--gradient-text);
+  border-color: rgba(255, 255, 255, 0.35) rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.25) rgba(255, 255, 255, 0.35);
+  outline-color: var(--gradient-text);
+}
+[data-theme="gradient"] .btn-primary:hover { background: rgba(0, 0, 0, 0.55); }
+[data-theme="gradient"] .btn-secondary { background: rgba(0, 0, 0, 0.18); color: var(--gradient-text); }
+[data-theme="gradient"] .badge { background: rgba(0, 0, 0, 0.35); border-color: rgba(255, 255, 255, 0.2); }
+
+[data-theme="gradient"] input[type="text"],
+[data-theme="gradient"] input[type="search"],
+[data-theme="gradient"] input[type="email"],
+[data-theme="gradient"] textarea,
+[data-theme="gradient"] select {
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--gradient-text);
+  border-color: rgba(0, 0, 0, 0.2) rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.2);
+}
+[data-theme="gradient"] input::placeholder,
+[data-theme="gradient"] textarea::placeholder { color: var(--gradient-text-muted); opacity: 1; }
+[data-theme="gradient"] input:focus,
+[data-theme="gradient"] textarea:focus,
+[data-theme="gradient"] select:focus {
+  outline-color: var(--gradient-text);
+  border-color: rgba(0, 0, 0, 0.2) rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="gradient"] ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+[data-theme="gradient"] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.35) rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.15) rgba(255, 255, 255, 0.35);
+}
+[data-theme="gradient"] ::-webkit-scrollbar-button {
+  background: rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.2) rgba(255, 255, 255, 0.3);
 }
 
 #root {
