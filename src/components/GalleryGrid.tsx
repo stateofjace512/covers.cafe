@@ -125,16 +125,14 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
       return { data: d, more: d.length === PAGE_SIZE };
 
     } else if (currentFilter === 'artist' && currentArtistUserId) {
-      const { data } = await applySort(
-        supabase
-          .from('covers_cafe_covers')
-          .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
-          .eq('user_id', currentArtistUserId)
-          .eq('is_public', true)
-          .eq('is_private', false)
-          .not('tags', 'cs', '{"official"}'),
-        currentSort,
-      ).range(from, to);
+      const isOwner = currentUser?.id === currentArtistUserId;
+      let q = supabase
+        .from('covers_cafe_covers')
+        .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
+        .eq('user_id', currentArtistUserId)
+        .not('tags', 'cs', '{"official"}');
+      if (!isOwner) q = q.eq('is_public', true).eq('is_private', false);
+      const { data } = await applySort(q, currentSort).range(from, to);
       const d = (data as Cover[]) ?? [];
       return { data: d, more: d.length === PAGE_SIZE };
 
