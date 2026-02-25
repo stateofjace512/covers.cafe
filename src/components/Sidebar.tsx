@@ -15,6 +15,8 @@ import GearIcon from './GearIcon';
 import ShieldIcon from './ShieldIcon';
 import WeatherIcon from './WeatherIcon';
 import WeatherMicroApp from './WeatherMicroApp';
+import SettingSlideIcon from './SettingSlideIcon';
+import GradientTuner from './GradientTuner';
 
 const NAV = [
   { section: 'Discover', label: 'Gallery',   icon: <GalleryIcon size={18} />,        path: '/' },
@@ -35,9 +37,10 @@ type SidebarProps = {
   onNavigate: () => void;
 };
 
-// Each microapp entry: { id, icon, label, component }
+// Each microapp entry: { id, icon, label }
 const MICROAPPS = [
-  { id: 'weather', icon: <WeatherIcon size={14} />, label: 'Weather' },
+  { id: 'weather',  icon: <WeatherIcon size={14} />,       label: 'Weather' },
+  { id: 'gradient', icon: <SettingSlideIcon size={14} />,  label: 'Gradient Tuner' },
 ] as const;
 
 export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
@@ -163,6 +166,9 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
       {/* Rendered microapp windows */}
       {openApps.has('weather') && (
         <WeatherMicroApp onClose={() => toggleApp('weather')} />
+      )}
+      {openApps.has('gradient') && (
+        <GradientTuner onClose={() => toggleApp('gradient')} />
       )}
 
       

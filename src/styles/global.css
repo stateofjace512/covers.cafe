@@ -719,9 +719,10 @@ textarea {
   display: flex;
   flex-direction: column;
   background: #dea77d;
-  /* Own stacking context: weather canvas (z-index:0) sits above this
-     background but below .site-main-content (z-index:1) */
-  isolation: isolate;
+  /* NOTE: isolation: isolate was removed so that fixed modal overlays
+     (z-index:200) escape the site-main stacking context and correctly
+     paint above the sticky header (z-index:100). The weather canvas
+     keeps its place because .site-main-content has z-index:1 > canvas z-index:0. */
 }
 
 [data-theme="dark"] .site-main {

@@ -1,7 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
 import GearIcon from '../components/GearIcon';
-import MoonIcon from '../components/MoonIcon';
-import SunIcon from '../components/SunIcon';
 import LockIcon from '../components/LockIcon';
 import EmailIcon from '../components/EmailIcon';
 import TrashIcon from '../components/TrashIcon';
@@ -11,6 +9,9 @@ import LoadingIcon from '../components/LoadingIcon';
 import ShieldIcon from '../components/ShieldIcon';
 import MonitorIcon from '../components/MonitorIcon';
 import LogoutIcon from '../components/LogoutIcon';
+import MilkIcon from '../components/MilkIcon';
+import TeaIcon from '../components/TeaIcon';
+import SettingSlideIcon from '../components/SettingSlideIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -553,10 +554,10 @@ export default function Settings() {
             </div>
             <div className="settings-row-control" style={{ flexWrap: 'wrap', gap: '4px' }}>
               <button className={`btn${currentTheme === 'light' ? ' btn-primary' : ' btn-secondary'}`} onClick={() => applyTheme('light')}>
-                <SunIcon size={13} /> Light
+                <MilkIcon size={13} /> Frappe
               </button>
               <button className={`btn${currentTheme === 'dark' ? ' btn-primary' : ' btn-secondary'}`} onClick={() => applyTheme('dark')}>
-                <MoonIcon size={13} /> Dark
+                <TeaIcon size={13} /> Mocha
               </button>
               <button className={`btn${currentTheme === 'pureblack' ? ' btn-primary' : ' btn-secondary'}`} onClick={() => applyTheme('pureblack')}>
                 ◼ Black
@@ -565,7 +566,7 @@ export default function Settings() {
                 ◻ Crisp
               </button>
               <button className={`btn${currentTheme === 'gradient' ? ' btn-primary' : ' btn-secondary'}`} onClick={() => applyTheme('gradient')}>
-                ◈ Gradient
+                <SettingSlideIcon size={13} /> Gradient
               </button>
             </div>
           </div>
