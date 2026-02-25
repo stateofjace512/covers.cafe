@@ -913,6 +913,9 @@ textarea {
   background-attachment: fixed;
 }
 [data-theme="gradient"] .site-main { background: transparent; }
+[data-theme="gradient"] .site-header {
+  background: linear-gradient(90deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+}
 [data-theme="gradient"] .site-sidebar {
   background: linear-gradient(180deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
   border-right-color: rgba(255, 255, 255, 0.25);
@@ -980,6 +983,27 @@ textarea {
 [data-theme="gradient"] ::-webkit-scrollbar-button {
   background: rgba(0, 0, 0, 0.25);
   border-color: rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.2) rgba(255, 255, 255, 0.3);
+}
+
+/* --accent = var(--gradient-text) = white in gradient mode, so any element using
+   "background: var(--accent); color: #fff" becomes white-on-white.
+   Override all toggle/active/hover-highlight patterns with a dark translucent bg. */
+[data-theme="gradient"] .upload-mode-btn--active,
+[data-theme="gradient"] .osg-select-btn--active,
+[data-theme="gradient"] .osr-select-btn--active,
+[data-theme="gradient"] .ma-select-btn--active,
+[data-theme="gradient"] .col-visibility-btn--active,
+[data-theme="gradient"] .col-set-cover-btn--active,
+[data-theme="gradient"] .ctx-item:hover,
+[data-theme="gradient"] .cover-size-option:hover,
+[data-theme="gradient"] .cover-download-option:hover,
+[data-theme="gradient"] .cover-tag--clickable:hover,
+[data-theme="gradient"] .cover-tag:hover,
+[data-theme="gradient"] .notif-item:hover,
+[data-theme="gradient"] .header-theme-dropdown-item:hover {
+  background: rgba(0, 0, 0, 0.45);
+  color: var(--gradient-text);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 #root {
