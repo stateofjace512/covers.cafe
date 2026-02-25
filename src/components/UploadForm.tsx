@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UploadDownloadIcon from './UploadDownloadIcon';
 import XIcon from './XIcon';
@@ -86,13 +86,49 @@ function detectArtistSplit(value: string): string[] {
   return parts.length >= 2 ? parts : [];
 }
 
+
+
+async function detectImageContainer(file: File): Promise<string> {
+  const bytes = new Uint8Array(await file.slice(0, 128).arrayBuffer());
+
+  const hasAscii = (offset: number, text: string) => text.split('').every((ch, i) => bytes[offset + i] === ch.charCodeAt(0));
+
+  // JPEG: FF D8 FF
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'JPEG';
+  // PNG
+  if (bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return 'PNG';
+  // GIF
+  if (bytes.length >= 6 && (hasAscii(0, 'GIF87a') || hasAscii(0, 'GIF89a'))) return 'GIF';
+  // WEBP: RIFF....WEBP
+  if (bytes.length >= 12 && hasAscii(0, 'RIFF') && hasAscii(8, 'WEBP')) return 'WEBP';
+  // ISOBMFF (AVIF/HEIC/etc): ....ftyp....
+  if (bytes.length >= 12 && hasAscii(4, 'ftyp')) {
+    const brand = String.fromCharCode(bytes[8] ?? 0, bytes[9] ?? 0, bytes[10] ?? 0, bytes[11] ?? 0);
+    if (brand.startsWith('avi')) return 'AVIF';
+    if (brand.startsWith('hei') || brand.startsWith('hei') || brand.startsWith('mif1') || brand.startsWith('msf1')) return 'HEIC';
+    return `ISOBMFF(${brand.trim() || 'unknown'})`;
+  }
+  // SVG (text/xml)
+  const head = new TextDecoder().decode(bytes).toLowerCase();
+  if (head.includes('<svg')) return 'SVG';
+
+  return file.type || 'unknown file type';
+}
+
+function renderErrorWithTerms(message: string): ReactNode {
+  if (!message.startsWith('This image is not allowed on our site.')) return message;
+  return <>This image is not allowed on our site. Read our <a href="/terms">Terms</a>.</>;
+}
+
+
 type ValidationResult =
   | { ok: true }
   | { ok: false; error: string }
   | { ok: false; tooLarge: true; width: number; height: number };
 
 async function validateFile(file: File): Promise<ValidationResult> {
-  if (file.type !== 'image/jpeg') return { ok: false, error: 'Only JPG/JPEG files are accepted.' };
+  const container = await detectImageContainer(file);
+  if (container !== 'JPEG') return { ok: false, error: `This image is ${container}, try uploading a jpg/jpeg image.` };
   return new Promise((resolve) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -165,7 +201,7 @@ export default function UploadForm() {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ReactNode | null>(null);
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
@@ -373,7 +409,7 @@ export default function UploadForm() {
       const urlJson = await urlRes.json() as { ok: boolean; code?: string; uploadUrl?: string; cfImageId?: string; message?: string };
       if (!urlJson.ok || !urlJson.uploadUrl || !urlJson.cfImageId) {
         if (urlJson.code === 'DUPLICATE') throw new Error('This image is already in our gallery!');
-        if (urlJson.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms: /terms');
+        if (urlJson.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms.');
         throw new Error(urlJson.message ?? 'Could not get upload URL');
       }
 
@@ -404,14 +440,15 @@ export default function UploadForm() {
       const json = await res.json() as { ok: boolean; code?: string; message?: string };
       if (!json.ok) {
         if (json.code === 'DUPLICATE') throw new Error('This image is already in our gallery!');
-        if (json.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms: /terms');
+        if (json.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms.');
         throw new Error(json.message ?? 'Upload failed');
       }
 
       setSuccess(true);
       setTimeout(() => navigate('/'), 1800);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
+      const msg = err instanceof Error ? err.message : 'Upload failed. Please try again.';
+      setError(renderErrorWithTerms(msg));
     }
     setUploading(false);
   };
@@ -507,7 +544,7 @@ export default function UploadForm() {
         const urlJson = await urlRes.json() as { ok: boolean; code?: string; uploadUrl?: string; cfImageId?: string; message?: string };
         if (!urlJson.ok || !urlJson.uploadUrl || !urlJson.cfImageId) {
           if (urlJson.code === 'DUPLICATE') throw new Error('This image is already in our gallery!');
-          if (urlJson.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms: /terms');
+          if (urlJson.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms.');
           throw new Error(urlJson.message ?? 'Could not get upload URL');
         }
 
@@ -535,7 +572,7 @@ export default function UploadForm() {
         const json = await res.json() as { ok: boolean; code?: string; message?: string };
         if (!json.ok) {
           if (json.code === 'DUPLICATE') throw new Error('This image is already in our gallery!');
-          if (json.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms: /terms');
+          if (json.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms.');
           throw new Error(json.message ?? 'Upload failed');
         }
 
@@ -964,7 +1001,7 @@ export default function UploadForm() {
                       </div>
                     )}
                     {item.errorMsg && (
-                      <p className="bulk-item-error"><AlertCircleIcon size={12} /> {item.errorMsg}</p>
+                      <p className="bulk-item-error"><AlertCircleIcon size={12} /> {renderErrorWithTerms(item.errorMsg)}</p>
                     )}
                   </div>
                   <div className="bulk-item-status">
