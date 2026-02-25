@@ -15,7 +15,7 @@ export const GET: APIRoute = async ({ request }) => {
     .order('username')
     .limit(12);
 
-  if (q) query = query.ilike('username', `${q}%`);
+  if (q) query = query.or(`username.ilike.%${q}%,display_name.ilike.%${q}%`);
 
   const { data, error } = await query;
   if (error) return new Response(error.message, { status: 500 });

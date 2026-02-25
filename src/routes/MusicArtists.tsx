@@ -327,7 +327,7 @@ export default function MusicArtists() {
       )}
 
       {isLoading ? (
-        <p className="text-muted">Loading…</p>
+        <p className="text-muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><LoadingIcon size={16} className="ma-list-spinner" /> Loading…</p>
       ) : !filtered.length ? (
         <p className="text-muted">No artists found{search ? ` for "${search}"` : ''}.</p>
       ) : (

@@ -74,6 +74,16 @@ export const POST: APIRoute = async ({ request }) => {
   if (userError || !userData.user) return json({ ok: false, message: 'Unauthorized' }, 401);
   const userId = userData.user.id;
 
+  const { data: activeBan } = await sb
+    .from('covers_cafe_user_bans')
+    .select('reason, expires_at')
+    .eq('user_id', userId)
+    .maybeSingle();
+  const isBanned = Boolean(activeBan) && !(activeBan?.expires_at && new Date(activeBan.expires_at) < new Date());
+  if (isBanned) {
+    return json({ ok: false, message: activeBan?.reason || 'Your account is restricted from posting.' }, 403);
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await request.json() as Record<string, unknown>;

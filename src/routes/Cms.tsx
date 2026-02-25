@@ -52,6 +52,17 @@ type UserOption = {
   display_name: string | null;
 };
 
+type BlacklistItem = {
+  value: string;
+  reason: string | null;
+  created_at: string;
+};
+
+type CoverLookupResult = {
+  cover: { id: string; page_slug: string; title: string; artist: string; is_public: boolean; is_private: boolean; profiles?: { username?: string | null; display_name?: string | null } | null };
+  nextByUser: Array<{ id: string; page_slug: string; title: string; artist: string; is_public: boolean; is_private: boolean; created_at: string }>;
+};
+
 type DashboardPayload = {
   reports: Report[];
   published: PublishedCover[];
@@ -93,6 +104,17 @@ export default function Cms() {
   // Legal operations
   const [removeTag, setRemoveTag] = useState('');
 
+  // Official spam controls
+  const [artistBlacklist, setArtistBlacklist] = useState<BlacklistItem[]>([]);
+  const [phraseBlacklist, setPhraseBlacklist] = useState<BlacklistItem[]>([]);
+  const [newArtistBlacklist, setNewArtistBlacklist] = useState('');
+  const [newPhraseBlacklist, setNewPhraseBlacklist] = useState('');
+  const [blacklistReason, setBlacklistReason] = useState('');
+
+  // Fast cover lookup
+  const [coverLookupInput, setCoverLookupInput] = useState('');
+  const [coverLookupResult, setCoverLookupResult] = useState<CoverLookupResult | null>(null);
+
   // Cloudflare migration
   const [migrating, setMigrating] = useState(false);
   const [migrateLog, setMigrateLog] = useState<string[]>([]);
@@ -124,12 +146,22 @@ export default function Cms() {
     setData(await res.json() as DashboardPayload);
   }
 
+  async function loadBlacklist() {
+    if (!token) return;
+    const res = await fetch('/api/cms/official-blacklist', { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return;
+    const payload = await res.json() as { artists: Array<{ artist_name: string; reason: string | null; created_at: string }>; phrases: Array<{ phrase: string; reason: string | null; created_at: string }> };
+    setArtistBlacklist((payload.artists ?? []).map((a) => ({ value: a.artist_name, reason: a.reason, created_at: a.created_at })));
+    setPhraseBlacklist((payload.phrases ?? []).map((p) => ({ value: p.phrase, reason: p.reason, created_at: p.created_at })));
+  }
+
   useEffect(() => {
     if (!loading && !user) openAuthModal('login');
   }, [loading, user, openAuthModal]);
 
   useEffect(() => {
     loadDashboard();
+    loadBlacklist();
   }, [token]);
 
   useEffect(() => {
@@ -316,6 +348,59 @@ export default function Cms() {
     }
     return [...map.entries()];
   }, [filteredCovers]);
+
+
+  async function addBlacklist(type: 'artist' | 'phrase') {
+    if (!token) return;
+    const value = (type === 'artist' ? newArtistBlacklist : newPhraseBlacklist).trim();
+    if (!value) return;
+    setBusyId(`blacklist-add-${type}`);
+    const res = await fetch('/api/cms/official-blacklist', {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ type, value, reason: blacklistReason.trim() || null }),
+    });
+    if (!res.ok) setError('Could not add blacklist rule.');
+    else {
+      if (type === 'artist') setNewArtistBlacklist(''); else setNewPhraseBlacklist('');
+      setBlacklistReason('');
+      flash('Blacklist updated.');
+      await loadBlacklist();
+    }
+    setBusyId(null);
+  }
+
+  async function removeBlacklist(type: 'artist' | 'phrase', value: string) {
+    if (!token) return;
+    setBusyId(`blacklist-del-${type}-${value}`);
+    const res = await fetch('/api/cms/official-blacklist', {
+      method: 'DELETE',
+      headers: authHeaders,
+      body: JSON.stringify({ type, value }),
+    });
+    if (!res.ok) setError('Could not remove blacklist rule.');
+    else {
+      flash('Blacklist updated.');
+      await loadBlacklist();
+    }
+    setBusyId(null);
+  }
+
+  async function lookupCoverByUrl() {
+    if (!token || !coverLookupInput.trim()) return;
+    setBusyId('cover-lookup');
+    setCoverLookupResult(null);
+    const res = await fetch(`/api/cms/cover-lookup?q=${encodeURIComponent(coverLookupInput.trim())}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      setError('Could not find that cover URL/slug.');
+    } else {
+      setCoverLookupResult(await res.json() as CoverLookupResult);
+      flash('Cover lookup complete.');
+    }
+    setBusyId(null);
+  }
 
   // ── Guards ─────────────────────────────────────────────────────────────────
 
@@ -600,6 +685,73 @@ export default function Cms() {
                 {op.can_be_removed === false && op.user_id !== user?.id && (
                   <span className="cms-badge cms-badge--locked" title="This operator cannot be removed">Locked</span>
                 )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+
+      {/* ── Official gallery spam controls ─────────────────────────────── */}
+      <section className="surface cms-section">
+        <h2 className="cms-h2">Official gallery spam controls</h2>
+        <p className="cms-desc">Blacklist exact artists and loose phrases from official gallery/search results.</p>
+        <div style={{ display: 'grid', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input className="form-input" placeholder="Add artist (exact)" value={newArtistBlacklist} onChange={(e) => setNewArtistBlacklist(e.target.value)} style={{ minWidth: 220 }} />
+            <input className="form-input" placeholder="Reason (optional)" value={blacklistReason} onChange={(e) => setBlacklistReason(e.target.value)} style={{ minWidth: 220 }} />
+            <button className="btn btn-primary" onClick={() => addBlacklist('artist')} disabled={busyId === 'blacklist-add-artist'}>Add artist rule</button>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input className="form-input" placeholder="Add phrase contains" value={newPhraseBlacklist} onChange={(e) => setNewPhraseBlacklist(e.target.value)} style={{ minWidth: 220 }} />
+            <button className="btn btn-primary" onClick={() => addBlacklist('phrase')} disabled={busyId === 'blacklist-add-phrase'}>Add phrase rule</button>
+          </div>
+          <div className="cms-ban-list">
+            {artistBlacklist.map((item) => (
+              <div key={`artist-${item.value}`} className="cms-ban-row">
+                <div className="cms-ban-details">
+                  <span className="cms-ban-user">Artist: {item.value}</span>
+                  <span className="cms-ban-reason">{item.reason ?? 'No reason provided'}</span>
+                </div>
+                <button className="btn" onClick={() => removeBlacklist('artist', item.value)}>Remove</button>
+              </div>
+            ))}
+            {phraseBlacklist.map((item) => (
+              <div key={`phrase-${item.value}`} className="cms-ban-row">
+                <div className="cms-ban-details">
+                  <span className="cms-ban-user">Phrase: {item.value}</span>
+                  <span className="cms-ban-reason">{item.reason ?? 'No reason provided'}</span>
+                </div>
+                <button className="btn" onClick={() => removeBlacklist('phrase', item.value)}>Remove</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Fast cover lookup ───────────────────────────────────────────── */}
+      <section className="surface cms-section">
+        <h2 className="cms-h2">Fast cover lookup</h2>
+        <p className="cms-desc">Paste a fan cover URL to load that cover and the next 10 by the same user.</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input className="form-input" placeholder="https://covers.cafe/covers/fan/..." value={coverLookupInput} onChange={(e) => setCoverLookupInput(e.target.value)} style={{ minWidth: 380, flex: 1 }} />
+          <button className="btn btn-primary" onClick={lookupCoverByUrl} disabled={busyId === 'cover-lookup'}>Lookup</button>
+        </div>
+        {coverLookupResult && (
+          <div className="cms-ban-list" style={{ marginTop: 10 }}>
+            <div className="cms-ban-row">
+              <div className="cms-ban-details">
+                <span className="cms-ban-user">{coverLookupResult.cover.artist} — {coverLookupResult.cover.title}</span>
+                <span className="cms-ban-reason">/{coverLookupResult.cover.page_slug}</span>
+              </div>
+            </div>
+            {coverLookupResult.nextByUser.map((c) => (
+              <div key={c.id} className="cms-ban-row">
+                <div className="cms-ban-details">
+                  <span className="cms-ban-user">{c.artist} — {c.title}</span>
+                  <span className="cms-ban-reason">/{c.page_slug}</span>
+                </div>
+                <button className="btn" onClick={() => setCoverVisibility(c.id, !c.is_public)}>{c.is_public ? 'Unpublish' : 'Publish'}</button>
               </div>
             ))}
           </div>

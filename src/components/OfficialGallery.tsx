@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { checkRateLimit, checkWeightedRateLimit } from '../lib/rateLimit';
 import { searchOfficialAssets, type OfficialUpsertRow } from '../lib/officialSearch';
 import { getOfficialCoverPath, slugifyArtist } from '../lib/coverRoutes';
+import { isOfficialRowBlacklisted, loadOfficialBlacklist, type OfficialBlacklist } from '../lib/officialBlacklist';
 
 interface OfficialCoverRow {
   artist_name: string | null;
@@ -37,10 +38,12 @@ export default function OfficialGallery() {
   const [merging, setMerging] = useState(false);
   const [undoSnapshot, setUndoSnapshot] = useState<{ album_cover_url: string; artist_name: string }[] | null>(null);
   const [undoCountdown, setUndoCountdown] = useState(0);
+  const [blacklist, setBlacklist] = useState<OfficialBlacklist>({ artists: new Set(), phrases: [] });
   const undoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const normalizedArtist = useMemo(() => artist.trim(), [artist]);
   const normalizedAlbum = useMemo(() => album.trim(), [album]);
+  const filteredCovers = useMemo(() => covers.filter((row) => !isOfficialRowBlacklisted(row, blacklist)), [covers, blacklist]);
 
   const loadCachedPage = useCallback(async (pageNumber: number) => {
     if (!normalizedArtist) { setCovers([]); setHasMore(false); return [] as OfficialCoverRow[]; }
@@ -85,6 +88,9 @@ export default function OfficialGallery() {
   }, [fetchFromItunes, loadCachedPage, normalizedArtist]);
 
   useEffect(() => { handleSearch(); }, [handleSearch]);
+  useEffect(() => {
+    void loadOfficialBlacklist().then(setBlacklist);
+  }, []);
   const handleLoadMore = async () => { if (loadingMore || !hasMore) return; if (!checkRateLimit('official_gallery_load_more_clicks', 5, 10_000) || !checkWeightedRateLimit('official_gallery_load_more_items', 500, 30_000, PAGE_SIZE)) { setLoadMoreRateLimited(true); return; } const nextPage = page + 1; setLoadingMore(true); await loadCachedPage(nextPage); setPage(nextPage); setLoadingMore(false); };
 
   const toggleArtist = (name: string) => {
@@ -191,7 +197,7 @@ export default function OfficialGallery() {
       ) : (
         <>
           <div className="album-grid">
-            {covers.map((cover) => {
+            {filteredCovers.map((cover) => {
               const artistName = cover.artist_name ?? '';
               const isSelected = selectedArtists.has(artistName);
               return (

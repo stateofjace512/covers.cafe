@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import DownloadIcon from '../components/DownloadIcon';
+import LoadingIcon from '../components/LoadingIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import CoverCard from '../components/CoverCard';
@@ -64,7 +65,7 @@ export default function Downloads() {
           </div>
         </div>
       ) : loading ? (
-        <p className="text-muted">Loading…</p>
+        <p className="text-muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><LoadingIcon size={16} className="gallery-spinner" /> Loading…</p>
       ) : !covers.length ? (
         <div className="empty-state card">
           <DownloadIcon size={48} style={{ opacity: 0.25, marginBottom: 14 }} />

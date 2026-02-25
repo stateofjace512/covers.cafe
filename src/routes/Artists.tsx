@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UserIcon from '../components/UserIcon';
+import LoadingIcon from '../components/LoadingIcon';
 import { supabase } from '../lib/supabase';
 import { getAvatarSrc } from '../lib/media';
 import { useAuth } from '../contexts/AuthContext';
@@ -64,7 +65,7 @@ export default function Artists() {
       </div>
 
       {loading ? (
-        <p className="text-muted">Loading…</p>
+        <p className="text-muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><LoadingIcon size={16} className="gallery-spinner" /> Loading…</p>
       ) : !sorted.length ? (
         <p className="text-muted">No users found{search ? ` for "${search}"` : ''}.</p>
       ) : (

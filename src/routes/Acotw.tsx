@@ -90,7 +90,7 @@ export default function Acotw() {
           )}
     
           {loading ? (
-            <span className="acotw-title-chunk">Loading poll…</span>
+            <span className="acotw-title-chunk"><LoadingIcon size={16} className="acotw-spinner" /> Loading poll…</span>
           ) : !poll || nominees.length === 0 ? (
             <span className="acotw-title-chunk">
               No poll yet. Favorite some covers to fuel next week’s nominees!
@@ -248,7 +248,7 @@ export default function Acotw() {
 
       {/* ── Archive ─────────────────────────────────────────────────────── */}
       <div className="acotw-archive-section">
-        <button className="acotw-archive-toggle" onClick={() => setShowArchive((v) => !v)}>
+        <button className="btn btn-secondary acotw-archive-toggle" onClick={() => setShowArchive((v) => !v)}>
           <TrophyIcon size={15} />
           Past Winners
           {showArchive ? <ChevronUpIcon size={15} /> : <ChevronDownIcon size={15} />}

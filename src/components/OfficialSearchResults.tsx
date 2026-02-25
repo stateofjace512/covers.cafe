@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import LoadingIcon from './LoadingIcon';
 import RateLimitModal from './RateLimitModal';
 import { useAuth } from '../contexts/AuthContext';
 import { checkRateLimit, checkWeightedRateLimit } from '../lib/rateLimit';
 import { searchOfficialAssets, type OfficialUpsertRow } from '../lib/officialSearch';
+import { isOfficialRowBlacklisted, loadOfficialBlacklist, type OfficialBlacklist } from '../lib/officialBlacklist';
 
 interface OfficialCoverRow {
   artist_name: string | null;
@@ -29,7 +30,9 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
   const [merging, setMerging] = useState(false);
   const [undoSnapshot, setUndoSnapshot] = useState<{ album_cover_url: string; artist_name: string }[] | null>(null);
   const [undoCountdown, setUndoCountdown] = useState(0);
+  const [blacklist, setBlacklist] = useState<OfficialBlacklist>({ artists: new Set(), phrases: [] });
   const undoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const filteredCovers = useMemo(() => covers.filter((row) => !isOfficialRowBlacklisted(row, blacklist)), [covers, blacklist]);
 
   const loadCachedPage = useCallback(async (pageNumber: number) => {
     const q = searchQuery.trim();
@@ -55,6 +58,10 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
     if (!q) return [] as OfficialUpsertRow[];
     return searchOfficialAssets(q, '', ['us', 'au', 'mx', 'jp']);
   }, [searchQuery]);
+
+  useEffect(() => {
+    void loadOfficialBlacklist().then(setBlacklist);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -113,7 +120,7 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
   const handleMerge = async () => {
     if (!session?.access_token || !mergeCanonical.trim() || selectedArtists.size < 2) return;
     const canonical = mergeCanonical.trim();
-    const snapshot = covers
+    const snapshot = filteredCovers
       .filter((c) => selectedArtists.has(c.artist_name ?? ''))
       .map((c) => ({ album_cover_url: c.album_cover_url, artist_name: c.artist_name ?? '' }));
     setMerging(true);
@@ -149,12 +156,12 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
 
   if (loading) return <div className="gallery-loading"><LoadingIcon size={28} className="gallery-spinner" /><span>Loading official covers…</span></div>;
 
-  return !covers.length ? (
+  return !filteredCovers.length ? (
     <div className="gallery-empty"><p>No official covers found for "{searchQuery}".</p></div>
   ) : (
     <>
       <div className="osr-header">
-        <p className="gallery-search-label" style={{ margin: 0 }}><strong>{covers.length}</strong> official results for <strong>"{searchQuery}"</strong></p>
+        <p className="gallery-search-label" style={{ margin: 0 }}><strong>{filteredCovers.length}</strong> official results for <strong>"{searchQuery}"</strong></p>
         <button
           className={`osr-select-btn${selectMode ? ' osr-select-btn--active' : ''}`}
           onClick={() => { setSelectMode((v) => !v); setSelectedArtists(new Set()); setMergeCanonical(''); }}
@@ -188,7 +195,7 @@ export default function OfficialSearchResults({ searchQuery }: { searchQuery: st
       )}
 
       <div className="album-grid">
-        {covers.map((cover) => {
+        {filteredCovers.map((cover) => {
           const artistName = cover.artist_name ?? '';
           const isSelected = selectedArtists.has(artistName);
           return (
