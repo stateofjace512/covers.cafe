@@ -227,6 +227,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
       return;
     }
     const isFav = favoritedIds.has(coverId);
+    // Optimistic update
     setFavoritedIds((prev) => {
       const next = new Set(prev);
       isFav ? next.delete(coverId) : next.add(coverId);
@@ -236,10 +237,20 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
       ? { ...c, favorite_count: Math.max(0, (c.favorite_count ?? 0) + (isFav ? -1 : 1)) }
       : c
     ));
-    if (isFav) {
-      await supabase.from('covers_cafe_favorites').delete().eq('user_id', user.id).eq('cover_id', coverId);
-    } else {
-      await supabase.from('covers_cafe_favorites').insert({ user_id: user.id, cover_id: coverId });
+    const { error } = isFav
+      ? await supabase.from('covers_cafe_favorites').delete().eq('user_id', user.id).eq('cover_id', coverId)
+      : await supabase.from('covers_cafe_favorites').insert({ user_id: user.id, cover_id: coverId });
+    if (error) {
+      // Revert optimistic update on failure
+      setFavoritedIds((prev) => {
+        const next = new Set(prev);
+        isFav ? next.add(coverId) : next.delete(coverId);
+        return next;
+      });
+      setCovers((prev) => prev.map((c) => c.id === coverId
+        ? { ...c, favorite_count: Math.max(0, (c.favorite_count ?? 0) + (isFav ? 1 : -1)) }
+        : c
+      ));
     }
   };
 

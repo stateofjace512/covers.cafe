@@ -166,11 +166,12 @@ export default function CoverDetail() {
     if (!user) return openAuthModal('login');
     if (!checkRateLimit('cover_detail_favorite', 8, 5000)) { setRateLimitedAction('cover_detail_favorite'); return; }
     if (isFavorited) {
-      await supabase.from('covers_cafe_favorites').delete().eq('user_id', user.id).eq('cover_id', cover.id);
+      const { error } = await supabase.from('covers_cafe_favorites').delete().eq('user_id', user.id).eq('cover_id', cover.id);
+      if (!error) setIsFavorited(false);
     } else {
-      await supabase.from('covers_cafe_favorites').insert({ user_id: user.id, cover_id: cover.id });
+      const { error } = await supabase.from('covers_cafe_favorites').insert({ user_id: user.id, cover_id: cover.id });
+      if (!error) setIsFavorited(true);
     }
-    setIsFavorited(!isFavorited);
   };
 
   const download = async (size?: number) => {

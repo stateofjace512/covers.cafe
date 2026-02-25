@@ -38,13 +38,6 @@ export function slugifyArtist(name: string): string {
   return slugifyPart(name);
 }
 
-export function buildCoverSlug(cover: Cover): string {
-  const publicId = String(cover.public_id ?? '');
-  const artist = slugifyPart(cover.artist);
-  const title = slugifyPart(cover.title).slice(0, 20).replace(/-+$/g, '');
-  return [publicId, artist, title].filter(Boolean).join('-');
-}
-
 export function getCoverPath(cover: Cover): string {
   return `/covers/fan/${cover.page_slug}`;
 }
