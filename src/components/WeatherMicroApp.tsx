@@ -17,19 +17,37 @@ const MODE_DEFAULTS: Record<'rain' | 'snow', Cfg> = {
   rain: { density: 400, speed: 15, wind: 5,  extra: 15, jitter: 15 },
 };
 
+const WEATHER_STORAGE_KEY = 'weatherMicroAppSettings';
+
+function loadWeatherSettings(): { mode: WeatherMode; isRising: boolean; cfg: Cfg } | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    const raw = localStorage.getItem(WEATHER_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as { mode: WeatherMode; isRising: boolean; cfg: Cfg };
+  } catch { return null; }
+}
+
 interface WeatherMicroAppProps { onClose: () => void; }
 
 export default function WeatherMicroApp({ onClose }: WeatherMicroAppProps) {
-  const [mode, setModeState] = useState<WeatherMode>('snow');
-  const [isRising, setIsRising] = useState(false);
-  const [pos, setPos]   = useState({ x: 240, y: 110 });
+  const saved = loadWeatherSettings();
+  const [mode, setModeState] = useState<WeatherMode>(saved?.mode ?? 'snow');
+  const [isRising, setIsRising] = useState(saved?.isRising ?? false);
+  const [pos, setPos]   = useState(() => {
+    if (typeof window === 'undefined') return { x: 240, y: 110 };
+    if (window.innerWidth <= 640) {
+      return { x: Math.max(0, (window.innerWidth - 320) / 2), y: Math.max(0, (window.innerHeight - 400) / 2) };
+    }
+    return { x: 240, y: 110 };
+  });
   const [size, setSize] = useState({ w: 320, h: 0 }); // h=0 → auto
-  const [cfg, setCfg]   = useState<Cfg>({ ...MODE_DEFAULTS.snow });
+  const [cfg, setCfg]   = useState<Cfg>(saved?.cfg ?? { ...MODE_DEFAULTS.snow });
 
   // Refs so the rAF loop always reads latest values without restarts
-  const modeRef     = useRef<WeatherMode>('snow');
-  const cfgRef      = useRef<Cfg>(cfg);
-  const isRisingRef = useRef(false);
+  const modeRef     = useRef<WeatherMode>(saved?.mode ?? 'snow');
+  const cfgRef      = useRef<Cfg>(saved?.cfg ?? { ...MODE_DEFAULTS.snow });
+  const isRisingRef = useRef(saved?.isRising ?? false);
   const canvasRef   = useRef<HTMLCanvasElement | null>(null);
   const particlesRef = useRef<Particle[]>([]);
   const rafRef      = useRef<number>(0);
@@ -155,6 +173,12 @@ export default function WeatherMicroApp({ onClose }: WeatherMicroAppProps) {
     if (m !== 'off') setCfg({ ...MODE_DEFAULTS[m] });
   }
 
+  // ── Save & Close ──────────────────────────────────────────────────
+  function handleSaveClose() {
+    try { localStorage.setItem(WEATHER_STORAGE_KEY, JSON.stringify({ mode, isRising, cfg })); } catch {}
+    onClose();
+  }
+
   // ── Titlebar drag ─────────────────────────────────────────────────
   const onTitleDown = useCallback((e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('.wma-close')) return;
@@ -241,6 +265,11 @@ export default function WeatherMicroApp({ onClose }: WeatherMicroAppProps) {
               <span className="wma-val">{cfg[key]}{key === 'jitter' ? '%' : ''}</span>
             </div>
           ))}
+        </div>
+
+        {/* Save & Close */}
+        <div className="wma-actions">
+          <button className="wma-btn wma-btn-active" onClick={handleSaveClose}>Save &amp; Close</button>
         </div>
       </div>
 

@@ -1227,6 +1227,7 @@
         .wma-close:active { border-color: #808080 #fff #fff #808080; padding: 1px 0 0 1px; }
         .wma-body { padding: 8px; flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
         .wma-modes { display: flex; gap: 4px; }
+        .wma-actions { display: flex; justify-content: flex-end; gap: 6px; }
         .wma-rise { margin-left: auto; }
         .wma-btn {
           background: #c0c0c0; border: 2px solid; border-color: #fff #808080 #808080 #fff;

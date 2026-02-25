@@ -119,7 +119,13 @@ export default function GradientTuner({ onClose }: GradientTunerProps) {
   const saved = getGradientPreference();
   const [start, setStart] = useState(saved.start);
   const [end, setEnd]     = useState(saved.end);
-  const [pos,  setPos]    = useState({ x: 260, y: 120 });
+  const [pos,  setPos]    = useState(() => {
+    if (typeof window === 'undefined') return { x: 260, y: 120 };
+    if (window.innerWidth <= 640) {
+      return { x: Math.max(0, (window.innerWidth - 300) / 2), y: Math.max(0, (window.innerHeight - 440) / 2) };
+    }
+    return { x: 260, y: 120 };
+  });
   const [size, setSize]   = useState({ w: 300, h: 0 });
 
   const dragRef   = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null);
