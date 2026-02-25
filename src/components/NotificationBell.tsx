@@ -11,7 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface Notification {
   id: string;
-  type: 'favorite' | 'comment' | 'comment_like' | 'comment_reply' | 'cover_removed' | 'friend_posted' | 'new_follower';
+  type: 'favorite' | 'comment' | 'comment_like' | 'comment_reply' | 'cover_removed' | 'friend_posted' | 'new_follower' | 'friend_request';
   cover_id: string | null;
   cover_title: string;
   cover_artist: string;
@@ -170,13 +170,13 @@ export default function NotificationBell() {
                     <span className="notif-num">{idx + 1}</span>
                     <span className={`notif-icon ${
                       n.type === 'cover_removed' ? 'notif-icon--removed'
-                      : n.type === 'new_follower' ? 'notif-icon--follow'
+                      : (n.type === 'new_follower' || n.type === 'friend_request') ? 'notif-icon--follow'
                       : n.type === 'friend_posted' ? 'notif-icon--friend'
                       : (n.type === 'favorite' || n.type === 'comment_like') ? 'notif-icon--fav'
                       : 'notif-icon--cmt'
                     }`}>
                       {n.type === 'cover_removed' ? <XIcon size={12} />
-                        : n.type === 'new_follower' ? <UserIcon size={12} />
+                        : (n.type === 'new_follower' || n.type === 'friend_request') ? <UserIcon size={12} />
                         : n.type === 'friend_posted' ? <GalleryIcon size={12} />
                         : (n.type === 'favorite' || n.type === 'comment_like') ? <FavoritesIcon size={12} />
                         : <CommentIcon size={12} />}
@@ -195,6 +195,15 @@ export default function NotificationBell() {
                           <button className="notif-user-link" onClick={() => { if (n.actor_username) navigate(`/users/${encodeURIComponent(n.actor_username)}`); setOpen(false); }}>
                             {n.actor_name}
                           </button>{' '}started following you
+                        </p>
+                      ) : n.type === 'friend_request' ? (
+                        <p className="notif-text">
+                          <button className="notif-user-link" onClick={() => { if (n.actor_username) navigate(`/users/${encodeURIComponent(n.actor_username)}`); setOpen(false); }}>
+                            {n.actor_name}
+                          </button>{' '}sent you a friend request —{' '}
+                          <button className="notif-cover-link" onClick={() => { navigate('/friends'); setOpen(false); }}>
+                            view requests
+                          </button>
                         </p>
                       ) : n.type === 'friend_posted' ? (
                         <p className="notif-text">
