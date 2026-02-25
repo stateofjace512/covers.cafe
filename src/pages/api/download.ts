@@ -16,6 +16,8 @@ import { getSupabaseServer } from './_supabase';
 const CLOUDFLARE_API = import.meta.env.CLOUDFLARE_API as string;
 const CLOUDFLARE_ACCOUNT_ID = import.meta.env.CLOUDFLARE_ACCOUNT_ID as string;
 
+const DOWNLOAD_CACHE_CONTROL = 'public, max-age=86400, s-maxage=2592000, stale-while-revalidate=604800';
+
 function err(msg: string, status: number) {
   return new Response(JSON.stringify({ ok: false, message: msg }), {
     status,
@@ -84,7 +86,7 @@ export const GET: APIRoute = async ({ url }) => {
     headers: {
       'Content-Type': targetSize ? 'image/jpeg' : contentType,
       'Content-Disposition': `attachment; filename="${filename}"`,
-      'Cache-Control': 'private, max-age=300',
+      'Cache-Control': DOWNLOAD_CACHE_CONTROL,
     },
   });
 };

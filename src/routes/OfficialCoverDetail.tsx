@@ -182,32 +182,7 @@ export default function OfficialCoverDetail() {
         </section>
       )}
 
-      <style>{`
-        .cover-spinner { animation: cover-spin 0.8s linear infinite; }
-        @keyframes cover-spin { to { transform: rotate(360deg); } }
-        .cover-page-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 22px; }
-        .cover-board { display: flex; flex-direction: column; align-items: center; gap: 14px; margin: 0 auto 16px; }
-        .cover-board-image { width: 100%; max-width: 600px; aspect-ratio: 1/1; object-fit: cover; border-radius: 0; box-shadow: var(--shadow-md); display: block; }
-        .cover-board-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .cover-fav-btn { background: linear-gradient(180deg, var(--sidebar-bg-light) 0%, var(--sidebar-bg) 55%, var(--sidebar-bg-dark) 100%); color: var(--sidebar-text); }
-        .cover-fav-btn--active { background: linear-gradient(180deg, #f0c060 0%, #d4a020 55%, #b08010 100%); color: #5a3a00; border-color: #8a6010; }
-        .cover-page-meta { max-width: 700px; margin: 0 auto 16px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px; }
-        .ocd-official-badge { background: rgba(0,0,0,0.07); border: 1px solid var(--body-card-border); color: var(--body-text-muted); font-size: 12px; padding: 2px 10px; border-radius: 0; }
-        .cover-page-title { font-size: 24px; color: var(--body-text); margin-bottom: 2px; line-height: 1.25; }
-        .cover-page-artist-wrap { margin: 0; padding: 0; font-size: 20px; color: var(--body-text-muted); }
-        .cover-page-artist-link { font-size: 20px; color: var(--body-text-muted); background: none; border: none; cursor: pointer; padding: 0; box-shadow: none; font-family: var(--font-body); display: inline; }
-        .cover-page-artist-link:hover { color: var(--accent); text-decoration: underline; }
-        .cover-meta-stats { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
-        .cover-meta-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 18px; color: var(--body-text-muted); background: var(--body-border); padding: 3px 8px; border-radius: 0; }
-        .cover-page-comments-wrap { max-width: 720px; margin: 0 auto; }
-        .cover-more-section { margin-top: 36px; padding-top: 28px; border-top: 2px solid var(--body-border); }
-        .cover-more-heading { font-size: 21px; color: var(--body-text); margin-bottom: 16px; }
-        .cover-more-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--cover-grid-min-width), 1fr)); gap: 10px; }
-        .cover-more-item { padding: 0; border: 1px solid var(--body-card-border); border-radius: 0; background: var(--body-card-bg); box-shadow: var(--shadow-sm); overflow: hidden; cursor: pointer; transition: transform 0.12s, box-shadow 0.12s; display: flex; flex-direction: column; text-align: left; }
-        .cover-more-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
-        .cover-more-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
-        .cover-more-label { font-size: 22px; font-family: var(--font-header); color: var(--body-text); padding: 6px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid var(--body-card-border); }
-      `}</style>
+      
     </div>
   );
 }

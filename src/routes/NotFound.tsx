@@ -18,51 +18,7 @@ export default function NotFound() {
         </button>
       </div>
 
-      <style>{`
-        .not-found-page {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex: 1;
-          min-height: 400px;
-          padding: 40px 24px;
-        }
-        .not-found-inner {
-          text-align: center;
-          max-width: 380px;
-        }
-        .not-found-icon {
-          color: var(--body-text-muted);
-          margin-bottom: 16px;
-          opacity: 0.5;
-        }
-        .not-found-code {
-          font-size: 72px;
-          color: var(--body-text);
-          line-height: 1;
-          margin: 0 0 10px;
-          letter-spacing: -2px;
-        }
-        [data-theme="dark"] .not-found-code { }
-        .not-found-headline {
-          font-size: 21px;
-          color: var(--body-text);
-          margin: 0 0 10px;
-        }
-        .not-found-sub {
-          font-size: 20px;
-          color: var(--body-text-muted);
-          line-height: 1.65;
-          margin: 0 0 28px;
-        }
-        .not-found-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 10px 24px;
-          font-size: 20px;
-        }
-      `}</style>
+      
     </div>
   );
 }

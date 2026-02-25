@@ -1,3 +1,6 @@
+@import "./components/shared-controls.css";
+@import "./components/extracted-inline-styles.css";
+
 /* ============================================================
    covers.cafe — Global Stylesheet
    Windows 95 inspired design: brown panels, warm borders

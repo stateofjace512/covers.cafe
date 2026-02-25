@@ -19,19 +19,6 @@ type Report = {
   reporter_username: string | null;
 };
 
-type PublishedCover = {
-  id: string;
-  title: string;
-  artist: string;
-  user_id: string;
-  username: string | null;
-  storage_path: string;
-  is_public: boolean;
-  is_private: boolean;
-  is_banned: boolean;
-  is_operator: boolean;
-};
-
 type Ban = {
   user_id: string;
   username: string | null;
@@ -52,9 +39,19 @@ type UserOption = {
   display_name: string | null;
 };
 
+type BlacklistItem = {
+  value: string;
+  reason: string | null;
+  created_at: string;
+};
+
+type CoverLookupResult = {
+  cover: { id: string; page_slug: string; title: string; artist: string; is_public: boolean; is_private: boolean; perma_unpublished: boolean; profiles?: { username?: string | null; display_name?: string | null } | null };
+  nextByUser: Array<{ id: string; page_slug: string; title: string; artist: string; is_public: boolean; is_private: boolean; perma_unpublished: boolean; created_at: string }>;
+};
+
 type DashboardPayload = {
   reports: Report[];
-  published: PublishedCover[];
   bans: Ban[];
   operators: Operator[];
 };
@@ -74,7 +71,7 @@ function formatDate(iso: string) {
 
 export default function Cms() {
   const { user, session, loading, openAuthModal } = useAuth();
-  const [data, setData] = useState<DashboardPayload>({ reports: [], published: [], bans: [], operators: [] });
+  const [data, setData] = useState<DashboardPayload>({ reports: [], bans: [], operators: [] });
   const [operator, setOperator] = useState<boolean | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -87,11 +84,19 @@ export default function Cms() {
   const [banReason, setBanReason] = useState('');
   const [banDuration, setBanDuration] = useState<'permanent' | '1' | '3' | '7' | '30'>('permanent');
 
-  // Published content filter
-  const [contentFilter, setContentFilter] = useState('');
-
   // Legal operations
   const [removeTag, setRemoveTag] = useState('');
+
+  // Official spam controls
+  const [artistBlacklist, setArtistBlacklist] = useState<BlacklistItem[]>([]);
+  const [phraseBlacklist, setPhraseBlacklist] = useState<BlacklistItem[]>([]);
+  const [newArtistBlacklist, setNewArtistBlacklist] = useState('');
+  const [newPhraseBlacklist, setNewPhraseBlacklist] = useState('');
+  const [blacklistReason, setBlacklistReason] = useState('');
+
+  // Fast cover lookup
+  const [coverLookupInput, setCoverLookupInput] = useState('');
+  const [coverLookupResult, setCoverLookupResult] = useState<CoverLookupResult | null>(null);
 
   // Cloudflare migration
   const [migrating, setMigrating] = useState(false);
@@ -124,12 +129,22 @@ export default function Cms() {
     setData(await res.json() as DashboardPayload);
   }
 
+  async function loadBlacklist() {
+    if (!token) return;
+    const res = await fetch('/api/cms/official-blacklist', { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return;
+    const payload = await res.json() as { artists: Array<{ artist_name: string; reason: string | null; created_at: string }>; phrases: Array<{ phrase: string; reason: string | null; created_at: string }> };
+    setArtistBlacklist((payload.artists ?? []).map((a) => ({ value: a.artist_name, reason: a.reason, created_at: a.created_at })));
+    setPhraseBlacklist((payload.phrases ?? []).map((p) => ({ value: p.phrase, reason: p.reason, created_at: p.created_at })));
+  }
+
   useEffect(() => {
     if (!loading && !user) openAuthModal('login');
   }, [loading, user, openAuthModal]);
 
   useEffect(() => {
     loadDashboard();
+    loadBlacklist();
   }, [token]);
 
   useEffect(() => {
@@ -180,18 +195,21 @@ export default function Cms() {
     setBusyId(null);
   }
 
-  async function setCoverPrivacy(coverId: string, isPrivate: boolean) {
+
+  async function setCoverPermaUnpublished(coverId: string, enabled: boolean) {
     if (!token) return;
-    setBusyId(`privacy-${coverId}`);
+    setBusyId(`perma-${coverId}`);
     setError(null);
-    const res = await fetch('/api/cms/cover-private', {
-      method: 'POST', headers: authHeaders, body: JSON.stringify({ coverId, isPrivate }),
+    const res = await fetch('/api/cms/perma-unpublish', {
+      method: 'POST', headers: authHeaders, body: JSON.stringify({ coverId, enabled }),
     });
-    if (!res.ok) setError('Could not update privacy.');
-    else flash(isPrivate ? 'Cover set to private.' : 'Cover republished.');
+    if (!res.ok) setError('Could not update perma-unpublish status.');
+    else flash(enabled ? 'Cover permanently unpublished.' : 'Perma-unpublish removed.');
     await loadDashboard();
+    if (coverLookupResult && coverLookupResult.cover.id === coverId) await lookupCoverByUrl();
     setBusyId(null);
   }
+
 
   // ── Report actions ─────────────────────────────────────────────────────────
 
@@ -292,30 +310,58 @@ export default function Cms() {
     setBusyId(null);
   }
 
-  // ── Filtered covers ────────────────────────────────────────────────────────
 
-  const filteredCovers = useMemo(() => {
-    const q = contentFilter.trim().toLowerCase();
-    if (!q) return data.published;
-    return data.published.filter(
-      (c) =>
-        (c.username ?? '').toLowerCase().includes(q) ||
-        c.title.toLowerCase().includes(q) ||
-        c.artist.toLowerCase().includes(q),
-    );
-  }, [data.published, contentFilter]);
-
-  // Group filtered covers by user
-  const coversByUser = useMemo(() => {
-    const map = new Map<string, { username: string | null; covers: PublishedCover[] }>();
-    for (const cover of filteredCovers) {
-      if (!map.has(cover.user_id)) {
-        map.set(cover.user_id, { username: cover.username, covers: [] });
-      }
-      map.get(cover.user_id)!.covers.push(cover);
+  async function addBlacklist(type: 'artist' | 'phrase') {
+    if (!token) return;
+    const value = (type === 'artist' ? newArtistBlacklist : newPhraseBlacklist).trim();
+    if (!value) return;
+    setBusyId(`blacklist-add-${type}`);
+    const res = await fetch('/api/cms/official-blacklist', {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ type, value, reason: blacklistReason.trim() || null }),
+    });
+    if (!res.ok) setError('Could not add blacklist rule.');
+    else {
+      if (type === 'artist') setNewArtistBlacklist(''); else setNewPhraseBlacklist('');
+      setBlacklistReason('');
+      flash('Blacklist updated.');
+      await loadBlacklist();
     }
-    return [...map.entries()];
-  }, [filteredCovers]);
+    setBusyId(null);
+  }
+
+  async function removeBlacklist(type: 'artist' | 'phrase', value: string) {
+    if (!token) return;
+    setBusyId(`blacklist-del-${type}-${value}`);
+    const res = await fetch('/api/cms/official-blacklist', {
+      method: 'DELETE',
+      headers: authHeaders,
+      body: JSON.stringify({ type, value }),
+    });
+    if (!res.ok) setError('Could not remove blacklist rule.');
+    else {
+      flash('Blacklist updated.');
+      await loadBlacklist();
+    }
+    setBusyId(null);
+  }
+
+  async function lookupCoverByUrl() {
+    if (!token || !coverLookupInput.trim()) return;
+    setBusyId('cover-lookup');
+    setCoverLookupResult(null);
+    const res = await fetch(`/api/cms/cover-lookup?q=${encodeURIComponent(coverLookupInput.trim())}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      setError('Could not find that cover URL/slug.');
+    } else {
+      setCoverLookupResult(await res.json() as CoverLookupResult);
+      flash('Cover lookup complete.');
+    }
+    setBusyId(null);
+  }
 
   // ── Guards ─────────────────────────────────────────────────────────────────
 
@@ -326,7 +372,7 @@ export default function Cms() {
   return (
     <div className="route-container">
       <h1 className="route-title">Operator CMS</h1>
-      <p className="route-subtitle">Moderate reports, published content, and users from one panel.</p>
+      <p className="route-subtitle">Moderate reports, user controls, legal operations, and compliance tools.</p>
 
       {error && <p className="cms-msg cms-msg--err">{error}</p>}
       {successMsg && <p className="cms-msg cms-msg--ok">{successMsg}</p>}
@@ -418,83 +464,6 @@ export default function Cms() {
                 {selectedUserIsOperator ? 'Remove operator' : 'Make operator'}
               </button>
             </div>
-          </div>
-        )}
-      </section>
-
-      {/* ── Published content ──────────────────────────────────────────── */}
-      <section className="surface cms-section">
-        <div className="cms-section-header">
-          <h2 className="cms-h2" style={{ margin: 0 }}>Published content</h2>
-          <span className="cms-count">{data.published.length} covers</span>
-        </div>
-
-        <input
-          className="form-input"
-          placeholder="Filter by username, title, or artist…"
-          value={contentFilter}
-          onChange={(e) => setContentFilter(e.target.value)}
-          style={{ marginBottom: 12 }}
-        />
-
-        {filteredCovers.length === 0 ? (
-          <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>
-            {contentFilter ? 'No covers match this filter.' : 'No published covers.'}
-          </p>
-        ) : (
-          <div className="cms-covers-list">
-            {coversByUser.map(([userId, group]) => (
-              <div key={userId} className="cms-user-group">
-                <div className="cms-user-group-header">
-                  <span>@{group.username ?? userId}</span>
-                  <span className="cms-count">{group.covers.length}</span>
-                </div>
-                {group.covers.map((cover) => (
-                  <div key={cover.id} className="cms-cover-row">
-                    {cover.storage_path && (
-                      <img
-                        src={coverThumbUrl(cover.storage_path)}
-                        alt=""
-                        className="cms-cover-thumb"
-                      />
-                    )}
-                    <div className="cms-cover-meta">
-                      <strong>{cover.title}</strong>
-                      <span>{cover.artist}</span>
-                    </div>
-                    <div className="cms-cover-badges">
-                      {cover.is_private && <span className="cms-badge cms-badge--private">Private</span>}
-                    </div>
-                    <div className="cms-actions cms-actions--inline">
-                      {cover.is_private ? (
-                        <button
-                          className="btn"
-                          disabled={busyId === `privacy-${cover.id}`}
-                          onClick={() => setCoverPrivacy(cover.id, false)}
-                        >
-                          Republish
-                        </button>
-                      ) : (
-                        <button
-                          className="btn"
-                          disabled={busyId === `privacy-${cover.id}`}
-                          onClick={() => setCoverPrivacy(cover.id, true)}
-                        >
-                          Unpublish
-                        </button>
-                      )}
-                      <button
-                        className="btn cms-btn-danger"
-                        disabled={busyId === cover.id}
-                        onClick={() => deleteCover(cover.id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
           </div>
         )}
       </section>
@@ -600,6 +569,74 @@ export default function Cms() {
                 {op.can_be_removed === false && op.user_id !== user?.id && (
                   <span className="cms-badge cms-badge--locked" title="This operator cannot be removed">Locked</span>
                 )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+
+      {/* ── Official gallery spam controls ─────────────────────────────── */}
+      <section className="surface cms-section">
+        <h2 className="cms-h2">Official gallery spam controls</h2>
+        <p className="cms-desc">Blacklist exact artists and loose phrases from official gallery/search results.</p>
+        <div style={{ display: 'grid', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input className="form-input" placeholder="Add artist (exact)" value={newArtistBlacklist} onChange={(e) => setNewArtistBlacklist(e.target.value)} style={{ minWidth: 220 }} />
+            <input className="form-input" placeholder="Reason (optional)" value={blacklistReason} onChange={(e) => setBlacklistReason(e.target.value)} style={{ minWidth: 220 }} />
+            <button className="btn btn-primary" onClick={() => addBlacklist('artist')} disabled={busyId === 'blacklist-add-artist'}>Add artist rule</button>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input className="form-input" placeholder="Add phrase contains" value={newPhraseBlacklist} onChange={(e) => setNewPhraseBlacklist(e.target.value)} style={{ minWidth: 220 }} />
+            <button className="btn btn-primary" onClick={() => addBlacklist('phrase')} disabled={busyId === 'blacklist-add-phrase'}>Add phrase rule</button>
+          </div>
+          <div className="cms-ban-list">
+            {artistBlacklist.map((item) => (
+              <div key={`artist-${item.value}`} className="cms-ban-row">
+                <div className="cms-ban-details">
+                  <span className="cms-ban-user">Artist: {item.value}</span>
+                  <span className="cms-ban-reason">{item.reason ?? 'No reason provided'}</span>
+                </div>
+                <button className="btn" onClick={() => removeBlacklist('artist', item.value)}>Remove</button>
+              </div>
+            ))}
+            {phraseBlacklist.map((item) => (
+              <div key={`phrase-${item.value}`} className="cms-ban-row">
+                <div className="cms-ban-details">
+                  <span className="cms-ban-user">Phrase: {item.value}</span>
+                  <span className="cms-ban-reason">{item.reason ?? 'No reason provided'}</span>
+                </div>
+                <button className="btn" onClick={() => removeBlacklist('phrase', item.value)}>Remove</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Fast cover lookup ───────────────────────────────────────────── */}
+      <section className="surface cms-section">
+        <h2 className="cms-h2">Fast cover lookup</h2>
+        <p className="cms-desc">Paste a fan cover URL to load that cover and the next 10 by the same user.</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input className="form-input" placeholder="https://covers.cafe/covers/fan/..." value={coverLookupInput} onChange={(e) => setCoverLookupInput(e.target.value)} style={{ minWidth: 380, flex: 1 }} />
+          <button className="btn btn-primary" onClick={lookupCoverByUrl} disabled={busyId === 'cover-lookup'}>Lookup</button>
+        </div>
+        {coverLookupResult && (
+          <div className="cms-ban-list" style={{ marginTop: 10 }}>
+            <div className="cms-ban-row">
+              <div className="cms-ban-details">
+                <span className="cms-ban-user">{coverLookupResult.cover.artist} — {coverLookupResult.cover.title}</span>
+                <span className="cms-ban-reason">/{coverLookupResult.cover.page_slug}{coverLookupResult.cover.perma_unpublished ? ' · perma-unpublished' : ''}</span>
+              </div>
+            </div>
+            {coverLookupResult.nextByUser.map((c) => (
+              <div key={c.id} className="cms-ban-row">
+                <div className="cms-ban-details">
+                  <span className="cms-ban-user">{c.artist} — {c.title}</span>
+                  <span className="cms-ban-reason">/{c.page_slug}</span>
+                </div>
+                <button className="btn" onClick={() => setCoverVisibility(c.id, !c.is_public)} disabled={c.perma_unpublished} title={c.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}>{c.is_public ? 'Unpublish' : 'Publish'}</button>
+                <button className="btn" onClick={() => setCoverPermaUnpublished(c.id, !c.perma_unpublished)}>{c.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}</button>
               </div>
             ))}
           </div>
@@ -723,74 +760,7 @@ export default function Cms() {
         )}
       </section>
 
-      <style>{`
-        .cms-section { margin-bottom: 20px; padding: 20px 22px; }
-        .cms-h2 { font-size: 21px; margin: 0 0 14px; color: var(--body-text); }
-        .cms-desc { font-size: 19px; color: var(--body-text-muted); margin: 0 0 10px; }
-        .cms-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-        .cms-count { font-size: 18px; color: var(--body-text-muted); background: var(--body-border); padding: 2px 7px; border-radius: 10px; }
-        .cms-msg { padding: 9px 14px; border-radius: 6px; font-size: 19px; margin-bottom: 12px; }
-        .cms-msg--ok { background: rgba(40,160,80,0.1); border: 1px solid rgba(40,160,80,0.35); color: #1a7a40; }
-        .cms-msg--err { background: rgba(200,50,30,0.1); border: 1px solid rgba(200,50,30,0.3); color: #b42318; }
-
-        /* Badges */
-        .cms-badge { font-size: 17px; padding: 2px 7px; border-radius: 10px; }
-        .cms-badge--banned { background: rgba(200,50,30,0.12); color: #b42318; border: 1px solid rgba(200,50,30,0.25); }
-        .cms-badge--op { background: rgba(115,73,42,0.12); color: var(--accent); border: 1px solid rgba(115,73,42,0.25); }
-        .cms-badge--warn { background: rgba(200,130,0,0.12); color: #a06000; border: 1px solid rgba(200,130,0,0.25); font-size: 18px; padding: 2px 8px; border-radius: 10px; }
-        .cms-badge--private { background: rgba(120,100,140,0.12); color: #6a4a8a; border: 1px solid rgba(120,100,140,0.3); }
-        .cms-badge--locked { background: rgba(80,80,80,0.12); color: #555; border: 1px solid rgba(80,80,80,0.25); }
-        .cms-cover-badges { display: flex; gap: 4px; align-items: center; }
-
-        /* User panel */
-        .cms-dropdown { position: absolute; z-index: 10; width: 100%; border: 1px solid var(--border); border-radius: 8px; margin-top: 4px; overflow: hidden; background: var(--body-card-bg); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
-        .cms-dropdown-item { width: 100%; border-radius: 0; justify-content: flex-start; text-align: left; }
-        .cms-user-panel { margin-top: 12px; padding: 14px; border: 1px solid var(--body-border); border-radius: 8px; display: grid; gap: 10px; background: var(--body-card-bg); }
-        .cms-user-header { display: flex; align-items: center; gap: 8px; font-size: 20px; }
-        .cms-ban-info { font-size: 18px; color: var(--body-text-muted); display: flex; flex-direction: column; gap: 2px; }
-        .cms-field-group { display: grid; gap: 8px; }
-        .cms-row { display: flex; align-items: center; gap: 8px; }
-        .cms-label { font-size: 18px; color: var(--body-text-muted); white-space: nowrap; }
-        .cms-select { flex: 1; }
-        .cms-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-        .cms-actions--inline { flex-shrink: 0; }
-
-        /* Cover list */
-        .cms-covers-list { display: grid; gap: 12px; }
-        .cms-user-group { border: 1px solid var(--body-border); border-radius: 8px; overflow: hidden; }
-        .cms-user-group-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--body-card-bg); font-size: 19px; border-bottom: 1px solid var(--body-border); }
-        .cms-cover-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--body-border); }
-        .cms-cover-row:last-child { border-bottom: none; }
-        .cms-cover-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 4px; flex-shrink: 0; border: 1px solid var(--body-border); }
-        .cms-cover-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 19px; overflow: hidden; }
-        .cms-cover-meta strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .cms-cover-meta span { color: var(--body-text-muted); font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-        /* Reports */
-        .cms-report-list { display: grid; gap: 10px; }
-        .cms-report-card { border: 1px solid var(--body-border); border-radius: 8px; padding: 12px; display: grid; gap: 10px; }
-        .cms-report-meta { display: flex; flex-direction: column; gap: 4px; font-size: 19px; }
-
-        /* Bans */
-        .cms-ban-list { display: grid; gap: 8px; }
-        .cms-ban-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--body-border); border-radius: 8px; }
-        .cms-ban-details { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
-        .cms-ban-user { font-size: 19px; }
-        .cms-ban-reason { font-size: 18px; color: var(--body-text-muted); }
-        .cms-ban-date { font-size: 17px; color: var(--body-text-muted); }
-
-        /* Operators */
-        .cms-op-list { display: grid; gap: 6px; }
-        .cms-op-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--body-border); border-radius: 8px; font-size: 19px; }
-
-        /* Danger button */
-        .cms-btn-danger {
-          background: linear-gradient(180deg, #e04030 0%, #b83020 100%);
-          color: #fff; border-color: #a02818;
-        }
-        .cms-btn-danger:hover { background: linear-gradient(180deg, #e85040 0%, #c03828 100%); transform: translateY(-1px); }
-        .cms-btn-danger:active { transform: translateY(0); }
-      `}</style>
+      
     </div>
   );
 }

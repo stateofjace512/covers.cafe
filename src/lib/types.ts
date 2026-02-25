@@ -26,6 +26,7 @@ export interface Cover {
   favorite_count: number;
   is_public: boolean;
   is_private: boolean;
+  perma_unpublished?: boolean;
   is_acotw: boolean;
   acotw_since: string | null;
   created_at: string;

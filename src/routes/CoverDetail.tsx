@@ -87,6 +87,12 @@ export default function CoverDetail() {
       if (cancelled) return;
       if (!data) { setCover(null); setLoading(false); return; }
       const c = data as Cover;
+      const isOwner = Boolean(user?.id && c.user_id === user.id);
+      if ((c.perma_unpublished || !c.is_public) && !isOwner) {
+        setCover(null);
+        setLoading(false);
+        return;
+      }
       setCover(c);
       document.title = `${c.artist} | ${c.title} | covers.cafe`;
 
@@ -483,13 +489,14 @@ export default function CoverDetail() {
             <input className="cover-panel-input" value={editTags} onChange={(e) => setEditTags(e.target.value)} placeholder="jazz, vinyl, 70s" />
             <label className="cover-panel-label">Visibility</label>
             <div className="cover-panel-row">
-              <button className={`btn${!editIsPrivate ? ' btn-primary' : ' btn-secondary'}`} onClick={() => setEditIsPrivate(false)}>Published</button>
+              <button className={`btn${!editIsPrivate ? ' btn-primary' : ' btn-secondary'}`} onClick={() => setEditIsPrivate(false)} disabled={Boolean(cover?.perma_unpublished)} title={cover?.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}>Published</button>
               <button className={`btn${editIsPrivate ? ' btn-primary' : ' btn-secondary'}`} onClick={() => setEditIsPrivate(true)}>Unpublished</button>
             </div>
           </div>
+          {cover?.perma_unpublished && <p className="cover-panel-status">Permanently unpublished (DMCA/compliance): public republish disabled.</p>}
           {editStatus && <p className="cover-panel-status">{editStatus}</p>}
           <div className="cover-panel-row">
-            <button className="btn btn-primary" onClick={() => void saveEdit()} disabled={editSaving}>
+            <button className="btn btn-primary" onClick={() => void saveEdit()} disabled={editSaving || Boolean(cover?.perma_unpublished && editIsPrivate === false)}>
               {editSaving ? 'Saving…' : 'Save Changes'}
             </button>
             <button className="btn btn-secondary" onClick={() => setActivePanel(null)}>Cancel</button>
@@ -527,93 +534,7 @@ export default function CoverDetail() {
         <RateLimitModal action={rateLimitedAction} onClose={() => setRateLimitedAction(null)} />
       )}
 
-      <style>{`
-        .cover-spinner { animation: cover-spin 0.8s linear infinite; }
-        @keyframes cover-spin { to { transform: rotate(360deg); } }
-
-        .cover-page-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 22px; }
-
-        /* Image */
-        .cover-board { display: flex; flex-direction: column; align-items: center; gap: 14px; margin: 0 auto 16px; }
-        .cover-board-image { width: 100%; max-width: 600px; aspect-ratio: 1/1; object-fit: cover; border-radius: 0; box-shadow: var(--shadow-md); display: block; }
-        .cover-board-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-
-        .cover-fav-btn { background: linear-gradient(180deg, var(--sidebar-bg-light) 0%, var(--sidebar-bg) 55%, var(--sidebar-bg-dark) 100%); color: var(--sidebar-text); }
-        .cover-fav-btn--active { background: linear-gradient(180deg, #f0c060 0%, #d4a020 55%, #b08010 100%); color: #5a3a00; border-color: #8a6010; }
-
-        .cover-download-group { position: relative; display: flex; }
-        .cover-dl-btn { border-radius: 0; display: flex; align-items: center; gap: 6px; }
-        .cover-dl-arrow { border-radius: 0; border-left: 1px solid rgba(255,255,255,0.25); padding: 0 8px; display: flex; align-items: center; }
-        .cover-size-menu {
-          position: absolute; top: calc(100% + 4px); right: 0; z-index: 100;
-          background: var(--body-card-bg); border: 1px solid var(--body-card-border);
-          border-radius: 0; box-shadow: var(--shadow-md);
-          display: flex; flex-direction: column; min-width: 120px; overflow: hidden;
-        }
-        .cover-size-option { padding: 8px 14px; text-align: left; font-size: 19px; background: none; border: none; color: var(--body-text); cursor: pointer; box-shadow: none; font-family: var(--font-body); }
-        .cover-size-option:hover { background: var(--accent); color: white; transform: none; }
-
-        /* Metadata */
-        .cover-page-meta { max-width: 700px; margin: 0 auto 16px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px; }
-        .cover-page-title { font-size: 24px; color: var(--body-text); margin-bottom: 2px; line-height: 1.25; }
-        [data-theme="dark"] .cover-page-title { }
-        .cover-page-artist-wrap { margin: 0; padding: 0; font-size: 20px; color: var(--body-text-muted); }
-        .cover-page-artist-link { font-size: 20px; color: var(--body-text-muted); background: none; border: none; cursor: pointer; padding: 0; box-shadow: none; font-family: var(--font-body); display: inline; }
-        .cover-page-artist-link:hover { color: var(--accent); text-decoration: underline; }
-        .cover-page-uploader { display: inline-flex; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; font-size: 19px; color: var(--accent); padding: 0; box-shadow: none; font-family: var(--font-body); }
-        .cover-page-uploader:hover { color: var(--accent-light); text-decoration: underline; }
-        .cover-page-meta-topline { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
-        .cover-meta-stats { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
-        .cover-meta-chips { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
-        .cover-meta-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 18px; color: var(--body-text); background: var(--body-border); padding: 3px 8px; border-radius: 0; }
-        .cover-tags { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: center; }
-        .cover-tags-icon { color: var(--body-text-muted); flex-shrink: 0; }
-        .cover-tag { font-size: 21px; font-family: var(--font-header); background: var(--sidebar-bg); color: var(--sidebar-text); padding: 2px 7px; border-radius: 0; border: 1px solid var(--sidebar-border); box-shadow: var(--shadow-sm); cursor: pointer; transition: background 0.1s, color 0.1s; }
-        .cover-tag:hover { background: var(--accent); color: white; border-color: var(--accent); transform: none; box-shadow: none; }
-
-        /* Panel scroll anchor — leaves room for sticky header */
-        .cover-panels-anchor { scroll-margin-top: calc(var(--header-h) + 16px); }
-
-        /* Secondary actions */
-        .cover-secondary-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
-        .cover-action-sm { display: flex; align-items: center; gap: 5px; font-size: 18px; padding: 6px 12px; background: var(--sidebar-bg); border: 1px solid var(--sidebar-border); color: var(--body-text); }
-        .cover-action-sm:hover { background: var(--sidebar-bg-dark); }
-        .cover-delete-btn { background: rgba(200,50,30,0.1); border-color: rgba(200,50,30,0.3); color: #c83220; }
-        .cover-delete-btn:hover { background: rgba(200,50,30,0.2); transform: none; box-shadow: none; }
-        .cover-delete-btn--confirm { background: #c83220 !important; color: white !important; border-color: #a02010 !important; }
-
-        /* Panels */
-        .cover-panel { max-width: 560px; margin: 0 auto 20px; background: var(--body-card-bg); border: 1px solid var(--body-card-border); border-radius: 0; box-shadow: var(--shadow-sm); padding: 18px; display: flex; flex-direction: column; gap: 12px; }
-        .cover-panel-title { font-size: 21px; color: var(--body-text); display: flex; align-items: center; gap: 7px; }
-        .cover-panel-muted { font-size: 19px; color: var(--body-text-muted); }
-        .cover-panel-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .cover-panel-form { display: flex; flex-direction: column; gap: 8px; }
-        .cover-panel-label { font-size: 19px; color: var(--body-text); }
-        .cover-panel-hint { font-size: 17px; color: var(--body-text-muted); font-weight: normal; }
-        .cover-panel-input { flex: 1; min-width: 0; padding: 7px 10px; border-radius: 0; border: 1px solid var(--body-card-border); background: var(--body-card-bg); color: var(--body-text); font-size: 19px; font-family: var(--font-body); box-shadow: var(--shadow-inset-sm); outline: none; width: 100%; }
-        .cover-panel-input:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
-        .cover-panel-textarea { resize: none; }
-        .cover-panel-status { font-size: 18px; color: var(--body-text-muted); padding: 6px 10px; background: var(--body-border); border-radius: 0; }
-        .cover-panel-close-btn { align-self: flex-start; }
-
-        /* Comments */
-        .cover-page-comments-wrap { max-width: 720px; margin: 0 auto; }
-
-        /* More */
-        .cover-more-section { margin-top: 36px; padding-top: 28px; border-top: 2px solid var(--body-border); }
-        .cover-more-heading { font-size: 21px; color: var(--body-text); margin-bottom: 16px; }
-        [data-theme="dark"] .cover-more-heading { }
-        .cover-more-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--cover-grid-min-width), 1fr)); gap: 10px; }
-        .cover-more-item { padding: 0; border: 1px solid var(--body-card-border); border-radius: 0; background: var(--body-card-bg); box-shadow: var(--shadow-sm); overflow: hidden; cursor: pointer; transition: transform 0.12s, box-shadow 0.12s; display: flex; flex-direction: column; text-align: left; }
-        .cover-more-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
-        .cover-more-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
-        .cover-more-label { font-size: 22px; font-family: var(--font-header); color: var(--body-text); padding: 6px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid var(--body-card-border); }
-
-        @media (max-width: 640px) {
-          .cover-page-title { font-size: 23px; }
-          .cover-more-grid { grid-template-columns: repeat(auto-fill, minmax(max(120px, calc(var(--cover-grid-min-width) - 30px)), 1fr)); gap: 8px; }
-        }
-      `}</style>
+      
     </div>
   );
 }

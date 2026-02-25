@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UserIcon from '../components/UserIcon';
+import LoadingIcon from '../components/LoadingIcon';
 import { supabase } from '../lib/supabase';
 import { getAvatarSrc } from '../lib/media';
 import { useAuth } from '../contexts/AuthContext';
@@ -64,7 +65,7 @@ export default function Artists() {
       </div>
 
       {loading ? (
-        <p className="text-muted">Loading…</p>
+        <p className="text-muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}><LoadingIcon size={16} className="gallery-spinner" /> Loading…</p>
       ) : !sorted.length ? (
         <p className="text-muted">No users found{search ? ` for "${search}"` : ''}.</p>
       ) : (
@@ -98,55 +99,7 @@ export default function Artists() {
         </div>
       )}
 
-      <style>{`
-        .toolbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-        .toolbar-search {
-          padding: 7px 12px; border-radius: 0; border: 1px solid var(--body-card-border);
-          background: var(--body-card-bg); color: var(--body-text); font-size: 19px;
-          box-shadow: var(--shadow-inset-sm); outline: none; width: 220px;
-          font-family: var(--font-body); transition: border-color 0.15s, box-shadow 0.15s;
-        }
-        .toolbar-search:focus { border-color: var(--accent); box-shadow: var(--shadow-inset-sm), 0 0 0 2px rgba(192,90,26,0.2); }
-        .artist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
-        .artist-card {
-          display: flex; flex-direction: column; align-items: center; gap: 12px;
-          padding: 22px 16px; cursor: pointer; text-align: center; width: 100%;
-          background: var(--body-card-bg); border: 1px solid var(--body-card-border);
-          border-radius: 0;
-          box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.4);
-          background-image:
-            linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
-            var(--skeu-card);
-          background-size: 100% 100%, 100% 100%;
-          background-position: 0 0, 0 0;
-          background-repeat: no-repeat, no-repeat;
-          transition: box-shadow 0.15s, transform 0.15s;
-        }
-        [data-theme="dark"] .artist-card {
-          background-image:
-            linear-gradient(var(--skeu-card-tint), var(--skeu-card-tint)),
-            var(--skeu-card);
-          background-size: 100% 100%, 100% 100%;
-          background-position: 0 0, 0 0;
-          background-repeat: no-repeat, no-repeat;
-        }
-        .artist-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
-        .artist-card--me { border-color: var(--accent); box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 0 2px var(--accent); }
-        .artist-avatar {
-          width: 64px; height: 64px; border-radius: 0;
-          background: linear-gradient(145deg, var(--sidebar-bg-light), var(--sidebar-bg-dark));
-          border: 2px solid var(--body-card-border);
-          box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.2);
-          display: flex; align-items: center; justify-content: center;
-          color: var(--body-text-muted); overflow: hidden;
-        }
-        .artist-avatar-img { width: 100%; height: 100%; object-fit: cover; }
-        .artist-info { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-        .artist-name { font-size: 20px; color: var(--body-text); display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: center; }
-        [data-theme="dark"] .artist-name { }
-        .artist-you-badge { font-size: 16px; background: var(--accent); color: white; padding: 1px 6px; border-radius: 0; letter-spacing: 0.3px; }
-        .artist-count { font-size: 17px; color: var(--body-text-muted); }
-      `}</style>
+      
     </div>
   );
 }

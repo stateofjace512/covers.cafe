@@ -156,29 +156,7 @@ export default function ContextMenu() {
           )
         )}
       </div>
-      <style>{`
-        /* Win95 context menu: raised border, no rounding, no blur */
-        .ctx-menu {
-          position: fixed; z-index: 9999;
-          background: #dea77d;
-          border: 2px solid; border-color: #ffffff #c07f55 #c07f55 #ffffff;
-          box-shadow: none; padding: 2px;
-          min-width: 160px; max-width: 240px;
-          backdrop-filter: none; -webkit-backdrop-filter: none;
-        }
-        [data-theme="dark"] .ctx-menu { background: #3d1a05; border-color: #6b3d1f #2a1505 #2a1505 #6b3d1f; }
-        .ctx-item {
-          display: block; width: 100%;
-          text-align: left; padding: 4px 12px;
-          background: transparent; border: none;
-          color: var(--body-text);
-          font-size: 12px; font-family: var(--font-body);
-          cursor: pointer; white-space: nowrap;
-          overflow: hidden; text-overflow: ellipsis;
-        }
-        .ctx-item:hover { background: var(--accent); color: #ffffff; }
-        .ctx-sep { height: 1px; background: var(--body-border); margin: 2px 0; }
-      `}</style>
+      
     </>
   );
 }

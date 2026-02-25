@@ -384,7 +384,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
           {hasMore && (
             <div className="gallery-load-more">
               <button
-                className="btn btn-secondary gallery-load-more-btn"
+                className="btn btn-secondary gallery-load-more-btn gallery-load-more-btn--compact"
                 onClick={handleLoadMore}
                 disabled={loadingMore}
 >
@@ -423,45 +423,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
         <RateLimitModal action="load_more_clicks" onClose={() => setLoadMoreRateLimited(false)} />
       )}
 
-      <style>{`
-        .gallery-refresh-banner { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; padding: 8px 10px; border: 2px solid; border-color: #c07f55 #ffffff #ffffff #c07f55; background: var(--body-card-bg); font-size: 11px; }
-        .gallery-toolbar {
-          display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap;
-          margin-bottom: 10px;
-        }
-        .gallery-sort-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-        .gallery-sort-label { font-size: 11px; color: var(--body-text-muted); }
-        .gallery-sort-select {
-          padding: 2px 6px; font-size: 11px; height: 22px;
-          border: 2px solid; border-color: #c07f55 #ffffff #ffffff #c07f55;
-          background: #ffffff; color: #000000;
-          box-shadow: none; cursor: pointer; outline: none;
-          font-family: var(--font-body);
-        }
-        .gallery-sort-select:focus { outline: 1px dotted #73492a; outline-offset: 1px; }
-
-        .gallery-loading, .gallery-empty {
-          display: flex; flex-direction: column;
-          align-items: center; justify-content: center;
-          gap: 10px; padding: 40px 20px;
-          color: var(--body-text-muted); text-align: center;
-        }
-        .gallery-spinner { animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .gallery-empty p { font-size: 12px; max-width: 300px; line-height: 1.5; }
-        .gallery-search-label { font-size: 12px; color: var(--body-text-muted); margin-bottom: 8px; }
-        /* Win95 drag zone: flat dashed border, no rounding */
-        .collection-drag-zone { margin-bottom: 10px; border: 2px dashed var(--body-border); padding: 10px; text-align: center; color: var(--body-text-muted); background: var(--body-card-bg); font-size: 11px; }
-        .gallery-load-more { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 0 6px; }
-        .gallery-load-more-hint { font-size: 11px; color: var(--body-text-muted); }
-        .gallery-load-more-btn {
-          display: flex; align-items: center; gap: 6px;
-          padding: 4px 20px; font-size: 12px;
-          background: #dea77d; background-image: none;
-        }
-        .gallery-load-more-btn::before { display: none; }
-        [data-theme="dark"] .gallery-load-more-btn { background: #3d1a05; background-image: none; }
-      `}</style>
+      
     </>
   );
 }

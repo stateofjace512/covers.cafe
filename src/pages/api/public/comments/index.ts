@@ -95,6 +95,14 @@ export const POST: APIRoute = async ({ request }) => {
   if (identityRow.is_admin_banned && !identityRow.is_admin_unbanned) return json({ error: 'Unable to post. Your account has been restricted.' }, 403);
   if (identityRow.is_auto_banned && !identityRow.is_admin_unbanned) return json({ error: 'Unable to post. Your account has been restricted due to policy violations.' }, 403);
 
+  const { data: activeBan } = await supabase
+    .from('covers_cafe_user_bans')
+    .select('reason, expires_at')
+    .eq('user_id', auth.user.id)
+    .maybeSingle();
+  const isUserBanned = Boolean(activeBan) && !(activeBan?.expires_at && new Date(activeBan.expires_at) < new Date());
+  if (isUserBanned) return json({ error: activeBan?.reason || 'Unable to post. Your account has been restricted.' }, 403);
+
   const cooldownState = getCooldownState(identityRow.cooldown_level, identityRow.cooldown_end_at);
   if (cooldownState.isActive) return json({ error: 'Please wait before posting again', cooldownRemaining: cooldownState.remainingMs }, 429);
 

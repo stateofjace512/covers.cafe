@@ -33,18 +33,7 @@ export default function RateLimitModal({ action, onClose }: Props) {
         </button>
       </div>
 
-      <style>{`
-        .rate-limit-modal {
-          display: flex; flex-direction: column; align-items: center;
-          text-align: center; padding: 40px 36px; max-width: 320px;
-          gap: 6px;
-        }
-        .rate-limit-emoji { line-height: 0; margin-bottom: 4px; }
-        .rate-limit-title {
-          font-size: 13px; font-weight: bold; color: var(--body-text);
-        }
-        .rate-limit-body { font-size: 12px; color: var(--body-text-muted); line-height: 1.5; }
-      `}</style>
+      
     </div>
   );
 }
