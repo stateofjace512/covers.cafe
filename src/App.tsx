@@ -22,6 +22,8 @@ import Coffee from './routes/Coffee';
 import Privacy from './routes/Privacy';
 import Terms from './routes/Terms';
 import About from './routes/About';
+import Blog from './routes/Blog';
+import BlogPost from './routes/BlogPost';
 import Cms from './routes/Cms';
 import Acotw from './routes/Acotw';
 import NotFound from './routes/NotFound';
@@ -137,6 +139,14 @@ function getSeoForPath(pathname: string): SeoPayload {
   if (pathname === '/about') return {
     title: 'About | covers.cafe',
     description: 'Learn about covers.cafe, the mission, and the community behind the album cover archive.',
+  };
+  if (pathname === '/blog') return {
+    title: 'Blog | covers.cafe',
+    description: 'News, updates, and posts from the covers.cafe team.',
+  };
+  if (pathname.startsWith('/blog/')) return {
+    title: 'Blog Post | covers.cafe',
+    description: 'Read the latest from the covers.cafe team.',
   };
   if (pathname === '/acotw') return {
     title: 'Album Cover of the Week | covers.cafe',
@@ -268,6 +278,8 @@ function AppContent() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/about" element={<About />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/acotw" element={<Acotw />} />
           <Route path="/cms" element={<Cms />} />
           <Route path="/covers/fan/:slug" element={<CoverDetail />} />

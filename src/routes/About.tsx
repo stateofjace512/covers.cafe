@@ -1,52 +1,51 @@
+import { useEffect, useState } from 'react';
 import AboutIcon from '../components/AboutIcon';
 import CoffeeCupIcon from '../components/CoffeeCupIcon';
 
+const FALLBACK_BODY = `We know this space is watched.
+By labels. By copyright offices. By the fans.
+
+We know album art matters; it matters to artists, to labels, and to the fans who live with it. It's not just a symbolic image. It's something people sit with. Something that becomes heritage. Lineage. Something they pass down like heirlooms. Something they obsess over, reinterpret, rearrange, and carry across devices and years.
+
+Album art holds deep connections to the hands of the artists  -  yes  -  but also the fans, who cherry pick and idealize and scrape at metaphoric varnish on digital art until they see it in a clear light.
+
+We're not here to replace the official channels. We're here because fans deserve a clean, dedicated place built specifically for album cover culture, and not one buried inside platforms that were never designed for it.
+
+Other systems weren't built for this use case. They struggle with spam, fragmentation, tracking-heavy environments, or chaos. We built something focused, moderated, and intentional.
+
+We love our users. We built this for people who care about their libraries, who care about presentation, who care about the art as much as the audio.
+
+There will always be other places to run to.
+We built this one out in the wild.
+
+So drop your bags at the front door, and get comfortable.`;
+
 export default function About() {
+  const [body, setBody] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/cms/site-content?key=about_body')
+      .then((r) => r.json())
+      .then((data: { value: string | null }) => {
+        if (data.value) setBody(data.value);
+      })
+      .catch(() => { /* fall through to fallback */ });
+  }, []);
+
+  const displayBody = body ?? FALLBACK_BODY;
+
   return (
     <div className="legal-page about-page">
       <h1 className="section-title"><AboutIcon size={22} /> About covers.cafe</h1>
 
       <div className="legal-body">
-        <p className="about-lede">
-          We know this space is watched.<br />
-          By labels. By copyright offices. By the fans.
-        </p>
-
-        <p>
-          We know album art matters; it matters to artists, to labels, and to the fans who live with it.
-          It's not just a symbolic image. It's something people sit with. Something that becomes heritage.
-          Lineage. Something they pass down like heirlooms. Something they obsess over, reinterpret,
-          rearrange, and carry across devices and years.
-        </p>
-
-        <p>
-          Album art holds deep connections to the hands of the artists  -  yes  -  but also the fans,
-          who cherry pick and idealize and scrape at metaphoric varnish on digital art until they see
-          it in a clear light.
-        </p>
-
-        <p>
-          We're not here to replace the official channels. We're here because fans deserve a clean,
-          dedicated place built specifically for album cover culture, and not one buried inside platforms
-          that were never designed for it.
-        </p>
-
-        <p>
-          Other systems weren't built for this use case. They struggle with spam, fragmentation,
-          tracking-heavy environments, or chaos. We built something focused, moderated, and intentional.
-        </p>
-
-        <p>
-          We love our users. We built this for people who care about their libraries, who care about
-          presentation, who care about the art as much as the audio.
-        </p>
-
-        <p>
-          There will always be other places to run to.<br />
-          We built this one out in the wild.
-        </p>
-
-        <p>So drop your bags at the front door, and get comfortable.</p>
+        {displayBody.split('\n').map((line, i) =>
+          line.trim() === ''
+            ? <br key={i} />
+            : i === 0
+              ? <p key={i} className="about-lede">{line}</p>
+              : <p key={i}>{line}</p>
+        )}
 
         <div className="about-sign"><CoffeeCupIcon size={56} /></div>
       </div>
@@ -66,8 +65,6 @@ export default function About() {
           </a>
         </div>
       </div>
-
-      
     </div>
   );
 }
