@@ -798,6 +798,7 @@
         .notif-icon--removed { color: #c0392b; }
         .notif-icon--follow { color: #27ae60; }
         .notif-icon--friend { color: #8e44ad; }
+        .notif-icon--achievement { color: #d4a020; }
         .notif-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
         .notif-text { font-size: 11px; color: var(--body-text); line-height: 1.4; margin: 0; }
         .notif-user-link { color: var(--body-text); background: none; border: none; padding: 0; cursor: pointer; font-size: 11px; box-shadow: none; font-family: inherit; text-decoration: underline; }
@@ -3547,4 +3548,16 @@
 .btn-sm {
   font-size: 12px;
   padding: 4px 12px;
+}
+
+/* ── DotSeparator ─────────────────────────────────────────────────── */
+.dot-sep {
+  display: inline-block;
+  vertical-align: middle;
+  fill: currentColor;
+  opacity: 0.35;
+  flex-shrink: 0;
+  margin: 0 5px;
+  position: relative;
+  top: -1px;
 }

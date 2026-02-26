@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import GearIcon from '../components/GearIcon';
+import DotSeparator from '../components/DotSeparator';
 import LockIcon from '../components/LockIcon';
 import EmailIcon from '../components/EmailIcon';
 import TrashIcon from '../components/TrashIcon';
@@ -417,7 +418,7 @@ function ActiveSessionsPanel({ onDone }: { onDone: () => void }) {
                 </span>
                 <span className="sessions-item-meta">
                   Signed in {formatRelativeTime(s.created_at)}
-                  {' · '}
+                  <DotSeparator />
                   Last active {formatRelativeTime(s.updated_at)}
                 </span>
               </div>

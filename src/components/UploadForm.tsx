@@ -5,6 +5,7 @@ import XIcon from './XIcon';
 import LoadingIcon from './LoadingIcon';
 import AlertCircleIcon from './AlertCircleIcon';
 import CheckCircleIcon from './CheckCircleIcon';
+import DotSeparator from './DotSeparator';
 import PlusIcon from './PlusIcon';
 import TrashIcon from './TrashIcon';
 import { supabase } from '../lib/supabase';
@@ -718,7 +719,7 @@ export default function UploadForm() {
       </div>
 
       <p className="upload-requirements">
-        <AlertCircleIcon size={13} /> JPG · {MIN_DIM}×{MIN_DIM}px min · Square preferred · Full-res stored
+        <AlertCircleIcon size={13} /> JPG <DotSeparator /> {MIN_DIM}×{MIN_DIM}px min <DotSeparator /> Square preferred <DotSeparator /> Full-res stored
       </p>
 
       {mode === 'single' && (
@@ -939,7 +940,7 @@ export default function UploadForm() {
                   if (!Number.isNaN(idx)) addItemToCollection(collection.id, idx);
                 }}
               >
-                <div className="collection-title">📁 {collection.name} · {collection.isPublic ? 'Public' : 'Private'}</div>
+                <div className="collection-title">📁 {collection.name} <DotSeparator /> {collection.isPublic ? 'Public' : 'Private'}</div>
                 <div className="form-hint">Drop a cover here, or click quick-add:</div>
                 <div className="collection-actions">
                   {bulkItems.map((_, idx) => (

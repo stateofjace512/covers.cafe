@@ -704,7 +704,7 @@ export default function Cms() {
                   <span className="cms-ban-reason">{ban.reason ?? 'No reason provided'}</span>
                   <span className="cms-ban-date">
                     Banned {formatDate(ban.banned_at)}
-                    {ban.expires_at && ` · expires ${formatDate(ban.expires_at)}`}
+                    {ban.expires_at && ` – expires ${formatDate(ban.expires_at)}`}
                   </span>
                 </div>
                 <button
@@ -811,7 +811,7 @@ export default function Cms() {
             <div className="cms-ban-row">
               <div className="cms-ban-details">
                 <span className="cms-ban-user">{coverLookupResult.cover.artist}  -  {coverLookupResult.cover.title}</span>
-                <span className="cms-ban-reason">/{coverLookupResult.cover.page_slug}{coverLookupResult.cover.perma_unpublished ? ' · perma-unpublished' : ''}</span>
+                <span className="cms-ban-reason">/{coverLookupResult.cover.page_slug}{coverLookupResult.cover.perma_unpublished ? ' – perma-unpublished' : ''}</span>
               </div>
               <button className="btn" onClick={() => setCoverVisibility(coverLookupResult.cover.id, !coverLookupResult.cover.is_public)} disabled={coverLookupResult.cover.perma_unpublished || busyId === `visibility-${coverLookupResult.cover.id}`} title={coverLookupResult.cover.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}>{coverLookupResult.cover.is_public ? 'Unpublish' : 'Publish'}</button>
               <button className="btn" onClick={() => setCoverPermaUnpublished(coverLookupResult.cover.id, !coverLookupResult.cover.perma_unpublished, permaUnpublishReason)} disabled={busyId === `perma-${coverLookupResult.cover.id}`}>{coverLookupResult.cover.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}</button>
@@ -820,7 +820,7 @@ export default function Cms() {
               <div key={c.id} className="cms-ban-row">
                 <div className="cms-ban-details">
                   <span className="cms-ban-user">{c.artist}  -  {c.title}</span>
-                  <span className="cms-ban-reason">/{c.page_slug}{c.perma_unpublished ? ' · perma-unpublished' : ''}</span>
+                  <span className="cms-ban-reason">/{c.page_slug}{c.perma_unpublished ? ' – perma-unpublished' : ''}</span>
                 </div>
                 <button className="btn" onClick={() => setCoverVisibility(c.id, !c.is_public)} disabled={c.perma_unpublished || busyId === `visibility-${c.id}`} title={c.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}>{c.is_public ? 'Unpublish' : 'Publish'}</button>
                 <button className="btn" onClick={() => setCoverPermaUnpublished(c.id, !c.perma_unpublished, permaUnpublishReason)} disabled={busyId === `perma-${c.id}`}>{c.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}</button>
@@ -900,7 +900,7 @@ export default function Cms() {
                         <span className="cms-ban-user">{c.artist}  -  {c.title}</span>
                         <span className="cms-ban-reason">
                           /{c.page_slug}
-                          {c.perma_unpublished ? ' · perma-unpublished' : c.is_public ? '' : ' · private'}
+                          {c.perma_unpublished ? ' – perma-unpublished' : c.is_public ? '' : ' – private'}
                         </span>
                       </div>
                       <button

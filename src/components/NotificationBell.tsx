@@ -9,9 +9,18 @@ import UserIcon from './UserIcon';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+const ACHIEVEMENT_LABELS: Record<string, string> = {
+  acotw: 'Album Cover of the Week',
+  poh: 'Picture of the Hour',
+  milestone_1: 'First Upload',
+  milestone_50: '50 Uploads',
+  milestone_100: '100 Uploads',
+  certified_loner: 'Certified Loner',
+};
+
 interface Notification {
   id: string;
-  type: 'favorite' | 'comment' | 'comment_like' | 'comment_reply' | 'cover_removed' | 'friend_posted' | 'new_follower' | 'friend_request';
+  type: 'favorite' | 'comment' | 'comment_like' | 'comment_reply' | 'cover_removed' | 'friend_posted' | 'new_follower' | 'friend_request' | 'achievement';
   cover_id: string | null;
   cover_title: string;
   cover_artist: string;
@@ -172,12 +181,14 @@ export default function NotificationBell() {
                       n.type === 'cover_removed' ? 'notif-icon--removed'
                       : (n.type === 'new_follower' || n.type === 'friend_request') ? 'notif-icon--follow'
                       : n.type === 'friend_posted' ? 'notif-icon--friend'
+                      : n.type === 'achievement' ? 'notif-icon--achievement'
                       : (n.type === 'favorite' || n.type === 'comment_like') ? 'notif-icon--fav'
                       : 'notif-icon--cmt'
                     }`}>
                       {n.type === 'cover_removed' ? <XIcon size={12} />
                         : (n.type === 'new_follower' || n.type === 'friend_request') ? <UserIcon size={12} />
                         : n.type === 'friend_posted' ? <GalleryIcon size={12} />
+                        : n.type === 'achievement' ? <span style={{ fontSize: 12 }}>🏆</span>
                         : (n.type === 'favorite' || n.type === 'comment_like') ? <FavoritesIcon size={12} />
                         : <CommentIcon size={12} />}
                     </span>
@@ -214,6 +225,11 @@ export default function NotificationBell() {
                             {n.cover_title}
                           </button>
                           {n.cover_artist && <> by {n.cover_artist}</>}
+                        </p>
+                      ) : n.type === 'achievement' ? (
+                        <p className="notif-text">
+                          You earned an achievement:{' '}
+                          <strong>{ACHIEVEMENT_LABELS[n.content ?? ''] ?? n.content}</strong>
                         </p>
                       ) : (
                         <p className="notif-text">
