@@ -187,7 +187,15 @@
           font-family: var(--font-body); text-decoration: underline;
         }
         .auth-switch-btn:hover { color: var(--accent-light); transform: none; box-shadow: none; }
-      
+        .auth-forgot-link {
+          background: none; border: none; color: var(--accent);
+          cursor: pointer; font-size: 11px; padding: 0; box-shadow: none;
+          font-family: var(--font-body); text-decoration: underline;
+          margin-left: auto;
+        }
+        .auth-forgot-link:hover { color: var(--accent-light); transform: none; box-shadow: none; }
+        .auth-forgot-desc { font-size: 12px; color: var(--body-text-muted); margin: 0 0 4px 0; }
+
 
 /* ===== Extracted from src/components/ContextMenu.tsx ===== */
         /* Win95 context menu: raised border, no rounding, no blur */
@@ -1532,7 +1540,7 @@
         .artist-detail-bio { font-size: 20px; color: var(--body-text); max-width: 480px; line-height: 1.5; }
         .artist-detail-website { font-size: 19px; color: var(--accent); text-decoration: none; }
         .artist-detail-website:hover { text-decoration: underline; }
-        .artist-detail-count { font-size: 19px; color: var(--body-text-muted); margin-top: 4px; }
+        .artist-detail-count { font-size: 19px; color: var(--body-text-muted); margin-top: 4px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
         .artist-follow-btn { }
         .artist-collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
         .artist-collection-card { padding: 0; overflow: hidden; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
@@ -1755,7 +1763,13 @@
           display: flex; align-items: center; justify-content: center;
           color: white;
         }
-      
+        .col-edit-delete-section { padding-top: 10px; border-top: 1px solid var(--body-card-border); }
+        .col-delete-btn { color: var(--danger, #c0392b); border-color: var(--danger, #c0392b); font-size: 13px; }
+        .col-delete-btn:hover { background: var(--danger, #c0392b); color: #fff; }
+        .col-delete-btn--confirm { display: inline-flex; align-items: center; gap: 5px; }
+        .col-edit-delete-confirm { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .col-edit-delete-confirm-text { font-size: 14px; color: var(--body-text-muted); }
+
 
 /* ===== Extracted from src/routes/CoverDetail.tsx ===== */
         .cover-spinner { animation: cover-spin 0.8s linear infinite; }
