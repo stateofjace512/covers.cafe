@@ -50,7 +50,7 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId,
   const [rateLimited, setRateLimited] = useState(false);
   const [loadMoreRateLimited, setLoadMoreRateLimited] = useState(false);
   const [refreshPending, setRefreshPending] = useState(false);
-  const coversChangesChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const latestCoverCreatedAtRef = useRef<string | null>(null);
   const [selectedCover, setSelectedCover] = useState<Cover | null>(null);
 
   const favIdsRef = useRef<string[]>([]);
@@ -190,6 +190,10 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId,
         setCovers(data);
         setHasMore(more);
         setLoading(false);
+        // Seed the poll baseline with the newest cover we just loaded
+        if (data.length > 0 && data[0].created_at) {
+          latestCoverCreatedAtRef.current = data[0].created_at as string;
+        }
       });
 
     fetchFavorites(capturedUser?.id);
@@ -257,30 +261,25 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId,
     setCovers((prev) => prev.filter((c) => c.id !== coverId));
   };
 
-  const rearmCoverRealtime = useCallback(() => {
-    if (coversChangesChannelRef.current) return;
-    const channel = supabase
-      .channel('gallery-covers-upsert-watch')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'covers_cafe_covers' }, () => {
-        setRefreshPending(true);
-        if (coversChangesChannelRef.current) {
-          supabase.removeChannel(coversChangesChannelRef.current);
-          coversChangesChannelRef.current = null;
-        }
-      })
-      .subscribe();
-    coversChangesChannelRef.current = channel;
-  }, []);
-
+  // Poll for new public covers every 90 s (replaces Realtime to free up WS connections).
+  // Only runs on the global "all covers" view — no need to poll for personal/filtered views.
   useEffect(() => {
-    rearmCoverRealtime();
-    return () => {
-      if (coversChangesChannelRef.current) {
-        supabase.removeChannel(coversChangesChannelRef.current);
-        coversChangesChannelRef.current = null;
-      }
-    };
-  }, [rearmCoverRealtime]);
+    if (filter !== 'all') return;
+    const id = setInterval(async () => {
+      if (refreshPending) return; // already flagged, no need to re-check
+      const baseline = latestCoverCreatedAtRef.current;
+      if (!baseline) return;
+      const { data } = await supabase
+        .from('covers_cafe_covers')
+        .select('created_at')
+        .eq('is_public', true)
+        .eq('is_private', false)
+        .gt('created_at', baseline)
+        .limit(1);
+      if (data && data.length > 0) setRefreshPending(true);
+    }, 90_000);
+    return () => clearInterval(id);
+  }, [filter, refreshPending]);
 
   const handleManualRefresh = async () => {
     setLoading(true);
@@ -290,7 +289,9 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId,
     setHasMore(more);
     setLoading(false);
     setRefreshPending(false);
-    rearmCoverRealtime();
+    if (data.length > 0 && data[0].created_at) {
+      latestCoverCreatedAtRef.current = data[0].created_at as string;
+    }
   };
 
   if (loading) {

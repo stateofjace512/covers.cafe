@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import DotSeparator from './DotSeparator';
 import AcotwTrophyIcon from './AcotwTrophyIcon';
 import ClimbTopIcon from './ClimbTopIcon';
 import Building1Icon from './Building1Icon';
@@ -133,7 +134,7 @@ export default function AchievementBadges({ userId }: Props) {
         {dbAchievements.map((a) => {
           if (a.type === 'acotw') {
             return (
-              <div key={a.id} className="ach-badge ach-badge--acotw" title={'Album Cover of the Week' + (a.metadata?.week_start ? ' · ' + formatMonth(a.metadata.week_start) : '')}>
+              <div key={a.id} className="ach-badge ach-badge--acotw" title={'Album Cover of the Week' + (a.metadata?.week_start ? ' – ' + formatMonth(a.metadata.week_start) : '')}>
                 <span className="ach-icon"><AcotwTrophyIcon size={25} /></span>
                 <div className="ach-info">
                   <span className="ach-label">Album Cover of the Week</span>
@@ -145,7 +146,7 @@ export default function AchievementBadges({ userId }: Props) {
                       style={a.metadata?.cover_id ? { cursor: 'pointer' } : undefined}
                     >
                       {a.metadata.cover_title}
-                      {a.metadata.cover_artist ? ' · ' + a.metadata.cover_artist : ''}
+                      {a.metadata.cover_artist ? <><DotSeparator />{a.metadata.cover_artist}</> : null}
                     </span>
                   )}
                   {a.metadata?.week_start && (

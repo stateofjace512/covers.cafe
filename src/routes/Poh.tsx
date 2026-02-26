@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoadingIcon from '../components/LoadingIcon';
 import CastleIcon from '../components/CastleIcon';
+import DotSeparator from '../components/DotSeparator';
 
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
 
@@ -132,12 +133,12 @@ export default function Poh() {
                             onClick={() => navigate(`/cover/${pin.page_slug}`)}
                           >
                             on{' '}
-                            <em>{pin.cover_title ?? ''}{pin.cover_artist ? ` · ${pin.cover_artist}` : ''}</em>
+                            <em>{pin.cover_title ?? ''}{pin.cover_artist ? <><DotSeparator />{pin.cover_artist}</> : null}</em>
                           </button>
                         ) : (
                           <span className="poh-on">
                             on{' '}
-                            <em>{pin.cover_title ?? ''}{pin.cover_artist ? ` · ${pin.cover_artist}` : ''}</em>
+                            <em>{pin.cover_title ?? ''}{pin.cover_artist ? <><DotSeparator />{pin.cover_artist}</> : null}</em>
                           </span>
                         )
                       )}

@@ -88,18 +88,11 @@ export default function CoverComments({ coverId, cover }: Props) {
     void loadComments();
   }, [loadComments]);
 
+  // Poll for comment changes every 30 s (replaces Realtime to free up WS connections).
   useEffect(() => {
-    const commentsChannel = supabase
-      .channel(`cover-comments-${coverId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `page_slug=eq.${coverId}` }, () => {
-        void loadComments();
-      })
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(commentsChannel);
-    };
-  }, [coverId, loadComments]);
+    const id = setInterval(() => { void loadComments(); }, 30_000);
+    return () => clearInterval(id);
+  }, [loadComments]);
 
   // Operator check
   useEffect(() => {

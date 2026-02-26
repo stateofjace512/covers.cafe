@@ -10,6 +10,7 @@ import GearIcon from '../components/GearIcon';
 import PinIcon from '../components/PinIcon';
 import CoffeeCupIcon from '../components/CoffeeCupIcon';
 import FavoritesIcon from '../components/FavoritesIcon';
+import DotSeparator from '../components/DotSeparator';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
@@ -75,9 +76,6 @@ export default function ArtistDetail() {
   const [brews, setBrews] = useState(0);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [following, setFollowing] = useState(false);
-  const [followerCount, setFollowerCount] = useState(0);
-  const [followBusy, setFollowBusy] = useState(false);
   const [pinnedCovers, setPinnedCovers] = useState<PinnedRow[]>([]);
   const [friends, setFriends] = useState<{ id: string; username: string; display_name: string | null; avatar_url: string | null }[]>([]);
   const [viewerFriendStatus, setViewerFriendStatus] = useState<'none' | 'pending_sent' | 'pending_received' | 'accepted'>('none');
@@ -194,14 +192,6 @@ export default function ArtistDetail() {
         item_count: itemCountMap[row.id] ?? 0,
       })));
 
-      // Follow status
-      const followRes = await fetch('/api/follow?userId=' + profileData.id);
-      if (followRes.ok) {
-        const followData = await followRes.json() as { following: boolean; followerCount: number };
-        setFollowing(followData.following);
-        setFollowerCount(followData.followerCount);
-      }
-
       // Friends list + viewer friendship status
       const friendsHeaders: HeadersInit = session?.access_token
         ? { Authorization: 'Bearer ' + session.access_token }
@@ -260,25 +250,6 @@ export default function ArtistDetail() {
       }
     };
   }, [profile?.profile_theme, profile?.profile_gradient_start, profile?.profile_gradient_end]);
-
-  async function toggleFollow() {
-    if (!profile || !session?.access_token) return;
-    setFollowBusy(true);
-    const next = !following;
-    setFollowing(next);
-    setFollowerCount((c) => c + (next ? 1 : -1));
-    try {
-      await fetch('/api/follow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
-        body: JSON.stringify({ userId: profile.id, follow: next }),
-      });
-    } catch {
-      setFollowing(!next);
-      setFollowerCount((c) => c + (next ? -1 : 1));
-    }
-    setFollowBusy(false);
-  }
 
   async function handleAddFriend() {
     if (!profile || !session?.access_token) return;
@@ -425,10 +396,9 @@ export default function ArtistDetail() {
             )}
             <p className="artist-detail-count">
               {coverCount} cover{coverCount !== 1 ? 's' : ''}
-              {followerCount > 0 && <> · {followerCount} follower{followerCount !== 1 ? 's' : ''}</>}
               {brews > 0 && (
                 <span className="artist-detail-brews">
-                  · <CoffeeCupIcon size={12} /> {brews} Brew{brews !== 1 ? 's' : ''}
+                  <DotSeparator /> <CoffeeCupIcon size={12} /> {brews} Brew{brews !== 1 ? 's' : ''}
                 </span>
               )}
             </p>
@@ -436,15 +406,6 @@ export default function ArtistDetail() {
               {isOwnProfile && (
                 <button className="btn btn-secondary artist-edit-btn" onClick={() => navigate('/profile/edit')}>
                   <GearIcon size={13} /> Edit Profile
-                </button>
-              )}
-              {user && !isOwnProfile && (
-                <button
-                  className={'btn' + (following ? '' : ' btn-primary') + ' artist-follow-btn'}
-                  onClick={toggleFollow}
-                  disabled={followBusy}
-                >
-                  {following ? 'Following' : 'Follow'}
                 </button>
               )}
               {user && (

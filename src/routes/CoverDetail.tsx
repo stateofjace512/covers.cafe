@@ -72,14 +72,18 @@ export default function CoverDetail() {
   const [rateLimitedAction, setRateLimitedAction] = useState<string | null>(null);
   const [refreshPending, setRefreshPending] = useState(false);
 
-  // Tracks when the current user is the one writing to covers_cafe_covers so we
-  // don't show the "This cover was updated" banner for their own actions.
+  // Tracks the cover's updated_at as seen at last load, for the poll below.
+  const knownUpdatedAtRef = useRef<string | null>(null);
+  // Tracks when the current user wrote to this cover so we advance the baseline
+  // instead of showing a spurious "cover updated" banner for their own saves.
   const selfWritePendingRef = useRef(false);
   const selfWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   function markSelfWrite() {
     selfWritePendingRef.current = true;
+    // Advance the baseline so the next poll doesn't flag our own write.
+    knownUpdatedAtRef.current = new Date().toISOString();
     if (selfWriteTimerRef.current) clearTimeout(selfWriteTimerRef.current);
-    selfWriteTimerRef.current = setTimeout(() => { selfWritePendingRef.current = false; }, 3000);
+    selfWriteTimerRef.current = setTimeout(() => { selfWritePendingRef.current = false; }, 5000);
   }
 
   const panelRef = useRef<HTMLDivElement>(null);
@@ -104,6 +108,7 @@ export default function CoverDetail() {
         return;
       }
       setCover(c);
+      knownUpdatedAtRef.current = c.updated_at;
       document.title = `${c.artist} | ${c.title} | covers.cafe`;
 
       const { data: more } = await supabase
@@ -132,18 +137,22 @@ export default function CoverDetail() {
     return () => { cancelled = true; };
   }, [slug, user?.id]);
 
+  // Poll for cover updates every 90 s (replaces Realtime to free up WS connections).
   useEffect(() => {
-    if (!cover) return;
-    const channel = supabase
-      .channel(`cover-detail-watch-${cover.id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'covers_cafe_covers', filter: `id=eq.${cover.id}` }, () => {
-        if (selfWritePendingRef.current) return;
+    if (!cover?.id) return;
+    const id = setInterval(async () => {
+      if (selfWritePendingRef.current || refreshPending) return;
+      const { data } = await supabase
+        .from('covers_cafe_covers')
+        .select('updated_at')
+        .eq('id', cover.id)
+        .maybeSingle();
+      if (data && data.updated_at !== knownUpdatedAtRef.current) {
         setRefreshPending(true);
-        supabase.removeChannel(channel);
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [cover?.id]);
+      }
+    }, 90_000);
+    return () => clearInterval(id);
+  }, [cover?.id, refreshPending]);
 
   // Open panel from ?panel= query param (drag-to-collection from gallery)
   useEffect(() => {
