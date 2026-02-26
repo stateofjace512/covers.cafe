@@ -10,16 +10,30 @@ type ReportRow = {
   reporter_id: string | null;
 };
 
+type ProfileReportRow = {
+  id: string;
+  reason: string;
+  details: string | null;
+  created_at: string;
+  profile_id: string;
+  reporter_id: string;
+};
+
 export const GET: APIRoute = async ({ request }) => {
   const auth = await requireOperator(request);
   if ('error' in auth) return auth.error;
 
   const { sb } = auth;
 
-  const [{ data: reports }, { data: bans }, { data: operators }] = await Promise.all([
+  const [{ data: reports }, { data: profileReports }, { data: bans }, { data: operators }] = await Promise.all([
     sb
       .from('covers_cafe_reports')
       .select('id, reason, details, created_at, cover_id, reporter_id')
+      .order('created_at', { ascending: false })
+      .limit(200),
+    sb
+      .from('covers_cafe_profile_reports')
+      .select('id, reason, details, created_at, profile_id, reporter_id')
       .order('created_at', { ascending: false })
       .limit(200),
     sb
@@ -33,9 +47,13 @@ export const GET: APIRoute = async ({ request }) => {
   ]);
 
   const reportRows = (reports ?? []) as ReportRow[];
+  const profileReportRows = (profileReports ?? []) as ProfileReportRow[];
+
   const ids = [
     ...new Set([
       ...reportRows.map((r) => r.reporter_id).filter(Boolean),
+      ...profileReportRows.map((r) => r.reporter_id),
+      ...profileReportRows.map((r) => r.profile_id),
       ...(bans ?? []).map((b: { user_id: string }) => b.user_id),
     ]),
   ] as string[];
@@ -50,14 +68,17 @@ export const GET: APIRoute = async ({ request }) => {
 
   const usernameMap = new Map((profiles ?? []).map((p: { id: string; username: string | null }) => [p.id, p.username]));
   const coverMap = new Map((reportCovers ?? []).map((c: { id: string; title: string | null }) => [c.id, c.title]));
-  const banMap = new Map((bans ?? []).map((b: { user_id: string; reason: string | null; banned_at: string; expires_at?: string | null }) => [b.user_id, b]));
-  const operatorSet = new Set((operators ?? []).map((o: { user_id: string; can_be_removed: boolean }) => o.user_id));
 
   return new Response(JSON.stringify({
     reports: reportRows.map((r) => ({
       ...r,
       cover_title: coverMap.get(r.cover_id) ?? null,
       reporter_username: r.reporter_id ? usernameMap.get(r.reporter_id) ?? null : null,
+    })),
+    profileReports: profileReportRows.map((r) => ({
+      ...r,
+      reported_username: usernameMap.get(r.profile_id) ?? null,
+      reporter_username: usernameMap.get(r.reporter_id) ?? null,
     })),
     bans: (bans ?? []).map((b: { user_id: string; reason: string | null; banned_at: string; expires_at?: string | null }) => ({
       ...b,

@@ -11,6 +11,7 @@ import PinIcon from '../components/PinIcon';
 import CoffeeCupIcon from '../components/CoffeeCupIcon';
 import FavoritesIcon from '../components/FavoritesIcon';
 import DotSeparator from '../components/DotSeparator';
+import FlagIcon from '../components/FlagIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import GalleryGrid from '../components/GalleryGrid';
@@ -19,6 +20,16 @@ import type { Profile, Cover } from '../lib/types';
 import { getAvatarSrc, getCoverImageSrc } from '../lib/media';
 import { getCoverPath } from '../lib/coverRoutes';
 import { applyGradientColorsToDocument } from '../lib/userPreferences';
+
+const REPORT_REASONS = [
+  'Inappropriate username',
+  'Inappropriate display name',
+  'Inappropriate profile picture',
+  'Inappropriate banner',
+  'Inappropriate bio/content',
+  'Inappropriate link',
+  'Other',
+] as const;
 
 // ── Theme helpers ─────────────────────────────────────────────────────────────
 
@@ -84,6 +95,11 @@ export default function ArtistDetail() {
   const [easterEggMsg, setEasterEggMsg] = useState<string | null>(null);
   const [selfFriended, setSelfFriended] = useState(false);
   const themeRestoredRef = useRef(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportStatus, setReportStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [collections, setCollections] = useState<{
     id: string;
     name: string;
@@ -335,6 +351,31 @@ export default function ArtistDetail() {
     }
   }
 
+  async function handleReport(e: React.FormEvent) {
+    e.preventDefault();
+    if (!profile || !session?.access_token || !reportReason) return;
+    setReportBusy(true);
+    setReportStatus(null);
+    try {
+      const res = await fetch('/api/public/profiles/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ profileId: profile.id, reason: reportReason, details: reportDetails || undefined }),
+      });
+      const data = await res.json() as { success?: boolean; error?: string };
+      if (res.ok && data.success) {
+        setReportStatus({ ok: true, msg: 'Report submitted. Thanks for helping keep the community safe.' });
+        setReportReason('');
+        setReportDetails('');
+      } else {
+        setReportStatus({ ok: false, msg: data.error ?? 'Could not submit report. Please try again.' });
+      }
+    } catch {
+      setReportStatus({ ok: false, msg: 'Network error. Please try again.' });
+    }
+    setReportBusy(false);
+  }
+
   if (loading) return <p className="text-muted">Loading…</p>;
   if (notFound) return (
     <div>
@@ -438,6 +479,15 @@ export default function ArtistDetail() {
                       : '+ Add Friend'}
                   </button>
                 )
+              )}
+              {user && !isOwnProfile && (
+                <button
+                  className="btn btn-secondary artist-report-btn"
+                  onClick={() => { setReportOpen(true); setReportStatus(null); }}
+                  title="Report this profile"
+                >
+                  <FlagIcon size={13} /> Report
+                </button>
               )}
             </div>
             {easterEggMsg && (
@@ -597,7 +647,88 @@ export default function ArtistDetail() {
         )}
       </section>
 
-      
+      {/* Profile Report Modal */}
+      {reportOpen && (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) { setReportOpen(false); setReportStatus(null); } }}>
+          <div className="modal-box profile-report-modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
+            <div className="modal-header">
+              <h2 id="report-modal-title" style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
+                <FlagIcon size={15} /> Report @{profile?.username}
+              </h2>
+              <button
+                className="modal-close-btn"
+                onClick={() => { setReportOpen(false); setReportStatus(null); }}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              {reportStatus ? (
+                <div style={{ padding: '12px 0' }}>
+                  <p style={{ color: reportStatus.ok ? 'var(--color-success, #2d7a2d)' : 'var(--color-error, #c0392b)', marginBottom: 16 }}>
+                    {reportStatus.msg}
+                  </p>
+                  <button className="btn btn-secondary" onClick={() => { setReportOpen(false); setReportStatus(null); }}>
+                    Close
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleReport} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <p style={{ margin: 0, fontSize: 13, color: 'var(--body-text-muted)' }}>
+                    Select a reason for reporting this profile. Reports are reviewed by our moderation team.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {REPORT_REASONS.map((reason) => (
+                      <label key={reason} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14 }}>
+                        <input
+                          type="radio"
+                          name="report-reason"
+                          value={reason}
+                          checked={reportReason === reason}
+                          onChange={() => setReportReason(reason)}
+                          required
+                        />
+                        {reason}
+                      </label>
+                    ))}
+                  </div>
+                  {reportReason === 'Other' && (
+                    <textarea
+                      className="auth-input"
+                      placeholder="Please describe the issue…"
+                      value={reportDetails}
+                      onChange={(e) => setReportDetails(e.target.value)}
+                      rows={3}
+                      style={{ resize: 'vertical', fontFamily: 'inherit', fontSize: 13 }}
+                      required
+                    />
+                  )}
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button
+                      type="submit"
+                      className="btn btn-primary"
+                      disabled={reportBusy || !reportReason}
+                      style={{ flex: 1 }}
+                    >
+                      {reportBusy ? 'Submitting…' : 'Submit Report'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => { setReportOpen(false); setReportStatus(null); }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 }

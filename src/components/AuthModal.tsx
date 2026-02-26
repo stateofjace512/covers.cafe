@@ -110,6 +110,11 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
     if (username.length < 3) { setError('Username must be at least 3 characters.'); return; }
     if (username.length > 30) { setError('Username must be 30 characters or fewer.'); return; }
     if (!/^[a-z0-9_]+$/.test(username)) { setError('Username: lowercase letters, numbers, and underscores only.'); return; }
+    if (password.length < 12) { setError('Password must be at least 12 characters.'); return; }
+    if (!/[a-z]/.test(password)) { setError('Password must contain at least one lowercase letter.'); return; }
+    if (!/[A-Z]/.test(password)) { setError('Password must contain at least one uppercase letter.'); return; }
+    if (!/[0-9]/.test(password)) { setError('Password must contain at least one number.'); return; }
+    if (!/[@#$%^&*!?_\-+=~`|\\:;"'<>,.\/\[\]{}()]/.test(password)) { setError('Password must contain at least one special character (@, #, $, etc.).'); return; }
     setLoading(true);
 
     // Server validates username and sends OTP  -  account is NOT created yet.
@@ -307,8 +312,20 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
       setError('Passwords do not match.');
       return;
     }
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (newPassword.length < 12) {
+      setError('Password must be at least 12 characters.');
+      return;
+    }
+    if (!/[a-z]/.test(newPassword) || !/[A-Z]/.test(newPassword)) {
+      setError('Password must contain both uppercase and lowercase letters.');
+      return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      setError('Password must contain at least one number.');
+      return;
+    }
+    if (!/[@#$%^&*!?_\-+=~`|\\:;"'<>,.\/\[\]{}()]/.test(newPassword)) {
+      setError('Password must contain at least one special character (@, #, $, etc.).');
       return;
     }
     setLoading(true);
@@ -443,11 +460,11 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
                 <input
                   type="password"
                   className="auth-input"
-                  placeholder="Min. 6 characters"
+                  placeholder="Min. 12 chars, mixed case, number + symbol"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   autoComplete="new-password"
-                  minLength={6}
+                  minLength={12}
                   required
                 />
               </div>
@@ -462,7 +479,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
                   value={newPasswordConfirm}
                   onChange={(e) => setNewPasswordConfirm(e.target.value)}
                   autoComplete="new-password"
-                  minLength={6}
+                  minLength={12}
                   required
                 />
               </div>
@@ -582,11 +599,11 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
                 <input
                   type="password"
                   className="auth-input"
-                  placeholder={tab === 'register' ? 'Min. 6 characters' : '••••••••'}
+                  placeholder={tab === 'register' ? 'Min. 12 chars, mixed case, number + symbol' : '••••••••'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
-                  minLength={6}
+                  minLength={tab === 'register' ? 12 : 1}
                   required
                 />
               </div>
