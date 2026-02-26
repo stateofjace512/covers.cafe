@@ -266,10 +266,10 @@ export default function AchievementBadges({ userId }: Props) {
 
           if (a.type === 'first_collection') {
             return (
-              <div key={a.id} className="ach-badge ach-badge--first-collection" title="Babies first collection">
+              <div key={a.id} className="ach-badge ach-badge--first-collection" title="Baby's first collection">
                 <span className="ach-icon"><PaginatePictureIcon size={25} /></span>
                 <div className="ach-info">
-                  <span className="ach-label">Babies first collection</span>
+                  <span className="ach-label">Baby's first collection</span>
                   <span className="ach-descriptor">Created their first collection.</span>
                 </div>
               </div>

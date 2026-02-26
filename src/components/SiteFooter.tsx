@@ -12,7 +12,6 @@ export default function SiteFooter() {
           <span className="site-footer-tagline">your cover art community</span>
         </div>
         <nav className="site-footer-links">
-          <button onClick={() => navigate('/about')}>About</button>
           <button onClick={() => navigate('/privacy')}>Privacy</button>
           <button onClick={() => navigate('/terms')}>Terms</button>
         </nav>

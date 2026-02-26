@@ -13,6 +13,7 @@ import TrophyIcon from './TrophyIcon';
 import ArtistsIcon from './ArtistsIcon';
 import FavoritesIcon from './FavoritesIcon';
 import UploadDownloadIcon from './UploadDownloadIcon';
+import BlogIcon from './BlogIcon';
 import GearIcon from './GearIcon';
 import ShieldIcon from './ShieldIcon';
 import WeatherIcon from './WeatherIcon';
@@ -32,6 +33,7 @@ const NAV = [
   {                       label: 'Downloads', icon: <DownloadIcon size={18} />,       path: '/downloads' },
   {                       label: 'Profile',   icon: <UserIcon size={18} />,            path: '/profile' },
   { section: 'More',     label: 'Settings',  icon: <GearIcon size={18} />,           path: '/settings' },
+  {                       label: 'Blog',      icon: <BlogIcon size={18} />,           path: '/blog' },
 ] as const;
 
 const OPERATOR_NAV = { label: 'CMS', icon: <ShieldIcon size={18} />, path: '/cms' } as const;
