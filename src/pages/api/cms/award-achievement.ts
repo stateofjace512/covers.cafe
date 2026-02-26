@@ -1,14 +1,21 @@
 /**
  * POST /api/cms/award-achievement
- * Operator-only endpoint for granting or revoking manually-awarded achievement badges.
+ * Operator-only endpoint for granting or revoking achievement badges.
  *
- * Body: { userId: string, type: 'og' | 'staff' | 'verified', action: 'grant' | 'revoke', note?: string }
+ * Body: { userId: string, type: string, action: 'grant' | 'revoke', note?: string }
  */
 import type { APIRoute } from 'astro';
 import { requireOperator } from './_auth';
 import { getSupabaseServer } from '../_supabase';
 
-const OPERATOR_GRANTABLE_TYPES = new Set(['og', 'staff', 'verified']);
+const OPERATOR_GRANTABLE_TYPES = new Set([
+  'og', 'staff', 'verified',
+  'acotw', 'poh',
+  'milestone_1', 'milestone_50', 'milestone_100', 'milestone_250', 'milestone_500', 'milestone_1000',
+  'certified_loner', 'contributor',
+  'first_friend', 'friends_5', 'friends_25',
+  'first_collection',
+]);
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });

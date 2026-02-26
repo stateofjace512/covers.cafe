@@ -201,7 +201,7 @@ export default function Cms() {
   const [achQuery, setAchQuery] = useState('');
   const [achOptions, setAchOptions] = useState<UserOption[]>([]);
   const [achSelectedUser, setAchSelectedUser] = useState<UserOption | null>(null);
-  const [achType, setAchType] = useState<'og' | 'staff' | 'verified'>('og');
+  const [achType, setAchType] = useState('og');
   const [achNote, setAchNote] = useState('');
 
   // ── Blog ──────────────────────────────────────────────────────────────────
@@ -1130,7 +1130,7 @@ export default function Cms() {
           {/* ── Achievement awards ────────────────────────────────────────── */}
           <section className="surface cms-section">
             <h2 className="cms-h2">Award achievements</h2>
-            <p className="cms-desc">Grant or revoke operator-only achievement badges (og, staff, verified).</p>
+            <p className="cms-desc">Grant or revoke any achievement badge for any user.</p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
               <div style={{ position: 'relative' }}>
                 <input
@@ -1150,10 +1150,32 @@ export default function Cms() {
                   </div>
                 )}
               </div>
-              <select className="form-input" value={achType} onChange={(e) => setAchType(e.target.value as 'og' | 'staff' | 'verified')}>
-                <option value="og">og — I'm a punkrocker, yes I am.</option>
-                <option value="staff">staff</option>
-                <option value="verified">verified</option>
+              <select className="form-input" value={achType} onChange={(e) => setAchType(e.target.value)}>
+                <optgroup label="Special">
+                  <option value="og">og</option>
+                  <option value="staff">staff</option>
+                  <option value="verified">verified</option>
+                </optgroup>
+                <optgroup label="Community">
+                  <option value="acotw">acotw — Album Cover of the Week</option>
+                  <option value="poh">poh — Picture of the Hour</option>
+                  <option value="contributor">contributor</option>
+                  <option value="certified_loner">certified_loner</option>
+                </optgroup>
+                <optgroup label="Milestones">
+                  <option value="milestone_1">milestone_1 — 1 upload</option>
+                  <option value="milestone_50">milestone_50 — 50 uploads</option>
+                  <option value="milestone_100">milestone_100 — 100 uploads</option>
+                  <option value="milestone_250">milestone_250 — 250 uploads</option>
+                  <option value="milestone_500">milestone_500 — 500 uploads</option>
+                  <option value="milestone_1000">milestone_1000 — 1000 uploads</option>
+                </optgroup>
+                <optgroup label="Social">
+                  <option value="first_friend">first_friend</option>
+                  <option value="friends_5">friends_5 — 5 friends</option>
+                  <option value="friends_25">friends_25 — 25 friends</option>
+                  <option value="first_collection">first_collection</option>
+                </optgroup>
               </select>
               <input className="form-input" placeholder="Note (optional)" value={achNote} onChange={(e) => setAchNote(e.target.value)} style={{ minWidth: 200 }} />
               <button className="btn btn-primary" disabled={!achSelectedUser || busyId === 'ach-grant'} onClick={() => awardAchievement('grant')}>Grant</button>

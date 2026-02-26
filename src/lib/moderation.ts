@@ -178,11 +178,9 @@ Respond with exactly one word: true or false. No explanation, no punctuation.`;
       return { ok: false, reason: 'This website link is not permitted on this platform.' };
     }
     console.warn('[moderation] Unexpected website response:', raw);
-    // Fail open for websites — unknown response means allow
-    return { ok: true };
+    return { ok: false, reason: 'Unable to validate website link. Please try again in a moment.' };
   } catch (err) {
-    // Fail open: if moderation service is down, don't block website saves
     console.error('[moderation] Website check error:', err);
-    return { ok: true };
+    throw new Error('Moderation service is temporarily unavailable. Please try again in a moment.');
   }
 }

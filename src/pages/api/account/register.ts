@@ -10,7 +10,7 @@ import { checkRateLimit } from '../../../lib/rateLimit';
 import { sendMail, codeEmailHtml, codeEmailText } from '../_mailer';
 
 function generateCode(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(crypto.randomInt(100000, 1000000));
 }
 
 function validatePassword(password: string): string | null {
@@ -45,7 +45,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const password = body.password ?? '';
 
   // ── Basic validation ─────────────────────────────────────────────────────
-  if (!email || !email.includes('@')) {
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return new Response(
       JSON.stringify({ ok: false, message: 'A valid email is required.' }),
       { status: 200, headers: { 'Content-Type': 'application/json' } },

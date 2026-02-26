@@ -6,6 +6,16 @@
   SECRETS_SCAN_OMIT_KEYS = "PUBLIC_CF_IMAGES_HASH"
 
 [[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
   for = "/themes/*"
   [headers.values]
     Cache-Control = "public, max-age=2592000, immutable"

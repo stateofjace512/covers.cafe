@@ -24,7 +24,7 @@ function isRateLimited(email: string): boolean {
 }
 
 function generateCode(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(crypto.randomInt(100000, 1000000));
 }
 
 export const POST: APIRoute = async ({ request }) => {
@@ -36,7 +36,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const email = (body.email ?? '').trim().toLowerCase();
-  if (!email || !email.includes('@')) {
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return new Response(JSON.stringify({ ok: false, message: 'Valid email required.' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
