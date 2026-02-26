@@ -232,6 +232,26 @@ export const POST: APIRoute = async ({ request }) => {
       .from('covers_cafe_friends')
       .insert({ user_id: viewerId, friend_id: targetId, status: 'pending' });
     if (error) return json({ ok: false, error: error.message }, 500);
+
+    // Notify the target user of the incoming friend request
+    const { data: senderProfile } = await sb
+      .from('covers_cafe_profiles')
+      .select('display_name, username')
+      .eq('id', viewerId)
+      .maybeSingle();
+    if (senderProfile) {
+      await sb.from('covers_cafe_notifications').insert({
+        user_id: targetId,
+        type: 'friend_request',
+        cover_id: null,
+        cover_title: '',
+        cover_artist: '',
+        actor_name: senderProfile.display_name ?? senderProfile.username ?? 'Someone',
+        actor_username: senderProfile.username ?? null,
+        content: null,
+      });
+    }
+
     return json({ ok: true, status: 'pending_sent' });
   }
 
