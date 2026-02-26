@@ -14,7 +14,7 @@ interface Props {
   onClose: () => void;
 }
 
-type Step = 'form' | 'verify';
+type Step = 'form' | 'verify' | 'forgot' | 'reset';
 
 export default function AuthModal({ tab: initialTab, onClose }: Props) {
   const { refreshProfile, closeAuthModal } = useAuth();
@@ -29,6 +29,8 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
   const [success, setSuccess] = useState<string | null>(null);
   // Track whether we just created a new account so "start over" can delete it
   const [isNewRegistration, setIsNewRegistration] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
 
   // When opened directly at the verify step (e.g. reload with unverified session),
   // pull the email from the live session and send a fresh code automatically.
@@ -273,6 +275,66 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
     if (sent) setSuccess('A new code has been sent to your email.');
   };
 
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch('/api/account/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const json = await res.json() as { ok: boolean; message?: string };
+      if (!json.ok) {
+        setError(json.message ?? 'Could not send reset email. Please try again.');
+      } else {
+        setStep('reset');
+        setCode('');
+        setNewPassword('');
+        setNewPasswordConfirm('');
+      }
+    } catch {
+      setError('Network error. Please check your connection and try again.');
+    }
+    setLoading(false);
+  };
+
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (newPassword !== newPasswordConfirm) {
+      setError('Passwords do not match.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch('/api/account/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code, newPassword }),
+      });
+      const json = await res.json() as { ok: boolean; message?: string };
+      if (!json.ok) {
+        setError(json.message ?? 'Reset failed. Please try again.');
+      } else {
+        setSuccess('Password reset! You can now sign in with your new password.');
+        setStep('form');
+        setTab('login');
+        setCode('');
+        setNewPassword('');
+        setNewPasswordConfirm('');
+      }
+    } catch {
+      setError('Network error. Please check your connection and try again.');
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="modal-overlay" onClick={(e) => { if (step !== 'verify' && e.target === e.currentTarget) onClose(); }}>
       <div className="modal-box auth-modal" role="dialog" aria-modal="true">
@@ -293,6 +355,14 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
                 Create Account
               </button>
             </div>
+          ) : step === 'forgot' ? (
+            <div className="auth-tabs">
+              <span className="auth-tab auth-tab--active">Forgot Password</span>
+            </div>
+          ) : step === 'reset' ? (
+            <div className="auth-tabs">
+              <span className="auth-tab auth-tab--active">Reset Password</span>
+            </div>
           ) : (
             <div className="auth-tabs">
               <span className="auth-tab auth-tab--active">Verify Email</span>
@@ -311,6 +381,108 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
             <div className="auth-success">
               <span>✓</span> {success}
             </div>
+          ) : step === 'forgot' ? (
+            /* Forgot password: enter email */
+            <form onSubmit={handleForgotSubmit} className="auth-form">
+              <p className="auth-forgot-desc">Enter your email and we'll send you a code to reset your password.</p>
+              <div className="auth-field">
+                <label className="auth-label">
+                  <EmailIcon size={13} /> Email
+                </label>
+                <input
+                  type="email"
+                  className="auth-input"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  required
+                />
+              </div>
+              {error && (
+                <div className="auth-error">
+                  <AlertCircleIcon size={14} /> {error}
+                </div>
+              )}
+              <button type="submit" className="btn btn-primary auth-submit-btn" disabled={loading}>
+                {loading ? (
+                  <><LoadingIcon size={14} className="auth-spinner" /> Sending…</>
+                ) : 'Send Reset Code'}
+              </button>
+              <button type="button" className="auth-switch-btn auth-back-btn" onClick={() => { setStep('form'); setError(null); }}>
+                Back to Sign In
+              </button>
+            </form>
+          ) : step === 'reset' ? (
+            /* Reset password: enter code + new password */
+            <form onSubmit={handleResetSubmit} className="auth-form">
+              <div className="auth-verify-info">
+                <ShieldIcon size={32} className="auth-verify-icon" />
+                <p>Enter the 6-digit code sent to <strong>{email}</strong> and choose a new password.</p>
+              </div>
+              <div className="auth-field">
+                <label className="auth-label">
+                  <ShieldIcon size={13} /> Reset Code
+                </label>
+                <input
+                  type="text"
+                  className="auth-input auth-code-input"
+                  placeholder="000000"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  required
+                />
+              </div>
+              <div className="auth-field">
+                <label className="auth-label">
+                  <LockIcon size={13} /> New Password
+                </label>
+                <input
+                  type="password"
+                  className="auth-input"
+                  placeholder="Min. 6 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                  minLength={6}
+                  required
+                />
+              </div>
+              <div className="auth-field">
+                <label className="auth-label">
+                  <LockIcon size={13} /> Confirm Password
+                </label>
+                <input
+                  type="password"
+                  className="auth-input"
+                  placeholder="Repeat new password"
+                  value={newPasswordConfirm}
+                  onChange={(e) => setNewPasswordConfirm(e.target.value)}
+                  autoComplete="new-password"
+                  minLength={6}
+                  required
+                />
+              </div>
+              {error && (
+                <div className="auth-error">
+                  <AlertCircleIcon size={14} /> {error}
+                </div>
+              )}
+              <button type="submit" className="btn btn-primary auth-submit-btn" disabled={loading || code.length !== 6}>
+                {loading ? (
+                  <><LoadingIcon size={14} className="auth-spinner" /> Resetting…</>
+                ) : 'Reset Password'}
+              </button>
+              <button type="button" className="auth-switch-btn" onClick={() => { setStep('forgot'); setError(null); }}>
+                Didn't receive it? Resend code
+              </button>
+              <button type="button" className="auth-switch-btn auth-back-btn" onClick={() => { setStep('form'); setError(null); }}>
+                Back to Sign In
+              </button>
+            </form>
           ) : step === 'verify' ? (
             /* OTP verification step */
             <form onSubmit={handleVerify} className="auth-form">
@@ -397,6 +569,15 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
               <div className="auth-field">
                 <label className="auth-label">
                   <LockIcon size={13} /> Password
+                  {tab === 'login' && (
+                    <button
+                      type="button"
+                      className="auth-forgot-link"
+                      onClick={() => { setStep('forgot'); setError(null); setSuccess(null); }}
+                    >
+                      Forgot password?
+                    </button>
+                  )}
                 </label>
                 <input
                   type="password"

@@ -31,6 +31,8 @@ export default function CollectionDetail() {
   const [editPublic, setEditPublic] = useState(true);
   const [editSaving, setEditSaving] = useState(false);
   const [setCoverLoading, setSetCoverLoading] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!collectionId) return;
@@ -124,6 +126,18 @@ export default function CollectionDetail() {
     setEditSaving(false);
   };
 
+  const handleDelete = async () => {
+    if (!collection || !user) return;
+    setDeleting(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    await fetch('/api/collection-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ collection_id: collection.id }),
+    });
+    navigate(`/users/${username}`);
+  };
+
   if (loading) {
     return (
       <div className="gallery-loading">
@@ -203,6 +217,30 @@ export default function CollectionDetail() {
                     );
                   })}
                 </div>
+              )}
+            </div>
+
+            {/* Delete collection */}
+            <div className="col-edit-delete-section">
+              {deleteConfirm ? (
+                <div className="col-edit-delete-confirm">
+                  <span className="col-edit-delete-confirm-text">Delete this collection?</span>
+                  <button
+                    className="btn col-delete-btn col-delete-btn--confirm"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                  >
+                    {deleting ? <LoadingIcon size={12} className="col-spinner" /> : null}
+                    Yes, delete
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => setDeleteConfirm(false)} disabled={deleting}>
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button className="btn col-delete-btn" onClick={() => setDeleteConfirm(true)}>
+                  Delete collection
+                </button>
               )}
             </div>
           </div>
