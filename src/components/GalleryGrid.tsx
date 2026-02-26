@@ -56,6 +56,34 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId,
   const favIdsRef = useRef<string[]>([]);
   const loadingMoreRef = useRef(false);
   const currentPageRef = useRef(0);
+  const handledOpenRef = useRef<string | null>(null);
+
+  // Handle ?open=<cover_id> — e.g. links from notification bell
+  const openCoverId = searchParams.get('open');
+  useEffect(() => {
+    if (!openCoverId || handledOpenRef.current === openCoverId) return;
+    handledOpenRef.current = openCoverId;
+
+    // Remove the param from the URL immediately so it doesn't re-trigger
+    const params = new URLSearchParams(searchParams);
+    params.delete('open');
+    navigate(`?${params.toString()}`, { replace: true });
+
+    void supabase
+      .from('covers_cafe_covers')
+      .select('*, profiles:covers_cafe_profiles(id, username, display_name, avatar_url)')
+      .eq('id', openCoverId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) return;
+        const cover = data as Cover;
+        if (getPreferModalOverPagePreference()) {
+          setSelectedCover(cover);
+        } else {
+          navigate(getCoverPath(cover));
+        }
+      });
+  }, [openCoverId, navigate, searchParams]);
 
   // When tab changes, reset sort to a sensible default
   useEffect(() => {

@@ -232,6 +232,33 @@ export const POST: APIRoute = async ({ request }) => {
       .from('covers_cafe_friends')
       .insert({ user_id: viewerId, friend_id: targetId, status: 'pending' });
     if (error) return json({ ok: false, error: error.message }, 500);
+
+    // Notify the target user of the incoming friend request.
+    // Use fn_insert_notification via RPC — it is SECURITY DEFINER so it
+    // bypasses RLS even when the server client uses only the anon key.
+    // If the DB trigger already created one, the unique index on
+    // (user_id, actor_user_id) prevents a duplicate; errors are ignored.
+    const { data: senderProfile } = await sb
+      .from('covers_cafe_profiles')
+      .select('display_name, username')
+      .eq('id', viewerId)
+      .maybeSingle();
+    if (senderProfile) {
+      await sb.rpc('fn_insert_notification', {
+        p_user_id: targetId,
+        p_actor_user_id: viewerId,
+        p_actor_identity_hash: null,
+        p_type: 'friend_request',
+        p_cover_id: null,
+        p_target_comment_id: null,
+        p_cover_title: '',
+        p_cover_artist: '',
+        p_actor_name: senderProfile.display_name ?? senderProfile.username ?? 'Someone',
+        p_actor_username: senderProfile.username ?? null,
+        p_content: null,
+      });
+    }
+
     return json({ ok: true, status: 'pending_sent' });
   }
 
