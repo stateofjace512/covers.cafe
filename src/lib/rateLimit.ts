@@ -35,6 +35,12 @@ function applyViolation(bucket: RateLimitBucket, now: number, windowMs: number) 
     bucket.blockedUntil = now + strikePenalty;
   }
 
+  // Clear recorded events so that when the block expires the user isn't
+  // immediately re-blocked because old timestamps are still inside the window.
+  // The block duration itself is the full penalty.
+  bucket.timestamps = [];
+  bucket.weightedEvents = [];
+
   bucket.lastViolationAt = now;
 }
 
