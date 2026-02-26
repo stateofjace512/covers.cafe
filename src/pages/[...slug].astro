@@ -36,10 +36,17 @@ if (isFanCoverPage) {
         .maybeSingle();
 
       if (data) {
-        const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL as string;
-        const imageUrl = data.storage_path
-          ? `${supabaseUrl}/storage/v1/render/image/public/covers_cafe_covers/${data.storage_path}?width=600&height=600&resize=cover&quality=85`
-          : (data.image_url as string);
+        let imageUrl: string;
+        if (data.storage_path?.startsWith('cf:')) {
+          // Cloudflare-hosted image: proxy through our cover-media endpoint
+          imageUrl = `${Astro.url.origin}/api/cover-media?path=${encodeURIComponent(data.storage_path as string)}`;
+        } else if (data.storage_path) {
+          // Legacy Supabase storage
+          const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL as string;
+          imageUrl = `${supabaseUrl}/storage/v1/render/image/public/covers_cafe_covers/${data.storage_path}?width=600&height=600&resize=cover&quality=85`;
+        } else {
+          imageUrl = data.image_url as string;
+        }
 
         coverMeta = {
           title: data.title as string,
