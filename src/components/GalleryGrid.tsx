@@ -18,6 +18,9 @@ interface Props {
   filter?: 'all' | 'favorites' | 'mine' | 'artist';
   tab?: GalleryTab;
   artistUserId?: string;
+  onPin?: (coverId: string, isPinned: boolean) => void;
+  pinnedCoverIds?: Set<string>;
+  maxPinsReached?: boolean;
 }
 
 const SORT_LABELS: Record<SortOption, string> = {
@@ -31,7 +34,7 @@ const SORT_LABELS: Record<SortOption, string> = {
 
 const PAGE_SIZE = 24;
 
-export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId }: Props) {
+export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId, onPin, pinnedCoverIds, maxPinsReached }: Props) {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') ?? '';
@@ -349,10 +352,27 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
 
       {!covers.length ? (
         <div className="gallery-empty">
-          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3 }}>
-            <rect x="3" y="3" width="18" height="18" rx="2"/>
-            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-            <circle cx="9" cy="9" r="2"/>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="48" height="48" style={{ opacity: 0.3 }}>
+            <path d="m30.48 16.76 -1.53 0 0 1.52 1.53 0 0 7.62 1.52 0 0 -19.81 -1.52 0 0 10.67z" fill="currentColor"></path>
+            <path d="M28.95 25.9h1.53v1.53h-1.53Z" fill="currentColor"></path>
+            <path d="M28.95 4.57h1.53v1.52h-1.53Z" fill="currentColor"></path>
+            <path d="M27.43 12.19h1.52v1.52h-1.52Z" fill="currentColor"></path>
+            <path d="m13.72 27.43 0 -1.53 -3.05 0 0 1.53 -7.62 0 0 1.52 25.9 0 0 -1.52 -15.23 0z" fill="currentColor"></path>
+            <path d="m25.91 16.76 -1.53 0 0 -1.52 -4.57 0 0 1.52 -1.52 0 0 1.52 -3.05 0 0 1.53 3.05 0 0 1.52 1.52 0 0 1.52 3.05 0 0 -1.52 3.05 0 0 -1.52 3.04 0 0 -1.53 -3.04 0 0 -1.52z" fill="currentColor"></path>
+            <path d="M25.91 13.71h1.52v1.53h-1.52Z" fill="currentColor"></path>
+            <path d="M21.34 10.66h1.52v3.05h-1.52Z" fill="currentColor"></path>
+            <path d="M16.76 22.85h3.05v1.53h-3.05Z" fill="currentColor"></path>
+            <path d="M16.76 13.71h1.53v1.53h-1.53Z" fill="currentColor"></path>
+            <path d="M15.24 12.19h1.52v1.52h-1.52Z" fill="currentColor"></path>
+            <path d="M13.72 24.38h3.04v1.52h-3.04Z" fill="currentColor"></path>
+            <path d="M12.19 16.76h3.05v1.52h-3.05Z" fill="currentColor"></path>
+            <path d="M7.62 15.24h4.57v1.52H7.62Z" fill="currentColor"></path>
+            <path d="M4.57 16.76h3.05v1.52H4.57Z" fill="currentColor"></path>
+            <path d="M3.05 3.05h25.9v1.52H3.05Z" fill="currentColor"></path>
+            <path d="M3.05 18.28h1.52v1.53H3.05Z" fill="currentColor"></path>
+            <path d="M1.53 25.9h1.52v1.53H1.53Z" fill="currentColor"></path>
+            <path d="M1.53 4.57h1.52v1.52H1.53Z" fill="currentColor"></path>
+            <path d="m1.53 21.33 1.52 0 0 -1.52 -1.52 0 0 -13.72 -1.53 0L0 25.9l1.53 0 0 -4.57z" fill="currentColor"></path>
           </svg>
           <p>
             {searchQuery
@@ -360,7 +380,9 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
               : filter === 'favorites'
               ? 'No favorites yet. Star covers to save them here.'
               : filter === 'mine'
-              ? 'You haven\'t uploaded any covers yet.'
+              ? "You haven't uploaded any covers yet."
+              : filter === 'artist'
+              ? (artistUserId === user?.id ? "You haven't uploaded any covers yet." : 'This user has not uploaded any images yet. Check back later!')
               : tab === 'acotw'
               ? 'No Album Cover Of The Week selected yet.'
               : 'No covers yet. Be the first to upload!'}
@@ -384,6 +406,9 @@ export default function GalleryGrid({ filter = 'all', tab = 'new', artistUserId 
                   }
                   navigate(getCoverPath(cover));
                 }}
+                onPin={onPin}
+                isPinned={pinnedCoverIds?.has(cover.id)}
+                canPin={!maxPinsReached || pinnedCoverIds?.has(cover.id)}
               />
             ))}
           </div>

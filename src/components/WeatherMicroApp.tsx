@@ -10,9 +10,9 @@ interface Props {
   initialSettings: WeatherSettings;
   /** Called on every slider / mode change so the live canvas updates in real-time. */
   onSettingsChange: (s: WeatherSettings) => void;
-  /** Persist settings and close — canvas keeps running. */
+  /** Persist settings and close  -  canvas keeps running. */
   onSaveAndClose: (s: WeatherSettings) => void;
-  /** Discard changes and close — caller reverts the canvas to saved state. */
+  /** Discard changes and close  -  caller reverts the canvas to saved state. */
   onClose: () => void;
 }
 

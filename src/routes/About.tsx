@@ -20,7 +20,7 @@ export default function About() {
         </p>
 
         <p>
-          Album art holds deep connections to the hands of the artists — yes — but also the fans,
+          Album art holds deep connections to the hands of the artists  -  yes  -  but also the fans,
           who cherry pick and idealize and scrape at metaphoric varnish on digital art until they see
           it in a clear light.
         </p>

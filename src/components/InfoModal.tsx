@@ -18,7 +18,7 @@ interface InfoModalProps {
 }
 
 /**
- * Site-wide informodal — a friendly overlay that explains why something failed
+ * Site-wide informodal  -  a friendly overlay that explains why something failed
  * or asks the user to confirm an action, in a tone that matches the covers.cafe
  * personality (warm, casual, slightly self-deprecating).
  *

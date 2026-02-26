@@ -82,6 +82,7 @@ export default function ArtistDetail() {
   const [friends, setFriends] = useState<{ id: string; username: string; display_name: string | null; avatar_url: string | null }[]>([]);
   const [viewerFriendStatus, setViewerFriendStatus] = useState<'none' | 'pending_sent' | 'pending_received' | 'accepted'>('none');
   const [friendBusy, setFriendBusy] = useState(false);
+  const [friendRemoveConfirm, setFriendRemoveConfirm] = useState(false);
   const [easterEggMsg, setEasterEggMsg] = useState<string | null>(null);
   const [selfFriended, setSelfFriended] = useState(false);
   const themeRestoredRef = useRef(false);
@@ -281,9 +282,19 @@ export default function ArtistDetail() {
 
   async function handleAddFriend() {
     if (!profile || !session?.access_token) return;
+
+    // Require confirmation before removing an accepted friend
+    if (viewerFriendStatus === 'accepted') {
+      if (!friendRemoveConfirm) {
+        setFriendRemoveConfirm(true);
+        return;
+      }
+      setFriendRemoveConfirm(false);
+    }
+
     setFriendBusy(true);
 
-    // Self-friend easter egg — one time only, no unfriending
+    // Self-friend easter egg - one time only, no unfriending
     if (user?.id === profile.id) {
       if (selfFriended) { setFriendBusy(false); return; }
       const res = await fetch('/api/friends', {
@@ -341,6 +352,15 @@ export default function ArtistDetail() {
     if (!res.ok) return;
     if (action === 'unpin') {
       setPinnedCovers((prev) => prev.filter((p) => p.cover_id !== coverId));
+    } else {
+      // Re-fetch pinned covers to get the new row with correct id/position
+      const { data: pinned } = await supabase
+        .from('covers_cafe_pinned_covers')
+        .select('id, cover_id, position, covers_cafe_covers(id, title, artist, storage_path, image_url, page_slug)')
+        .eq('user_id', profile!.id)
+        .order('position', { ascending: true })
+        .limit(6);
+      setPinnedCovers((pinned ?? []) as PinnedRow[]);
     }
   }
 
@@ -368,7 +388,7 @@ export default function ArtistDetail() {
       </button>
 
       <div className="artist-detail-header card">
-        {/* Banner strip — avatar is anchored to its bottom-left edge */}
+        {/* Banner strip  -  avatar is anchored to its bottom-left edge */}
         {hasBanner ? (
           <div className="artist-profile-banner" style={bannerBgStyle}>
             <div className="artist-detail-avatar">
@@ -441,18 +461,20 @@ export default function ArtistDetail() {
                   <button
                     className={'btn btn-secondary artist-friend-btn' + (viewerFriendStatus === 'accepted' ? ' artist-friend-btn--friended' : '')}
                     onClick={handleAddFriend}
+                    onMouseLeave={() => setFriendRemoveConfirm(false)}
                     disabled={friendBusy}
                     title={
-                      viewerFriendStatus === 'accepted' ? 'Friends — click to unfriend' :
+                      viewerFriendStatus === 'accepted' ? 'Click to unfriend' :
                       viewerFriendStatus === 'pending_sent' ? 'Click to cancel request' :
                       viewerFriendStatus === 'pending_received' ? 'Accept friend request' :
                       'Send friend request'
                     }
                   >
-                    {viewerFriendStatus === 'accepted' ? 'Friends ✓' :
-                     viewerFriendStatus === 'pending_sent' ? 'Cancel Request' :
-                     viewerFriendStatus === 'pending_received' ? 'Accept Request' :
-                     '+ Add Friend'}
+                    {viewerFriendStatus === 'accepted'
+                      ? (friendRemoveConfirm ? 'Confirm remove?' : 'Friends')
+                      : viewerFriendStatus === 'pending_sent' ? 'Cancel Request'
+                      : viewerFriendStatus === 'pending_received' ? 'Accept Request'
+                      : '+ Add Friend'}
                   </button>
                 )
               )}
@@ -603,7 +625,15 @@ export default function ArtistDetail() {
           <GalleryIcon size={18} />
           Covers by {profile?.username}
         </h2>
-        {profile && <GalleryGrid filter="artist" artistUserId={profile.id} />}
+        {profile && (
+          <GalleryGrid
+            filter="artist"
+            artistUserId={profile.id}
+            onPin={isOwnProfile ? togglePin : undefined}
+            pinnedCoverIds={isOwnProfile ? new Set(pinnedCovers.map((p) => p.cover_id)) : undefined}
+            maxPinsReached={isOwnProfile ? pinnedCovers.length >= 6 : undefined}
+          />
+        )}
       </section>
 
       

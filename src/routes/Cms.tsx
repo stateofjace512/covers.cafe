@@ -810,7 +810,7 @@ export default function Cms() {
           <div className="cms-ban-list" style={{ marginTop: 10 }}>
             <div className="cms-ban-row">
               <div className="cms-ban-details">
-                <span className="cms-ban-user">{coverLookupResult.cover.artist} — {coverLookupResult.cover.title}</span>
+                <span className="cms-ban-user">{coverLookupResult.cover.artist}  -  {coverLookupResult.cover.title}</span>
                 <span className="cms-ban-reason">/{coverLookupResult.cover.page_slug}{coverLookupResult.cover.perma_unpublished ? ' · perma-unpublished' : ''}</span>
               </div>
               <button className="btn" onClick={() => setCoverVisibility(coverLookupResult.cover.id, !coverLookupResult.cover.is_public)} disabled={coverLookupResult.cover.perma_unpublished || busyId === `visibility-${coverLookupResult.cover.id}`} title={coverLookupResult.cover.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}>{coverLookupResult.cover.is_public ? 'Unpublish' : 'Publish'}</button>
@@ -819,7 +819,7 @@ export default function Cms() {
             {coverLookupResult.nextByUser.map((c) => (
               <div key={c.id} className="cms-ban-row">
                 <div className="cms-ban-details">
-                  <span className="cms-ban-user">{c.artist} — {c.title}</span>
+                  <span className="cms-ban-user">{c.artist}  -  {c.title}</span>
                   <span className="cms-ban-reason">/{c.page_slug}{c.perma_unpublished ? ' · perma-unpublished' : ''}</span>
                 </div>
                 <button className="btn" onClick={() => setCoverVisibility(c.id, !c.is_public)} disabled={c.perma_unpublished || busyId === `visibility-${c.id}`} title={c.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}>{c.is_public ? 'Unpublish' : 'Publish'}</button>
@@ -897,7 +897,7 @@ export default function Cms() {
                   {userBrowserCovers.map((c) => (
                     <div key={c.id} className="cms-ban-row">
                       <div className="cms-ban-details">
-                        <span className="cms-ban-user">{c.artist} — {c.title}</span>
+                        <span className="cms-ban-user">{c.artist}  -  {c.title}</span>
                         <span className="cms-ban-reason">
                           /{c.page_slug}
                           {c.perma_unpublished ? ' · perma-unpublished' : c.is_public ? '' : ' · private'}
@@ -972,7 +972,7 @@ export default function Cms() {
                       <div className="cms-ban-details">
                         <span className="cms-ban-user">@{pin.author_username}</span>
                         <span className="cms-ban-reason" style={{ fontStyle: 'italic' }}>"{pin.comment_content.slice(0, 80)}{pin.comment_content.length > 80 ? '…' : ''}"</span>
-                        {pin.cover_title && <span className="cms-ban-reason">{pin.cover_title}{pin.cover_artist ? ` — ${pin.cover_artist}` : ''}</span>}
+                        {pin.cover_title && <span className="cms-ban-reason">{pin.cover_title}{pin.cover_artist ? `  -  ${pin.cover_artist}` : ''}</span>}
                       </div>
                       <button className="btn" disabled={busyId === `unpin-${pin.id}`} onClick={() => unpinComment(pin.id)}>Unpin</button>
                     </div>
@@ -990,7 +990,7 @@ export default function Cms() {
                       <div className="cms-ban-details">
                         <span className="cms-ban-user">@{c.author_username}</span>
                         <span className="cms-ban-reason" style={{ fontStyle: 'italic' }}>"{c.content.slice(0, 100)}{c.content.length > 100 ? '…' : ''}"</span>
-                        {c.cover_title && <span className="cms-ban-reason">{c.cover_title}{c.cover_artist ? ` — ${c.cover_artist}` : ''}</span>}
+                        {c.cover_title && <span className="cms-ban-reason">{c.cover_title}{c.cover_artist ? `  -  ${c.cover_artist}` : ''}</span>}
                       </div>
                       {c.is_already_pinned ? (
                         <span className="cms-badge cms-badge--op">Pinned</span>

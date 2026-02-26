@@ -441,7 +441,7 @@ export default function CoverDetail() {
             <>
               <div className="cover-panel-row">
                 <select className="cover-panel-input" value={selectedCollectionId} onChange={(e) => setSelectedCollectionId(e.target.value)}>
-                  <option value="">{collections.length === 0 ? 'No collections yet — create one below' : 'Select a collection…'}</option>
+                  <option value="">{collections.length === 0 ? 'No collections yet  -  create one below' : 'Select a collection…'}</option>
                   {collections.map((c) => (
                     <option key={c.id} value={c.id}>{c.name} ({c.is_public ? 'Public' : 'Private'})</option>
                   ))}
@@ -467,7 +467,7 @@ export default function CoverDetail() {
           <h3 className="cover-panel-title"><FlagIcon size={14} /> Report Cover</h3>
           {reportDone ? (
             <>
-              <p className="cover-panel-muted">Thanks — your report has been submitted.</p>
+              <p className="cover-panel-muted">Thanks  -  your report has been submitted.</p>
               <button className="btn btn-secondary cover-panel-close-btn" onClick={() => setActivePanel(null)}>Close</button>
             </>
           ) : (

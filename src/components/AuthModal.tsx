@@ -87,14 +87,14 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
       .single();
 
     if (profileData?.email_verified === false) {
-      // Need to verify — send code then show OTP step
+      // Need to verify  -  send code then show OTP step
       const token = data.session?.access_token ?? '';
       const sent = await sendVerificationCode(token, email);
       if (sent) {
         setStep('verify');
       }
     } else {
-      // Already verified — close modal
+      // Already verified  -  close modal
       closeAuthModal();
     }
 
@@ -110,7 +110,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
     if (!/^[a-z0-9_]+$/.test(username)) { setError('Username: lowercase letters, numbers, and underscores only.'); return; }
     setLoading(true);
 
-    // Server validates username and sends OTP — account is NOT created yet.
+    // Server validates username and sends OTP  -  account is NOT created yet.
     // The email is only stored after the user proves ownership in the verify step.
     let registerJson: { ok: boolean; message?: string; field?: string };
     try {
@@ -132,7 +132,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
       return;
     }
 
-    // OTP sent — show the verify step. No account exists yet.
+    // OTP sent  -  show the verify step. No account exists yet.
     setIsNewRegistration(true);
     setStep('verify');
     setLoading(false);
@@ -183,7 +183,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
       }
 
       if (json.session) {
-        // Server signed us in — just set the session directly
+        // Server signed us in  -  just set the session directly
         await supabase.auth.setSession({
           access_token: json.session.access_token,
           refresh_token: json.session.refresh_token,
@@ -249,7 +249,7 @@ export default function AuthModal({ tab: initialTab, onClose }: Props) {
   const handleResend = async () => {
     setError(null);
     if (isNewRegistration) {
-      // No session yet — resend by hitting the register endpoint again (respects 90s cooldown)
+      // No session yet  -  resend by hitting the register endpoint again (respects 90s cooldown)
       try {
         const res = await fetch('/api/account/register', {
           method: 'POST',

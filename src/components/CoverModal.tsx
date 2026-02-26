@@ -503,7 +503,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                 <h3 className="cover-report-title">Report this cover</h3>
                 {reportDone ? (
                   <p className="cover-report-done">
-                    Thanks — your report has been submitted and will be reviewed.
+                    Thanks  -  your report has been submitted and will be reviewed.
                   </p>
                 ) : (
                   <>
@@ -565,7 +565,7 @@ export default function CoverModal({ cover, isFavorited, onToggleFavorite, onClo
                     <p className="collection-status">Loading collections…</p>
                   ) : (
                     <select className="form-input" value={selectedCollectionId} onChange={(e) => setSelectedCollectionId(e.target.value)}>
-                      <option value="">{collections.length === 0 ? 'No collections yet — create one below' : 'Select a collection…'}</option>
+                      <option value="">{collections.length === 0 ? 'No collections yet  -  create one below' : 'Select a collection…'}</option>
                       {collections.map((item) => (
                         <option key={item.id} value={item.id}>{item.name} ({item.is_public ? 'Public' : 'Private'})</option>
                       ))}

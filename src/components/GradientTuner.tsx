@@ -11,7 +11,7 @@ interface GradientTunerProps { onClose: () => void; }
 const DEFAULT_START = '#4f46e5';
 const DEFAULT_END   = '#db2777';
 
-/** Same WCAG luminance calculation as in userPreferences.ts — duplicated here
+/** Same WCAG luminance calculation as in userPreferences.ts  -  duplicated here
  *  so the preview can run synchronously without importing the full module. */
 function wcagTextColor(start: string, end: string): '#ffffff' | '#000000' {
   function toLinear(c: number) { const s = c / 255; return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4); }
@@ -207,7 +207,7 @@ export default function GradientTuner({ onClose }: GradientTunerProps) {
           aria-label="Gradient preview"
         >
           <span className="gta-preview-text" style={{ color: textColor }}>
-            Preview — text will be {isBright ? 'dark' : 'white'}
+            Preview  -  text will be {isBright ? 'dark' : 'white'}
           </span>
         </div>
 

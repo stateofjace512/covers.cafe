@@ -15,7 +15,7 @@ export default function SearchUserIcon({ size = 18, className, style }: Props) {
       className={className}
       style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
     >
-      {/* Magnifying glass lens — same ring as SearchIcon */}
+      {/* Magnifying glass lens  -  same ring as SearchIcon */}
       <path fill="currentColor" d="m24.38 19.81 -1.53 0 0 3.05 -3.04 0 0 1.52 -3.05 0 0 1.52 4.57 0 0 1.53 1.52 0 0 1.52 1.53 0 0 1.53 1.52 0 0 1.52 1.53 0 0 -1.52 1.52 0 0 -1.53 1.52 0 0 -1.52 1.53 0 0 -1.53 -1.53 0 0 -1.52 -1.52 0 0 -1.52 -1.52 0 0 -1.53 -1.53 0 0 -4.57 -1.52 0 0 3.05z" />
       <path fill="currentColor" d="M25.9 10.67h1.53v6.09H25.9Z" />
       <path fill="currentColor" d="M24.38 7.62h1.52v3.05h-1.52Z" />

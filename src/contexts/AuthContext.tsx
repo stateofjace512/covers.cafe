@@ -17,7 +17,7 @@ interface AuthContextValue {
   profile: Profile | null;
   loading: boolean;
   emailVerified: boolean;
-  // Modal controls — lifted here so any component can call openAuthModal()
+  // Modal controls  -  lifted here so any component can call openAuthModal()
   authModalOpen: boolean;
   authModalTab: 'login' | 'register' | 'verify';
   openAuthModal: (tab?: 'login' | 'register' | 'verify') => void;
@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
-        // Don't auto-close modal here — AuthModal handles it after verification
+        // Don't auto-close modal here  -  AuthModal handles it after verification
       } else {
         setProfile(null);
       }
@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchProfile]);
 
   // If the user has a live session but hasn't verified their email yet, surface the
-  // verify modal automatically — this keeps the flow alive across page reloads.
+  // verify modal automatically  -  this keeps the flow alive across page reloads.
   useEffect(() => {
     if (user && profile && !profile.email_verified && !autoVerifyFired.current) {
       autoVerifyFired.current = true;
