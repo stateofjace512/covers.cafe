@@ -571,7 +571,7 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Gradient colour picker — only shown when gradient theme is active */}
+          {/* Gradient colour picker  -  only shown when gradient theme is active */}
           {currentTheme === 'gradient' && (
             <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '10px' }}>
               <div className="settings-row-info">

@@ -5,6 +5,7 @@ import UserIcon from './UserIcon';
 import TrashIcon from './TrashIcon';
 import TrophyIcon from './TrophyIcon';
 import LockIcon from './LockIcon';
+import PinIcon from './PinIcon';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -19,9 +20,12 @@ interface Props {
   onClick?: () => void;
   onDeleted?: (coverId: string) => void;
   onDragForCollection?: (cover: Cover) => void;
+  onPin?: (coverId: string, isPinned: boolean) => void;
+  isPinned?: boolean;
+  canPin?: boolean;
 }
 
-export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClick, onDeleted, onDragForCollection }: Props) {
+export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClick, onDeleted, onDragForCollection, onPin, isPinned, canPin }: Props) {
   const { user, session } = useAuth();
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
@@ -107,6 +111,16 @@ export default function CoverCard({ cover, isFavorited, onToggleFavorite, onClic
               disabled={deleting}
             >
               <TrashIcon size={15} />
+            </button>
+          )}
+          {onPin && (
+            <button
+              className={`cover-card-action-btn cover-card-pin-btn${isPinned ? ' cover-card-pin-btn--pinned' : ''}`}
+              onClick={(e) => { e.stopPropagation(); onPin(cover.id, isPinned ?? false); }}
+              title={isPinned ? 'Unpin' : (canPin ? 'Pin to profile' : 'Max 6 pins reached')}
+              disabled={!isPinned && !canPin}
+            >
+              <PinIcon size={15} />
             </button>
           )}
         </div>

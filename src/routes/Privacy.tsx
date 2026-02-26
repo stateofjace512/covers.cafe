@@ -35,7 +35,7 @@ export default function Privacy() {
 
         <h2>3. Data Sharing</h2>
         <p>
-          We share your data only with the infrastructure providers necessary to operate the service —
+          We share your data only with the infrastructure providers necessary to operate the service  - 
           specifically <strong>Supabase</strong> (database and storage) and our hosting provider.
           These providers are bound by their own privacy policies and data processing agreements.
           We do not sell, rent, or trade your personal information with any other third party.

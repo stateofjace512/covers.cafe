@@ -35,7 +35,7 @@ export default function Gallery() {
 
   return (
     <div>
-      {/* Hero — only show when no search */}
+      {/* Hero  -  only show when no search */}
       {!searchQuery && (
         <div className="hero-banner">
           <div className="hero-content">

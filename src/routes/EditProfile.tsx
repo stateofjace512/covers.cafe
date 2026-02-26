@@ -46,7 +46,7 @@ const THEME_OPTIONS = [
   { id: 'pureblack', label: 'Black',    icon: <MoonIcon size={16} /> },
   { id: 'crisp',     label: 'Crisp',    icon: <SunIcon size={16} /> },
   { id: 'gradient',  label: 'Gradient', icon: <SettingSlideIcon size={16} /> },
-  { id: null,        label: 'None',     icon: <span style={{ fontSize: 12, opacity: 0.5 }}>—</span> },
+  { id: null,        label: 'None',     icon: <span style={{ fontSize: 12, opacity: 0.5 }}> - </span> },
 ] as const;
 
 export default function EditProfile() {
@@ -67,10 +67,15 @@ export default function EditProfile() {
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarZoom, setAvatarZoom] = useState(1);
+  const [avatarOffsetX, setAvatarOffsetX] = useState(0);
+  const [avatarOffsetY, setAvatarOffsetY] = useState(0);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Banner
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [bannerZoom, setBannerZoom] = useState(1);
+  const [bannerOffsetX, setBannerOffsetX] = useState(0);
+  const [bannerOffsetY, setBannerOffsetY] = useState(0);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
   // Profile theme
@@ -116,8 +121,11 @@ export default function EditProfile() {
     if (!ctx) return null;
     const minSide = Math.min(img.width, img.height);
     const cropSide = minSide / Math.max(avatarZoom, 1);
-    const sx = (img.width - cropSide) / 2;
-    const sy = (img.height - cropSide) / 2;
+    // Center crop, then apply offset (offset is -1..1 fraction of the remaining space)
+    const maxOffsetX = (img.width - cropSide) / 2;
+    const maxOffsetY = (img.height - cropSide) / 2;
+    const sx = maxOffsetX + avatarOffsetX * maxOffsetX;
+    const sy = maxOffsetY + avatarOffsetY * maxOffsetY;
     ctx.drawImage(img, sx, sy, cropSide, cropSide, 0, 0, 500, 500);
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
     if (!blob) return null;
@@ -135,19 +143,33 @@ export default function EditProfile() {
 
   const uploadBanner = async (): Promise<string | null> => {
     if (!user || !session || !bannerPreview) return null;
-    // Canvas pre-resize to ≤1200×700 so the payload fits within Netlify's body limit.
-    // The server then does the final sharp pass for best quality.
+    // Canvas crop with zoom/position, then resize to ≤1200×400 for upload.
     const img = new Image();
     img.src = bannerPreview;
     await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
-    const TARGET_W = 1200, TARGET_H = 700;
-    const scale = Math.min(TARGET_W / img.width, TARGET_H / img.height, 1);
+    const TARGET_W = 1200, TARGET_H = 400;
+    // Crop a 3:1 region from the source image using zoom and offset
+    const srcAspect = img.width / img.height;
+    const targetAspect = TARGET_W / TARGET_H;
+    // Base crop: fit the target aspect ratio into the image
+    let cropW: number, cropH: number;
+    if (srcAspect > targetAspect) {
+      cropH = img.height / bannerZoom;
+      cropW = cropH * targetAspect;
+    } else {
+      cropW = img.width / bannerZoom;
+      cropH = cropW / targetAspect;
+    }
+    const maxOffsetX = (img.width - cropW) / 2;
+    const maxOffsetY = (img.height - cropH) / 2;
+    const sx = maxOffsetX + bannerOffsetX * maxOffsetX;
+    const sy = maxOffsetY + bannerOffsetY * maxOffsetY;
     const canvas = document.createElement('canvas');
-    canvas.width = Math.round(img.width * scale);
-    canvas.height = Math.round(img.height * scale);
+    canvas.width = TARGET_W;
+    canvas.height = TARGET_H;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas unavailable');
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, sx, sy, cropW, cropH, 0, 0, TARGET_W, TARGET_H);
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.88));
     if (!blob) throw new Error('Could not encode image');
     const form = new FormData();
@@ -342,15 +364,28 @@ export default function EditProfile() {
             const picked = e.target.files?.[0];
             if (!picked) return;
             setAvatarPreview(URL.createObjectURL(picked));
+            setAvatarZoom(1);
+            setAvatarOffsetX(0);
+            setAvatarOffsetY(0);
           }} />
           <button type="button" className="btn btn-secondary" onClick={() => avatarInputRef.current?.click()}><UploadDownloadIcon size={14} /> Upload image</button>
           {avatarPreview && (
             <>
               <div className="avatar-crop-preview">
-                <img src={avatarPreview} alt="Avatar crop preview" style={{ transform: 'scale(' + avatarZoom + ')' }} />
+                <img
+                  src={avatarPreview}
+                  alt="Avatar crop preview"
+                  style={{
+                    transform: `scale(${avatarZoom}) translate(${avatarOffsetX * 50 / avatarZoom}%, ${avatarOffsetY * 50 / avatarZoom}%)`,
+                  }}
+                />
               </div>
               <label className="form-hint">Zoom</label>
               <input type="range" min="1" max="2.5" step="0.1" value={avatarZoom} onChange={(e) => setAvatarZoom(parseFloat(e.target.value))} />
+              <label className="form-hint">Position X</label>
+              <input type="range" min="-1" max="1" step="0.05" value={avatarOffsetX} onChange={(e) => setAvatarOffsetX(parseFloat(e.target.value))} />
+              <label className="form-hint">Position Y</label>
+              <input type="range" min="-1" max="1" step="0.05" value={avatarOffsetY} onChange={(e) => setAvatarOffsetY(parseFloat(e.target.value))} />
               <p className="form-hint">Saved as 500×500 square.</p>
             </>
           )}
@@ -363,15 +398,35 @@ export default function EditProfile() {
             const picked = e.target.files?.[0];
             if (!picked) return;
             setBannerPreview(URL.createObjectURL(picked));
+            setBannerZoom(1);
+            setBannerOffsetX(0);
+            setBannerOffsetY(0);
           }} />
           <button type="button" className="btn btn-secondary" onClick={() => bannerInputRef.current?.click()}><UploadDownloadIcon size={14} /> Upload banner</button>
-          {(bannerPreview || profile?.banner_url) && (
+          {bannerPreview && (
+            <>
+              <div className="banner-preview">
+                <img
+                  src={bannerPreview}
+                  alt="Banner preview"
+                  className="banner-preview-img"
+                  style={{
+                    transform: `scale(${bannerZoom}) translate(${bannerOffsetX * 50 / bannerZoom}%, ${bannerOffsetY * 50 / bannerZoom}%)`,
+                    transformOrigin: 'center',
+                  }}
+                />
+              </div>
+              <label className="form-hint">Zoom</label>
+              <input type="range" min="1" max="3" step="0.1" value={bannerZoom} onChange={(e) => setBannerZoom(parseFloat(e.target.value))} />
+              <label className="form-hint">Position X</label>
+              <input type="range" min="-1" max="1" step="0.05" value={bannerOffsetX} onChange={(e) => setBannerOffsetX(parseFloat(e.target.value))} />
+              <label className="form-hint">Position Y</label>
+              <input type="range" min="-1" max="1" step="0.05" value={bannerOffsetY} onChange={(e) => setBannerOffsetY(parseFloat(e.target.value))} />
+            </>
+          )}
+          {!bannerPreview && profile?.banner_url && (
             <div className="banner-preview">
-              <img
-                src={bannerPreview ?? profile?.banner_url ?? ''}
-                alt="Banner preview"
-                className="banner-preview-img"
-              />
+              <img src={profile.banner_url} alt="Current banner" className="banner-preview-img" />
             </div>
           )}
           <span className="form-hint">Displayed at the top of your profile. Saved as 1200×400.</span>

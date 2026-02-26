@@ -214,7 +214,7 @@ export default function Acotw() {
                         </button>
                       )}
 
-                    {/* Vote bar — only visible after user voted or poll closed */}
+                    {/* Vote bar  -  only visible after user voted or poll closed */}
                     {(hasVoted || isClosed) && (
                       <div className="acotw-bar-wrap" title={`${pct}%`}>
                         <div className="acotw-bar" style={{ width: `${pct}%` }} />

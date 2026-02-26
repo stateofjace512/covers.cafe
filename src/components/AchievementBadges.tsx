@@ -55,7 +55,7 @@ function getMilestones(coverCount: number): Milestone[] {
   if (coverCount >= 50) earned.push({
     id: 'city',
     label: 'Entering the City',
-    descriptor: 'Reached 50 public uploads — a serious contributor.',
+    descriptor: 'Reached 50 public uploads  -  a serious contributor.',
     icon: <Building1Icon size={25} />,
     cssClass: 'ach-badge--city',
   });

@@ -137,7 +137,7 @@ async function validateFile(file: File): Promise<ValidationResult> {
       if (img.naturalWidth < MIN_DIM || img.naturalHeight < MIN_DIM) {
         resolve({ ok: false, error: `Image must be at least ${MIN_DIM}×${MIN_DIM}px (yours: ${img.naturalWidth}×${img.naturalHeight}).` });
       } else if (img.naturalWidth > MAX_DIM || img.naturalHeight > MAX_DIM) {
-        // Don't hard-reject — let the caller offer to resize
+        // Don't hard-reject  -  let the caller offer to resize
         resolve({ ok: false, tooLarge: true, width: img.naturalWidth, height: img.naturalHeight });
       } else {
         resolve({ ok: true });
@@ -473,7 +473,7 @@ export default function UploadForm() {
       const result = await validateFile(f);
       if (!result.ok) {
         if ('tooLarge' in result) {
-          // Auto-resize oversized files in bulk mode — no modal interruption
+          // Auto-resize oversized files in bulk mode  -  no modal interruption
           try { f = await resizeToNearestThousand(f); } catch { continue; }
         } else {
           continue; // skip invalid (wrong type, too small, etc.)
@@ -804,7 +804,7 @@ export default function UploadForm() {
                   <div className="fuzzy-hint fuzzy-hint--split">
                     Multiple artists detected:{' '}
                     {artistSplitParts.map((p) => <span key={p} className="fuzzy-hint-tag">{p}</span>)}
-                    {' '}— each will link to their own artist page.
+                    {' '} -  each will link to their own artist page.
                   </div>
                 )}
               </div>
@@ -997,7 +997,7 @@ export default function UploadForm() {
                       <div className="fuzzy-hint fuzzy-hint--split" style={{ width: '100%' }}>
                         Multiple artists:{' '}
                         {bulkArtistSplit.map((p) => <span key={p} className="fuzzy-hint-tag">{p}</span>)}
-                        {' '}— each will link to their own artist page.
+                        {' '} -  each will link to their own artist page.
                       </div>
                     )}
                     {item.errorMsg && (

@@ -4,7 +4,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AppShell from './components/AppShell';
 import AuthModal from './components/AuthModal';
 import { applyUserPreferencesToDocument } from './lib/userPreferences';
-import ContextMenu from './components/ContextMenu';
 
 // Route pages
 import Gallery from './routes/Gallery';
@@ -250,7 +249,6 @@ function AppContent() {
 
   return (
     <>
-      <ContextMenu />
       <AppShell>
         <Routes>
           <Route path="/" element={<Gallery />} />
@@ -274,7 +272,7 @@ function AppContent() {
           <Route path="/cms" element={<Cms />} />
           <Route path="/covers/fan/:slug" element={<CoverDetail />} />
           <Route path="/covers/official/:slug" element={<OfficialCoverDetail />} />
-          {/* Legacy redirect — old /cover/ links go to the new fan path */}
+          {/* Legacy redirect  -  old /cover/ links go to the new fan path */}
           <Route path="/cover/:slug" element={<LegacyCoverRedirect />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

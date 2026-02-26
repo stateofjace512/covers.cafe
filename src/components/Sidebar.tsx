@@ -105,7 +105,7 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
   }
 
   function handleWeatherClose() {
-    // Discard unsaved changes — revert canvas to last saved state
+    // Discard unsaved changes  -  revert canvas to last saved state
     setLiveWeather(savedWeather.mode !== 'off' ? savedWeather : null);
     setOpenApps(prev => { const next = new Set(prev); next.delete('weather'); return next; });
   }
@@ -222,7 +222,7 @@ export default function Sidebar({ isMobileNavOpen, onNavigate }: SidebarProps) {
 
     </aside>
 
-      {/* Persistent weather canvas — survives control window close */}
+      {/* Persistent weather canvas  -  survives control window close */}
       {liveWeather !== null && <WeatherCanvas settings={liveWeather} />}
 
       {/* Microapp windows portalled to document.body */}

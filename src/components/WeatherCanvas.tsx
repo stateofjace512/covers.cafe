@@ -27,7 +27,7 @@ export default function WeatherCanvas({ settings }: Props) {
   useEffect(() => { cfgRef.current = settings.cfg; }, [settings.cfg]);
   useEffect(() => { isRisingRef.current = settings.isRising; }, [settings.isRising]);
 
-  // Canvas + animation — mounted once, cleaned up on unmount
+  // Canvas + animation  -  mounted once, cleaned up on unmount
   useEffect(() => {
     const canvas = document.createElement('canvas');
     canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;';

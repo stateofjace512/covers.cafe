@@ -63,7 +63,7 @@ export default function Poh() {
           </span>
           <h1 className="poh-title">THE PIN OF HEURISTICS</h1>
           <p className="poh-subtitle">
-            Comments inducted by communal heuristic consensus — preserved in perpetuity.
+            Comments inducted by communal heuristic consensus  -  preserved in perpetuity.
           </p>
         </div>
         <div className="poh-header-arch poh-header-arch--bottom" aria-hidden="true" />

@@ -132,7 +132,7 @@ export default function MusicArtistDetail() {
   const [undoSnapshot, setUndoSnapshot] = useState<{ records: { album_cover_url: string; artist_name: string }[]; aliases: string[] } | null>(null);
   const [undoCountdown, setUndoCountdown] = useState(0);
   const undoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // Known aliases for this artist (alias → this artistName) — used to expand official cover queries.
+  // Known aliases for this artist (alias → this artistName)  -  used to expand official cover queries.
   const [artistAliases, setArtistAliases] = useState<string[]>([]);
 
   // Artist photo state

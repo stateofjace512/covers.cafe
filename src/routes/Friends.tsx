@@ -146,7 +146,7 @@ export default function Friends() {
                   <div className="friends-page-info">
                     <span className="friends-page-name">{p.display_name ?? p.username}</span>
                     {p.display_name && <span className="friends-page-username">@{p.username}</span>}
-                    <span className="friends-page-username">Request sent — awaiting response</span>
+                    <span className="friends-page-username">Request sent  -  awaiting response</span>
                   </div>
                 </button>
                 <div className="friend-request-actions">

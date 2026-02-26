@@ -200,7 +200,7 @@ export default function NotificationBell() {
                         <p className="notif-text">
                           <button className="notif-user-link" onClick={() => { if (n.actor_username) navigate(`/users/${encodeURIComponent(n.actor_username)}`); setOpen(false); }}>
                             {n.actor_name}
-                          </button>{' '}sent you a friend request —{' '}
+                          </button>{' '}sent you a friend request  - {' '}
                           <button className="notif-cover-link" onClick={() => { navigate('/friends'); setOpen(false); }}>
                             view requests
                           </button>
