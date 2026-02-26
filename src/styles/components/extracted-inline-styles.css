@@ -3391,6 +3391,91 @@
   border-color: rgba(120,80,160,0.3);
 }
 
+/* ── Upload milestone badges (250 / 500 / 1000) ── */
+.ach-badge--milestone250 {
+  background: linear-gradient(135deg, rgba(0,180,180,0.15) 0%, rgba(0,120,140,0.08) 100%);
+  border-color: rgba(0,160,170,0.4);
+}
+.ach-badge--milestone500 {
+  background: linear-gradient(135deg, rgba(220,130,0,0.18) 0%, rgba(180,80,0,0.1) 100%);
+  border-color: rgba(200,110,0,0.45);
+  color: #b85c00;
+}
+[data-theme="dark"] .ach-badge--milestone500 {
+  color: #e07c20;
+  border-color: rgba(200,110,0,0.4);
+}
+.ach-badge--milestone1000 {
+  background: linear-gradient(135deg, rgba(180,20,20,0.18) 0%, rgba(100,0,0,0.12) 100%);
+  border-color: rgba(160,20,20,0.5);
+  color: #9e1a1a;
+}
+[data-theme="dark"] .ach-badge--milestone1000 {
+  color: #e05050;
+  border-color: rgba(180,40,40,0.5);
+}
+
+/* ── Friend achievement badges ── */
+.ach-badge--first-friend {
+  background: linear-gradient(135deg, rgba(240,100,140,0.15) 0%, rgba(200,60,100,0.08) 100%);
+  border-color: rgba(220,80,120,0.4);
+}
+.ach-badge--friends5 {
+  background: linear-gradient(135deg, rgba(80,120,220,0.15) 0%, rgba(50,80,180,0.08) 100%);
+  border-color: rgba(80,110,200,0.4);
+}
+.ach-badge--friends25 {
+  background: linear-gradient(135deg, rgba(180,140,0,0.18) 0%, rgba(140,100,0,0.1) 100%);
+  border-color: rgba(180,140,0,0.45);
+  color: #8a6c00;
+}
+[data-theme="dark"] .ach-badge--friends25 {
+  color: #d4aa00;
+  border-color: rgba(200,160,0,0.4);
+}
+
+/* ── First collection badge ── */
+.ach-badge--first-collection {
+  background: linear-gradient(135deg, rgba(140,80,200,0.14) 0%, rgba(90,40,160,0.08) 100%);
+  border-color: rgba(130,70,190,0.4);
+}
+
+/* ── Contributor badge ── */
+.ach-badge--contributor {
+  background: linear-gradient(135deg, rgba(200,170,0,0.14) 0%, rgba(160,130,0,0.08) 100%);
+  border-color: rgba(190,160,0,0.35);
+}
+
+/* ── Operator-granted rare badges ── */
+.ach-badge--og {
+  background: linear-gradient(135deg, rgba(30,30,30,0.12) 0%, rgba(80,0,0,0.1) 100%);
+  border-color: rgba(180,20,20,0.5);
+  color: #7a0000;
+}
+[data-theme="dark"] .ach-badge--og {
+  background: linear-gradient(135deg, rgba(60,0,0,0.25) 0%, rgba(20,20,20,0.2) 100%);
+  border-color: rgba(200,40,40,0.5);
+  color: #e04040;
+}
+.ach-badge--staff {
+  background: linear-gradient(135deg, rgba(30,80,200,0.14) 0%, rgba(10,40,140,0.09) 100%);
+  border-color: rgba(40,90,210,0.5);
+  color: #1a4ab8;
+}
+[data-theme="dark"] .ach-badge--staff {
+  color: #5b8cff;
+  border-color: rgba(60,110,230,0.5);
+}
+.ach-badge--verified {
+  background: linear-gradient(135deg, rgba(10,120,180,0.14) 0%, rgba(5,70,120,0.09) 100%);
+  border-color: rgba(10,110,170,0.5);
+  color: #0a5e8a;
+}
+[data-theme="dark"] .ach-badge--verified {
+  color: #40b4e8;
+  border-color: rgba(20,130,190,0.5);
+}
+
 /* ── Friends section on ArtistDetail ── */
 .artist-friends-section {
   margin-top: 24px;

@@ -140,5 +140,10 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ ok: false, message: `Database insert failed: ${insertErr?.message ?? 'unknown'}` }, 500);
   }
 
+  // Award contributor achievement (fire-and-forget, errors ignored)
+  sb.from('covers_cafe_achievements')
+    .insert({ user_id: userId, type: 'contributor', reference_id: null, metadata: {}, awarded_at: new Date().toISOString() })
+    .then(() => {}).catch(() => {});
+
   return json({ ok: true, cover_id: cover.id }, 200);
 };

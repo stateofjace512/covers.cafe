@@ -163,6 +163,13 @@ export default function Cms() {
   const [recentComments, setRecentComments] = useState<RecentComment[]>([]);
   const [pohLoading, setPohLoading] = useState(false);
 
+  // Achievement awards
+  const [achQuery, setAchQuery] = useState('');
+  const [achOptions, setAchOptions] = useState<UserOption[]>([]);
+  const [achSelectedUser, setAchSelectedUser] = useState<UserOption | null>(null);
+  const [achType, setAchType] = useState<'og' | 'staff' | 'verified'>('og');
+  const [achNote, setAchNote] = useState('');
+
   const token = session?.access_token;
 
   const authHeaders = useMemo(() => ({
@@ -236,9 +243,41 @@ export default function Cms() {
     return () => clearTimeout(handle);
   }, [userBrowserQuery, token]);
 
+  // Achievement user search autocomplete
+  useEffect(() => {
+    if (!token || achQuery.trim().length < 1) {
+      setAchOptions([]);
+      return;
+    }
+    const handle = setTimeout(async () => {
+      const res = await fetch(`/api/cms/users?q=${encodeURIComponent(achQuery.trim())}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      setAchOptions(await res.json() as UserOption[]);
+    }, 150);
+    return () => clearTimeout(handle);
+  }, [achQuery, token]);
+
   function flash(msg: string) {
     setSuccessMsg(msg);
     setTimeout(() => setSuccessMsg(null), 3000);
+  }
+
+  // ── Achievement award ──────────────────────────────────────────────────────
+
+  async function awardAchievement(action: 'grant' | 'revoke') {
+    if (!achSelectedUser) return setError('Select a user first.');
+    setBusyId(`ach-${action}`);
+    setError(null);
+    const res = await fetch('/api/cms/award-achievement', {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ userId: achSelectedUser.id, type: achType, action, note: achNote || undefined }),
+    });
+    setBusyId(null);
+    if (!res.ok) { setError(await res.text()); return; }
+    flash(`${action === 'grant' ? 'Granted' : 'Revoked'} ${achType} for @${achSelectedUser.username}`);
   }
 
   // ── Cover actions ──────────────────────────────────────────────────────────
@@ -1010,6 +1049,63 @@ export default function Cms() {
             Mass remove by tag
           </button>
         </div>
+      </section>
+
+      {/* ── Achievement awards ─────────────────────────────────────────── */}
+      <section className="surface cms-section">
+        <h2 className="cms-h2">Award achievements</h2>
+        <p className="cms-desc">Grant or revoke operator-only achievement badges (og, staff, verified).</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          <div style={{ position: 'relative' }}>
+            <input
+              className="form-input"
+              placeholder="Search user…"
+              value={achQuery}
+              onChange={(e) => { setAchQuery(e.target.value); setAchSelectedUser(null); }}
+              style={{ minWidth: 220 }}
+            />
+            {achOptions.length > 0 && (
+              <div className="cms-dropdown">
+                {achOptions.map((opt) => (
+                  <button
+                    key={opt.id}
+                    className="btn cms-dropdown-item"
+                    onClick={() => { setAchSelectedUser(opt); setAchQuery(opt.username); setAchOptions([]); }}
+                  >
+                    @{opt.username}{opt.display_name ? ` (${opt.display_name})` : ''}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <select
+            className="form-input"
+            value={achType}
+            onChange={(e) => setAchType(e.target.value as 'og' | 'staff' | 'verified')}
+          >
+            <option value="og">og — I'm a punkrocker, yes I am.</option>
+            <option value="staff">staff</option>
+            <option value="verified">verified</option>
+          </select>
+          <input
+            className="form-input"
+            placeholder="Note (optional)"
+            value={achNote}
+            onChange={(e) => setAchNote(e.target.value)}
+            style={{ minWidth: 200 }}
+          />
+          <button className="btn btn-primary" disabled={!achSelectedUser || busyId === 'ach-grant'} onClick={() => awardAchievement('grant')}>
+            Grant
+          </button>
+          <button className="btn" disabled={!achSelectedUser || busyId === 'ach-revoke'} onClick={() => awardAchievement('revoke')}>
+            Revoke
+          </button>
+        </div>
+        {achSelectedUser && (
+          <p style={{ marginTop: 8, fontSize: 13, color: 'var(--body-text-muted)' }}>
+            Selected: @{achSelectedUser.username}
+          </p>
+        )}
       </section>
 
       {/* ── Hall of Fame pins ───────────────────────────────────────────── */}
