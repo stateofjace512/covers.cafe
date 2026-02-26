@@ -666,7 +666,7 @@ export default function ArtistDetail() {
             <div className="modal-body">
               {reportStatus ? (
                 <div style={{ padding: '12px 0' }}>
-                  <p style={{ color: reportStatus.ok ? 'var(--color-success, #2d7a2d)' : 'var(--color-error, #c0392b)', marginBottom: 16 }}>
+                  <p className={`report-status-msg ${reportStatus.ok ? 'report-status-msg--ok' : 'report-status-msg--err'}`}>
                     {reportStatus.msg}
                   </p>
                   <button className="btn btn-secondary" onClick={() => { setReportOpen(false); setReportStatus(null); }}>
