@@ -6,12 +6,20 @@
  */
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from '../_supabase';
-import { moderateUsername } from '../../../lib/moderation';
 import { checkRateLimit } from '../../../lib/rateLimit';
 import { sendMail, codeEmailHtml, codeEmailText } from '../_mailer';
 
 function generateCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function validatePassword(password: string): string | null {
+  if (password.length < 12) return 'Password must be at least 12 characters.';
+  if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter.';
+  if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter.';
+  if (!/[0-9]/.test(password)) return 'Password must contain at least one number.';
+  if (!/[@#$%^&*!?_\-+=~`|\\:;"'<>,.\/\[\]{}()]/.test(password)) return 'Password must contain at least one special character (@, #, $, etc.).';
+  return null;
 }
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
@@ -43,9 +51,10 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } },
     );
   }
-  if (!password || password.length < 6) {
+  const passwordError = validatePassword(password);
+  if (passwordError) {
     return new Response(
-      JSON.stringify({ ok: false, message: 'Password must be at least 6 characters.' }),
+      JSON.stringify({ ok: false, message: passwordError }),
       { status: 200, headers: { 'Content-Type': 'application/json' } },
     );
   }
@@ -81,6 +90,15 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const sb = getSupabaseServer();
   if (!sb) return new Response('Server misconfigured', { status: 503 });
 
+  // ── Email uniqueness (check before sending OTP) ──────────────────────────
+  const { data: existingEmailUser } = await sb.auth.admin.getUserByEmail(email);
+  if (existingEmailUser?.user) {
+    return new Response(
+      JSON.stringify({ ok: false, message: 'An account with this email already exists.' }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
   // ── Username uniqueness ──────────────────────────────────────────────────
   const { data: existingUsername } = await sb
     .from('covers_cafe_profiles')
@@ -90,27 +108,8 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 
   if (existingUsername) {
     return new Response(
-      JSON.stringify({ ok: false, field: 'username', message: 'That username is already taken.' }),
+      JSON.stringify({ ok: false, field: 'username', message: 'This username is already in use. Try another one.' }),
       { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
-  }
-
-  // ── AI moderation ────────────────────────────────────────────────────────
-  try {
-    const modResult = await moderateUsername(username);
-    if (!modResult.ok) {
-      return new Response(
-        JSON.stringify({ ok: false, field: 'username', message: modResult.reason }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      );
-    }
-  } catch (err) {
-    return new Response(
-      JSON.stringify({
-        ok: false,
-        message: err instanceof Error ? err.message : 'Moderation service unavailable. Please try again.',
-      }),
-      { status: 503, headers: { 'Content-Type': 'application/json' } },
     );
   }
 

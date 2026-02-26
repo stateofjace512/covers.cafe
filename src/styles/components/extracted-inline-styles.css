@@ -82,8 +82,8 @@
         .modal-header {
           display: flex; align-items: center; justify-content: space-between;
           padding: 3px 4px 3px 8px; height: 22px;
-          background: linear-gradient(90deg, #5a3620 0%, #73492a 35%, #8a5a35 100%);
-          color: #ffffff; border-bottom: none; flex-shrink: 0;
+          background: linear-gradient(90deg, var(--header-bg-dark) 0%, var(--header-bg) 35%, var(--header-bg-light) 100%);
+          color: var(--header-text); border-bottom: none; flex-shrink: 0;
         }
         .auth-tabs { display: flex; gap: 0; }
         .auth-tab {
@@ -2981,7 +2981,21 @@
 [data-theme="gradient"] .auth-input::placeholder { color: var(--gradient-text-muted); opacity: 1; }
 [data-theme="gradient"] .auth-input:focus { outline-color: var(--gradient-text); }
 [data-theme="gradient"] .modal-close-btn { background: rgba(0,0,0,0.3); color: var(--gradient-text); border-color: rgba(255,255,255,0.3) rgba(0,0,0,0.2) rgba(0,0,0,0.2) rgba(255,255,255,0.3); }
-[data-theme="gradient"] .modal-header { background: rgba(0,0,0,0.35); }
+
+/* artist "you" badge — accent is white on gradient so override */
+[data-theme="gradient"] .artist-detail-you,
+[data-theme="gradient"] .artist-you-badge { background: rgba(0,0,0,0.4); color: var(--gradient-text); }
+
+/* Report modal status messages */
+.report-status-msg { padding: 8px 10px; font-size: 13px; border-left: 3px solid; margin-bottom: 8px; }
+.report-status-msg--ok { color: #004000; background: rgba(0,128,0,0.07); border-color: #2d7a2d; }
+.report-status-msg--err { color: #800000; background: rgba(192,57,43,0.07); border-color: #c0392b; }
+[data-theme="dark"] .report-status-msg--ok,
+[data-theme="pureblack"] .report-status-msg--ok { color: #7be07b; background: rgba(0,128,0,0.1); border-color: #7be07b; }
+[data-theme="dark"] .report-status-msg--err,
+[data-theme="pureblack"] .report-status-msg--err { color: #ff7f7f; background: rgba(192,57,43,0.1); border-color: #ff7f7f; }
+[data-theme="gradient"] .report-status-msg--ok,
+[data-theme="gradient"] .report-status-msg--err { color: var(--gradient-text); background: rgba(0,0,0,0.2); border-color: var(--gradient-text); }
 
 /* Context menu */
 [data-theme="gradient"] .ctx-menu { background: var(--gradient-panel-bg); border-color: rgba(255,255,255,0.2) rgba(0,0,0,0.15) rgba(0,0,0,0.15) rgba(255,255,255,0.2); }

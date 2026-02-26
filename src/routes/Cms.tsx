@@ -87,8 +87,19 @@ type RecentComment = {
   is_already_pinned: boolean;
 };
 
+type ProfileReport = {
+  id: string;
+  reason: string;
+  details: string | null;
+  profile_id: string;
+  reported_username: string | null;
+  reporter_username: string | null;
+  created_at: string;
+};
+
 type DashboardPayload = {
   reports: Report[];
+  profileReports: ProfileReport[];
   bans: Ban[];
   operators: Operator[];
 };
@@ -108,7 +119,7 @@ function formatDate(iso: string) {
 
 export default function Cms() {
   const { user, session, loading, openAuthModal } = useAuth();
-  const [data, setData] = useState<DashboardPayload>({ reports: [], bans: [], operators: [] });
+  const [data, setData] = useState<DashboardPayload>({ reports: [], profileReports: [], bans: [], operators: [] });
   const [operator, setOperator] = useState<boolean | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -402,6 +413,19 @@ export default function Cms() {
     setBusyId(null);
   }
 
+  async function dismissProfileReport(reportId: string) {
+    if (!token) return;
+    setBusyId(`dismiss-pr-${reportId}`);
+    setError(null);
+    const res = await fetch('/api/cms/dismiss-profile-report', {
+      method: 'POST', headers: authHeaders, body: JSON.stringify({ reportId }),
+    });
+    if (!res.ok) setError('Could not dismiss report.');
+    else flash('Profile report dismissed.');
+    await loadDashboard();
+    setBusyId(null);
+  }
+
   // ── User / ban actions ─────────────────────────────────────────────────────
 
   async function banSelectedUser() {
@@ -678,6 +702,42 @@ export default function Cms() {
                     disabled={busyId === report.cover_id}
                   >
                     Delete cover
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ── Profile Reports ────────────────────────────────────────────── */}
+      <section className="surface cms-section">
+        <div className="cms-section-header">
+          <h2 className="cms-h2" style={{ margin: 0 }}>Profile Reports</h2>
+          {data.profileReports.length > 0 && <span className="cms-badge cms-badge--warn">{data.profileReports.length}</span>}
+        </div>
+
+        {data.profileReports.length === 0 ? (
+          <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>No profile reports.</p>
+        ) : (
+          <div className="cms-report-list">
+            {data.profileReports.map((report) => (
+              <div key={report.id} className="cms-report-card">
+                <div className="cms-report-meta">
+                  <span><strong>Reason:</strong> {report.reason}</span>
+                  <span><strong>Profile:</strong> <a href={'/users/' + report.reported_username} target="_blank" rel="noopener noreferrer">@{report.reported_username ?? report.profile_id}</a></span>
+                  <span><strong>Reporter:</strong> @{report.reporter_username ?? 'Unknown'}</span>
+                  {report.details && <span><strong>Details:</strong> {report.details}</span>}
+                  <span style={{ color: 'var(--body-text-muted)', fontSize: 12 }}>{formatDate(report.created_at)}</span>
+                </div>
+                <div className="cms-actions">
+                  <button
+                    className="btn"
+                    onClick={() => dismissProfileReport(report.id)}
+                    disabled={busyId === `dismiss-pr-${report.id}`}
+                    title="Dismiss this profile report"
+                  >
+                    Dismiss
                   </button>
                 </div>
               </div>
