@@ -108,6 +108,41 @@ export const GET: APIRoute = async ({ url, request }) => {
   return json({ friends: friendProfiles, viewerStatus, friendCount: friendProfiles.length, pendingReceived, pendingSent });
 };
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Award an achievement idempotently. Errors are silently ignored. */
+async function tryAward(
+  sb: ReturnType<typeof getSupabaseServer>,
+  userId: string,
+  type: string,
+  metadata: Record<string, unknown> = {},
+) {
+  try {
+    await sb!
+      .from('covers_cafe_achievements')
+      .insert({ user_id: userId, type, reference_id: null, metadata, awarded_at: new Date().toISOString() });
+  } catch {
+    // ignore — unique constraint violations are expected
+  }
+}
+
+/** Award friend-count milestone achievements after a friendship is accepted. */
+async function checkFriendAchievements(
+  sb: ReturnType<typeof getSupabaseServer>,
+  userId: string,
+) {
+  const [{ count: sentCount }, { count: recvCount }] = await Promise.all([
+    sb!.from('covers_cafe_friends').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'accepted'),
+    sb!.from('covers_cafe_friends').select('id', { count: 'exact', head: true }).eq('friend_id', userId).eq('status', 'accepted'),
+  ]);
+  const total = (sentCount ?? 0) + (recvCount ?? 0);
+
+  await tryAward(sb, userId, 'contributor');
+  await tryAward(sb, userId, 'first_friend');
+  if (total >= 5) await tryAward(sb, userId, 'friends_5', { friend_count: total });
+  if (total >= 25) await tryAward(sb, userId, 'friends_25', { friend_count: total });
+}
+
 // ── POST ──────────────────────────────────────────────────────────────────────
 export const POST: APIRoute = async ({ request }) => {
   const sb = getSupabaseServer();
@@ -182,6 +217,11 @@ export const POST: APIRoute = async ({ request }) => {
           .from('covers_cafe_friends')
           .update({ status: 'accepted', updated_at: new Date().toISOString() })
           .eq('id', existing.id);
+        // Both sides just became friends — award achievements for both
+        await Promise.all([
+          checkFriendAchievements(sb, viewerId),
+          checkFriendAchievements(sb, targetId),
+        ]);
         return json({ ok: true, status: 'accepted' });
       }
       return json({ ok: true, status: 'pending_sent' });
@@ -204,6 +244,11 @@ export const POST: APIRoute = async ({ request }) => {
       .eq('friend_id', viewerId)
       .eq('status', 'pending');
     if (error) return json({ ok: false, error: error.message }, 500);
+    // Both sides just became friends — award achievements for both
+    await Promise.all([
+      checkFriendAchievements(sb, viewerId),
+      checkFriendAchievements(sb, targetId),
+    ]);
     return json({ ok: true, status: 'accepted' });
   }
 
