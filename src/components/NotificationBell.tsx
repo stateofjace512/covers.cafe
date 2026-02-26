@@ -46,8 +46,17 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const fetchNotifications = useCallback(async () => {
     if (!user || !session?.access_token) return;
@@ -99,6 +108,10 @@ export default function NotificationBell() {
   }, [session?.access_token]);
 
   const handleOpen = () => {
+    if (isMobile) {
+      navigate('/notifications');
+      return;
+    }
     if (!open) {
       setOpen(true);
       setNotifications((prev) => prev.map((n) => (n.read_at ? n : { ...n, read_at: new Date().toISOString() })));
@@ -172,7 +185,8 @@ export default function NotificationBell() {
             ) : notifications.length === 0 ? (
               <p className="notif-empty">No notifications yet. Upload some covers to get started!</p>
             ) : (
-              notifications.map((n, idx) => {
+              <>
+              {notifications.map((n, idx) => {
                 const isNew = !n.read_at;
                 return (
                   <div key={n.id} className={`notif-item${isNew ? ' notif-item--new' : ''}`}>
@@ -273,7 +287,14 @@ export default function NotificationBell() {
                     </button>
                   </div>
                 );
-              })
+              })}
+              <button
+                className="notif-view-all"
+                onClick={() => { navigate('/notifications'); setOpen(false); }}
+              >
+                View all notifications →
+              </button>
+              </>
             )}
           </div>
         </div>

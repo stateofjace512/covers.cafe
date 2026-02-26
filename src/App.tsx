@@ -30,6 +30,7 @@ import NotFound from './routes/NotFound';
 import CoverDetail from './routes/CoverDetail';
 import OfficialCoverDetail from './routes/OfficialCoverDetail';
 import Friends from './routes/Friends';
+import Notifications from './routes/Notifications';
 
 
 interface SeoPayload {
@@ -269,6 +270,7 @@ function AppContent() {
           <Route path="/artists" element={<MusicArtists />} />
           <Route path="/artists/:artistName" element={<MusicArtistDetail />} />
           <Route path="/friends" element={<Friends />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/downloads" element={<Downloads />} />
           <Route path="/profile" element={<Profile />} />

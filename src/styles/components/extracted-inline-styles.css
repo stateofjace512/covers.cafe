@@ -832,7 +832,28 @@
           .notif-panel { width: calc(100vw - 16px); right: -8px; }
           .notif-dismiss-btn { opacity: 1; }
         }
-      
+        /* "View all notifications" footer inside the desktop dropdown */
+        .notif-view-all {
+          display: block; width: 100%; padding: 7px 10px; text-align: center;
+          font-size: 11px; font-family: inherit; font-weight: bold;
+          background: var(--accent); color: #ffffff;
+          border: none; cursor: pointer; border-top: 1px solid rgba(0,0,0,0.15);
+        }
+        .notif-view-all:hover { opacity: 0.85; transform: none; box-shadow: none; }
+        .notif-view-all:active { opacity: 0.7; transform: none; box-shadow: none; }
+        /* Page-view notification items — slightly more breathing room */
+        .notif-item--page { padding: 10px 10px 10px 12px; }
+        .notif-item--page .notif-num { font-size: 11px; }
+        .notif-item--page .notif-text { font-size: 12px; }
+        .notif-item--page .notif-comment-preview { font-size: 11px; }
+        .notif-item--page .notif-time { font-size: 11px; }
+        /* Page list card — flush borders like the dropdown list */
+        .notif-page-list { padding: 0; overflow: hidden; }
+        .notif-page-list .notif-item { background: var(--body-card-bg); }
+        .notif-page-list .notif-item--new { background: #fff3e8; }
+        [data-theme="dark"] .notif-page-list .notif-item { background: var(--body-card-bg); }
+        [data-theme="dark"] .notif-page-list .notif-item--new { background: #3d2009; }
+
 
 /* ===== Extracted from src/components/OfficialGallery.tsx ===== */
         .official-search-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
@@ -3087,6 +3108,9 @@
 [data-theme="gradient"] .notif-cover-link, [data-theme="gradient"] .notif-user-link { color: var(--gradient-text); }
 [data-theme="gradient"] .notif-dismiss-btn { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.2) rgba(0,0,0,0.15) rgba(0,0,0,0.15) rgba(255,255,255,0.2); color: var(--gradient-text); }
 [data-theme="gradient"] .notif-empty { color: var(--gradient-text-muted); }
+[data-theme="gradient"] .notif-view-all { background: rgba(0,0,0,0.3); color: var(--gradient-text); border-top-color: rgba(255,255,255,0.15); }
+[data-theme="gradient"] .notif-page-list .notif-item { background: var(--gradient-card-bg); border-color: rgba(255,255,255,0.15); }
+[data-theme="gradient"] .notif-page-list .notif-item--new { background: rgba(0,0,0,0.2); }
 
 /* ── Sidebar avatar ── */
 [data-theme="pureblack"] .sidebar-avatar { background: #222222; border-color: #2e2e2e #000000 #000000 #2e2e2e; color: #666666; }
