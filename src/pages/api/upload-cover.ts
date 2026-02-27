@@ -22,6 +22,14 @@
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from './_supabase';
 import { deleteFromCf } from '../../lib/cloudflare';
+import { createClient } from '@supabase/supabase-js';
+
+/** Service-role client that always bypasses RLS — used for read-only moderation checks. */
+function getAdminClient() {
+  const url = import.meta.env.PUBLIC_SUPABASE_URL as string;
+  const key = (import.meta.env.SUPABASE_SERVICE_ROLE_KEY ?? import.meta.env.PUBLIC_SUPABASE_ANON_PUBLIC_KEY) as string;
+  return createClient(url, key);
+}
 
 const json = (body: object, status: number) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -45,29 +53,34 @@ function hammingDistanceHex(a: string, b: string): number {
 
 const NEAR_DUP_THRESHOLD = 6;
 
-async function findFanMatch(
-  sb: ReturnType<typeof getSupabaseServer>,
-  phash: string,
-): Promise<string | null> {
+/**
+ * Check for near-duplicate fan covers.
+ * Uses the admin (service-role) client so RLS never filters out other users'
+ * covers. Does NOT filter by moderation_status — we want to flag duplicates
+ * regardless of whether the matching cover is approved, under_review, etc.
+ * Errors are logged rather than silently swallowed so failures are visible.
+ */
+async function findFanMatch(phash: string): Promise<string | null> {
+  const admin = getAdminClient();
   const normalized = normalizePhash(phash);
   if (!normalized) return null;
 
-  // Fast path: exact match
-  const { data: exact } = await sb!
+  // Fast path: exact phash match
+  const { data: exact, error: exactErr } = await admin
     .from('covers_cafe_covers')
     .select('id')
     .eq('phash', normalized)
-    .eq('moderation_status', 'approved')
     .limit(1);
+  if (exactErr) console.error('[upload-cover] findFanMatch exact error:', exactErr.message);
   if ((exact?.length ?? 0) > 0) return (exact as Array<{ id: string }>)[0].id;
 
-  // Near-dup path: load all approved phashes and compare with hamming distance
-  const { data: allHashes } = await sb!
+  // Near-dup path: hamming distance across all covers with a stored phash
+  const { data: allHashes, error: hashErr } = await admin
     .from('covers_cafe_covers')
     .select('id, phash')
-    .eq('moderation_status', 'approved')
     .not('phash', 'is', null)
     .limit(10000);
+  if (hashErr) console.error('[upload-cover] findFanMatch near-dup error:', hashErr.message);
 
   const near = (allHashes ?? []).find(
     (row: { id: string; phash: string | null }) =>
@@ -77,25 +90,29 @@ async function findFanMatch(
   return near?.id ?? null;
 }
 
-async function findOfficialMatch(
-  sb: ReturnType<typeof getSupabaseServer>,
-  phash: string,
-): Promise<string | null> {
+/**
+ * Check for near-duplicate official covers.
+ * Also uses the admin client for consistency.
+ */
+async function findOfficialMatch(phash: string): Promise<string | null> {
+  const admin = getAdminClient();
   const normalized = normalizePhash(phash);
   if (!normalized) return null;
 
-  const { data: exact } = await sb!
+  const { data: exact, error: exactErr } = await admin
     .from('covers_cafe_official_covers')
     .select('id')
     .eq('official_phash', normalized)
     .limit(1);
+  if (exactErr) console.error('[upload-cover] findOfficialMatch exact error:', exactErr.message);
   if ((exact?.length ?? 0) > 0) return (exact as Array<{ id: string }>)[0].id;
 
-  const { data: officialHashes } = await sb!
+  const { data: officialHashes, error: hashErr } = await admin
     .from('covers_cafe_official_covers')
     .select('id, official_phash')
     .not('official_phash', 'is', null)
     .limit(10000);
+  if (hashErr) console.error('[upload-cover] findOfficialMatch near-dup error:', hashErr.message);
 
   const near = (officialHashes ?? []).find(
     (row: { id: string; official_phash: string | null }) =>
@@ -158,13 +175,15 @@ export const POST: APIRoute = async ({ request }) => {
     // Block re-submission: if this user already has a pending review for the same
     // image (near-dup phash, under_review, created within last 12 hours), reject early.
     const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
-    const { data: recentReviews } = await sb
+    const admin = getAdminClient();
+    const { data: recentReviews, error: resubErr } = await admin
       .from('covers_cafe_covers')
       .select('id, phash')
       .eq('user_id', userId)
       .eq('moderation_status', 'under_review')
       .gte('created_at', twelveHoursAgo)
       .not('phash', 'is', null);
+    if (resubErr) console.error('[upload-cover] re-submission check error:', resubErr.message);
     const recentReview = (recentReviews ?? []).filter(
       (r: { id: string; phash: string | null }) =>
         r.phash && hammingDistanceHex(phash, r.phash) <= NEAR_DUP_THRESHOLD,
@@ -181,8 +200,8 @@ export const POST: APIRoute = async ({ request }) => {
       }, 409);
     }
 
-    // Check for fan-cover near-duplicate in approved gallery (exact + hamming ≤ 6)
-    const fanMatchId = await findFanMatch(sb, phash);
+    // Check for fan-cover near-duplicate (exact + hamming ≤ 6, service-role client)
+    const fanMatchId = await findFanMatch(phash);
     if (fanMatchId) {
       moderationStatus = 'under_review';
       moderationReason = 'Matches an existing fan cover';
@@ -191,7 +210,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Check for official cover match (only if not already flagged)
     if (moderationStatus === 'approved') {
-      const officialId = await findOfficialMatch(sb, phash);
+      const officialId = await findOfficialMatch(phash);
       if (officialId) {
         moderationStatus = 'under_review';
         moderationReason = 'Matches an official cover';
