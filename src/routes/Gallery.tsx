@@ -50,7 +50,7 @@ export default function Gallery() {
         <div className="hero-banner">
           <div className="hero-content">
             <h1 className="hero-title">
-              {coverCount !== null ? `${coverCount.toLocaleString()} and counting...` : 'Discover Album Art'}
+              {coverCount !== null ? `${coverCount.toLocaleString()} covers and counting` : 'Discover Album Art'}
             </h1>
             <p className="hero-subtitle">
               Too many album covers. Never enough coffee. <CoffeeCupIcon size={18} style={{ verticalAlign: 'middle', display: 'inline-block' }} />
