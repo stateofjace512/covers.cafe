@@ -4,13 +4,14 @@
  * provided email — but does NOT create the account yet. The account is only
  * created after the user proves they own the email in complete-registration.ts.
  */
+import { randomInt } from 'node:crypto';
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from '../_supabase';
 import { checkRateLimit } from '../../../lib/rateLimit';
 import { sendMail, codeEmailHtml, codeEmailText } from '../_mailer';
 
 function generateCode(): string {
-  return String(crypto.randomInt(100000, 1000000));
+  return String(randomInt(100000, 1000000));
 }
 
 function validatePassword(password: string): string | null {
