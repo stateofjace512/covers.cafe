@@ -159,7 +159,8 @@ export const POST: APIRoute = async ({ request }) => {
       }, 409);
     }
 
-    // Fan cover duplicate check — uses sb (user-token client) which can read public covers.
+    // Fan cover duplicate check: exact match first, then near-dup (hamming ≤ 6).
+    // Uses sb so the same auth context as the rest of the handler applies.
     const { data: fanDup, error: fanErr } = await sb
       .from('covers_cafe_covers')
       .select('id')
@@ -170,6 +171,26 @@ export const POST: APIRoute = async ({ request }) => {
       moderationStatus = 'under_review';
       moderationReason = 'Matches an existing fan cover';
       matchedCoverId = (fanDup as Array<{ id: string }>)[0].id;
+    }
+
+    // Near-dup fallback: catches covers whose phash shifted slightly due to
+    // CF re-encoding (exact match misses them; hamming ≤ 6 catches them).
+    if (moderationStatus === 'approved') {
+      const { data: allHashes, error: nearErr } = await sb
+        .from('covers_cafe_covers')
+        .select('id, phash')
+        .not('phash', 'is', null)
+        .limit(10000);
+      if (nearErr) console.error('[upload-cover] near-dup check error:', nearErr.message);
+      const near = (allHashes ?? []).find(
+        (row: { id: string; phash: string | null }) =>
+          row.phash && hammingDistanceHex(phash, row.phash) <= NEAR_DUP_THRESHOLD,
+      ) as { id: string } | undefined;
+      if (near) {
+        moderationStatus = 'under_review';
+        moderationReason = 'Matches an existing fan cover';
+        matchedCoverId = near.id;
+      }
     }
 
     // Check for official cover match (only if not already flagged)
