@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import GalleryIcon from '../components/GalleryIcon';
 import UploadDownloadIcon from '../components/UploadDownloadIcon';
@@ -10,6 +10,7 @@ import GalleryGrid from '../components/GalleryGrid';
 import CoffeeCupIcon from '../components/CoffeeCupIcon';
 import OfficialGallery from '../components/OfficialGallery';
 import OfficialSearchResults from '../components/OfficialSearchResults';
+import { supabase } from '../lib/supabase';
 
 export type GalleryTab = 'new' | 'top_rated' | 'acotw';
 
@@ -27,6 +28,15 @@ export default function Gallery() {
   const searchSource = searchParams.get('source') === 'official' ? 'official' : 'fan';
   const [activeTab, setActiveTab] = useState<GalleryTab>('new');
   const [browseSource, setBrowseSource] = useState<'fan' | 'official'>('fan');
+  const [coverCount, setCoverCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from('covers_cafe_covers')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_public', true)
+      .then(({ count }) => { if (count !== null) setCoverCount(count); });
+  }, []);
 
   // Unified source: URL param when searching, state when browsing
   const activeSource = searchQuery ? searchSource : browseSource;
@@ -39,7 +49,9 @@ export default function Gallery() {
       {!searchQuery && (
         <div className="hero-banner">
           <div className="hero-content">
-            <h1 className="hero-title">Discover Album Art</h1>
+            <h1 className="hero-title">
+              {coverCount !== null ? `${coverCount.toLocaleString()} and counting...` : 'Discover Album Art'}
+            </h1>
             <p className="hero-subtitle">
               Too many album covers. Never enough coffee. <CoffeeCupIcon size={18} style={{ verticalAlign: 'middle', display: 'inline-block' }} />
             </p>
