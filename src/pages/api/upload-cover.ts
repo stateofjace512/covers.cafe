@@ -21,6 +21,7 @@
  */
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from './_supabase';
+import { deleteFromCf } from '../../lib/cloudflare';
 
 const json = (body: object, status: number) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -133,6 +134,10 @@ export const POST: APIRoute = async ({ request }) => {
       .gte('created_at', twelveHoursAgo)
       .limit(1);
     if ((recentReview?.length ?? 0) > 0) {
+      // Delete the just-uploaded CF image — it will never be stored in the DB.
+      deleteFromCf(cfImageId).catch((err) => {
+        console.error('[upload-cover] CF delete (re-submission) error:', err);
+      });
       return json({
         ok: false,
         code: 'UNDER_REVIEW',
