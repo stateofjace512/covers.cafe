@@ -222,6 +222,8 @@ export default function Cms() {
   // ── Phash backfill ────────────────────────────────────────────────────────
   const [phashBackfillRunning, setPhashBackfillRunning] = useState(false);
   const [phashBackfillMsg, setPhashBackfillMsg] = useState<string | null>(null);
+  const [phashForceRunning, setPhashForceRunning] = useState(false);
+  const [phashForceMsg, setPhashForceMsg] = useState<string | null>(null);
 
   const token = session?.access_token;
 
@@ -278,6 +280,47 @@ export default function Cms() {
       setPhashBackfillMsg(`Error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setPhashBackfillRunning(false);
+    }
+  }
+
+  async function runPhashForceRecompute() {
+    if (!token || phashForceRunning) return;
+    setPhashForceRunning(true);
+    setPhashForceMsg('Fetching all CF-backed covers…');
+    try {
+      const listRes = await fetch('/api/cms/phash-backfill?limit=500&force=true', { headers: { Authorization: `Bearer ${token}` } });
+      const listJson = await listRes.json() as { ok: boolean; covers?: Array<{ id: string; storage_path: string }>; message?: string };
+      if (!listJson.ok || !listJson.covers) throw new Error(listJson.message ?? 'Failed to fetch covers');
+      const covers = listJson.covers.filter((c) => c.storage_path?.startsWith('cf:'));
+      if (covers.length === 0) { setPhashForceMsg('No CF-backed covers found.'); return; }
+      setPhashForceMsg(`Recomputing 0 / ${covers.length}…`);
+      let done = 0;
+      let failed = 0;
+      for (const cover of covers) {
+        try {
+          const imgRes = await fetch(`/api/cover-media?path=${encodeURIComponent(cover.storage_path)}`);
+          if (!imgRes.ok) throw new Error(`Image fetch failed: ${imgRes.status}`);
+          const blob = await imgRes.blob();
+          const file = new File([blob], 'cover.jpg', { type: blob.type || 'image/jpeg' });
+          const phash = await computePhash(file);
+          if (phash) {
+            await fetch('/api/cms/phash-backfill', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ coverId: cover.id, phash }),
+            });
+          }
+          done++;
+        } catch {
+          failed++;
+        }
+        setPhashForceMsg(`Recomputing ${done + failed} / ${covers.length}… (${failed} failed)`);
+      }
+      setPhashForceMsg(`Done. ${done} recomputed, ${failed} failed.`);
+    } catch (err) {
+      setPhashForceMsg(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setPhashForceRunning(false);
     }
   }
 
@@ -1181,6 +1224,22 @@ export default function Cms() {
               {phashBackfillRunning ? 'Running…' : 'Backfill phash'}
             </button>
             {phashBackfillMsg && <p className="cms-desc" style={{ marginTop: 8 }}>{phashBackfillMsg}</p>}
+          </section>
+
+          {/* ── Phash force-recompute ──────────────────────────────────────── */}
+          <section className="surface cms-section">
+            <h2 className="cms-h2">Force-recompute all phash</h2>
+            <p className="cms-desc">
+              Recomputes the perceptual hash for <strong>every</strong> CF-backed cover from the
+              Cloudflare-served image. Run this if duplicate detection is missing re-uploads —
+              CF re-encodes images on ingest, so the stored phash (computed from the original file)
+              may differ from what re-uploaders compute when downloading from the gallery.
+              Processes up to 500 covers at a time.
+            </p>
+            <button className="btn btn-secondary" onClick={runPhashForceRecompute} disabled={phashForceRunning}>
+              {phashForceRunning ? 'Running…' : 'Force-recompute phash'}
+            </button>
+            {phashForceMsg && <p className="cms-desc" style={{ marginTop: 8 }}>{phashForceMsg}</p>}
           </section>
         </>
       )}

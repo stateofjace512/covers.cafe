@@ -51,7 +51,7 @@ function hammingDistanceHex(a: string, b: string): number {
   return dist + Math.abs(x.length - y.length) * 4;
 }
 
-const NEAR_DUP_THRESHOLD = 6;
+const NEAR_DUP_THRESHOLD = 10;
 
 /**
  * Check for near-duplicate official covers.
