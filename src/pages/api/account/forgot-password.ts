@@ -27,6 +27,9 @@ function generateCode(): string {
   return String(crypto.randomInt(100000, 1000000));
 }
 
+export const GET: APIRoute = () =>
+  new Response(null, { status: 302, headers: { Location: '/' } });
+
 export const POST: APIRoute = async ({ request }) => {
   let body: { email?: string };
   try {

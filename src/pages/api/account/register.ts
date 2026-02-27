@@ -22,6 +22,9 @@ function validatePassword(password: string): string | null {
   return null;
 }
 
+export const GET: APIRoute = () =>
+  new Response(null, { status: 302, headers: { Location: '/' } });
+
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   const ip = clientAddress ?? 'unknown';
 
