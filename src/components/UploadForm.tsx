@@ -10,7 +10,7 @@ import PlusIcon from './PlusIcon';
 import TrashIcon from './TrashIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { computePhash, isDuplicate } from '../lib/phash';
+import { computePhash } from '../lib/phash';
 import { checkRateLimit, getRateLimitState } from '../lib/rateLimit';
 import InfoModal from './InfoModal';
 import ClockIcon from './ClockIcon';
@@ -397,11 +397,6 @@ export default function UploadForm() {
     setError(null);
     try {
       const phash = await computePhash(file);
-      if (phash && await isDuplicate(phash, supabase)) {
-        setError('This image is already in our gallery!');
-        setUploading(false);
-        return;
-      }
 
       // Step 1: get a one-time direct upload URL from CF (file never touches Netlify)
       const urlRes = await fetch('/api/cf-upload-url', {
@@ -534,10 +529,6 @@ export default function UploadForm() {
 
       try {
         const phash = await computePhash(item.file);
-        if (phash && await isDuplicate(phash, supabase)) {
-          updateBulkItem(i, { status: 'error', errorMsg: 'This image is already in our gallery!' });
-          continue;
-        }
 
         // Step 1: get a one-time direct upload URL
         const urlRes = await fetch('/api/cf-upload-url', {
