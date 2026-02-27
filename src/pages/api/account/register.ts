@@ -94,10 +94,32 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const sb = getSupabaseServer();
   if (!sb) return new Response('Server misconfigured', { status: 503 });
 
+  // ── Email uniqueness (check before sending OTP) ──────────────────────────
+  // auth.admin.getUserByEmail doesn't exist in supabase-js v2.97+, so call
+  // the GoTrue Admin REST API directly instead.
+  const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL as string;
+  const serviceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY as string;
+  if (supabaseUrl && serviceKey) {
+    try {
+      const lookupRes = await fetch(
+        `${supabaseUrl}/auth/v1/admin/users?page=1&per_page=1&query=${encodeURIComponent(email)}`,
+        { headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey } },
+      );
+      if (lookupRes.ok) {
+        const { users } = await lookupRes.json() as { users?: Array<{ email: string }> };
+        if (users?.some((u) => u.email === email)) {
+          return new Response(
+            JSON.stringify({ ok: false, message: 'An account with this email already exists.' }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+      }
+    } catch {
+      // If the lookup fails, let step 2 catch the duplicate when creating the account
+    }
+  }
+
   // ── Username uniqueness ──────────────────────────────────────────────────
-  // Note: email uniqueness is enforced at complete-registration time when the
-  // account is actually created (createUser returns an error for duplicates).
-  // auth.admin.getUserByEmail is not available in supabase-js v2.97+.
   const { data: existingUsername } = await sb
     .from('covers_cafe_profiles')
     .select('id')
