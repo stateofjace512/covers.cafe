@@ -24,7 +24,7 @@ import { getSupabaseServer } from './_supabase';
 import { deleteFromCf } from '../../lib/cloudflare';
 import { createClient } from '@supabase/supabase-js';
 
-/** Service-role client that always bypasses RLS — used for read-only moderation checks. */
+/** Admin client used only for the official-cover check (covers_cafe_official_covers has no user-auth RLS). */
 function getAdminClient() {
   const url = import.meta.env.PUBLIC_SUPABASE_URL as string;
   const key = (import.meta.env.SUPABASE_SERVICE_ROLE_KEY ?? import.meta.env.PUBLIC_SUPABASE_ANON_PUBLIC_KEY) as string;
@@ -52,43 +52,6 @@ function hammingDistanceHex(a: string, b: string): number {
 }
 
 const NEAR_DUP_THRESHOLD = 6;
-
-/**
- * Check for near-duplicate fan covers.
- * Uses the admin (service-role) client so RLS never filters out other users'
- * covers. Does NOT filter by moderation_status — we want to flag duplicates
- * regardless of whether the matching cover is approved, under_review, etc.
- * Errors are logged rather than silently swallowed so failures are visible.
- */
-async function findFanMatch(phash: string): Promise<string | null> {
-  const admin = getAdminClient();
-  const normalized = normalizePhash(phash);
-  if (!normalized) return null;
-
-  // Fast path: exact phash match
-  const { data: exact, error: exactErr } = await admin
-    .from('covers_cafe_covers')
-    .select('id')
-    .eq('phash', normalized)
-    .limit(1);
-  if (exactErr) console.error('[upload-cover] findFanMatch exact error:', exactErr.message);
-  if ((exact?.length ?? 0) > 0) return (exact as Array<{ id: string }>)[0].id;
-
-  // Near-dup path: hamming distance across all covers with a stored phash
-  const { data: allHashes, error: hashErr } = await admin
-    .from('covers_cafe_covers')
-    .select('id, phash')
-    .not('phash', 'is', null)
-    .limit(10000);
-  if (hashErr) console.error('[upload-cover] findFanMatch near-dup error:', hashErr.message);
-
-  const near = (allHashes ?? []).find(
-    (row: { id: string; phash: string | null }) =>
-      row.phash && hammingDistanceHex(normalized, row.phash) <= NEAR_DUP_THRESHOLD,
-  ) as { id: string; phash: string } | undefined;
-
-  return near?.id ?? null;
-}
 
 /**
  * Check for near-duplicate official covers.
@@ -173,21 +136,17 @@ export const POST: APIRoute = async ({ request }) => {
 
   if (phash) {
     // Block re-submission: if this user already has a pending review for the same
-    // image (near-dup phash, under_review, created within last 12 hours), reject early.
+    // image within the last 12 hours, reject and clean up the CF upload.
     const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
-    const admin = getAdminClient();
-    const { data: recentReviews, error: resubErr } = await admin
+    const { data: recentReview, error: resubErr } = await sb
       .from('covers_cafe_covers')
-      .select('id, phash')
+      .select('id')
       .eq('user_id', userId)
+      .eq('phash', phash)
       .eq('moderation_status', 'under_review')
       .gte('created_at', twelveHoursAgo)
-      .not('phash', 'is', null);
+      .limit(1);
     if (resubErr) console.error('[upload-cover] re-submission check error:', resubErr.message);
-    const recentReview = (recentReviews ?? []).filter(
-      (r: { id: string; phash: string | null }) =>
-        r.phash && hammingDistanceHex(phash, r.phash) <= NEAR_DUP_THRESHOLD,
-    );
     if ((recentReview?.length ?? 0) > 0) {
       // Delete the just-uploaded CF image — it will never be stored in the DB.
       deleteFromCf(cfImageId).catch((err) => {
@@ -200,12 +159,17 @@ export const POST: APIRoute = async ({ request }) => {
       }, 409);
     }
 
-    // Check for fan-cover near-duplicate (exact + hamming ≤ 6, service-role client)
-    const fanMatchId = await findFanMatch(phash);
-    if (fanMatchId) {
+    // Fan cover duplicate check — uses sb (user-token client) which can read public covers.
+    const { data: fanDup, error: fanErr } = await sb
+      .from('covers_cafe_covers')
+      .select('id')
+      .eq('phash', phash)
+      .limit(1);
+    if (fanErr) console.error('[upload-cover] fan cover check error:', fanErr.message);
+    if ((fanDup?.length ?? 0) > 0) {
       moderationStatus = 'under_review';
       moderationReason = 'Matches an existing fan cover';
-      matchedCoverId = fanMatchId;
+      matchedCoverId = (fanDup as Array<{ id: string }>)[0].id;
     }
 
     // Check for official cover match (only if not already flagged)
