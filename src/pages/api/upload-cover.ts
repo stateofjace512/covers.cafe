@@ -43,6 +43,40 @@ function hammingDistanceHex(a: string, b: string): number {
   return dist + Math.abs(x.length - y.length) * 4;
 }
 
+const NEAR_DUP_THRESHOLD = 6;
+
+async function findFanMatch(
+  sb: ReturnType<typeof getSupabaseServer>,
+  phash: string,
+): Promise<string | null> {
+  const normalized = normalizePhash(phash);
+  if (!normalized) return null;
+
+  // Fast path: exact match
+  const { data: exact } = await sb!
+    .from('covers_cafe_covers')
+    .select('id')
+    .eq('phash', normalized)
+    .eq('moderation_status', 'approved')
+    .limit(1);
+  if ((exact?.length ?? 0) > 0) return (exact as Array<{ id: string }>)[0].id;
+
+  // Near-dup path: load all approved phashes and compare with hamming distance
+  const { data: allHashes } = await sb!
+    .from('covers_cafe_covers')
+    .select('id, phash')
+    .eq('moderation_status', 'approved')
+    .not('phash', 'is', null)
+    .limit(10000);
+
+  const near = (allHashes ?? []).find(
+    (row: { id: string; phash: string | null }) =>
+      row.phash && hammingDistanceHex(normalized, row.phash) <= NEAR_DUP_THRESHOLD,
+  ) as { id: string; phash: string } | undefined;
+
+  return near?.id ?? null;
+}
+
 async function findOfficialMatch(
   sb: ReturnType<typeof getSupabaseServer>,
   phash: string,
@@ -63,7 +97,6 @@ async function findOfficialMatch(
     .not('official_phash', 'is', null)
     .limit(10000);
 
-  const NEAR_DUP_THRESHOLD = 6;
   const near = (officialHashes ?? []).find(
     (row: { id: string; official_phash: string | null }) =>
       row.official_phash && hammingDistanceHex(normalized, row.official_phash) <= NEAR_DUP_THRESHOLD,
@@ -123,16 +156,19 @@ export const POST: APIRoute = async ({ request }) => {
 
   if (phash) {
     // Block re-submission: if this user already has a pending review for the same
-    // image (same phash, under_review, created within last 12 hours), reject early.
+    // image (near-dup phash, under_review, created within last 12 hours), reject early.
     const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
-    const { data: recentReview } = await sb
+    const { data: recentReviews } = await sb
       .from('covers_cafe_covers')
-      .select('id')
+      .select('id, phash')
       .eq('user_id', userId)
-      .eq('phash', phash)
       .eq('moderation_status', 'under_review')
       .gte('created_at', twelveHoursAgo)
-      .limit(1);
+      .not('phash', 'is', null);
+    const recentReview = (recentReviews ?? []).filter(
+      (r: { id: string; phash: string | null }) =>
+        r.phash && hammingDistanceHex(phash, r.phash) <= NEAR_DUP_THRESHOLD,
+    );
     if ((recentReview?.length ?? 0) > 0) {
       // Delete the just-uploaded CF image — it will never be stored in the DB.
       deleteFromCf(cfImageId).catch((err) => {
@@ -145,17 +181,12 @@ export const POST: APIRoute = async ({ request }) => {
       }, 409);
     }
 
-    // Check for exact fan-cover match in approved gallery
-    const { data: fanDup } = await sb
-      .from('covers_cafe_covers')
-      .select('id')
-      .eq('phash', phash)
-      .eq('moderation_status', 'approved')
-      .limit(1);
-    if ((fanDup?.length ?? 0) > 0) {
+    // Check for fan-cover near-duplicate in approved gallery (exact + hamming ≤ 6)
+    const fanMatchId = await findFanMatch(sb, phash);
+    if (fanMatchId) {
       moderationStatus = 'under_review';
       moderationReason = 'Matches an existing fan cover';
-      matchedCoverId = (fanDup as Array<{ id: string }>)[0].id;
+      matchedCoverId = fanMatchId;
     }
 
     // Check for official cover match (only if not already flagged)
