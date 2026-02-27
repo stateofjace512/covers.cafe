@@ -8,6 +8,9 @@
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from '../_supabase';
 
+export const GET: APIRoute = () =>
+  new Response(null, { status: 302, headers: { Location: '/' } });
+
 export const POST: APIRoute = async ({ request }) => {
   let body: { email?: string; code?: string; newPassword?: string };
   try {

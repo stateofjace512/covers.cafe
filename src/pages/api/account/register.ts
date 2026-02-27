@@ -4,13 +4,14 @@
  * provided email — but does NOT create the account yet. The account is only
  * created after the user proves they own the email in complete-registration.ts.
  */
+import { randomInt } from 'node:crypto';
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from '../_supabase';
 import { checkRateLimit } from '../../../lib/rateLimit';
 import { sendMail, codeEmailHtml, codeEmailText } from '../_mailer';
 
 function generateCode(): string {
-  return String(crypto.randomInt(100000, 1000000));
+  return String(randomInt(100000, 1000000));
 }
 
 function validatePassword(password: string): string | null {
@@ -21,6 +22,9 @@ function validatePassword(password: string): string | null {
   if (!/[@#$%^&*!?_\-+=~`|\\:;"'<>,.\/\[\]{}()]/.test(password)) return 'Password must contain at least one special character (@, #, $, etc.).';
   return null;
 }
+
+export const GET: APIRoute = () =>
+  new Response(null, { status: 302, headers: { Location: '/' } });
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   const ip = clientAddress ?? 'unknown';
@@ -91,12 +95,28 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   if (!sb) return new Response('Server misconfigured', { status: 503 });
 
   // ── Email uniqueness (check before sending OTP) ──────────────────────────
-  const { data: existingEmailUser } = await sb.auth.admin.getUserByEmail(email);
-  if (existingEmailUser?.user) {
-    return new Response(
-      JSON.stringify({ ok: false, message: 'An account with this email already exists.' }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
+  // auth.admin.getUserByEmail doesn't exist in supabase-js v2.97+, so call
+  // the GoTrue Admin REST API directly instead.
+  const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL as string;
+  const serviceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY as string;
+  if (supabaseUrl && serviceKey) {
+    try {
+      const lookupRes = await fetch(
+        `${supabaseUrl}/auth/v1/admin/users?page=1&per_page=1&query=${encodeURIComponent(email)}`,
+        { headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey } },
+      );
+      if (lookupRes.ok) {
+        const { users } = await lookupRes.json() as { users?: Array<{ email: string }> };
+        if (users?.some((u) => u.email === email)) {
+          return new Response(
+            JSON.stringify({ ok: false, message: 'An account with this email already exists.' }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+      }
+    } catch {
+      // If the lookup fails, let step 2 catch the duplicate when creating the account
+    }
   }
 
   // ── Username uniqueness ──────────────────────────────────────────────────

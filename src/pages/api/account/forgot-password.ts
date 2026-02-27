@@ -6,6 +6,7 @@
  * Body: { email: string }
  * Returns: { ok: true }
  */
+import { randomInt } from 'node:crypto';
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from '../_supabase';
 import { sendMail, codeEmailHtml, codeEmailText } from '../_mailer';
@@ -24,8 +25,11 @@ function isRateLimited(email: string): boolean {
 }
 
 function generateCode(): string {
-  return String(crypto.randomInt(100000, 1000000));
+  return String(randomInt(100000, 1000000));
 }
+
+export const GET: APIRoute = () =>
+  new Response(null, { status: 302, headers: { Location: '/' } });
 
 export const POST: APIRoute = async ({ request }) => {
   let body: { email?: string };

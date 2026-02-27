@@ -7,6 +7,9 @@ import type { APIRoute } from 'astro';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseServer } from '../_supabase';
 
+export const GET: APIRoute = () =>
+  new Response(null, { status: 302, headers: { Location: '/' } });
+
 export const POST: APIRoute = async ({ request }) => {
   let body: { username?: string; email?: string; password?: string; code?: string };
   try {
