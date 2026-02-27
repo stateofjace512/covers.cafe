@@ -94,16 +94,10 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const sb = getSupabaseServer();
   if (!sb) return new Response('Server misconfigured', { status: 503 });
 
-  // ── Email uniqueness (check before sending OTP) ──────────────────────────
-  const { data: existingEmailUser } = await sb.auth.admin.getUserByEmail(email);
-  if (existingEmailUser?.user) {
-    return new Response(
-      JSON.stringify({ ok: false, message: 'An account with this email already exists.' }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
-  }
-
   // ── Username uniqueness ──────────────────────────────────────────────────
+  // Note: email uniqueness is enforced at complete-registration time when the
+  // account is actually created (createUser returns an error for duplicates).
+  // auth.admin.getUserByEmail is not available in supabase-js v2.97+.
   const { data: existingUsername } = await sb
     .from('covers_cafe_profiles')
     .select('id')
