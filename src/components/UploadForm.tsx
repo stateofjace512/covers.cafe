@@ -10,9 +10,10 @@ import PlusIcon from './PlusIcon';
 import TrashIcon from './TrashIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { computePhash, isDuplicate } from '../lib/phash';
+import { computePhash } from '../lib/phash';
 import { checkRateLimit, getRateLimitState } from '../lib/rateLimit';
 import InfoModal from './InfoModal';
+import ClockIcon from './ClockIcon';
 
 const MIN_DIM = 500;
 const MAX_DIM = 5000;
@@ -25,7 +26,7 @@ interface UploadItem {
   preview: string;
   title: string;
   artist: string;
-  status: 'pending' | 'uploading' | 'done' | 'error';
+  status: 'pending' | 'uploading' | 'done' | 'under_review' | 'error';
   errorMsg?: string;
 }
 
@@ -204,6 +205,7 @@ export default function UploadForm() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<ReactNode | null>(null);
   const [success, setSuccess] = useState(false);
+  const [underReview, setUnderReview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   // File awaiting the user's decision to resize (too-large informodal)
@@ -395,11 +397,6 @@ export default function UploadForm() {
     setError(null);
     try {
       const phash = await computePhash(file);
-      if (phash && await isDuplicate(phash, supabase)) {
-        setError('This image is already in our gallery!');
-        setUploading(false);
-        return;
-      }
 
       // Step 1: get a one-time direct upload URL from CF (file never touches Netlify)
       const urlRes = await fetch('/api/cf-upload-url', {
@@ -407,10 +404,8 @@ export default function UploadForm() {
         headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ phash }),
       });
-      const urlJson = await urlRes.json() as { ok: boolean; code?: string; uploadUrl?: string; cfImageId?: string; message?: string };
+      const urlJson = await urlRes.json() as { ok: boolean; uploadUrl?: string; cfImageId?: string; message?: string };
       if (!urlJson.ok || !urlJson.uploadUrl || !urlJson.cfImageId) {
-        if (urlJson.code === 'DUPLICATE') throw new Error('This image is already in our gallery!');
-        if (urlJson.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms.');
         throw new Error(urlJson.message ?? 'Could not get upload URL');
       }
 
@@ -438,15 +433,18 @@ export default function UploadForm() {
           phash: phash ?? undefined,
         }),
       });
-      const json = await res.json() as { ok: boolean; code?: string; message?: string };
+      const json = await res.json() as { ok: boolean; code?: string; status?: string; message?: string };
       if (!json.ok) {
-        if (json.code === 'DUPLICATE') throw new Error('This image is already in our gallery!');
-        if (json.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms.');
+        if (json.code === 'UNDER_REVIEW') throw new Error(json.message ?? 'This cover is already under review.');
         throw new Error(json.message ?? 'Upload failed');
       }
 
-      setSuccess(true);
-      setTimeout(() => navigate('/'), 1800);
+      if (json.status === 'under_review') {
+        setUnderReview(true);
+      } else {
+        setSuccess(true);
+        setTimeout(() => navigate('/'), 1800);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Upload failed. Please try again.';
       setError(renderErrorWithTerms(msg));
@@ -531,10 +529,6 @@ export default function UploadForm() {
 
       try {
         const phash = await computePhash(item.file);
-        if (phash && await isDuplicate(phash, supabase)) {
-          updateBulkItem(i, { status: 'error', errorMsg: 'This image is already in our gallery!' });
-          continue;
-        }
 
         // Step 1: get a one-time direct upload URL
         const urlRes = await fetch('/api/cf-upload-url', {
@@ -542,10 +536,8 @@ export default function UploadForm() {
           headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ phash }),
         });
-        const urlJson = await urlRes.json() as { ok: boolean; code?: string; uploadUrl?: string; cfImageId?: string; message?: string };
+        const urlJson = await urlRes.json() as { ok: boolean; uploadUrl?: string; cfImageId?: string; message?: string };
         if (!urlJson.ok || !urlJson.uploadUrl || !urlJson.cfImageId) {
-          if (urlJson.code === 'DUPLICATE') throw new Error('This image is already in our gallery!');
-          if (urlJson.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms.');
           throw new Error(urlJson.message ?? 'Could not get upload URL');
         }
 
@@ -570,14 +562,13 @@ export default function UploadForm() {
             phash: phash ?? undefined,
           }),
         });
-        const json = await res.json() as { ok: boolean; code?: string; message?: string };
+        const json = await res.json() as { ok: boolean; code?: string; status?: string; message?: string };
         if (!json.ok) {
-          if (json.code === 'DUPLICATE') throw new Error('This image is already in our gallery!');
-          if (json.code === 'OFFICIAL_BLOCKED') throw new Error('This image is not allowed on our site. Read our Terms.');
+          if (json.code === 'UNDER_REVIEW') throw new Error(json.message ?? 'This cover is already under review.');
           throw new Error(json.message ?? 'Upload failed');
         }
 
-        updateBulkItem(i, { status: 'done' });
+        updateBulkItem(i, { status: json.status === 'under_review' ? 'under_review' : 'done' });
       } catch (err: unknown) {
         updateBulkItem(i, {
           status: 'error',
@@ -646,15 +637,31 @@ export default function UploadForm() {
     );
   }
 
+  if (underReview) {
+    return (
+      <div className="upload-success card">
+        <ClockIcon size={40} style={{ color: 'var(--body-text-muted)', marginBottom: 12 }} />
+        <h2 className="upload-gate-title">Under Review</h2>
+        <p className="upload-gate-body">Your cover has been automatically flagged for review. Please check back in 6–12 hours.</p>
+        <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => navigate('/')}>
+          Go to Gallery
+        </button>
+      </div>
+    );
+  }
+
   if (bulkDone) {
     const successCount = bulkItems.filter((it) => it.status === 'done').length;
+    const reviewCount = bulkItems.filter((it) => it.status === 'under_review').length;
     const errCount = bulkItems.filter((it) => it.status === 'error').length;
     return (
       <div className="upload-success card">
         <CheckCircleIcon size={40} style={{ color: 'var(--accent)', marginBottom: 12 }} />
         <h2 className="upload-gate-title">Bulk Upload Complete</h2>
         <p className="upload-gate-body">
-          {successCount} cover{successCount !== 1 ? 's' : ''} uploaded{errCount > 0 ? `, ${errCount} failed` : ''}.
+          {successCount} cover{successCount !== 1 ? 's' : ''} uploaded
+          {reviewCount > 0 ? `, ${reviewCount} under review (check back in 6–12 hours)` : ''}
+          {errCount > 0 ? `, ${errCount} failed` : ''}.
         </p>
         <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => navigate('/')}>
           Go to Gallery
@@ -960,7 +967,7 @@ export default function UploadForm() {
                 return (
                 <div
                   key={idx}
-                  className={`bulk-item${item.status === 'error' ? ' bulk-item--error' : item.status === 'done' ? ' bulk-item--done' : ''}`}
+                  className={`bulk-item${item.status === 'error' ? ' bulk-item--error' : item.status === 'done' ? ' bulk-item--done' : item.status === 'under_review' ? ' bulk-item--review' : ''}`}
                   draggable
                   onDragStart={(e) => e.dataTransfer.setData('text/bulk-index', String(idx))}
                 >
@@ -973,7 +980,7 @@ export default function UploadForm() {
                       value={item.title}
                       onChange={(e) => updateBulkItem(idx, { title: e.target.value })}
                       onBlur={() => applyKnownMetadata(item.title, 'bulk', idx)}
-                      disabled={item.status === 'uploading' || item.status === 'done'}
+                      disabled={item.status === 'uploading' || item.status === 'done' || item.status === 'under_review'}
                     />
                     <input
                       type="text"
@@ -981,9 +988,9 @@ export default function UploadForm() {
                       placeholder="Artist *"
                       value={item.artist}
                       onChange={(e) => updateBulkItem(idx, { artist: e.target.value })}
-                      disabled={item.status === 'uploading' || item.status === 'done'}
+                      disabled={item.status === 'uploading' || item.status === 'done' || item.status === 'under_review'}
                     />
-                    {bulkArtistFuzzy.length > 0 && item.status === 'pending' && (
+                    {bulkArtistFuzzy.length > 0 && (item.status === 'pending' || item.status === 'error') && (
                       <div className="fuzzy-hint" style={{ width: '100%' }}>
                         Did you mean{' '}
                         {bulkArtistFuzzy.map((m, i) => (
@@ -994,12 +1001,15 @@ export default function UploadForm() {
                         ))}
                       </div>
                     )}
-                    {bulkArtistSplit.length >= 2 && item.status === 'pending' && (
+                    {bulkArtistSplit.length >= 2 && (item.status === 'pending' || item.status === 'error') && (
                       <div className="fuzzy-hint fuzzy-hint--split" style={{ width: '100%' }}>
                         Multiple artists:{' '}
                         {bulkArtistSplit.map((p) => <span key={p} className="fuzzy-hint-tag">{p}</span>)}
                         {' '} -  each will link to their own artist page.
                       </div>
+                    )}
+                    {item.status === 'under_review' && (
+                      <p className="bulk-item-error" style={{ color: 'var(--body-text-muted)' }}><ClockIcon size={12} /> Under review — check back in 6–12 hours.</p>
                     )}
                     {item.errorMsg && (
                       <p className="bulk-item-error"><AlertCircleIcon size={12} /> {renderErrorWithTerms(item.errorMsg)}</p>
@@ -1008,6 +1018,7 @@ export default function UploadForm() {
                   <div className="bulk-item-status">
                     {item.status === 'uploading' && <LoadingIcon size={16} className="upload-spinner" />}
                     {item.status === 'done' && <CheckCircleIcon size={16} style={{ color: 'var(--accent)' }} />}
+                    {item.status === 'under_review' && <ClockIcon size={16} style={{ color: 'var(--body-text-muted)' }} />}
                     {item.status === 'error' && <AlertCircleIcon size={16} style={{ color: '#c83220' }} />}
                     {(item.status === 'pending' || item.status === 'error') && (
                       <button type="button" className="bulk-item-remove" onClick={() => removeBulkItem(idx)} title="Remove">

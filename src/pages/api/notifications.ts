@@ -3,7 +3,7 @@ import { getSupabaseServer } from './_supabase';
 
 interface StoredNotification {
   id: string;
-  type: 'favorite' | 'comment' | 'comment_like' | 'comment_reply' | 'cover_removed' | 'friend_posted' | 'new_follower' | 'friend_request' | 'achievement';
+  type: 'favorite' | 'comment' | 'comment_like' | 'comment_reply' | 'cover_removed' | 'friend_posted' | 'new_follower' | 'friend_request' | 'achievement' | 'cover_under_review' | 'cover_approved' | 'cover_denied';
   cover_id: string;
   cover_title: string;
   cover_artist: string;

@@ -4,6 +4,11 @@
  * was already uploaded directly to CF via /api/cf-upload-url), then inserts a row
  * in covers_cafe_covers.
  *
+ * Instead of hard-blocking duplicates or official-cover matches, covers are
+ * inserted with moderation_status = 'approved' or 'under_review':
+ *   - 'approved'     → is_public = true, immediately visible
+ *   - 'under_review' → is_public = false, queued for operator review
+ *
  * Body (JSON):
  *   cfImageId — CF image ID returned after direct upload (required)
  *   title     — album/cover title (required)
@@ -12,7 +17,7 @@
  *   tags      — array of tag strings (optional)
  *   phash     — perceptual hash hex string (optional, computed client-side)
  *
- * Returns: { ok: true, cover_id: string }
+ * Returns: { ok: true, cover_id: string, status: 'approved' | 'under_review' }
  */
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from './_supabase';
@@ -37,27 +42,33 @@ function hammingDistanceHex(a: string, b: string): number {
   return dist + Math.abs(x.length - y.length) * 4;
 }
 
-async function isOfficialHashBlocked(sb: ReturnType<typeof getSupabaseServer>, phash: string): Promise<boolean> {
+async function findOfficialMatch(
+  sb: ReturnType<typeof getSupabaseServer>,
+  phash: string,
+): Promise<string | null> {
   const normalized = normalizePhash(phash);
-  if (!normalized) return false;
+  if (!normalized) return null;
 
-  const { data: exact } = await sb
+  const { data: exact } = await sb!
     .from('covers_cafe_official_covers')
     .select('id')
     .eq('official_phash', normalized)
     .limit(1);
-  if ((exact?.length ?? 0) > 0) return true;
+  if ((exact?.length ?? 0) > 0) return (exact as Array<{ id: string }>)[0].id;
 
-  const { data: officialHashes } = await sb
+  const { data: officialHashes } = await sb!
     .from('covers_cafe_official_covers')
-    .select('official_phash')
+    .select('id, official_phash')
     .not('official_phash', 'is', null)
     .limit(10000);
 
   const NEAR_DUP_THRESHOLD = 6;
-  return (officialHashes ?? []).some((row: { official_phash: string | null }) =>
-    row.official_phash && hammingDistanceHex(normalized, row.official_phash) <= NEAR_DUP_THRESHOLD,
-  );
+  const near = (officialHashes ?? []).find(
+    (row: { id: string; official_phash: string | null }) =>
+      row.official_phash && hammingDistanceHex(normalized, row.official_phash) <= NEAR_DUP_THRESHOLD,
+  ) as { id: string; official_phash: string } | undefined;
+
+  return near?.id ?? null;
 }
 
 
@@ -103,18 +114,53 @@ export const POST: APIRoute = async ({ request }) => {
   const tags = Array.isArray(body.tags) ? (body.tags as string[]).filter((t) => typeof t === 'string') : [];
   const phash = normalizePhash(typeof body.phash === 'string' ? body.phash : '');
 
+  // Determine moderation status
+  let moderationStatus: 'approved' | 'under_review' = 'approved';
+  let moderationReason: string | null = null;
+  let matchedCoverId: string | null = null;
+  let matchedOfficialId: string | null = null;
+
   if (phash) {
-    const { data: existingDup } = await sb
+    // Block re-submission: if this user already has a pending review for the same
+    // image (same phash, under_review, created within last 12 hours), reject early.
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+    const { data: recentReview } = await sb
+      .from('covers_cafe_covers')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('phash', phash)
+      .eq('moderation_status', 'under_review')
+      .gte('created_at', twelveHoursAgo)
+      .limit(1);
+    if ((recentReview?.length ?? 0) > 0) {
+      return json({
+        ok: false,
+        code: 'UNDER_REVIEW',
+        message: 'This cover is already under review. Please check back in 6–12 hours.',
+      }, 409);
+    }
+
+    // Check for exact fan-cover match in approved gallery
+    const { data: fanDup } = await sb
       .from('covers_cafe_covers')
       .select('id')
       .eq('phash', phash)
+      .eq('moderation_status', 'approved')
       .limit(1);
-    if ((existingDup?.length ?? 0) > 0) {
-      return json({ ok: false, code: 'DUPLICATE', message: 'This image is already in our gallery!' }, 409);
+    if ((fanDup?.length ?? 0) > 0) {
+      moderationStatus = 'under_review';
+      moderationReason = 'Matches an existing fan cover';
+      matchedCoverId = (fanDup as Array<{ id: string }>)[0].id;
     }
 
-    if (await isOfficialHashBlocked(sb, phash)) {
-      return json({ ok: false, code: 'OFFICIAL_BLOCKED', message: 'This image is not allowed on our site. Read our Terms: /terms' }, 403);
+    // Check for official cover match (only if not already flagged)
+    if (moderationStatus === 'approved') {
+      const officialId = await findOfficialMatch(sb, phash);
+      if (officialId) {
+        moderationStatus = 'under_review';
+        moderationReason = 'Matches an official cover';
+        matchedOfficialId = officialId;
+      }
     }
   }
 
@@ -130,7 +176,11 @@ export const POST: APIRoute = async ({ request }) => {
       storage_path: storagePath,
       image_url: '',
       phash,
-      is_public: true,
+      is_public: moderationStatus === 'approved',
+      moderation_status: moderationStatus,
+      moderation_reason: moderationReason,
+      matched_cover_id: matchedCoverId,
+      matched_official_id: matchedOfficialId,
     })
     .select('id')
     .single();
@@ -140,10 +190,28 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ ok: false, message: `Database insert failed: ${insertErr?.message ?? 'unknown'}` }, 500);
   }
 
+  // Notify uploader when their cover is placed under review
+  if (moderationStatus === 'under_review') {
+    sb.from('covers_cafe_notifications')
+      .insert({
+        user_id: userId,
+        actor_user_id: null,
+        type: 'cover_under_review',
+        cover_id: cover.id,
+        cover_title: title,
+        cover_artist: artist,
+        actor_name: 'Covers Cafe',
+        actor_username: null,
+        content: moderationReason,
+        created_at: new Date().toISOString(),
+      })
+      .then(() => {}).catch(() => {});
+  }
+
   // Award contributor achievement (fire-and-forget, errors ignored)
   sb.from('covers_cafe_achievements')
     .insert({ user_id: userId, type: 'contributor', reference_id: null, metadata: {}, awarded_at: new Date().toISOString() })
     .then(() => {}).catch(() => {});
 
-  return json({ ok: true, cover_id: cover.id }, 200);
+  return json({ ok: true, cover_id: cover.id, status: moderationStatus }, 200);
 };
