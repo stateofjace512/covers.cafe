@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { computePhash } from '../lib/phash';
 
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
 
@@ -218,6 +219,10 @@ export default function Cms() {
   const [aboutLoading, setAboutLoading] = useState(false);
   const [aboutSaving, setAboutSaving] = useState(false);
 
+  // ── Phash backfill ────────────────────────────────────────────────────────
+  const [phashBackfillRunning, setPhashBackfillRunning] = useState(false);
+  const [phashBackfillMsg, setPhashBackfillMsg] = useState<string | null>(null);
+
   const token = session?.access_token;
 
   const authHeaders = useMemo(() => ({
@@ -232,6 +237,49 @@ export default function Cms() {
   const selectedUserIsOperator = selectedUser
     ? data.operators.some((op) => op.user_id === selectedUser.id)
     : false;
+
+  // ── Phash backfill handler ────────────────────────────────────────────────
+
+  async function runPhashBackfill() {
+    if (!token || phashBackfillRunning) return;
+    setPhashBackfillRunning(true);
+    setPhashBackfillMsg('Fetching covers without phash…');
+    try {
+      const listRes = await fetch('/api/cms/phash-backfill?limit=500', { headers: { Authorization: `Bearer ${token}` } });
+      const listJson = await listRes.json() as { ok: boolean; covers?: Array<{ id: string; storage_path: string }>; message?: string };
+      if (!listJson.ok || !listJson.covers) throw new Error(listJson.message ?? 'Failed to fetch covers');
+      const covers = listJson.covers.filter((c) => c.storage_path?.startsWith('cf:'));
+      if (covers.length === 0) { setPhashBackfillMsg('All covers already have phash — nothing to do.'); return; }
+      setPhashBackfillMsg(`Processing 0 / ${covers.length}…`);
+      let done = 0;
+      let failed = 0;
+      for (const cover of covers) {
+        try {
+          const imgRes = await fetch(`/api/cover-media?path=${encodeURIComponent(cover.storage_path)}`);
+          if (!imgRes.ok) throw new Error(`Image fetch failed: ${imgRes.status}`);
+          const blob = await imgRes.blob();
+          const file = new File([blob], 'cover.jpg', { type: blob.type || 'image/jpeg' });
+          const phash = await computePhash(file);
+          if (phash) {
+            await fetch('/api/cms/phash-backfill', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ coverId: cover.id, phash }),
+            });
+          }
+          done++;
+        } catch {
+          failed++;
+        }
+        setPhashBackfillMsg(`Processing ${done + failed} / ${covers.length}… (${failed} failed)`);
+      }
+      setPhashBackfillMsg(`Done. ${done} updated, ${failed} failed.`);
+    } catch (err) {
+      setPhashBackfillMsg(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setPhashBackfillRunning(false);
+    }
+  }
 
   // ── Data loading ──────────────────────────────────────────────────────────
 
@@ -1118,6 +1166,21 @@ export default function Cms() {
                 ))}
               </div>
             </div>
+          </section>
+
+          {/* ── Phash backfill ────────────────────────────────────────────── */}
+          <section className="surface cms-section">
+            <h2 className="cms-h2">Backfill missing phash</h2>
+            <p className="cms-desc">
+              Covers uploaded before phash tracking was added have no stored perceptual hash.
+              Without it, the duplicate-upload guard can't detect re-uploads of those covers.
+              Click below to compute and store phash for all affected covers (runs client-side,
+              processes up to 500 at a time).
+            </p>
+            <button className="btn btn-primary" onClick={runPhashBackfill} disabled={phashBackfillRunning}>
+              {phashBackfillRunning ? 'Running…' : 'Backfill phash'}
+            </button>
+            {phashBackfillMsg && <p className="cms-desc" style={{ marginTop: 8 }}>{phashBackfillMsg}</p>}
           </section>
         </>
       )}
