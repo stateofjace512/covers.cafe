@@ -65,32 +65,6 @@ type CoverListItem = {
   created_at: string;
 };
 
-type PohPin = {
-  id: string;
-  comment_id: string;
-  comment_content: string;
-  author_username: string;
-  cover_title: string | null;
-  cover_artist: string | null;
-  page_slug: string | null;
-  pinned_at: string;
-};
-
-type RecentComment = {
-  id: string;
-  content: string;
-  author_username: string;
-  user_id: string | null;
-  page_slug: string;
-  created_at: string;
-  cover_id: string | null;
-  cover_title: string | null;
-  cover_artist: string | null;
-  cover_storage_path: string | null;
-  cover_image_url: string | null;
-  is_already_pinned: boolean;
-};
-
 type ProfileReport = {
   id: string;
   reason: string;
@@ -120,6 +94,7 @@ type DashboardPayload = {
   bans: Ban[];
   operators: Operator[];
   reviewQueueCount: number;
+  myRole: 'operator' | 'moderator' | 'helper';
 };
 
 type BlogPost = {
@@ -157,48 +132,49 @@ type Section =
   | 'queue' | 'reports' | 'bans'
   | 'users' | 'permissions'
   | 'lookup' | 'browser' | 'legal'
-  | 'blog' | 'about'
-  | 'achievements' | 'poh';
+  | 'blog'
+  | 'achievements';
 
-type NavItem = { id: Section; label: string; icon: string; badge?: (d: DashboardPayload) => number };
+type Role = 'operator' | 'moderator' | 'helper';
+
+const ALLOWED_SECTIONS: Record<Role, Section[]> = {
+  operator: ['overview', 'queue', 'reports', 'bans', 'users', 'permissions', 'lookup', 'browser', 'legal', 'blog', 'achievements'],
+  moderator: ['overview', 'queue', 'reports', 'lookup', 'browser', 'legal'],
+  helper:   ['queue', 'reports'],
+};
+
+type NavItem = { id: Section; label: string; badge?: (d: DashboardPayload) => number };
 type NavGroup = { label: string; items: NavItem[] };
 
 const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Moderation',
     items: [
-      { id: 'queue',   label: 'Review Queue',    icon: '🔍', badge: (d) => d.reviewQueueCount },
-      { id: 'reports', label: 'Reports',          icon: '⚑',  badge: (d) => d.reports.length + d.profileReports.length },
-      { id: 'bans',    label: 'Active Bans',      icon: '⊘',  badge: (d) => d.bans.length || 0 },
+      { id: 'queue',   label: 'Review Queue', badge: (d) => d.reviewQueueCount },
+      { id: 'reports', label: 'Reports',       badge: (d) => d.reports.length + d.profileReports.length },
+      { id: 'bans',    label: 'Active Bans',   badge: (d) => d.bans.length || 0 },
     ],
   },
   {
     label: 'Users',
     items: [
-      { id: 'users',       label: 'User Ops',     icon: '👤' },
-      { id: 'permissions', label: 'Permissions',  icon: '🛡' },
+      { id: 'users',       label: 'User Ops'    },
+      { id: 'permissions', label: 'Permissions' },
     ],
   },
   {
     label: 'Covers',
     items: [
-      { id: 'lookup',  label: 'Cover Lookup',  icon: '🔗' },
-      { id: 'browser', label: 'User Browser',  icon: '📁' },
-      { id: 'legal',   label: 'Legal & Tools', icon: '⚖' },
+      { id: 'lookup',  label: 'Cover Lookup'  },
+      { id: 'browser', label: 'User Browser'  },
+      { id: 'legal',   label: 'Legal & Tools' },
     ],
   },
   {
     label: 'Content',
     items: [
-      { id: 'blog',  label: 'Blog',      icon: '📝' },
-      { id: 'about', label: 'About Page', icon: 'ℹ' },
-    ],
-  },
-  {
-    label: 'Community',
-    items: [
-      { id: 'achievements', label: 'Achievements', icon: '🏆' },
-      { id: 'poh',          label: 'Hall of Fame',  icon: '📌' },
+      { id: 'blog',         label: 'Blog'         },
+      { id: 'achievements', label: 'Achievements' },
     ],
   },
 ];
@@ -214,9 +190,7 @@ const SECTION_TITLES: Record<Section, string> = {
   browser:      'User Cover Browser',
   legal:        'Legal & Tools',
   blog:         'Blog',
-  about:        'About Page Editor',
   achievements: 'Achievement Awards',
-  poh:          'Hall of Fame (POH)',
 };
 
 // ---------------------------------------------------------------------------
@@ -228,8 +202,8 @@ export default function Cms() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeSection = (searchParams.get('s') ?? 'overview') as Section;
 
-  const [data, setData] = useState<DashboardPayload>({ reports: [], profileReports: [], bans: [], operators: [], reviewQueueCount: 0 });
-  const [operator, setOperator] = useState<boolean | null>(null);
+  const [data, setData] = useState<DashboardPayload>({ reports: [], profileReports: [], bans: [], operators: [], reviewQueueCount: 0, myRole: 'operator' });
+  const [myRole, setMyRole] = useState<Role | null | false>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -265,11 +239,6 @@ export default function Cms() {
   const [userBrowserPage, setUserBrowserPage] = useState(1);
   const [userBrowserLoading, setUserBrowserLoading] = useState(false);
 
-  // ── POH pins ──────────────────────────────────────────────────────────────
-  const [pohPins, setPohPins] = useState<PohPin[]>([]);
-  const [recentComments, setRecentComments] = useState<RecentComment[]>([]);
-  const [pohLoading, setPohLoading] = useState(false);
-
   // ── Achievement awards ────────────────────────────────────────────────────
   const [achQuery, setAchQuery] = useState('');
   const [achOptions, setAchOptions] = useState<UserOption[]>([]);
@@ -285,11 +254,6 @@ export default function Cms() {
   const [blogBody, setBlogBody] = useState('');
   const [blogPublished, setBlogPublished] = useState(false);
   const [blogFormOpen, setBlogFormOpen] = useState(false);
-
-  // ── About editor ──────────────────────────────────────────────────────────
-  const [aboutBody, setAboutBody] = useState('');
-  const [aboutLoading, setAboutLoading] = useState(false);
-  const [aboutSaving, setAboutSaving] = useState(false);
 
   // ── Review queue ──────────────────────────────────────────────────────────
   const [reviewQueue, setReviewQueue] = useState<ReviewQueueItem[]>([]);
@@ -436,10 +400,11 @@ export default function Cms() {
   async function loadDashboard() {
     if (!token) return;
     const res = await fetch('/api/cms/dashboard', { headers: { Authorization: `Bearer ${token}` } });
-    if (res.status === 403) return setOperator(false);
+    if (res.status === 403) return setMyRole(false);
     if (!res.ok) return setError('Failed to load CMS data.');
-    setOperator(true);
-    setData(await res.json() as DashboardPayload);
+    const payload = await res.json() as DashboardPayload;
+    setMyRole(payload.myRole);
+    setData(payload);
   }
 
   async function loadBlacklist() {
@@ -459,16 +424,6 @@ export default function Cms() {
     setBlogLoading(false);
   }
 
-  async function loadAboutContent() {
-    setAboutLoading(true);
-    const res = await fetch('/api/cms/site-content?key=about_body');
-    if (res.ok) {
-      const data = await res.json() as { value: string | null };
-      setAboutBody(data.value ?? '');
-    }
-    setAboutLoading(false);
-  }
-
   useEffect(() => {
     if (!loading && !user) openAuthModal('login');
   }, [loading, user, openAuthModal]);
@@ -480,12 +435,10 @@ export default function Cms() {
 
   // Load section-specific data when switching sections
   useEffect(() => {
-    if (!token || operator !== true) return;
-    if (activeSection === 'queue') loadReviewQueue();
-    if (activeSection === 'poh') loadPohData();
-    if (activeSection === 'blog') loadBlogPosts();
-    if (activeSection === 'about') loadAboutContent();
-  }, [activeSection, token, operator]);
+    if (!token || !myRole) return;
+    if (visibleSection === 'queue') loadReviewQueue();
+    if (visibleSection === 'blog') loadBlogPosts();
+  }, [activeSection, token, myRole]);
 
   // ── Autocomplete effects ──────────────────────────────────────────────────
 
@@ -590,65 +543,6 @@ export default function Cms() {
       flash(`${payload.count ?? 0} cover(s) ${enabled ? 'perma-unpublished' : 'restored'}.`);
       await loadUserBrowserCovers(userId, userBrowserPage);
     }
-    setBusyId(null);
-  }
-
-  // ── POH pins ──────────────────────────────────────────────────────────────
-
-  async function loadPohData() {
-    if (!token) return;
-    setPohLoading(true);
-    const [pinsRes, commentsRes] = await Promise.all([
-      fetch('/api/poh/pins', { headers: { Authorization: `Bearer ${token}` } }),
-      fetch('/api/cms/recent-comments', { headers: { Authorization: `Bearer ${token}` } }),
-    ]);
-    if (pinsRes.ok) {
-      const payload = await pinsRes.json() as { pins: PohPin[] };
-      setPohPins(payload.pins ?? []);
-    }
-    if (commentsRes.ok) setRecentComments(await commentsRes.json() as RecentComment[]);
-    setPohLoading(false);
-  }
-
-  async function pinComment(comment: RecentComment) {
-    if (!token) return;
-    setBusyId(`pin-${comment.id}`);
-    setError(null);
-    const res = await fetch('/api/cms/pin-comment', {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({
-        commentId: comment.id,
-        commentContent: comment.content,
-        authorUsername: comment.author_username,
-        authorUserId: comment.user_id,
-        coverId: comment.cover_id,
-        coverTitle: comment.cover_title,
-        coverArtist: comment.cover_artist,
-        coverStoragePath: comment.cover_storage_path,
-        coverImageUrl: comment.cover_image_url,
-        pageType: 'music',
-        pageSlug: comment.page_slug,
-      }),
-    });
-    if (!res.ok) setError('Could not pin comment.');
-    else flash('Comment pinned to POH!');
-    await loadPohData();
-    setBusyId(null);
-  }
-
-  async function unpinComment(pinId: string) {
-    if (!token) return;
-    setBusyId(`unpin-${pinId}`);
-    setError(null);
-    const res = await fetch('/api/cms/unpin-comment', {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({ pinId }),
-    });
-    if (!res.ok) setError('Could not unpin comment.');
-    else flash('Comment unpinned.');
-    await loadPohData();
     setBusyId(null);
   }
 
@@ -905,21 +799,6 @@ export default function Cms() {
     await loadBlogPosts();
   }
 
-  // ── About editor ──────────────────────────────────────────────────────────
-
-  async function saveAboutContent() {
-    setAboutSaving(true);
-    setError(null);
-    const res = await fetch('/api/cms/site-content', {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({ key: 'about_body', value: aboutBody }),
-    });
-    setAboutSaving(false);
-    if (!res.ok) { setError('Could not save About content.'); return; }
-    flash('About page updated.');
-  }
-
   // ── Guards ────────────────────────────────────────────────────────────────
 
   const guardStyle: CSSProperties = {
@@ -928,9 +807,15 @@ export default function Cms() {
   };
   if (loading) return <div style={guardStyle}>Loading…</div>;
   if (!user) return <div style={guardStyle}>Sign in to access the CMS.</div>;
-  if (operator === false) return <div style={guardStyle}>You are not authorized to view this page.</div>;
+  if (myRole === false) return <div style={guardStyle}>You are not authorized to view this page.</div>;
 
   // ── Render ────────────────────────────────────────────────────────────────
+
+  const currentRole: Role = myRole || 'helper';
+  const allowed = ALLOWED_SECTIONS[currentRole];
+
+  // Redirect to first allowed section if current one is not permitted
+  const visibleSection: Section = allowed.includes(activeSection) ? activeSection : allowed[0];
 
   // ── Role badge helper ─────────────────────────────────────────────────────
   function roleBadge(role: string) {
@@ -943,7 +828,7 @@ export default function Cms() {
       {/* ══ SIDEBAR ══════════════════════════════════════════════════════ */}
       <aside className="admin-sidebar">
         <div className="admin-sidebar-logo">
-          <span className="admin-sidebar-logo-icon">☕</span>
+          <span className="admin-sidebar-logo-icon">cc</span>
           <div>
             <div className="admin-sidebar-logo-text">covers.cafe</div>
             <div className="admin-sidebar-logo-sub">Admin Panel</div>
@@ -951,41 +836,45 @@ export default function Cms() {
         </div>
 
         <nav className="admin-nav">
-          {/* Overview */}
-          <div className="admin-nav-group" style={{ marginTop: 10 }}>
-            <button
-              className={`admin-nav-item${activeSection === 'overview' ? ' active' : ''}`}
-              onClick={() => setSection('overview')}
-            >
-              <span className="admin-nav-icon">⊞</span>
-              Overview
-            </button>
-          </div>
-
-          {NAV_GROUPS.map((group) => (
-            <div key={group.label} className="admin-nav-group">
-              <div className="admin-nav-group-label">{group.label}</div>
-              {group.items.map((item) => {
-                const badge = item.badge?.(data) ?? 0;
-                return (
-                  <button
-                    key={item.id}
-                    className={`admin-nav-item${activeSection === item.id ? ' active' : ''}`}
-                    onClick={() => setSection(item.id)}
-                  >
-                    <span className="admin-nav-icon">{item.icon}</span>
-                    {item.label}
-                    {badge > 0 && <span className="admin-nav-badge">{badge}</span>}
-                  </button>
-                );
-              })}
+          {/* Overview — only for operator and moderator */}
+          {allowed.includes('overview') && (
+            <div className="admin-nav-group" style={{ marginTop: 10 }}>
+              <button
+                className={`admin-nav-item${visibleSection === 'overview' ? ' active' : ''}`}
+                onClick={() => setSection('overview')}
+              >
+                Overview
+              </button>
             </div>
-          ))}
+          )}
+
+          {NAV_GROUPS.map((group) => {
+            const visibleItems = group.items.filter((item) => allowed.includes(item.id));
+            if (visibleItems.length === 0) return null;
+            return (
+              <div key={group.label} className="admin-nav-group">
+                <div className="admin-nav-group-label">{group.label}</div>
+                {visibleItems.map((item) => {
+                  const badge = item.badge?.(data) ?? 0;
+                  return (
+                    <button
+                      key={item.id}
+                      className={`admin-nav-item${visibleSection === item.id ? ' active' : ''}`}
+                      onClick={() => setSection(item.id)}
+                    >
+                      {item.label}
+                      {badge > 0 && <span className="admin-nav-badge">{badge}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
         </nav>
 
         <div className="admin-sidebar-footer">
           <div className="admin-sidebar-user">@{(user as { email?: string })?.email?.split('@')[0] ?? 'admin'}</div>
-          <a href="/" className="admin-exit-link">← Back to site</a>
+          <a href="/" className="admin-exit-link">Back to site</a>
         </div>
       </aside>
 
@@ -993,20 +882,15 @@ export default function Cms() {
       <main className="admin-main">
         <div className="admin-topbar">
           <div className="admin-topbar-row">
-            <h1 className="admin-topbar-title">{SECTION_TITLES[activeSection]}</h1>
-            {activeSection === 'queue' && (
+            <h1 className="admin-topbar-title">{SECTION_TITLES[visibleSection]}</h1>
+            {visibleSection === 'queue' && (
               <button className="admin-btn admin-btn-secondary admin-btn-sm" onClick={loadReviewQueue} disabled={reviewQueueLoading}>
-                {reviewQueueLoading ? 'Loading…' : '↻ Refresh'}
+                {reviewQueueLoading ? 'Loading…' : 'Refresh'}
               </button>
             )}
-            {activeSection === 'blog' && (
+            {visibleSection === 'blog' && (
               <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={openNewBlogForm} disabled={blogFormOpen}>
                 + New post
-              </button>
-            )}
-            {activeSection === 'poh' && (
-              <button className="admin-btn admin-btn-secondary admin-btn-sm" onClick={loadPohData} disabled={pohLoading}>
-                {pohLoading ? 'Loading…' : '↻ Refresh'}
               </button>
             )}
           </div>
@@ -1015,8 +899,8 @@ export default function Cms() {
         {/* Alerts */}
         {(error || successMsg) && (
           <div className="admin-alerts">
-            {error    && <div className="admin-alert admin-alert--error">⚠ {error}</div>}
-            {successMsg && <div className="admin-alert admin-alert--success">✓ {successMsg}</div>}
+            {error    && <div className="admin-alert admin-alert--error">{error}</div>}
+            {successMsg && <div className="admin-alert admin-alert--success">{successMsg}</div>}
           </div>
         )}
 
@@ -1025,7 +909,7 @@ export default function Cms() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* OVERVIEW                                                          */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {activeSection === 'overview' && (
+          {visibleSection === 'overview' && (
             <>
               <div className="admin-stats-grid">
                 <div className={`admin-stat-card${data.reviewQueueCount > 0 ? ' admin-stat-card--warn' : ''}`}>
@@ -1052,10 +936,10 @@ export default function Cms() {
               <div className="admin-card" style={{ marginTop: 16 }}>
                 <h3 className="admin-card-title">Quick Links</h3>
                 <div className="admin-list">
-                  <button className="admin-list-row admin-btn-link" onClick={() => setSection('queue')}>Review Queue →</button>
-                  <button className="admin-list-row admin-btn-link" onClick={() => setSection('reports')}>Reports →</button>
-                  <button className="admin-list-row admin-btn-link" onClick={() => setSection('users')}>User Operations →</button>
-                  <button className="admin-list-row admin-btn-link" onClick={() => setSection('legal')}>Legal & Tools →</button>
+                  <button className="admin-list-row admin-btn-link" onClick={() => setSection('queue')}>Review Queue</button>
+                  <button className="admin-list-row admin-btn-link" onClick={() => setSection('reports')}>Reports</button>
+                  {currentRole === 'operator' && <button className="admin-list-row admin-btn-link" onClick={() => setSection('users')}>User Operations</button>}
+                  {currentRole !== 'helper' && <button className="admin-list-row admin-btn-link" onClick={() => setSection('legal')}>Legal & Tools</button>}
                 </div>
               </div>
             </>
@@ -1064,7 +948,7 @@ export default function Cms() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* REVIEW QUEUE                                                      */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {activeSection === 'queue' && (
+          {visibleSection === 'queue' && (
             <div className="admin-card">
               <p className="admin-card-desc">Covers flagged by the auto-duplicate detector. Approve to publish, deny to remove.</p>
               {reviewQueueLoading ? (
@@ -1116,7 +1000,7 @@ export default function Cms() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* REPORTS                                                           */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {activeSection === 'reports' && (
+          {visibleSection === 'reports' && (
             <>
               {/* Cover reports */}
               <div className="admin-card">
@@ -1179,7 +1063,7 @@ export default function Cms() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* BANS                                                              */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {activeSection === 'bans' && (
+          {visibleSection === 'bans' && (
             <div className="admin-card">
               <h3 className="admin-card-title">
                 Active Bans
@@ -1212,7 +1096,7 @@ export default function Cms() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* USERS                                                             */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {activeSection === 'users' && (
+          {visibleSection === 'users' && (
             <div className="admin-card">
               <h3 className="admin-card-title">User Operations</h3>
               <div style={{ position: 'relative' }}>
@@ -1289,7 +1173,7 @@ export default function Cms() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* PERMISSIONS                                                       */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {activeSection === 'permissions' && (
+          {visibleSection === 'permissions' && (
             <div className="admin-card">
               <h3 className="admin-card-title">Operators &amp; Roles</h3>
               {data.operators.length === 0 ? (
@@ -1318,8 +1202,9 @@ export default function Cms() {
                 <div style={{ marginTop: 16 }}>
                   <h4 className="admin-card-subtitle">Assign role to @{selectedUser.username}</h4>
                   <div className="admin-row-actions">
-                    <button className="admin-btn admin-btn-primary" disabled={busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, true, selectedUser.username, 'operator')}>Promote to Operator</button>
+                    <button className="admin-btn admin-btn-primary" disabled={busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, true, selectedUser.username, 'operator')}>Assign Operator</button>
                     <button className="admin-btn" disabled={busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, true, selectedUser.username, 'moderator')}>Assign Moderator</button>
+                    <button className="admin-btn" disabled={busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, true, selectedUser.username, 'helper')}>Assign Helper</button>
                     <button className="admin-btn admin-btn-danger" disabled={!selectedUserIsOperator || busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, false, selectedUser.username)}>Remove from Staff</button>
                   </div>
                 </div>
@@ -1330,7 +1215,7 @@ export default function Cms() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* COVER LOOKUP                                                      */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {activeSection === 'lookup' && (
+          {visibleSection === 'lookup' && (
             <div className="admin-card">
               <p className="admin-card-desc">Paste a fan cover URL to load that cover and the next 10 by the same user.</p>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -1378,7 +1263,7 @@ export default function Cms() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* USER BROWSER                                                      */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {activeSection === 'browser' && (
+          {visibleSection === 'browser' && (
             <div className="admin-card">
               <p className="admin-card-desc">Search a user to browse and bulk-manage all their covers.</p>
               <div style={{ position: 'relative' }}>
@@ -1457,7 +1342,7 @@ export default function Cms() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* LEGAL & TOOLS                                                     */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {activeSection === 'legal' && (
+          {visibleSection === 'legal' && (
             <>
               {/* Mass remove by tag */}
               <div className="admin-card">
@@ -1534,7 +1419,7 @@ export default function Cms() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* BLOG                                                              */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {activeSection === 'blog' && (
+          {visibleSection === 'blog' && (
             <div className="admin-card">
               <p className="admin-card-desc">Write and publish blog posts visible at <a href="/blog" target="_blank" rel="noopener noreferrer">/blog</a>. Only operators can post.</p>
 
@@ -1607,41 +1492,9 @@ export default function Cms() {
           )}
 
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {/* ABOUT EDITOR                                                      */}
-          {/* ══════════════════════════════════════════════════════════════════ */}
-          {activeSection === 'about' && (
-            <div className="admin-card">
-              <p className="admin-card-desc">Edit the text shown on the <a href="/about" target="_blank" rel="noopener noreferrer">/about</a> page. Plain text — line breaks are preserved.</p>
-
-              {aboutLoading ? (
-                <p className="admin-empty">Loading…</p>
-              ) : (
-                <div style={{ display: 'grid', gap: 10 }}>
-                  <textarea
-                    className="admin-input"
-                    value={aboutBody}
-                    onChange={(e) => setAboutBody(e.target.value)}
-                    rows={20}
-                    style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }}
-                    placeholder="About page content…"
-                  />
-                  <div className="admin-row-actions">
-                    <button className="admin-btn admin-btn-primary" onClick={saveAboutContent} disabled={aboutSaving}>
-                      {aboutSaving ? 'Saving…' : 'Save changes'}
-                    </button>
-                    <button className="admin-btn" onClick={loadAboutContent} disabled={aboutLoading || aboutSaving}>
-                      Reset to saved
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ══════════════════════════════════════════════════════════════════ */}
           {/* ACHIEVEMENTS                                                      */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {activeSection === 'achievements' && (
+          {visibleSection === 'achievements' && (
             <div className="admin-card">
               <p className="admin-card-desc">Grant or revoke any achievement badge for any user.</p>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
@@ -1695,67 +1548,6 @@ export default function Cms() {
                 <button className="admin-btn" disabled={!achSelectedUser || busyId === 'ach-revoke'} onClick={() => awardAchievement('revoke')}>Revoke</button>
               </div>
               {achSelectedUser && <p className="admin-muted" style={{ marginTop: 8 }}>Selected: @{achSelectedUser.username}</p>}
-            </div>
-          )}
-
-          {/* ══════════════════════════════════════════════════════════════════ */}
-          {/* HALL OF FAME (POH)                                                */}
-          {/* ══════════════════════════════════════════════════════════════════ */}
-          {activeSection === 'poh' && (
-            <div className="admin-card">
-              <p className="admin-card-desc">Pin standout comments to the Hall of Fame. Awards the author a POH achievement badge.</p>
-
-              {(pohPins.length > 0 || recentComments.length > 0) && (
-                <div style={{ display: 'grid', gap: 16 }}>
-                  {pohPins.length > 0 && (
-                    <div>
-                      <h3 className="admin-card-subtitle">Current pins ({pohPins.length})</h3>
-                      <div className="admin-list">
-                        {pohPins.map((pin) => (
-                          <div key={pin.id} className="admin-list-row">
-                            <div className="admin-list-meta">
-                              <span className="admin-list-primary">@{pin.author_username}</span>
-                              <span className="admin-muted" style={{ fontStyle: 'italic' }}>"{pin.comment_content.slice(0, 80)}{pin.comment_content.length > 80 ? '…' : ''}"</span>
-                              {pin.cover_title && <span className="admin-muted">{pin.cover_title}{pin.cover_artist ? ` — ${pin.cover_artist}` : ''}</span>}
-                            </div>
-                            <div className="admin-row-actions">
-                              <button className="admin-btn" disabled={busyId === `unpin-${pin.id}`} onClick={() => unpinComment(pin.id)}>Unpin</button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {recentComments.length > 0 && (
-                    <div>
-                      <h3 className="admin-card-subtitle">Recent comments</h3>
-                      <div className="admin-list">
-                        {recentComments.map((c) => (
-                          <div key={c.id} className="admin-list-row">
-                            <div className="admin-list-meta">
-                              <span className="admin-list-primary">@{c.author_username}</span>
-                              <span className="admin-muted" style={{ fontStyle: 'italic' }}>"{c.content.slice(0, 100)}{c.content.length > 100 ? '…' : ''}"</span>
-                              {c.cover_title && <span className="admin-muted">{c.cover_title}{c.cover_artist ? ` — ${c.cover_artist}` : ''}</span>}
-                            </div>
-                            <div className="admin-row-actions">
-                              {c.is_already_pinned ? (
-                                <span className="admin-badge admin-badge--op">Pinned</span>
-                              ) : (
-                                <button className="admin-btn admin-btn-primary" disabled={busyId === `pin-${c.id}`} onClick={() => pinComment(c)}>Pin to POH</button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {pohPins.length === 0 && recentComments.length === 0 && (
-                <p className="admin-empty">Click "Refresh" above to load pins and recent comments.</p>
-              )}
             </div>
           )}
 

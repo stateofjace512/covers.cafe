@@ -23,7 +23,7 @@ export const GET: APIRoute = async ({ request }) => {
   const auth = await requireOperator(request);
   if ('error' in auth) return auth.error;
 
-  const { sb } = auth;
+  const { sb, role } = auth;
 
   const [{ data: reports }, { data: profileReports }, { data: bans }, { data: operators }, { count: reviewQueueCount }] = await Promise.all([
     sb
@@ -95,5 +95,6 @@ export const GET: APIRoute = async ({ request }) => {
       can_be_removed: o.can_be_removed,
     })),
     reviewQueueCount: reviewQueueCount ?? 0,
+    myRole: role,
   }), { status: 200 });
 };
