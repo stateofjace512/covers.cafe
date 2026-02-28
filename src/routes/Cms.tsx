@@ -827,14 +827,6 @@ export default function Cms() {
     <div className="admin-wrap">
       {/* ══ SIDEBAR ══════════════════════════════════════════════════════ */}
       <aside className="admin-sidebar">
-        <div className="admin-sidebar-logo">
-          <span className="admin-sidebar-logo-icon">cc</span>
-          <div>
-            <div className="admin-sidebar-logo-text">covers.cafe</div>
-            <div className="admin-sidebar-logo-sub">Admin Panel</div>
-          </div>
-        </div>
-
         <nav className="admin-nav">
           {/* Overview — only for operator and moderator */}
           {allowed.includes('overview') && (
