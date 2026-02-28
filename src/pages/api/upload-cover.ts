@@ -4,6 +4,11 @@
  * was already uploaded directly to CF via /api/cf-upload-url), then inserts a row
  * in covers_cafe_covers.
  *
+ * Instead of hard-blocking duplicates or official-cover matches, covers are
+ * inserted with moderation_status = 'approved' or 'under_review':
+ *   - 'approved'     → is_public = true, immediately visible
+ *   - 'under_review' → is_public = false, queued for operator review
+ *
  * Body (JSON):
  *   cfImageId — CF image ID returned after direct upload (required)
  *   title     — album/cover title (required)
@@ -12,10 +17,19 @@
  *   tags      — array of tag strings (optional)
  *   phash     — perceptual hash hex string (optional, computed client-side)
  *
- * Returns: { ok: true, cover_id: string }
+ * Returns: { ok: true, cover_id: string, status: 'approved' | 'under_review' }
  */
 import type { APIRoute } from 'astro';
 import { getSupabaseServer } from './_supabase';
+import { deleteFromCf } from '../../lib/cloudflare';
+import { createClient } from '@supabase/supabase-js';
+
+/** Admin client used only for the official-cover check (covers_cafe_official_covers has no user-auth RLS). */
+function getAdminClient() {
+  const url = import.meta.env.PUBLIC_SUPABASE_URL as string;
+  const key = (import.meta.env.SUPABASE_SERVICE_ROLE_KEY ?? import.meta.env.PUBLIC_SUPABASE_ANON_PUBLIC_KEY) as string;
+  return createClient(url, key);
+}
 
 const json = (body: object, status: number) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -37,27 +51,38 @@ function hammingDistanceHex(a: string, b: string): number {
   return dist + Math.abs(x.length - y.length) * 4;
 }
 
-async function isOfficialHashBlocked(sb: ReturnType<typeof getSupabaseServer>, phash: string): Promise<boolean> {
-  const normalized = normalizePhash(phash);
-  if (!normalized) return false;
+const NEAR_DUP_THRESHOLD = 10;
 
-  const { data: exact } = await sb
+/**
+ * Check for near-duplicate official covers.
+ * Also uses the admin client for consistency.
+ */
+async function findOfficialMatch(phash: string): Promise<string | null> {
+  const admin = getAdminClient();
+  const normalized = normalizePhash(phash);
+  if (!normalized) return null;
+
+  const { data: exact, error: exactErr } = await admin
     .from('covers_cafe_official_covers')
     .select('id')
     .eq('official_phash', normalized)
     .limit(1);
-  if ((exact?.length ?? 0) > 0) return true;
+  if (exactErr) console.error('[upload-cover] findOfficialMatch exact error:', exactErr.message);
+  if ((exact?.length ?? 0) > 0) return (exact as Array<{ id: string }>)[0].id;
 
-  const { data: officialHashes } = await sb
+  const { data: officialHashes, error: hashErr } = await admin
     .from('covers_cafe_official_covers')
-    .select('official_phash')
+    .select('id, official_phash')
     .not('official_phash', 'is', null)
     .limit(10000);
+  if (hashErr) console.error('[upload-cover] findOfficialMatch near-dup error:', hashErr.message);
 
-  const NEAR_DUP_THRESHOLD = 6;
-  return (officialHashes ?? []).some((row: { official_phash: string | null }) =>
-    row.official_phash && hammingDistanceHex(normalized, row.official_phash) <= NEAR_DUP_THRESHOLD,
-  );
+  const near = (officialHashes ?? []).find(
+    (row: { id: string; official_phash: string | null }) =>
+      row.official_phash && hammingDistanceHex(normalized, row.official_phash) <= NEAR_DUP_THRESHOLD,
+  ) as { id: string; official_phash: string } | undefined;
+
+  return near?.id ?? null;
 }
 
 
@@ -103,18 +128,79 @@ export const POST: APIRoute = async ({ request }) => {
   const tags = Array.isArray(body.tags) ? (body.tags as string[]).filter((t) => typeof t === 'string') : [];
   const phash = normalizePhash(typeof body.phash === 'string' ? body.phash : '');
 
+  // Determine moderation status
+  let moderationStatus: 'approved' | 'under_review' = 'approved';
+  let moderationReason: string | null = null;
+  let matchedCoverId: string | null = null;
+  let matchedOfficialId: string | null = null;
+
   if (phash) {
-    const { data: existingDup } = await sb
+    // Block re-submission: if this user already has a pending review for the same
+    // image within the last 12 hours, reject and clean up the CF upload.
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+    const { data: recentReview, error: resubErr } = await sb
+      .from('covers_cafe_covers')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('phash', phash)
+      .eq('moderation_status', 'under_review')
+      .gte('created_at', twelveHoursAgo)
+      .limit(1);
+    if (resubErr) console.error('[upload-cover] re-submission check error:', resubErr.message);
+    if ((recentReview?.length ?? 0) > 0) {
+      // Delete the just-uploaded CF image — it will never be stored in the DB.
+      deleteFromCf(cfImageId).catch((err) => {
+        console.error('[upload-cover] CF delete (re-submission) error:', err);
+      });
+      return json({
+        ok: false,
+        code: 'UNDER_REVIEW',
+        message: 'This cover is already under review. Please check back in 6–12 hours.',
+      }, 409);
+    }
+
+    // Fan cover duplicate check: exact match first, then near-dup (hamming ≤ 6).
+    // Uses sb so the same auth context as the rest of the handler applies.
+    const { data: fanDup, error: fanErr } = await sb
       .from('covers_cafe_covers')
       .select('id')
       .eq('phash', phash)
       .limit(1);
-    if ((existingDup?.length ?? 0) > 0) {
-      return json({ ok: false, code: 'DUPLICATE', message: 'This image is already in our gallery!' }, 409);
+    if (fanErr) console.error('[upload-cover] fan cover check error:', fanErr.message);
+    if ((fanDup?.length ?? 0) > 0) {
+      moderationStatus = 'under_review';
+      moderationReason = 'Matches an existing fan cover';
+      matchedCoverId = (fanDup as Array<{ id: string }>)[0].id;
     }
 
-    if (await isOfficialHashBlocked(sb, phash)) {
-      return json({ ok: false, code: 'OFFICIAL_BLOCKED', message: 'This image is not allowed on our site. Read our Terms: /terms' }, 403);
+    // Near-dup fallback: catches covers whose phash shifted slightly due to
+    // CF re-encoding (exact match misses them; hamming ≤ 6 catches them).
+    if (moderationStatus === 'approved') {
+      const { data: allHashes, error: nearErr } = await sb
+        .from('covers_cafe_covers')
+        .select('id, phash')
+        .not('phash', 'is', null)
+        .limit(10000);
+      if (nearErr) console.error('[upload-cover] near-dup check error:', nearErr.message);
+      const near = (allHashes ?? []).find(
+        (row: { id: string; phash: string | null }) =>
+          row.phash && hammingDistanceHex(phash, row.phash) <= NEAR_DUP_THRESHOLD,
+      ) as { id: string } | undefined;
+      if (near) {
+        moderationStatus = 'under_review';
+        moderationReason = 'Matches an existing fan cover';
+        matchedCoverId = near.id;
+      }
+    }
+
+    // Check for official cover match (only if not already flagged)
+    if (moderationStatus === 'approved') {
+      const officialId = await findOfficialMatch(phash);
+      if (officialId) {
+        moderationStatus = 'under_review';
+        moderationReason = 'Matches an official cover';
+        matchedOfficialId = officialId;
+      }
     }
   }
 
@@ -130,7 +216,11 @@ export const POST: APIRoute = async ({ request }) => {
       storage_path: storagePath,
       image_url: '',
       phash,
-      is_public: true,
+      is_public: moderationStatus === 'approved',
+      moderation_status: moderationStatus,
+      moderation_reason: moderationReason,
+      matched_cover_id: matchedCoverId,
+      matched_official_id: matchedOfficialId,
     })
     .select('id')
     .single();
@@ -140,10 +230,28 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ ok: false, message: `Database insert failed: ${insertErr?.message ?? 'unknown'}` }, 500);
   }
 
+  // Notify uploader when their cover is placed under review
+  if (moderationStatus === 'under_review') {
+    sb.from('covers_cafe_notifications')
+      .insert({
+        user_id: userId,
+        actor_user_id: null,
+        type: 'cover_under_review',
+        cover_id: cover.id,
+        cover_title: title,
+        cover_artist: artist,
+        actor_name: 'Covers Cafe',
+        actor_username: null,
+        content: moderationReason,
+        created_at: new Date().toISOString(),
+      })
+      .then(() => {}).catch(() => {});
+  }
+
   // Award contributor achievement (fire-and-forget, errors ignored)
   sb.from('covers_cafe_achievements')
     .insert({ user_id: userId, type: 'contributor', reference_id: null, metadata: {}, awarded_at: new Date().toISOString() })
     .then(() => {}).catch(() => {});
 
-  return json({ ok: true, cover_id: cover.id }, 200);
+  return json({ ok: true, cover_id: cover.id, status: moderationStatus }, 200);
 };

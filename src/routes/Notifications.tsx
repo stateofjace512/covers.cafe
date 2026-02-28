@@ -7,6 +7,8 @@ import CommentIcon from '../components/CommentIcon';
 import XIcon from '../components/XIcon';
 import GalleryIcon from '../components/GalleryIcon';
 import UserIcon from '../components/UserIcon';
+import ClockIcon from '../components/ClockIcon';
+import CheckCircleIcon from '../components/CheckCircleIcon';
 
 const ACHIEVEMENT_LABELS: Record<string, string> = {
   acotw: 'Album Cover of the Week',
@@ -19,7 +21,7 @@ const ACHIEVEMENT_LABELS: Record<string, string> = {
 
 interface Notification {
   id: string;
-  type: 'favorite' | 'comment' | 'comment_like' | 'comment_reply' | 'cover_removed' | 'friend_posted' | 'new_follower' | 'friend_request' | 'achievement';
+  type: 'favorite' | 'comment' | 'comment_like' | 'comment_reply' | 'cover_removed' | 'friend_posted' | 'new_follower' | 'friend_request' | 'achievement' | 'cover_under_review' | 'cover_approved' | 'cover_denied';
   cover_id: string | null;
   cover_title: string;
   cover_artist: string;
@@ -116,22 +118,43 @@ export default function Notifications() {
             <div key={n.id} className={`notif-item notif-item--page${!n.read_at ? ' notif-item--new' : ''}`}>
               <span className="notif-num">{idx + 1}</span>
               <span className={`notif-icon ${
-                n.type === 'cover_removed' ? 'notif-icon--removed'
+                n.type === 'cover_removed' || n.type === 'cover_denied' ? 'notif-icon--removed'
                 : (n.type === 'new_follower' || n.type === 'friend_request') ? 'notif-icon--follow'
                 : n.type === 'friend_posted' ? 'notif-icon--friend'
                 : n.type === 'achievement' ? 'notif-icon--achievement'
+                : n.type === 'cover_under_review' ? 'notif-icon--review'
+                : n.type === 'cover_approved' ? 'notif-icon--approved'
                 : (n.type === 'favorite' || n.type === 'comment_like') ? 'notif-icon--fav'
                 : 'notif-icon--cmt'
               }`}>
-                {n.type === 'cover_removed' ? <XIcon size={13} />
+                {(n.type === 'cover_removed' || n.type === 'cover_denied') ? <XIcon size={13} />
                   : (n.type === 'new_follower' || n.type === 'friend_request') ? <UserIcon size={13} />
                   : n.type === 'friend_posted' ? <GalleryIcon size={13} />
                   : n.type === 'achievement' ? <span style={{ fontSize: 13 }}>🏆</span>
+                  : n.type === 'cover_under_review' ? <ClockIcon size={13} />
+                  : n.type === 'cover_approved' ? <CheckCircleIcon size={13} />
                   : (n.type === 'favorite' || n.type === 'comment_like') ? <FavoritesIcon size={13} />
                   : <CommentIcon size={13} />}
               </span>
               <div className="notif-body">
-                {n.type === 'cover_removed' ? (
+                {n.type === 'cover_under_review' ? (
+                  <p className="notif-text">
+                    Your cover <strong>{n.cover_title}</strong>{n.cover_artist ? <> by {n.cover_artist}</> : ''} has been automatically flagged for review. Please check back in 6–12 hours.
+                  </p>
+                ) : n.type === 'cover_approved' ? (
+                  <p className="notif-text">
+                    Your cover{' '}
+                    {n.cover_id
+                      ? <button className="notif-cover-link" onClick={() => navigate(`/?open=${n.cover_id}`)}>{n.cover_title}</button>
+                      : <strong>{n.cover_title}</strong>
+                    }{' '}has been approved and is now live!
+                    {n.content && <> <span style={{ color: 'var(--body-text-muted)' }}>Note: {n.content}</span></>}
+                  </p>
+                ) : n.type === 'cover_denied' ? (
+                  <p className="notif-text">
+                    Your cover <strong>{n.cover_title}</strong> was not approved: <strong>{n.content}</strong>
+                  </p>
+                ) : n.type === 'cover_removed' ? (
                   <p className="notif-text">
                     {n.cover_id ? (
                       <>Your upload{' '}<button className="notif-cover-link" onClick={() => navigate(`/?open=${n.cover_id}`)}>{n.cover_title}</button>{' '}has</>

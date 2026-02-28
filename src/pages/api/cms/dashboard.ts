@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ request }) => {
 
   const { sb } = auth;
 
-  const [{ data: reports }, { data: profileReports }, { data: bans }, { data: operators }] = await Promise.all([
+  const [{ data: reports }, { data: profileReports }, { data: bans }, { data: operators }, { count: reviewQueueCount }] = await Promise.all([
     sb
       .from('covers_cafe_reports')
       .select('id, reason, details, created_at, cover_id, reporter_id')
@@ -44,6 +44,10 @@ export const GET: APIRoute = async ({ request }) => {
       .from('covers_cafe_operator_roles')
       .select('user_id, can_be_removed')
       .eq('role', 'operator'),
+    sb
+      .from('covers_cafe_covers')
+      .select('id', { count: 'exact', head: true })
+      .eq('moderation_status', 'under_review'),
   ]);
 
   const reportRows = (reports ?? []) as ReportRow[];
@@ -89,5 +93,6 @@ export const GET: APIRoute = async ({ request }) => {
       username: usernameMap.get(o.user_id) ?? null,
       can_be_removed: o.can_be_removed,
     })),
+    reviewQueueCount: reviewQueueCount ?? 0,
   }), { status: 200 });
 };
