@@ -37,23 +37,23 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(`role must be one of: ${validRoles.join(', ')}`, { status: 400 });
   }
 
+  // Check lock status before any modification
+  const { data: existing } = await adminSb
+    .from('covers_cafe_operator_roles')
+    .select('can_be_removed, role')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existing && existing.can_be_removed === false) {
+    return new Response('This staff member is permanently locked and cannot be modified.', { status: 403 });
+  }
+
   if (promote) {
     const { error } = await adminSb
       .from('covers_cafe_operator_roles')
       .upsert({ user_id: userId, role });
     if (error) return new Response(error.message, { status: 500 });
   } else {
-    // Block removal of permanently-locked operators
-    const { data: existing } = await adminSb
-      .from('covers_cafe_operator_roles')
-      .select('can_be_removed')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (existing && existing.can_be_removed === false) {
-      return new Response('This operator is permanently locked and cannot be removed.', { status: 403 });
-    }
-
     const { error } = await adminSb
       .from('covers_cafe_operator_roles')
       .delete()

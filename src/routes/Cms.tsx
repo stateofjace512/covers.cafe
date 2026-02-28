@@ -276,9 +276,10 @@ export default function Cms() {
     ? data.bans.find((ban) => ban.user_id === selectedUser.id)
     : null;
 
-  const selectedUserIsOperator = selectedUser
-    ? data.operators.some((op) => op.user_id === selectedUser.id)
-    : false;
+  const selectedUserStaff = selectedUser
+    ? (data.operators.find((op) => op.user_id === selectedUser.id) ?? null)
+    : null;
+  const selectedUserIsOperator = selectedUserStaff !== null;
 
   // ── Review queue handlers ─────────────────────────────────────────────────
 
@@ -666,8 +667,21 @@ export default function Cms() {
     const res = await fetch('/api/cms/set-operator', {
       method: 'POST', headers: authHeaders, body: JSON.stringify({ userId, promote, role }),
     });
-    if (!res.ok) setError('Could not update role.');
+    if (!res.ok) setError((await res.text()) || 'Could not update role.');
     else flash(`@${username ?? userId} ${promote ? `assigned ${role} role` : 'removed from staff'}.`);
+    await loadDashboard();
+    setBusyId(null);
+  }
+
+  async function lockStaff(userId: string, username: string | null) {
+    if (!window.confirm(`Permanently lock @${username ?? userId}? Their role can never be changed or removed after this.`)) return;
+    setBusyId(`lock-${userId}`);
+    setError(null);
+    const res = await fetch('/api/cms/lock-operator', {
+      method: 'POST', headers: authHeaders, body: JSON.stringify({ userId }),
+    });
+    if (!res.ok) setError((await res.text()) || 'Could not lock staff member.');
+    else flash(`@${username ?? userId} permanently locked.`);
     await loadDashboard();
     setBusyId(null);
   }
@@ -1118,7 +1132,8 @@ export default function Cms() {
                   <div className="admin-user-header">
                     <strong>@{selectedUser.username}</strong>
                     {selectedUserBan && <span className="admin-badge admin-badge--banned">Banned</span>}
-                    {selectedUserIsOperator && <span className="admin-badge admin-badge--op">Operator</span>}
+                    {selectedUserStaff && roleBadge(selectedUserStaff.role)}
+                    {selectedUserStaff?.can_be_removed === false && <span className="admin-badge admin-badge--op">Locked</span>}
                   </div>
 
                   {selectedUserBan && (
@@ -1153,9 +1168,15 @@ export default function Cms() {
                       {selectedUserBan ? 'Update ban' : 'Ban user'}
                     </button>
                     <button className="admin-btn" disabled={!selectedUserBan || busyId === 'unban-user'} onClick={unbanSelectedUser}>Unban</button>
-                    <button className="admin-btn" disabled={busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, !selectedUserIsOperator, selectedUser.username)}>
-                      {selectedUserIsOperator ? 'Remove operator' : 'Make operator'}
-                    </button>
+                  </div>
+
+                  <hr className="admin-divider" />
+                  <p className="admin-muted" style={{ marginBottom: 6 }}>Staff role{selectedUserStaff?.can_be_removed === false ? ' — locked' : ''}</p>
+                  <div className="admin-row-actions">
+                    <button className="admin-btn admin-btn-primary" disabled={!!selectedUserStaff?.can_be_removed === false || busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, true, selectedUser.username, 'operator')}>Operator</button>
+                    <button className="admin-btn" disabled={selectedUserStaff?.can_be_removed === false || busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, true, selectedUser.username, 'moderator')}>Moderator</button>
+                    <button className="admin-btn" disabled={selectedUserStaff?.can_be_removed === false || busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, true, selectedUser.username, 'helper')}>Helper</button>
+                    <button className="admin-btn admin-btn-danger" disabled={!selectedUserIsOperator || selectedUserStaff?.can_be_removed === false || busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, false, selectedUser.username)}>Remove from Staff</button>
                   </div>
                 </div>
               )}
@@ -1167,9 +1188,10 @@ export default function Cms() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {visibleSection === 'permissions' && (
             <div className="admin-card">
-              <h3 className="admin-card-title">Operators &amp; Roles</h3>
+              <h3 className="admin-card-title">Staff Roster</h3>
+              <p className="admin-card-desc">Use User Ops to search for a user and assign or change their role. Lock a staff member here to permanently protect their account from modification.</p>
               {data.operators.length === 0 ? (
-                <p className="admin-empty">No operators — no role management available.</p>
+                <p className="admin-empty">No staff found.</p>
               ) : (
                 <div className="admin-list">
                   {data.operators.map((op) => (
@@ -1179,26 +1201,17 @@ export default function Cms() {
                         {roleBadge(op.role)}
                       </div>
                       <div className="admin-row-actions">
-                        {op.user_id !== user?.id && op.can_be_removed && (
-                          <button className="admin-btn admin-btn-danger" disabled={busyId === `operator-${op.user_id}`} onClick={() => setOperatorRole(op.user_id, false, op.username)}>Remove</button>
-                        )}
-                        {op.can_be_removed === false && op.user_id !== user?.id && (
-                          <span className="admin-badge" title="This operator cannot be removed">Locked</span>
+                        {op.can_be_removed === false ? (
+                          <span className="admin-badge admin-badge--op" title="Role and staff status can never be changed">Locked</span>
+                        ) : op.user_id !== user?.id && (
+                          <>
+                            <button className="admin-btn admin-btn-danger" disabled={busyId === `operator-${op.user_id}`} onClick={() => setOperatorRole(op.user_id, false, op.username)}>Remove</button>
+                            <button className="admin-btn" disabled={busyId === `lock-${op.user_id}`} onClick={() => lockStaff(op.user_id, op.username)}>Lock</button>
+                          </>
                         )}
                       </div>
                     </div>
                   ))}
-                </div>
-              )}
-              {selectedUser && (
-                <div style={{ marginTop: 16 }}>
-                  <h4 className="admin-card-subtitle">Assign role to @{selectedUser.username}</h4>
-                  <div className="admin-row-actions">
-                    <button className="admin-btn admin-btn-primary" disabled={busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, true, selectedUser.username, 'operator')}>Assign Operator</button>
-                    <button className="admin-btn" disabled={busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, true, selectedUser.username, 'moderator')}>Assign Moderator</button>
-                    <button className="admin-btn" disabled={busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, true, selectedUser.username, 'helper')}>Assign Helper</button>
-                    <button className="admin-btn admin-btn-danger" disabled={!selectedUserIsOperator || busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, false, selectedUser.username)}>Remove from Staff</button>
-                  </div>
                 </div>
               )}
             </div>
