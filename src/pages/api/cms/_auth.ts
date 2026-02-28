@@ -13,12 +13,11 @@ export async function requireOperator(request: Request) {
   const { data: userData, error: userError } = await adminSb.auth.getUser(token);
   if (userError || !userData.user) return { error: new Response('Unauthorized', { status: 401 }) };
 
-  // Check operator role using service-role client (bypasses RLS — covers_cafe_operator_roles has no RLS)
+  // Check staff role using service-role client (bypasses RLS — covers_cafe_operator_roles has no RLS)
   const { data: roleData, error: roleError } = await adminSb
     .from('covers_cafe_operator_roles')
-    .select('user_id')
+    .select('user_id, role')
     .eq('user_id', userData.user.id)
-    .eq('role', 'operator')
     .maybeSingle();
 
   if (roleError || !roleData) return { error: new Response('Forbidden', { status: 403 }) };
@@ -34,5 +33,5 @@ export async function requireOperator(request: Request) {
     auth: { persistSession: false },
   });
 
-  return { sb, user: userData.user };
+  return { sb, user: userData.user, role: roleData.role as 'operator' | 'moderator' | 'helper' };
 }

@@ -260,37 +260,44 @@ function AppContent() {
 
   return (
     <>
-      <AppShell>
-        <Routes>
-          <Route path="/" element={<Gallery />} />
-          <Route path="/upload" element={<Upload />} />
-          <Route path="/users" element={<Artists />} />
-          <Route path="/users/:username" element={<ArtistDetail />} />
-          <Route path="/users/:username/collections/:collectionId" element={<CollectionDetail />} />
-          <Route path="/artists" element={<MusicArtists />} />
-          <Route path="/artists/:artistName" element={<MusicArtistDetail />} />
-          <Route path="/friends" element={<Friends />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/favorites" element={<Favorites />} />
-          <Route path="/downloads" element={<Downloads />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/edit" element={<EditProfile />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/coffee" element={<Coffee />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
-          <Route path="/acotw" element={<Acotw />} />
-          <Route path="/cms" element={<Cms />} />
-          <Route path="/covers/fan/:slug" element={<CoverDetail />} />
-          <Route path="/covers/official/:slug" element={<OfficialCoverDetail />} />
-          {/* Legacy redirect  -  old /cover/ links go to the new fan path */}
-          <Route path="/cover/:slug" element={<LegacyCoverRedirect />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AppShell>
+      <Routes>
+        {/* CMS renders outside AppShell — it has its own full-screen layout */}
+        <Route path="/cms" element={<Cms />} />
+
+        {/* Everything else gets the main AppShell with the site chrome */}
+        <Route path="*" element={
+          <AppShell>
+            <Routes>
+              <Route path="/" element={<Gallery />} />
+              <Route path="/upload" element={<Upload />} />
+              <Route path="/users" element={<Artists />} />
+              <Route path="/users/:username" element={<ArtistDetail />} />
+              <Route path="/users/:username/collections/:collectionId" element={<CollectionDetail />} />
+              <Route path="/artists" element={<MusicArtists />} />
+              <Route path="/artists/:artistName" element={<MusicArtistDetail />} />
+              <Route path="/friends" element={<Friends />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/favorites" element={<Favorites />} />
+              <Route path="/downloads" element={<Downloads />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/edit" element={<EditProfile />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/coffee" element={<Coffee />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
+              <Route path="/acotw" element={<Acotw />} />
+              <Route path="/covers/fan/:slug" element={<CoverDetail />} />
+              <Route path="/covers/official/:slug" element={<OfficialCoverDetail />} />
+              {/* Legacy redirect — old /cover/ links go to the new fan path */}
+              <Route path="/cover/:slug" element={<LegacyCoverRedirect />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AppShell>
+        } />
+      </Routes>
 
       {authModalOpen && (
         <AuthModal tab={authModalTab} onClose={closeAuthModal} />

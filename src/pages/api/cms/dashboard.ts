@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { requireOperator } from './_auth';
+import { getSupabaseServer } from '../_supabase';
 
 type ReportRow = {
   id: string;
@@ -23,7 +24,8 @@ export const GET: APIRoute = async ({ request }) => {
   const auth = await requireOperator(request);
   if ('error' in auth) return auth.error;
 
-  const { sb } = auth;
+  const { sb, role } = auth;
+  const adminSb = getSupabaseServer();
 
   const [{ data: reports }, { data: profileReports }, { data: bans }, { data: operators }, { count: reviewQueueCount }] = await Promise.all([
     sb
@@ -40,10 +42,11 @@ export const GET: APIRoute = async ({ request }) => {
       .from('covers_cafe_user_bans')
       .select('user_id, reason, banned_at, expires_at')
       .order('banned_at', { ascending: false }),
-    sb
+    // Use service-role client to bypass any RLS on the roles table
+    (adminSb ?? sb)
       .from('covers_cafe_operator_roles')
-      .select('user_id, can_be_removed')
-      .eq('role', 'operator'),
+      .select('user_id, role, can_be_removed')
+      .order('role', { ascending: true }),
     sb
       .from('covers_cafe_covers')
       .select('id', { count: 'exact', head: true })
@@ -59,6 +62,7 @@ export const GET: APIRoute = async ({ request }) => {
       ...profileReportRows.map((r) => r.reporter_id),
       ...profileReportRows.map((r) => r.profile_id),
       ...(bans ?? []).map((b: { user_id: string }) => b.user_id),
+      ...(operators ?? []).map((o: { user_id: string }) => o.user_id),
     ]),
   ] as string[];
 
@@ -88,11 +92,13 @@ export const GET: APIRoute = async ({ request }) => {
       ...b,
       username: usernameMap.get(b.user_id) ?? null,
     })),
-    operators: (operators ?? []).map((o: { user_id: string; can_be_removed: boolean }) => ({
+    operators: (operators ?? []).map((o: { user_id: string; role: string; can_be_removed: boolean }) => ({
       user_id: o.user_id,
+      role: o.role,
       username: usernameMap.get(o.user_id) ?? null,
       can_be_removed: o.can_be_removed,
     })),
     reviewQueueCount: reviewQueueCount ?? 0,
+    myRole: role,
   }), { status: 200 });
 };
