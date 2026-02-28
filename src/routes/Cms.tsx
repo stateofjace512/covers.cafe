@@ -99,11 +99,25 @@ type ProfileReport = {
   created_at: string;
 };
 
+type ReviewQueueItem = {
+  id: string;
+  title: string;
+  artist: string;
+  year: number | null;
+  storage_path: string;
+  created_at: string;
+  uploader_username: string | null;
+  moderation_reason: string | null;
+  matched_cover_id: string | null;
+  matched_official_id: string | null;
+};
+
 type DashboardPayload = {
   reports: Report[];
   profileReports: ProfileReport[];
   bans: Ban[];
   operators: Operator[];
+  reviewQueueCount: number;
 };
 
 type BlogPost = {
@@ -139,7 +153,7 @@ function formatDate(iso: string) {
 type Tab = 'moderation' | 'users' | 'covers' | 'community' | 'blog' | 'about';
 
 const TABS: { id: Tab; label: string; badge?: (d: DashboardPayload) => number }[] = [
-  { id: 'moderation', label: 'Moderation', badge: (d) => d.reports.length + d.profileReports.length },
+  { id: 'moderation', label: 'Moderation', badge: (d) => d.reports.length + d.profileReports.length + d.reviewQueueCount },
   { id: 'users',      label: 'Users' },
   { id: 'covers',     label: 'Covers' },
   { id: 'community',  label: 'Community' },
@@ -156,7 +170,7 @@ export default function Cms() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get('tab') ?? 'moderation') as Tab;
 
-  const [data, setData] = useState<DashboardPayload>({ reports: [], profileReports: [], bans: [], operators: [] });
+  const [data, setData] = useState<DashboardPayload>({ reports: [], profileReports: [], bans: [], operators: [], reviewQueueCount: 0 });
   const [operator, setOperator] = useState<boolean | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -219,6 +233,10 @@ export default function Cms() {
   const [aboutLoading, setAboutLoading] = useState(false);
   const [aboutSaving, setAboutSaving] = useState(false);
 
+  // ── Review queue ──────────────────────────────────────────────────────────
+  const [reviewQueue, setReviewQueue] = useState<ReviewQueueItem[]>([]);
+  const [reviewQueueLoading, setReviewQueueLoading] = useState(false);
+
   // ── Phash backfill ────────────────────────────────────────────────────────
   const [phashBackfillRunning, setPhashBackfillRunning] = useState(false);
   const [phashBackfillMsg, setPhashBackfillMsg] = useState<string | null>(null);
@@ -239,6 +257,37 @@ export default function Cms() {
   const selectedUserIsOperator = selectedUser
     ? data.operators.some((op) => op.user_id === selectedUser.id)
     : false;
+
+  // ── Review queue handlers ─────────────────────────────────────────────────
+
+  async function loadReviewQueue() {
+    if (!token) return;
+    setReviewQueueLoading(true);
+    const res = await fetch('/api/cms/review-queue', { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) {
+      const payload = await res.json() as { covers: ReviewQueueItem[] };
+      setReviewQueue(payload.covers ?? []);
+    }
+    setReviewQueueLoading(false);
+  }
+
+  async function reviewCover(coverId: string, decision: 'approve' | 'deny') {
+    setBusyId(`review-${coverId}`);
+    setError(null);
+    const res = await fetch('/api/cms/review-cover', {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({ coverId, decision }),
+    });
+    if (!res.ok) {
+      setError(`Could not ${decision} cover.`);
+    } else {
+      flash(`Cover ${decision === 'approve' ? 'approved and published' : 'denied and removed'}.`);
+      setReviewQueue((q) => q.filter((c) => c.id !== coverId));
+      setData((d) => ({ ...d, reviewQueueCount: Math.max(0, d.reviewQueueCount - 1) }));
+    }
+    setBusyId(null);
+  }
 
   // ── Phash backfill handler ────────────────────────────────────────────────
 
@@ -374,6 +423,7 @@ export default function Cms() {
   // Load tab-specific data when switching tabs
   useEffect(() => {
     if (!token || operator !== true) return;
+    if (activeTab === 'moderation') loadReviewQueue();
     if (activeTab === 'blog') loadBlogPosts();
     if (activeTab === 'about') loadAboutContent();
   }, [activeTab, token, operator]);
@@ -850,6 +900,62 @@ export default function Cms() {
       {/* ══════════════════════════════════════════════════════════════════ */}
       {activeTab === 'moderation' && (
         <>
+          {/* ── Review Queue ─────────────────────────────────────────────── */}
+          <section className="surface cms-section">
+            <div className="cms-section-header">
+              <h2 className="cms-h2" style={{ margin: 0 }}>Review Queue</h2>
+              {reviewQueue.length > 0 && <span className="cms-badge cms-badge--warn">{reviewQueue.length}</span>}
+              <button className="btn" onClick={loadReviewQueue} disabled={reviewQueueLoading} style={{ marginLeft: 'auto' }}>
+                {reviewQueueLoading ? 'Loading…' : 'Refresh'}
+              </button>
+            </div>
+            <p className="cms-desc">Covers flagged by the auto-duplicate detector. Approve to publish, deny to remove.</p>
+
+            {reviewQueueLoading ? (
+              <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>Loading…</p>
+            ) : reviewQueue.length === 0 ? (
+              <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>No covers pending review.</p>
+            ) : (
+              <div className="cms-report-list">
+                {reviewQueue.map((item) => (
+                  <div key={item.id} className="cms-report-card">
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                      <img
+                        src={coverThumbUrl(item.storage_path)}
+                        alt=""
+                        style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }}
+                      />
+                      <div className="cms-report-meta" style={{ flex: 1 }}>
+                        <span><strong>{item.artist} — {item.title}</strong>{item.year ? ` (${item.year})` : ''}</span>
+                        <span>Uploader: @{item.uploader_username ?? 'unknown'}</span>
+                        {item.moderation_reason && <span>Flagged: {item.moderation_reason}</span>}
+                        {item.matched_cover_id && <span style={{ color: 'var(--body-text-muted)', fontSize: 12 }}>Matched cover ID: {item.matched_cover_id}</span>}
+                        {item.matched_official_id && <span style={{ color: 'var(--body-text-muted)', fontSize: 12 }}>Matched official ID: {item.matched_official_id}</span>}
+                        <span style={{ color: 'var(--body-text-muted)', fontSize: 12 }}>{formatDate(item.created_at)}</span>
+                      </div>
+                    </div>
+                    <div className="cms-actions" style={{ marginTop: 10 }}>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => reviewCover(item.id, 'approve')}
+                        disabled={busyId === `review-${item.id}`}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        className="btn cms-btn-danger"
+                        onClick={() => reviewCover(item.id, 'deny')}
+                        disabled={busyId === `review-${item.id}`}
+                      >
+                        Deny
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
           {/* ── Reports ──────────────────────────────────────────────────── */}
           <section className="surface cms-section">
             <div className="cms-section-header">
