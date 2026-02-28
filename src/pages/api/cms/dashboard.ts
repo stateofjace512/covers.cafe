@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { requireOperator } from './_auth';
+import { getSupabaseServer } from '../_supabase';
 
 type ReportRow = {
   id: string;
@@ -24,6 +25,7 @@ export const GET: APIRoute = async ({ request }) => {
   if ('error' in auth) return auth.error;
 
   const { sb, role } = auth;
+  const adminSb = getSupabaseServer();
 
   const [{ data: reports }, { data: profileReports }, { data: bans }, { data: operators }, { count: reviewQueueCount }] = await Promise.all([
     sb
@@ -40,10 +42,11 @@ export const GET: APIRoute = async ({ request }) => {
       .from('covers_cafe_user_bans')
       .select('user_id, reason, banned_at, expires_at')
       .order('banned_at', { ascending: false }),
-    sb
+    // Use service-role client to bypass any RLS on the roles table
+    (adminSb ?? sb)
       .from('covers_cafe_operator_roles')
       .select('user_id, role, can_be_removed')
-      .order('created_at', { ascending: true }),
+      .order('role', { ascending: true }),
     sb
       .from('covers_cafe_covers')
       .select('id', { count: 'exact', head: true })
@@ -59,6 +62,7 @@ export const GET: APIRoute = async ({ request }) => {
       ...profileReportRows.map((r) => r.reporter_id),
       ...profileReportRows.map((r) => r.profile_id),
       ...(bans ?? []).map((b: { user_id: string }) => b.user_id),
+      ...(operators ?? []).map((o: { user_id: string }) => o.user_id),
     ]),
   ] as string[];
 
