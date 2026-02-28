@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { CSSProperties, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { computePhash } from '../lib/phash';
+import '../styles/cms-admin.css';
 
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL as string;
 
@@ -32,6 +33,7 @@ type Ban = {
 type Operator = {
   user_id: string;
   username: string | null;
+  role: string;
   can_be_removed: boolean;
 };
 
@@ -147,19 +149,75 @@ function formatDate(iso: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Tab definitions
+// Section definitions (sidebar nav)
 // ---------------------------------------------------------------------------
 
-type Tab = 'moderation' | 'users' | 'covers' | 'community' | 'blog' | 'about';
+type Section =
+  | 'overview'
+  | 'queue' | 'reports' | 'bans'
+  | 'users' | 'permissions'
+  | 'lookup' | 'browser' | 'legal'
+  | 'blog' | 'about'
+  | 'achievements' | 'poh';
 
-const TABS: { id: Tab; label: string; badge?: (d: DashboardPayload) => number }[] = [
-  { id: 'moderation', label: 'Moderation', badge: (d) => d.reports.length + d.profileReports.length + d.reviewQueueCount },
-  { id: 'users',      label: 'Users' },
-  { id: 'covers',     label: 'Covers' },
-  { id: 'community',  label: 'Community' },
-  { id: 'blog',       label: 'Blog' },
-  { id: 'about',      label: 'About Editor' },
+type NavItem = { id: Section; label: string; icon: string; badge?: (d: DashboardPayload) => number };
+type NavGroup = { label: string; items: NavItem[] };
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: 'Moderation',
+    items: [
+      { id: 'queue',   label: 'Review Queue',    icon: '🔍', badge: (d) => d.reviewQueueCount },
+      { id: 'reports', label: 'Reports',          icon: '⚑',  badge: (d) => d.reports.length + d.profileReports.length },
+      { id: 'bans',    label: 'Active Bans',      icon: '⊘',  badge: (d) => d.bans.length || 0 },
+    ],
+  },
+  {
+    label: 'Users',
+    items: [
+      { id: 'users',       label: 'User Ops',     icon: '👤' },
+      { id: 'permissions', label: 'Permissions',  icon: '🛡' },
+    ],
+  },
+  {
+    label: 'Covers',
+    items: [
+      { id: 'lookup',  label: 'Cover Lookup',  icon: '🔗' },
+      { id: 'browser', label: 'User Browser',  icon: '📁' },
+      { id: 'legal',   label: 'Legal & Tools', icon: '⚖' },
+    ],
+  },
+  {
+    label: 'Content',
+    items: [
+      { id: 'blog',  label: 'Blog',      icon: '📝' },
+      { id: 'about', label: 'About Page', icon: 'ℹ' },
+    ],
+  },
+  {
+    label: 'Community',
+    items: [
+      { id: 'achievements', label: 'Achievements', icon: '🏆' },
+      { id: 'poh',          label: 'Hall of Fame',  icon: '📌' },
+    ],
+  },
 ];
+
+const SECTION_TITLES: Record<Section, string> = {
+  overview:     'Overview',
+  queue:        'Review Queue',
+  reports:      'Reports',
+  bans:         'Active Bans',
+  users:        'User Operations',
+  permissions:  'Permissions',
+  lookup:       'Cover Lookup',
+  browser:      'User Cover Browser',
+  legal:        'Legal & Tools',
+  blog:         'Blog',
+  about:        'About Page Editor',
+  achievements: 'Achievement Awards',
+  poh:          'Hall of Fame (POH)',
+};
 
 // ---------------------------------------------------------------------------
 // Component
@@ -168,7 +226,7 @@ const TABS: { id: Tab; label: string; badge?: (d: DashboardPayload) => number }[
 export default function Cms() {
   const { user, session, loading, openAuthModal } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') ?? 'moderation') as Tab;
+  const activeSection = (searchParams.get('s') ?? 'overview') as Section;
 
   const [data, setData] = useState<DashboardPayload>({ reports: [], profileReports: [], bans: [], operators: [], reviewQueueCount: 0 });
   const [operator, setOperator] = useState<boolean | null>(null);
@@ -420,13 +478,14 @@ export default function Cms() {
     loadBlacklist();
   }, [token]);
 
-  // Load tab-specific data when switching tabs
+  // Load section-specific data when switching sections
   useEffect(() => {
     if (!token || operator !== true) return;
-    if (activeTab === 'moderation') loadReviewQueue();
-    if (activeTab === 'blog') loadBlogPosts();
-    if (activeTab === 'about') loadAboutContent();
-  }, [activeTab, token, operator]);
+    if (activeSection === 'queue') loadReviewQueue();
+    if (activeSection === 'poh') loadPohData();
+    if (activeSection === 'blog') loadBlogPosts();
+    if (activeSection === 'about') loadAboutContent();
+  }, [activeSection, token, operator]);
 
   // ── Autocomplete effects ──────────────────────────────────────────────────
 
@@ -467,8 +526,8 @@ export default function Cms() {
     setTimeout(() => setSuccessMsg(null), 3000);
   }
 
-  function setTab(tab: Tab) {
-    setSearchParams({ tab });
+  function setSection(s: Section) {
+    setSearchParams({ s });
     setError(null);
     setSuccessMsg(null);
   }
@@ -707,14 +766,14 @@ export default function Cms() {
     setBusyId(null);
   }
 
-  async function setOperatorRole(userId: string, promote: boolean, username: string | null) {
+  async function setOperatorRole(userId: string, promote: boolean, username: string | null, role = 'operator') {
     setBusyId(`operator-${userId}`);
     setError(null);
     const res = await fetch('/api/cms/set-operator', {
-      method: 'POST', headers: authHeaders, body: JSON.stringify({ userId, promote }),
+      method: 'POST', headers: authHeaders, body: JSON.stringify({ userId, promote, role }),
     });
-    if (!res.ok) setError('Could not update operator role.');
-    else flash(`@${username ?? userId} ${promote ? 'promoted to' : 'removed from'} operator.`);
+    if (!res.ok) setError('Could not update role.');
+    else flash(`@${username ?? userId} ${promote ? `assigned ${role} role` : 'removed from staff'}.`);
     await loadDashboard();
     setBusyId(null);
   }
@@ -863,721 +922,845 @@ export default function Cms() {
 
   // ── Guards ────────────────────────────────────────────────────────────────
 
-  if (loading) return <div>Loading…</div>;
-  if (!user) return <div>Please sign in to access CMS.</div>;
-  if (operator === false) return <div>You are not an operator.</div>;
+  const guardStyle: CSSProperties = {
+    display: 'grid', placeItems: 'center', height: '100vh',
+    fontFamily: 'system-ui, sans-serif', fontSize: 15, color: '#64748b',
+  };
+  if (loading) return <div style={guardStyle}>Loading…</div>;
+  if (!user) return <div style={guardStyle}>Sign in to access the CMS.</div>;
+  if (operator === false) return <div style={guardStyle}>You are not authorized to view this page.</div>;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  const totalReports = data.reports.length + data.profileReports.length;
+  // ── Role badge helper ─────────────────────────────────────────────────────
+  function roleBadge(role: string) {
+    const cls = role === 'operator' ? 'operator' : role === 'moderator' ? 'moderator' : 'helper';
+    return <span className={`admin-role-badge admin-role-badge--${cls}`}>{role}</span>;
+  }
 
   return (
-    <div className="route-container">
-      <h1 className="route-title">Operator CMS</h1>
+    <div className="admin-wrap">
+      {/* ══ SIDEBAR ══════════════════════════════════════════════════════ */}
+      <aside className="admin-sidebar">
+        <div className="admin-sidebar-logo">
+          <span className="admin-sidebar-logo-icon">☕</span>
+          <div>
+            <div className="admin-sidebar-logo-text">covers.cafe</div>
+            <div className="admin-sidebar-logo-sub">Admin Panel</div>
+          </div>
+        </div>
 
-      {/* ── Tab nav ─────────────────────────────────────────────────────── */}
-      <nav className="cms-tabs">
-        {TABS.map((t) => {
-          const badge = t.badge?.(data) ?? 0;
-          return (
+        <nav className="admin-nav">
+          {/* Overview */}
+          <div className="admin-nav-group" style={{ marginTop: 10 }}>
             <button
-              key={t.id}
-              className={`cms-tab${activeTab === t.id ? ' cms-tab--active' : ''}`}
-              onClick={() => setTab(t.id)}
+              className={`admin-nav-item${activeSection === 'overview' ? ' active' : ''}`}
+              onClick={() => setSection('overview')}
             >
-              {t.label}
-              {badge > 0 && <span className="cms-tab-badge">{badge}</span>}
+              <span className="admin-nav-icon">⊞</span>
+              Overview
             </button>
-          );
-        })}
-      </nav>
+          </div>
 
-      {error && <p className="cms-msg cms-msg--err">{error}</p>}
-      {successMsg && <p className="cms-msg cms-msg--ok">{successMsg}</p>}
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label} className="admin-nav-group">
+              <div className="admin-nav-group-label">{group.label}</div>
+              {group.items.map((item) => {
+                const badge = item.badge?.(data) ?? 0;
+                return (
+                  <button
+                    key={item.id}
+                    className={`admin-nav-item${activeSection === item.id ? ' active' : ''}`}
+                    onClick={() => setSection(item.id)}
+                  >
+                    <span className="admin-nav-icon">{item.icon}</span>
+                    {item.label}
+                    {badge > 0 && <span className="admin-nav-badge">{badge}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
 
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* MODERATION TAB                                                    */}
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {activeTab === 'moderation' && (
-        <>
-          {/* ── Review Queue ─────────────────────────────────────────────── */}
-          <section className="surface cms-section">
-            <div className="cms-section-header">
-              <h2 className="cms-h2" style={{ margin: 0 }}>Review Queue</h2>
-              {reviewQueue.length > 0 && <span className="cms-badge cms-badge--warn">{reviewQueue.length}</span>}
-              <button className="btn" onClick={loadReviewQueue} disabled={reviewQueueLoading} style={{ marginLeft: 'auto' }}>
-                {reviewQueueLoading ? 'Loading…' : 'Refresh'}
+        <div className="admin-sidebar-footer">
+          <div className="admin-sidebar-user">@{(user as { email?: string })?.email?.split('@')[0] ?? 'admin'}</div>
+          <a href="/" className="admin-exit-link">← Back to site</a>
+        </div>
+      </aside>
+
+      {/* ══ MAIN ═════════════════════════════════════════════════════════ */}
+      <main className="admin-main">
+        <div className="admin-topbar">
+          <div className="admin-topbar-row">
+            <h1 className="admin-topbar-title">{SECTION_TITLES[activeSection]}</h1>
+            {activeSection === 'queue' && (
+              <button className="admin-btn admin-btn-secondary admin-btn-sm" onClick={loadReviewQueue} disabled={reviewQueueLoading}>
+                {reviewQueueLoading ? 'Loading…' : '↻ Refresh'}
               </button>
-            </div>
-            <p className="cms-desc">Covers flagged by the auto-duplicate detector. Approve to publish, deny to remove.</p>
-
-            {reviewQueueLoading ? (
-              <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>Loading…</p>
-            ) : reviewQueue.length === 0 ? (
-              <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>No covers pending review.</p>
-            ) : (
-              <div className="cms-report-list">
-                {reviewQueue.map((item) => (
-                  <div key={item.id} className="cms-report-card">
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                      <img
-                        src={coverThumbUrl(item.storage_path)}
-                        alt=""
-                        style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }}
-                      />
-                      <div className="cms-report-meta" style={{ flex: 1 }}>
-                        <span><strong>{item.artist} — {item.title}</strong>{item.year ? ` (${item.year})` : ''}</span>
-                        <span>Uploader: @{item.uploader_username ?? 'unknown'}</span>
-                        {item.moderation_reason && <span>Flagged: {item.moderation_reason}</span>}
-                        {item.matched_cover_id && <span style={{ color: 'var(--body-text-muted)', fontSize: 12 }}>Matched cover ID: {item.matched_cover_id}</span>}
-                        {item.matched_official_id && <span style={{ color: 'var(--body-text-muted)', fontSize: 12 }}>Matched official ID: {item.matched_official_id}</span>}
-                        <span style={{ color: 'var(--body-text-muted)', fontSize: 12 }}>{formatDate(item.created_at)}</span>
-                      </div>
-                    </div>
-                    <div className="cms-actions" style={{ marginTop: 10 }}>
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => reviewCover(item.id, 'approve')}
-                        disabled={busyId === `review-${item.id}`}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        className="btn cms-btn-danger"
-                        onClick={() => reviewCover(item.id, 'deny')}
-                        disabled={busyId === `review-${item.id}`}
-                      >
-                        Deny
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
             )}
-          </section>
-
-          {/* ── Reports ──────────────────────────────────────────────────── */}
-          <section className="surface cms-section">
-            <div className="cms-section-header">
-              <h2 className="cms-h2" style={{ margin: 0 }}>Reports</h2>
-              {data.reports.length > 0 && <span className="cms-badge cms-badge--warn">{data.reports.length}</span>}
-            </div>
-
-            {data.reports.length === 0 ? (
-              <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>No reports.</p>
-            ) : (
-              <div className="cms-report-list">
-                {data.reports.map((report) => (
-                  <div key={report.id} className="cms-report-card">
-                    <div className="cms-report-meta">
-                      <span><strong>Reason:</strong> {report.reason}</span>
-                      <span><strong>Cover:</strong> {report.cover_title ?? report.cover_id}</span>
-                      <span><strong>Reporter:</strong> @{report.reporter_username ?? 'Unknown'}</span>
-                      {report.details && <span><strong>Details:</strong> {report.details}</span>}
-                    </div>
-                    <div className="cms-actions">
-                      <button className="btn" onClick={() => dismissReport(report.id)} disabled={busyId === `dismiss-${report.id}`} title="Disregard this report without removing the cover">Dismiss</button>
-                      <button className="btn cms-btn-danger" onClick={() => deleteCover(report.cover_id)} disabled={busyId === report.cover_id}>Delete cover</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {activeSection === 'blog' && (
+              <button className="admin-btn admin-btn-primary admin-btn-sm" onClick={openNewBlogForm} disabled={blogFormOpen}>
+                + New post
+              </button>
             )}
-          </section>
-
-          {/* ── Profile Reports ───────────────────────────────────────────── */}
-          <section className="surface cms-section">
-            <div className="cms-section-header">
-              <h2 className="cms-h2" style={{ margin: 0 }}>Profile Reports</h2>
-              {data.profileReports.length > 0 && <span className="cms-badge cms-badge--warn">{data.profileReports.length}</span>}
-            </div>
-
-            {data.profileReports.length === 0 ? (
-              <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>No profile reports.</p>
-            ) : (
-              <div className="cms-report-list">
-                {data.profileReports.map((report) => (
-                  <div key={report.id} className="cms-report-card">
-                    <div className="cms-report-meta">
-                      <span><strong>Reason:</strong> {report.reason}</span>
-                      <span><strong>Profile:</strong> <a href={'/users/' + report.reported_username} target="_blank" rel="noopener noreferrer">@{report.reported_username ?? report.profile_id}</a></span>
-                      <span><strong>Reporter:</strong> @{report.reporter_username ?? 'Unknown'}</span>
-                      {report.details && <span><strong>Details:</strong> {report.details}</span>}
-                      <span style={{ color: 'var(--body-text-muted)', fontSize: 12 }}>{formatDate(report.created_at)}</span>
-                    </div>
-                    <div className="cms-actions">
-                      <button className="btn" onClick={() => dismissProfileReport(report.id)} disabled={busyId === `dismiss-pr-${report.id}`} title="Dismiss this profile report">Dismiss</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {activeSection === 'poh' && (
+              <button className="admin-btn admin-btn-secondary admin-btn-sm" onClick={loadPohData} disabled={pohLoading}>
+                {pohLoading ? 'Loading…' : '↻ Refresh'}
+              </button>
             )}
-          </section>
+          </div>
+        </div>
 
-          {/* ── Active bans ───────────────────────────────────────────────── */}
-          <section className="surface cms-section">
-            <div className="cms-section-header">
-              <h2 className="cms-h2" style={{ margin: 0 }}>Active bans</h2>
-              {data.bans.length > 0 && <span className="cms-count">{data.bans.length}</span>}
-            </div>
+        {/* Alerts */}
+        {(error || successMsg) && (
+          <div className="admin-alerts">
+            {error    && <div className="admin-alert admin-alert--error">⚠ {error}</div>}
+            {successMsg && <div className="admin-alert admin-alert--success">✓ {successMsg}</div>}
+          </div>
+        )}
 
-            {data.bans.length === 0 ? (
-              <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>No active bans.</p>
-            ) : (
-              <div className="cms-ban-list">
-                {data.bans.map((ban) => (
-                  <div key={ban.user_id} className="cms-ban-row">
-                    <div className="cms-ban-details">
-                      <span className="cms-ban-user">@{ban.username ?? ban.user_id}</span>
-                      <span className="cms-ban-reason">{ban.reason ?? 'No reason provided'}</span>
-                      <span className="cms-ban-date">
-                        Banned {formatDate(ban.banned_at)}
-                        {ban.expires_at && ` – expires ${formatDate(ban.expires_at)}`}
-                      </span>
-                    </div>
-                    <button className="btn" disabled={busyId === `unban-${ban.user_id}`} onClick={() => unbanByUserId(ban.user_id, ban.username)}>Unban</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        </>
-      )}
+        <div className="admin-content">
 
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* USERS TAB                                                         */}
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {activeTab === 'users' && (
-        <>
-          {/* ── User operations ───────────────────────────────────────────── */}
-          <section className="surface cms-section">
-            <h2 className="cms-h2">User operations</h2>
-
-            <div style={{ position: 'relative' }}>
-              <input
-                className="form-input"
-                placeholder="Search username…"
-                value={userQuery}
-                onChange={(e) => { setUserQuery(e.target.value); setSelectedUser(null); }}
-              />
-              {userOptions.length > 0 && !selectedUser && (
-                <div className="cms-dropdown">
-                  {userOptions.map((option) => (
-                    <button
-                      key={option.id}
-                      className="btn cms-dropdown-item"
-                      onClick={() => { setSelectedUser(option); setUserQuery(option.username); setUserOptions([]); }}
-                    >
-                      @{option.username}{option.display_name ? ` (${option.display_name})` : ''}
-                    </button>
-                  ))}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* OVERVIEW                                                          */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'overview' && (
+            <>
+              <div className="admin-stats-grid">
+                <div className={`admin-stat-card${data.reviewQueueCount > 0 ? ' admin-stat-card--warn' : ''}`}>
+                  <div className="admin-stat-label">Review Queue</div>
+                  <div className="admin-stat-value">{data.reviewQueueCount}</div>
                 </div>
-              )}
-            </div>
-
-            {selectedUser && (
-              <div className="cms-user-panel">
-                <div className="cms-user-header">
-                  <strong>@{selectedUser.username}</strong>
-                  {selectedUserBan && <span className="cms-badge cms-badge--banned">Banned</span>}
-                  {selectedUserIsOperator && <span className="cms-badge cms-badge--op">Operator</span>}
+                <div className={`admin-stat-card${data.reports.length > 0 ? ' admin-stat-card--danger' : ''}`}>
+                  <div className="admin-stat-label">Cover Reports</div>
+                  <div className="admin-stat-value">{data.reports.length}</div>
                 </div>
-
-                {selectedUserBan && (
-                  <div className="cms-ban-info">
-                    <span>Reason: {selectedUserBan.reason ?? 'No reason provided'}</span>
-                    {selectedUserBan.expires_at && <span>Expires: {formatDate(selectedUserBan.expires_at)}</span>}
-                  </div>
-                )}
-
-                <div className="cms-field-group">
-                  <textarea
-                    className="form-input"
-                    placeholder="Ban reason (optional)"
-                    value={banReason}
-                    onChange={(e) => setBanReason(e.target.value)}
-                    rows={2}
-                  />
-                  <div className="cms-row">
-                    <label className="cms-label">Duration</label>
-                    <select className="form-input cms-select" value={banDuration} onChange={(e) => setBanDuration(e.target.value as typeof banDuration)}>
-                      <option value="permanent">Permanent</option>
-                      <option value="1">1 day</option>
-                      <option value="3">3 days</option>
-                      <option value="7">7 days</option>
-                      <option value="30">30 days</option>
-                    </select>
-                  </div>
+                <div className="admin-stat-card">
+                  <div className="admin-stat-label">Profile Reports</div>
+                  <div className="admin-stat-value">{data.profileReports.length}</div>
                 </div>
-
-                <div className="cms-actions">
-                  <button className="btn btn-primary" disabled={busyId === 'ban-user'} onClick={banSelectedUser}>
-                    {selectedUserBan ? 'Update ban' : 'Ban user'}
-                  </button>
-                  <button className="btn" disabled={!selectedUserBan || busyId === 'unban-user'} onClick={unbanSelectedUser}>Unban</button>
-                  <button className="btn" disabled={busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, !selectedUserIsOperator, selectedUser.username)}>
-                    {selectedUserIsOperator ? 'Remove operator' : 'Make operator'}
-                  </button>
+                <div className="admin-stat-card">
+                  <div className="admin-stat-label">Active Bans</div>
+                  <div className="admin-stat-value">{data.bans.length}</div>
+                </div>
+                <div className="admin-stat-card">
+                  <div className="admin-stat-label">Operators</div>
+                  <div className="admin-stat-value">{data.operators.length}</div>
                 </div>
               </div>
-            )}
-          </section>
-
-          {/* ── Current operators ─────────────────────────────────────────── */}
-          <section className="surface cms-section">
-            <div className="cms-section-header">
-              <h2 className="cms-h2" style={{ margin: 0 }}>Operators</h2>
-              <span className="cms-count">{data.operators.length}</span>
-            </div>
-            {data.operators.length === 0 ? (
-              <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>No operators.</p>
-            ) : (
-              <div className="cms-op-list">
-                {data.operators.map((op) => (
-                  <div key={op.user_id} className="cms-op-row">
-                    <span>@{op.username ?? op.user_id}</span>
-                    {op.user_id !== user?.id && op.can_be_removed !== false && (
-                      <button className="btn cms-btn-danger" disabled={busyId === `operator-${op.user_id}`} onClick={() => setOperatorRole(op.user_id, false, op.username)}>Remove</button>
-                    )}
-                    {op.can_be_removed === false && op.user_id !== user?.id && (
-                      <span className="cms-badge cms-badge--locked" title="This operator cannot be removed">Locked</span>
-                    )}
-                  </div>
-                ))}
+              <div className="admin-card" style={{ marginTop: 16 }}>
+                <h3 className="admin-card-title">Quick Links</h3>
+                <div className="admin-list">
+                  <button className="admin-list-row admin-btn-link" onClick={() => setSection('queue')}>Review Queue →</button>
+                  <button className="admin-list-row admin-btn-link" onClick={() => setSection('reports')}>Reports →</button>
+                  <button className="admin-list-row admin-btn-link" onClick={() => setSection('users')}>User Operations →</button>
+                  <button className="admin-list-row admin-btn-link" onClick={() => setSection('legal')}>Legal & Tools →</button>
+                </div>
               </div>
-            )}
-          </section>
-        </>
-      )}
+            </>
+          )}
 
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* COVERS TAB                                                        */}
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {activeTab === 'covers' && (
-        <>
-          {/* ── Fast cover lookup ─────────────────────────────────────────── */}
-          <section className="surface cms-section">
-            <h2 className="cms-h2">Fast cover lookup</h2>
-            <p className="cms-desc">Paste a fan cover URL to load that cover and the next 10 by the same user.</p>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <input className="form-input" placeholder="https://covers.cafe/covers/fan/…" value={coverLookupInput} onChange={(e) => setCoverLookupInput(e.target.value)} style={{ minWidth: 380, flex: 1 }} />
-              <button className="btn btn-primary" onClick={lookupCoverByUrl} disabled={busyId === 'cover-lookup'}>Lookup</button>
-            </div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 6 }}>
-              <label className="cms-label">Removal reason:</label>
-              <select className="form-input" style={{ width: 'auto' }} value={permaUnpublishReason} onChange={(e) => setPermaUnpublishReason(e.target.value)}>
-                <option value="DMCA/compliance">DMCA/compliance</option>
-                <option value="Spam/duplicate content">Spam/duplicate content</option>
-                <option value="Inappropriate content">Inappropriate content</option>
-                <option value="Other violation">Other violation</option>
-              </select>
-            </div>
-            {coverLookupResult && (
-              <div className="cms-ban-list" style={{ marginTop: 10 }}>
-                <div className="cms-ban-row">
-                  <div className="cms-ban-details">
-                    <span className="cms-ban-user">{coverLookupResult.cover.artist}  -  {coverLookupResult.cover.title}</span>
-                    <span className="cms-ban-reason">/{coverLookupResult.cover.page_slug}{coverLookupResult.cover.perma_unpublished ? ' – perma-unpublished' : ''}</span>
-                  </div>
-                  <button className="btn" onClick={() => setCoverVisibility(coverLookupResult.cover.id, !coverLookupResult.cover.is_public)} disabled={coverLookupResult.cover.perma_unpublished || busyId === `visibility-${coverLookupResult.cover.id}`} title={coverLookupResult.cover.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}>{coverLookupResult.cover.is_public ? 'Unpublish' : 'Publish'}</button>
-                  <button className="btn" onClick={() => setCoverPermaUnpublished(coverLookupResult.cover.id, !coverLookupResult.cover.perma_unpublished, permaUnpublishReason)} disabled={busyId === `perma-${coverLookupResult.cover.id}`}>{coverLookupResult.cover.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}</button>
-                </div>
-                {coverLookupResult.nextByUser.map((c) => (
-                  <div key={c.id} className="cms-ban-row">
-                    <div className="cms-ban-details">
-                      <span className="cms-ban-user">{c.artist}  -  {c.title}</span>
-                      <span className="cms-ban-reason">/{c.page_slug}{c.perma_unpublished ? ' – perma-unpublished' : ''}</span>
-                    </div>
-                    <button className="btn" onClick={() => setCoverVisibility(c.id, !c.is_public)} disabled={c.perma_unpublished || busyId === `visibility-${c.id}`} title={c.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}>{c.is_public ? 'Unpublish' : 'Publish'}</button>
-                    <button className="btn" onClick={() => setCoverPermaUnpublished(c.id, !c.perma_unpublished, permaUnpublishReason)} disabled={busyId === `perma-${c.id}`}>{c.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* ── User cover browser ────────────────────────────────────────── */}
-          <section className="surface cms-section">
-            <h2 className="cms-h2">User cover browser</h2>
-            <p className="cms-desc">Search a user to browse and bulk-manage all their covers.</p>
-            <div style={{ position: 'relative' }}>
-              <input
-                className="form-input"
-                placeholder="Search username…"
-                value={userBrowserQuery}
-                onChange={(e) => { setUserBrowserQuery(e.target.value); setUserBrowserSelected(null); setUserBrowserCovers([]); }}
-              />
-              {userBrowserOptions.length > 0 && !userBrowserSelected && (
-                <div className="cms-dropdown">
-                  {userBrowserOptions.map((option) => (
-                    <button
-                      key={option.id}
-                      className="btn cms-dropdown-item"
-                      onClick={() => {
-                        setUserBrowserSelected(option);
-                        setUserBrowserQuery(option.username);
-                        setUserBrowserOptions([]);
-                        setUserBrowserPage(1);
-                        void loadUserBrowserCovers(option.id, 1);
-                      }}
-                    >
-                      @{option.username}{option.display_name ? ` (${option.display_name})` : ''}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {userBrowserSelected && (
-              <div style={{ marginTop: 10 }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
-                  <strong>@{userBrowserSelected.username}</strong>
-                  <span className="cms-count">{userBrowserTotal} covers</span>
-                  <button className="btn cms-btn-danger" disabled={busyId === `bulk-perma-${userBrowserSelected.id}` || userBrowserTotal === 0} onClick={() => { if (!window.confirm(`Perma-unpublish ALL ${userBrowserTotal} covers by @${userBrowserSelected.username}? This notifies the user.`)) return; void bulkPermaUnpublish(userBrowserSelected.id, true); }}>
-                    Perma-unpublish all ({permaUnpublishReason})
-                  </button>
-                  <button className="btn" disabled={busyId === `bulk-perma-${userBrowserSelected.id}` || userBrowserTotal === 0} onClick={() => { if (!window.confirm(`Allow republish for ALL covers by @${userBrowserSelected.username}?`)) return; void bulkPermaUnpublish(userBrowserSelected.id, false); }}>
-                    Allow republish all
-                  </button>
-                </div>
-
-                {userBrowserLoading ? (
-                  <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>Loading…</p>
-                ) : (
-                  <>
-                    <div className="cms-ban-list">
-                      {userBrowserCovers.map((c) => (
-                        <div key={c.id} className="cms-ban-row">
-                          <div className="cms-ban-details">
-                            <span className="cms-ban-user">{c.artist}  -  {c.title}</span>
-                            <span className="cms-ban-reason">/{c.page_slug}{c.perma_unpublished ? ' – perma-unpublished' : c.is_public ? '' : ' – private'}</span>
-                          </div>
-                          <button className="btn" onClick={() => setCoverVisibility(c.id, !c.is_public)} disabled={c.perma_unpublished || busyId === `visibility-${c.id}`} title={c.perma_unpublished ? 'Permanently unpublished' : ''}>{c.is_public ? 'Unpublish' : 'Publish'}</button>
-                          <button className="btn" onClick={() => setCoverPermaUnpublished(c.id, !c.perma_unpublished, permaUnpublishReason)} disabled={busyId === `perma-${c.id}`}>{c.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}</button>
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* REVIEW QUEUE                                                      */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'queue' && (
+            <div className="admin-card">
+              <p className="admin-card-desc">Covers flagged by the auto-duplicate detector. Approve to publish, deny to remove.</p>
+              {reviewQueueLoading ? (
+                <p className="admin-empty">Loading…</p>
+              ) : reviewQueue.length === 0 ? (
+                <p className="admin-empty">No covers pending review.</p>
+              ) : (
+                <div className="admin-review-list">
+                  {reviewQueue.map((item) => (
+                    <div key={item.id} className="admin-review-card">
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                        <img
+                          src={coverThumbUrl(item.storage_path)}
+                          alt=""
+                          className="admin-review-thumb"
+                        />
+                        <div className="admin-review-meta">
+                          <span><strong>{item.artist} — {item.title}</strong>{item.year ? ` (${item.year})` : ''}</span>
+                          <span>Uploader: @{item.uploader_username ?? 'unknown'}</span>
+                          {item.moderation_reason && <span>Flagged: {item.moderation_reason}</span>}
+                          {item.matched_cover_id && <span className="admin-muted">Matched cover ID: {item.matched_cover_id}</span>}
+                          {item.matched_official_id && <span className="admin-muted">Matched official ID: {item.matched_official_id}</span>}
+                          <span className="admin-muted">{formatDate(item.created_at)}</span>
                         </div>
-                      ))}
-                    </div>
-                    {userBrowserTotal > 50 && (
-                      <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
-                        <button className="btn" disabled={userBrowserPage <= 1} onClick={() => { const p = userBrowserPage - 1; setUserBrowserPage(p); void loadUserBrowserCovers(userBrowserSelected.id, p); }}>← Prev</button>
-                        <span style={{ fontSize: 13 }}>Page {userBrowserPage} of {Math.ceil(userBrowserTotal / 50)}</span>
-                        <button className="btn" disabled={userBrowserPage >= Math.ceil(userBrowserTotal / 50)} onClick={() => { const p = userBrowserPage + 1; setUserBrowserPage(p); void loadUserBrowserCovers(userBrowserSelected.id, p); }}>Next →</button>
                       </div>
-                    )}
-                  </>
+                      <div className="admin-row-actions" style={{ marginTop: 10 }}>
+                        <button
+                          className="admin-btn admin-btn-success"
+                          onClick={() => reviewCover(item.id, 'approve')}
+                          disabled={busyId === `review-${item.id}`}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          className="admin-btn admin-btn-danger"
+                          onClick={() => reviewCover(item.id, 'deny')}
+                          disabled={busyId === `review-${item.id}`}
+                        >
+                          Deny
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* REPORTS                                                           */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'reports' && (
+            <>
+              {/* Cover reports */}
+              <div className="admin-card">
+                <h3 className="admin-card-title">
+                  Cover Reports
+                  {data.reports.length > 0 && <span className="admin-nav-badge" style={{ marginLeft: 8 }}>{data.reports.length}</span>}
+                </h3>
+                {data.reports.length === 0 ? (
+                  <p className="admin-empty">No cover reports.</p>
+                ) : (
+                  <div className="admin-list">
+                    {data.reports.map((report) => (
+                      <div key={report.id} className="admin-list-row">
+                        <div className="admin-list-meta">
+                          <span><strong>Reason:</strong> {report.reason}</span>
+                          <span><strong>Cover:</strong> {report.cover_title ?? report.cover_id}</span>
+                          <span><strong>Reporter:</strong> @{report.reporter_username ?? 'Unknown'}</span>
+                          {report.details && <span><strong>Details:</strong> {report.details}</span>}
+                        </div>
+                        <div className="admin-row-actions">
+                          <button className="admin-btn" onClick={() => dismissReport(report.id)} disabled={busyId === `dismiss-${report.id}`} title="Disregard this report without removing the cover">Dismiss</button>
+                          <button className="admin-btn admin-btn-danger" onClick={() => deleteCover(report.cover_id)} disabled={busyId === report.cover_id}>Delete cover</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-            )}
-          </section>
 
-          {/* ── Legal operations ──────────────────────────────────────────── */}
-          <section className="surface cms-section">
-            <h2 className="cms-h2">Legal operations</h2>
-            <p className="cms-desc">Mass remove all covers matching a specific tag.</p>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <input className="form-input" placeholder="Tag (e.g. infringing-label)" value={removeTag} onChange={(e) => setRemoveTag(e.target.value)} style={{ minWidth: 260 }} />
-              <button className="btn btn-primary" disabled={busyId === 'mass-remove-tag'} onClick={massRemoveByTag}>Mass remove by tag</button>
-            </div>
-          </section>
-
-          {/* ── Official gallery spam controls ────────────────────────────── */}
-          <section className="surface cms-section">
-            <h2 className="cms-h2">Official gallery spam controls</h2>
-            <p className="cms-desc">Blacklist exact artists and loose phrases from official gallery/search results.</p>
-            <div style={{ display: 'grid', gap: 10 }}>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <input className="form-input" placeholder="Add artist (exact)" value={newArtistBlacklist} onChange={(e) => setNewArtistBlacklist(e.target.value)} style={{ minWidth: 220 }} />
-                <input className="form-input" placeholder="Reason (optional)" value={blacklistReason} onChange={(e) => setBlacklistReason(e.target.value)} style={{ minWidth: 220 }} />
-                <button className="btn btn-primary" onClick={() => addBlacklist('artist')} disabled={busyId === 'blacklist-add-artist'}>Add artist rule</button>
-              </div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <input className="form-input" placeholder="Add phrase contains" value={newPhraseBlacklist} onChange={(e) => setNewPhraseBlacklist(e.target.value)} style={{ minWidth: 220 }} />
-                <button className="btn btn-primary" onClick={() => addBlacklist('phrase')} disabled={busyId === 'blacklist-add-phrase'}>Add phrase rule</button>
-              </div>
-              <div className="cms-ban-list">
-                {artistBlacklist.map((item) => (
-                  <div key={`artist-${item.value}`} className="cms-ban-row">
-                    <div className="cms-ban-details">
-                      <span className="cms-ban-user">Artist: {item.value}</span>
-                      <span className="cms-ban-reason">{item.reason ?? 'No reason provided'}</span>
-                    </div>
-                    <button className="btn" onClick={() => removeBlacklist('artist', item.value)}>Remove</button>
+              {/* Profile reports */}
+              <div className="admin-card" style={{ marginTop: 16 }}>
+                <h3 className="admin-card-title">
+                  Profile Reports
+                  {data.profileReports.length > 0 && <span className="admin-nav-badge" style={{ marginLeft: 8 }}>{data.profileReports.length}</span>}
+                </h3>
+                {data.profileReports.length === 0 ? (
+                  <p className="admin-empty">No profile reports.</p>
+                ) : (
+                  <div className="admin-list">
+                    {data.profileReports.map((report) => (
+                      <div key={report.id} className="admin-list-row">
+                        <div className="admin-list-meta">
+                          <span><strong>Reason:</strong> {report.reason}</span>
+                          <span><strong>Profile:</strong> <a href={'/users/' + report.reported_username} target="_blank" rel="noopener noreferrer">@{report.reported_username ?? report.profile_id}</a></span>
+                          <span><strong>Reporter:</strong> @{report.reporter_username ?? 'Unknown'}</span>
+                          {report.details && <span><strong>Details:</strong> {report.details}</span>}
+                          <span className="admin-muted">{formatDate(report.created_at)}</span>
+                        </div>
+                        <div className="admin-row-actions">
+                          <button className="admin-btn" onClick={() => dismissProfileReport(report.id)} disabled={busyId === `dismiss-pr-${report.id}`}>Dismiss</button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-                {phraseBlacklist.map((item) => (
-                  <div key={`phrase-${item.value}`} className="cms-ban-row">
-                    <div className="cms-ban-details">
-                      <span className="cms-ban-user">Phrase: {item.value}</span>
-                      <span className="cms-ban-reason">{item.reason ?? 'No reason provided'}</span>
-                    </div>
-                    <button className="btn" onClick={() => removeBlacklist('phrase', item.value)}>Remove</button>
-                  </div>
-                ))}
+                )}
               </div>
+            </>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* BANS                                                              */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'bans' && (
+            <div className="admin-card">
+              <h3 className="admin-card-title">
+                Active Bans
+                {data.bans.length > 0 && <span className="admin-nav-badge" style={{ marginLeft: 8 }}>{data.bans.length}</span>}
+              </h3>
+              {data.bans.length === 0 ? (
+                <p className="admin-empty">No active bans.</p>
+              ) : (
+                <div className="admin-list">
+                  {data.bans.map((ban) => (
+                    <div key={ban.user_id} className="admin-list-row">
+                      <div className="admin-list-meta">
+                        <span className="admin-list-primary">@{ban.username ?? ban.user_id}</span>
+                        <span>{ban.reason ?? 'No reason provided'}</span>
+                        <span className="admin-muted">
+                          Banned {formatDate(ban.banned_at)}
+                          {ban.expires_at && ` – expires ${formatDate(ban.expires_at)}`}
+                        </span>
+                      </div>
+                      <div className="admin-row-actions">
+                        <button className="admin-btn" disabled={busyId === `unban-${ban.user_id}`} onClick={() => unbanByUserId(ban.user_id, ban.username)}>Unban</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </section>
+          )}
 
-          {/* ── Phash backfill ────────────────────────────────────────────── */}
-          <section className="surface cms-section">
-            <h2 className="cms-h2">Backfill missing phash</h2>
-            <p className="cms-desc">
-              Covers uploaded before phash tracking was added have no stored perceptual hash.
-              Without it, the duplicate-upload guard can't detect re-uploads of those covers.
-              Click below to compute and store phash for all affected covers (runs client-side,
-              processes up to 500 at a time).
-            </p>
-            <button className="btn btn-primary" onClick={runPhashBackfill} disabled={phashBackfillRunning}>
-              {phashBackfillRunning ? 'Running…' : 'Backfill phash'}
-            </button>
-            {phashBackfillMsg && <p className="cms-desc" style={{ marginTop: 8 }}>{phashBackfillMsg}</p>}
-          </section>
-
-          {/* ── Phash force-recompute ──────────────────────────────────────── */}
-          <section className="surface cms-section">
-            <h2 className="cms-h2">Force-recompute all phash</h2>
-            <p className="cms-desc">
-              Recomputes the perceptual hash for <strong>every</strong> CF-backed cover from the
-              Cloudflare-served image. Run this if duplicate detection is missing re-uploads —
-              CF re-encodes images on ingest, so the stored phash (computed from the original file)
-              may differ from what re-uploaders compute when downloading from the gallery.
-              Processes up to 500 covers at a time.
-            </p>
-            <button className="btn btn-secondary" onClick={runPhashForceRecompute} disabled={phashForceRunning}>
-              {phashForceRunning ? 'Running…' : 'Force-recompute phash'}
-            </button>
-            {phashForceMsg && <p className="cms-desc" style={{ marginTop: 8 }}>{phashForceMsg}</p>}
-          </section>
-        </>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* COMMUNITY TAB                                                     */}
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {activeTab === 'community' && (
-        <>
-          {/* ── Achievement awards ────────────────────────────────────────── */}
-          <section className="surface cms-section">
-            <h2 className="cms-h2">Award achievements</h2>
-            <p className="cms-desc">Grant or revoke any achievement badge for any user.</p>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* USERS                                                             */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'users' && (
+            <div className="admin-card">
+              <h3 className="admin-card-title">User Operations</h3>
               <div style={{ position: 'relative' }}>
                 <input
-                  className="form-input"
-                  placeholder="Search user…"
-                  value={achQuery}
-                  onChange={(e) => { setAchQuery(e.target.value); setAchSelectedUser(null); }}
-                  style={{ minWidth: 220 }}
+                  className="admin-input"
+                  placeholder="Search username…"
+                  value={userQuery}
+                  onChange={(e) => { setUserQuery(e.target.value); setSelectedUser(null); }}
                 />
-                {achOptions.length > 0 && (
-                  <div className="cms-dropdown">
-                    {achOptions.map((opt) => (
-                      <button key={opt.id} className="btn cms-dropdown-item" onClick={() => { setAchSelectedUser(opt); setAchQuery(opt.username); setAchOptions([]); }}>
-                        @{opt.username}{opt.display_name ? ` (${opt.display_name})` : ''}
+                {userOptions.length > 0 && !selectedUser && (
+                  <div className="admin-dropdown">
+                    {userOptions.map((option) => (
+                      <button
+                        key={option.id}
+                        className="admin-dropdown-item"
+                        onClick={() => { setSelectedUser(option); setUserQuery(option.username); setUserOptions([]); }}
+                      >
+                        @{option.username}{option.display_name ? ` (${option.display_name})` : ''}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-              <select className="form-input" value={achType} onChange={(e) => setAchType(e.target.value)}>
-                <optgroup label="Special">
-                  <option value="og">og</option>
-                  <option value="staff">staff</option>
-                  <option value="verified">verified</option>
-                </optgroup>
-                <optgroup label="Community">
-                  <option value="acotw">acotw — Album Cover of the Week</option>
-                  <option value="poh">poh — Picture of the Hour</option>
-                  <option value="contributor">contributor</option>
-                  <option value="certified_loner">certified_loner</option>
-                </optgroup>
-                <optgroup label="Milestones">
-                  <option value="milestone_1">milestone_1 — 1 upload</option>
-                  <option value="milestone_50">milestone_50 — 50 uploads</option>
-                  <option value="milestone_100">milestone_100 — 100 uploads</option>
-                  <option value="milestone_250">milestone_250 — 250 uploads</option>
-                  <option value="milestone_500">milestone_500 — 500 uploads</option>
-                  <option value="milestone_1000">milestone_1000 — 1000 uploads</option>
-                </optgroup>
-                <optgroup label="Social">
-                  <option value="first_friend">first_friend</option>
-                  <option value="friends_5">friends_5 — 5 friends</option>
-                  <option value="friends_25">friends_25 — 25 friends</option>
-                  <option value="first_collection">first_collection</option>
-                </optgroup>
-              </select>
-              <input className="form-input" placeholder="Note (optional)" value={achNote} onChange={(e) => setAchNote(e.target.value)} style={{ minWidth: 200 }} />
-              <button className="btn btn-primary" disabled={!achSelectedUser || busyId === 'ach-grant'} onClick={() => awardAchievement('grant')}>Grant</button>
-              <button className="btn" disabled={!achSelectedUser || busyId === 'ach-revoke'} onClick={() => awardAchievement('revoke')}>Revoke</button>
+
+              {selectedUser && (
+                <div className="admin-user-panel">
+                  <div className="admin-user-header">
+                    <strong>@{selectedUser.username}</strong>
+                    {selectedUserBan && <span className="admin-badge admin-badge--banned">Banned</span>}
+                    {selectedUserIsOperator && <span className="admin-badge admin-badge--op">Operator</span>}
+                  </div>
+
+                  {selectedUserBan && (
+                    <div className="admin-ban-info">
+                      <span>Reason: {selectedUserBan.reason ?? 'No reason provided'}</span>
+                      {selectedUserBan.expires_at && <span>Expires: {formatDate(selectedUserBan.expires_at)}</span>}
+                    </div>
+                  )}
+
+                  <div className="admin-field-group">
+                    <textarea
+                      className="admin-input"
+                      placeholder="Ban reason (optional)"
+                      value={banReason}
+                      onChange={(e) => setBanReason(e.target.value)}
+                      rows={2}
+                    />
+                    <div className="admin-form-row">
+                      <label className="admin-label">Duration</label>
+                      <select className="admin-input admin-select" value={banDuration} onChange={(e) => setBanDuration(e.target.value as typeof banDuration)}>
+                        <option value="permanent">Permanent</option>
+                        <option value="1">1 day</option>
+                        <option value="3">3 days</option>
+                        <option value="7">7 days</option>
+                        <option value="30">30 days</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="admin-row-actions">
+                    <button className="admin-btn admin-btn-primary" disabled={busyId === 'ban-user'} onClick={banSelectedUser}>
+                      {selectedUserBan ? 'Update ban' : 'Ban user'}
+                    </button>
+                    <button className="admin-btn" disabled={!selectedUserBan || busyId === 'unban-user'} onClick={unbanSelectedUser}>Unban</button>
+                    <button className="admin-btn" disabled={busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, !selectedUserIsOperator, selectedUser.username)}>
+                      {selectedUserIsOperator ? 'Remove operator' : 'Make operator'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            {achSelectedUser && <p style={{ marginTop: 8, fontSize: 13, color: 'var(--body-text-muted)' }}>Selected: @{achSelectedUser.username}</p>}
-          </section>
+          )}
 
-          {/* ── Hall of Fame pins ─────────────────────────────────────────── */}
-          <section className="surface cms-section">
-            <h2 className="cms-h2">Hall of Fame pins (POH)</h2>
-            <p className="cms-desc">Pin standout comments to the Hall of Fame. Awards the author a POH achievement badge.</p>
-            <button className="btn btn-primary" onClick={loadPohData} disabled={pohLoading}>
-              {pohLoading ? 'Loading…' : 'Load / refresh'}
-            </button>
-
-            {(pohPins.length > 0 || recentComments.length > 0) && (
-              <div style={{ marginTop: 12, display: 'grid', gap: 16 }}>
-                {pohPins.length > 0 && (
-                  <div>
-                    <h3 className="cms-h3">Current pins ({pohPins.length})</h3>
-                    <div className="cms-ban-list">
-                      {pohPins.map((pin) => (
-                        <div key={pin.id} className="cms-ban-row">
-                          <div className="cms-ban-details">
-                            <span className="cms-ban-user">@{pin.author_username}</span>
-                            <span className="cms-ban-reason" style={{ fontStyle: 'italic' }}>"{pin.comment_content.slice(0, 80)}{pin.comment_content.length > 80 ? '…' : ''}"</span>
-                            {pin.cover_title && <span className="cms-ban-reason">{pin.cover_title}{pin.cover_artist ? `  -  ${pin.cover_artist}` : ''}</span>}
-                          </div>
-                          <button className="btn" disabled={busyId === `unpin-${pin.id}`} onClick={() => unpinComment(pin.id)}>Unpin</button>
-                        </div>
-                      ))}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* PERMISSIONS                                                       */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'permissions' && (
+            <div className="admin-card">
+              <h3 className="admin-card-title">Operators &amp; Roles</h3>
+              {data.operators.length === 0 ? (
+                <p className="admin-empty">No operators — no role management available.</p>
+              ) : (
+                <div className="admin-list">
+                  {data.operators.map((op) => (
+                    <div key={op.user_id} className="admin-list-row">
+                      <div className="admin-list-meta">
+                        <span className="admin-list-primary">@{op.username ?? op.user_id}</span>
+                        {roleBadge(op.role)}
+                      </div>
+                      <div className="admin-row-actions">
+                        {op.user_id !== user?.id && op.can_be_removed && (
+                          <button className="admin-btn admin-btn-danger" disabled={busyId === `operator-${op.user_id}`} onClick={() => setOperatorRole(op.user_id, false, op.username)}>Remove</button>
+                        )}
+                        {op.can_be_removed === false && op.user_id !== user?.id && (
+                          <span className="admin-badge" title="This operator cannot be removed">Locked</span>
+                        )}
+                      </div>
                     </div>
+                  ))}
+                </div>
+              )}
+              {selectedUser && (
+                <div style={{ marginTop: 16 }}>
+                  <h4 className="admin-card-subtitle">Assign role to @{selectedUser.username}</h4>
+                  <div className="admin-row-actions">
+                    <button className="admin-btn admin-btn-primary" disabled={busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, true, selectedUser.username, 'operator')}>Promote to Operator</button>
+                    <button className="admin-btn" disabled={busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, true, selectedUser.username, 'moderator')}>Assign Moderator</button>
+                    <button className="admin-btn admin-btn-danger" disabled={!selectedUserIsOperator || busyId === `operator-${selectedUser.id}`} onClick={() => setOperatorRole(selectedUser.id, false, selectedUser.username)}>Remove from Staff</button>
                   </div>
-                )}
+                </div>
+              )}
+            </div>
+          )}
 
-                {recentComments.length > 0 && (
-                  <div>
-                    <h3 className="cms-h3">Recent comments</h3>
-                    <div className="cms-ban-list">
-                      {recentComments.map((c) => (
-                        <div key={c.id} className="cms-ban-row">
-                          <div className="cms-ban-details">
-                            <span className="cms-ban-user">@{c.author_username}</span>
-                            <span className="cms-ban-reason" style={{ fontStyle: 'italic' }}>"{c.content.slice(0, 100)}{c.content.length > 100 ? '…' : ''}"</span>
-                            {c.cover_title && <span className="cms-ban-reason">{c.cover_title}{c.cover_artist ? `  -  ${c.cover_artist}` : ''}</span>}
-                          </div>
-                          {c.is_already_pinned ? (
-                            <span className="cms-badge cms-badge--op">Pinned</span>
-                          ) : (
-                            <button className="btn btn-primary" disabled={busyId === `pin-${c.id}`} onClick={() => pinComment(c)}>Pin to POH</button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* COVER LOOKUP                                                      */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'lookup' && (
+            <div className="admin-card">
+              <p className="admin-card-desc">Paste a fan cover URL to load that cover and the next 10 by the same user.</p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <input className="admin-input" placeholder="https://covers.cafe/covers/fan/…" value={coverLookupInput} onChange={(e) => setCoverLookupInput(e.target.value)} style={{ minWidth: 380, flex: 1 }} />
+                <button className="admin-btn admin-btn-primary" onClick={lookupCoverByUrl} disabled={busyId === 'cover-lookup'}>Lookup</button>
               </div>
-            )}
-          </section>
-        </>
-      )}
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
+                <label className="admin-label">Removal reason:</label>
+                <select className="admin-input admin-select" value={permaUnpublishReason} onChange={(e) => setPermaUnpublishReason(e.target.value)}>
+                  <option value="DMCA/compliance">DMCA/compliance</option>
+                  <option value="Spam/duplicate content">Spam/duplicate content</option>
+                  <option value="Inappropriate content">Inappropriate content</option>
+                  <option value="Other violation">Other violation</option>
+                </select>
+              </div>
+              {coverLookupResult && (
+                <div className="admin-list" style={{ marginTop: 12 }}>
+                  <div className="admin-list-row">
+                    <div className="admin-list-meta">
+                      <span className="admin-list-primary">{coverLookupResult.cover.artist} — {coverLookupResult.cover.title}</span>
+                      <span className="admin-muted">/{coverLookupResult.cover.page_slug}{coverLookupResult.cover.perma_unpublished ? ' – perma-unpublished' : ''}</span>
+                    </div>
+                    <div className="admin-row-actions">
+                      <button className="admin-btn" onClick={() => setCoverVisibility(coverLookupResult.cover.id, !coverLookupResult.cover.is_public)} disabled={coverLookupResult.cover.perma_unpublished || busyId === `visibility-${coverLookupResult.cover.id}`} title={coverLookupResult.cover.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}>{coverLookupResult.cover.is_public ? 'Unpublish' : 'Publish'}</button>
+                      <button className="admin-btn" onClick={() => setCoverPermaUnpublished(coverLookupResult.cover.id, !coverLookupResult.cover.perma_unpublished, permaUnpublishReason)} disabled={busyId === `perma-${coverLookupResult.cover.id}`}>{coverLookupResult.cover.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}</button>
+                    </div>
+                  </div>
+                  {coverLookupResult.nextByUser.map((c) => (
+                    <div key={c.id} className="admin-list-row">
+                      <div className="admin-list-meta">
+                        <span className="admin-list-primary">{c.artist} — {c.title}</span>
+                        <span className="admin-muted">/{c.page_slug}{c.perma_unpublished ? ' – perma-unpublished' : ''}</span>
+                      </div>
+                      <div className="admin-row-actions">
+                        <button className="admin-btn" onClick={() => setCoverVisibility(c.id, !c.is_public)} disabled={c.perma_unpublished || busyId === `visibility-${c.id}`} title={c.perma_unpublished ? 'Permanently unpublished: cannot republish' : ''}>{c.is_public ? 'Unpublish' : 'Publish'}</button>
+                        <button className="admin-btn" onClick={() => setCoverPermaUnpublished(c.id, !c.perma_unpublished, permaUnpublishReason)} disabled={busyId === `perma-${c.id}`}>{c.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* BLOG TAB                                                          */}
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {activeTab === 'blog' && (
-        <section className="surface cms-section">
-          <div className="cms-section-header">
-            <h2 className="cms-h2" style={{ margin: 0 }}>Blog posts</h2>
-            <button className="btn btn-primary" onClick={openNewBlogForm} disabled={blogFormOpen}>New post</button>
-          </div>
-          <p className="cms-desc">Write and publish blog posts visible at <a href="/blog" target="_blank" rel="noopener noreferrer">/blog</a>. Only operators can post.</p>
-
-          {blogFormOpen && (
-            <div className="cms-blog-form surface" style={{ marginTop: 16 }}>
-              <h3 className="cms-h3" style={{ marginTop: 0 }}>{blogEditingId ? 'Edit post' : 'New post'}</h3>
-              <div style={{ display: 'grid', gap: 10 }}>
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* USER BROWSER                                                      */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'browser' && (
+            <div className="admin-card">
+              <p className="admin-card-desc">Search a user to browse and bulk-manage all their covers.</p>
+              <div style={{ position: 'relative' }}>
                 <input
-                  className="form-input"
-                  placeholder="Title"
-                  value={blogTitle}
-                  onChange={(e) => setBlogTitle(e.target.value)}
+                  className="admin-input"
+                  placeholder="Search username…"
+                  value={userBrowserQuery}
+                  onChange={(e) => { setUserBrowserQuery(e.target.value); setUserBrowserSelected(null); setUserBrowserCovers([]); }}
                 />
-                <textarea
-                  className="form-input"
-                  placeholder="Write your post… (plain text, line breaks preserved)"
-                  value={blogBody}
-                  onChange={(e) => setBlogBody(e.target.value)}
-                  rows={14}
-                  style={{ resize: 'vertical', fontFamily: 'inherit' }}
-                />
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={blogPublished} onChange={(e) => setBlogPublished(e.target.checked)} />
-                  Publish immediately
-                </label>
-                <div className="cms-actions">
-                  <button className="btn btn-primary" onClick={saveBlogPost} disabled={busyId === 'blog-save'}>
-                    {busyId === 'blog-save' ? 'Saving…' : blogEditingId ? 'Update post' : 'Create post'}
+                {userBrowserOptions.length > 0 && !userBrowserSelected && (
+                  <div className="admin-dropdown">
+                    {userBrowserOptions.map((option) => (
+                      <button
+                        key={option.id}
+                        className="admin-dropdown-item"
+                        onClick={() => {
+                          setUserBrowserSelected(option);
+                          setUserBrowserQuery(option.username);
+                          setUserBrowserOptions([]);
+                          setUserBrowserPage(1);
+                          void loadUserBrowserCovers(option.id, 1);
+                        }}
+                      >
+                        @{option.username}{option.display_name ? ` (${option.display_name})` : ''}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {userBrowserSelected && (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
+                    <strong>@{userBrowserSelected.username}</strong>
+                    <span className="admin-badge">{userBrowserTotal} covers</span>
+                    <button className="admin-btn admin-btn-danger" disabled={busyId === `bulk-perma-${userBrowserSelected.id}` || userBrowserTotal === 0} onClick={() => { if (!window.confirm(`Perma-unpublish ALL ${userBrowserTotal} covers by @${userBrowserSelected.username}? This notifies the user.`)) return; void bulkPermaUnpublish(userBrowserSelected.id, true); }}>
+                      Perma-unpublish all ({permaUnpublishReason})
+                    </button>
+                    <button className="admin-btn" disabled={busyId === `bulk-perma-${userBrowserSelected.id}` || userBrowserTotal === 0} onClick={() => { if (!window.confirm(`Allow republish for ALL covers by @${userBrowserSelected.username}?`)) return; void bulkPermaUnpublish(userBrowserSelected.id, false); }}>
+                      Allow republish all
+                    </button>
+                  </div>
+
+                  {userBrowserLoading ? (
+                    <p className="admin-empty">Loading…</p>
+                  ) : (
+                    <>
+                      <div className="admin-list">
+                        {userBrowserCovers.map((c) => (
+                          <div key={c.id} className="admin-list-row">
+                            <div className="admin-list-meta">
+                              <span className="admin-list-primary">{c.artist} — {c.title}</span>
+                              <span className="admin-muted">/{c.page_slug}{c.perma_unpublished ? ' – perma-unpublished' : c.is_public ? '' : ' – private'}</span>
+                            </div>
+                            <div className="admin-row-actions">
+                              <button className="admin-btn" onClick={() => setCoverVisibility(c.id, !c.is_public)} disabled={c.perma_unpublished || busyId === `visibility-${c.id}`} title={c.perma_unpublished ? 'Permanently unpublished' : ''}>{c.is_public ? 'Unpublish' : 'Publish'}</button>
+                              <button className="admin-btn" onClick={() => setCoverPermaUnpublished(c.id, !c.perma_unpublished, permaUnpublishReason)} disabled={busyId === `perma-${c.id}`}>{c.perma_unpublished ? 'Allow republish' : 'Perma-unpublish'}</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {userBrowserTotal > 50 && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'center' }}>
+                          <button className="admin-btn" disabled={userBrowserPage <= 1} onClick={() => { const p = userBrowserPage - 1; setUserBrowserPage(p); void loadUserBrowserCovers(userBrowserSelected.id, p); }}>← Prev</button>
+                          <span className="admin-muted">Page {userBrowserPage} of {Math.ceil(userBrowserTotal / 50)}</span>
+                          <button className="admin-btn" disabled={userBrowserPage >= Math.ceil(userBrowserTotal / 50)} onClick={() => { const p = userBrowserPage + 1; setUserBrowserPage(p); void loadUserBrowserCovers(userBrowserSelected.id, p); }}>Next →</button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* LEGAL & TOOLS                                                     */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'legal' && (
+            <>
+              {/* Mass remove by tag */}
+              <div className="admin-card">
+                <h3 className="admin-card-title">Mass Remove by Tag</h3>
+                <p className="admin-card-desc">Delete every cover that has been tagged with a specific label.</p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <input className="admin-input" placeholder="Tag (e.g. infringing-label)" value={removeTag} onChange={(e) => setRemoveTag(e.target.value)} style={{ minWidth: 260 }} />
+                  <button className="admin-btn admin-btn-primary" disabled={busyId === 'mass-remove-tag'} onClick={massRemoveByTag}>Mass remove by tag</button>
+                </div>
+              </div>
+
+              {/* Official gallery blacklist */}
+              <div className="admin-card" style={{ marginTop: 16 }}>
+                <h3 className="admin-card-title">Official Gallery Blacklist</h3>
+                <p className="admin-card-desc">Blacklist exact artists and loose phrases from official gallery/search results.</p>
+                <div style={{ display: 'grid', gap: 10 }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <input className="admin-input" placeholder="Add artist (exact)" value={newArtistBlacklist} onChange={(e) => setNewArtistBlacklist(e.target.value)} style={{ minWidth: 220 }} />
+                    <input className="admin-input" placeholder="Reason (optional)" value={blacklistReason} onChange={(e) => setBlacklistReason(e.target.value)} style={{ minWidth: 220 }} />
+                    <button className="admin-btn admin-btn-primary" onClick={() => addBlacklist('artist')} disabled={busyId === 'blacklist-add-artist'}>Add artist rule</button>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <input className="admin-input" placeholder="Add phrase contains" value={newPhraseBlacklist} onChange={(e) => setNewPhraseBlacklist(e.target.value)} style={{ minWidth: 220 }} />
+                    <button className="admin-btn admin-btn-primary" onClick={() => addBlacklist('phrase')} disabled={busyId === 'blacklist-add-phrase'}>Add phrase rule</button>
+                  </div>
+                  <div className="admin-list">
+                    {artistBlacklist.map((item) => (
+                      <div key={`artist-${item.value}`} className="admin-list-row">
+                        <div className="admin-list-meta">
+                          <span className="admin-list-primary">Artist: {item.value}</span>
+                          <span className="admin-muted">{item.reason ?? 'No reason provided'}</span>
+                        </div>
+                        <div className="admin-row-actions">
+                          <button className="admin-btn" onClick={() => removeBlacklist('artist', item.value)}>Remove</button>
+                        </div>
+                      </div>
+                    ))}
+                    {phraseBlacklist.map((item) => (
+                      <div key={`phrase-${item.value}`} className="admin-list-row">
+                        <div className="admin-list-meta">
+                          <span className="admin-list-primary">Phrase: {item.value}</span>
+                          <span className="admin-muted">{item.reason ?? 'No reason provided'}</span>
+                        </div>
+                        <div className="admin-row-actions">
+                          <button className="admin-btn" onClick={() => removeBlacklist('phrase', item.value)}>Remove</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Phash tools */}
+              <div className="admin-card" style={{ marginTop: 16 }}>
+                <h3 className="admin-card-title">Phash Tools</h3>
+                <p className="admin-card-desc">
+                  Backfill computes perceptual hashes for covers that are missing one (up to 500 at a time).
+                  Force-recompute updates all CF-backed covers' stored phash from the Cloudflare-served image.
+                </p>
+                <div className="admin-row-actions">
+                  <button className="admin-btn admin-btn-primary" onClick={runPhashBackfill} disabled={phashBackfillRunning}>
+                    {phashBackfillRunning ? 'Running…' : 'Backfill phash'}
                   </button>
-                  <button className="btn" onClick={closeBlogForm}>Cancel</button>
+                  <button className="admin-btn" onClick={runPhashForceRecompute} disabled={phashForceRunning}>
+                    {phashForceRunning ? 'Running…' : 'Force-recompute phash'}
+                  </button>
                 </div>
+                {phashBackfillMsg && <p className="admin-muted" style={{ marginTop: 8 }}>{phashBackfillMsg}</p>}
+                {phashForceMsg && <p className="admin-muted" style={{ marginTop: 4 }}>{phashForceMsg}</p>}
               </div>
-            </div>
+            </>
           )}
 
-          {blogLoading ? (
-            <p style={{ color: 'var(--body-text-muted)', fontSize: 13, marginTop: 12 }}>Loading…</p>
-          ) : blogPosts.length === 0 ? (
-            <p style={{ color: 'var(--body-text-muted)', fontSize: 13, marginTop: 12 }}>No posts yet. Hit "New post" to write one.</p>
-          ) : (
-            <div className="cms-blog-list cms-ban-list" style={{ marginTop: 16 }}>
-              {blogPosts.map((post) => (
-                <div key={post.id} className="cms-ban-row">
-                  <div className="cms-ban-details">
-                    <span className="cms-ban-user">
-                      {post.title}
-                      {post.published
-                        ? <span className="cms-badge cms-badge--op" style={{ marginLeft: 8 }}>Published</span>
-                        : <span className="cms-badge" style={{ marginLeft: 8 }}>Draft</span>}
-                    </span>
-                    <span className="cms-ban-reason">
-                      /blog/{post.slug}
-                      {post.published_at ? ` · ${new Date(post.published_at).toLocaleDateString()}` : ''}
-                      {post.author_username ? ` · @${post.author_username}` : ''}
-                    </span>
-                    <span className="cms-ban-reason" style={{ fontStyle: 'italic', opacity: 0.7 }}>
-                      {post.body.slice(0, 120)}{post.body.length > 120 ? '…' : ''}
-                    </span>
-                  </div>
-                  <div className="cms-actions" style={{ flexShrink: 0 }}>
-                    <button className="btn" onClick={() => openEditBlogForm(post)}>Edit</button>
-                    <a className="btn" href={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">View</a>
-                    <button className="btn cms-btn-danger" onClick={() => deleteBlogPost(post.id, post.title)} disabled={busyId === `blog-del-${post.id}`}>Delete</button>
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* BLOG                                                              */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'blog' && (
+            <div className="admin-card">
+              <p className="admin-card-desc">Write and publish blog posts visible at <a href="/blog" target="_blank" rel="noopener noreferrer">/blog</a>. Only operators can post.</p>
+
+              {blogFormOpen && (
+                <div className="admin-blog-form" style={{ marginBottom: 20 }}>
+                  <h3 className="admin-card-subtitle">{blogEditingId ? 'Edit post' : 'New post'}</h3>
+                  <div style={{ display: 'grid', gap: 10 }}>
+                    <input
+                      className="admin-input"
+                      placeholder="Title"
+                      value={blogTitle}
+                      onChange={(e) => setBlogTitle(e.target.value)}
+                    />
+                    <textarea
+                      className="admin-input"
+                      placeholder="Write your post… (plain text, line breaks preserved)"
+                      value={blogBody}
+                      onChange={(e) => setBlogBody(e.target.value)}
+                      rows={14}
+                      style={{ resize: 'vertical', fontFamily: 'inherit' }}
+                    />
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer' }}>
+                      <input type="checkbox" checked={blogPublished} onChange={(e) => setBlogPublished(e.target.checked)} />
+                      Publish immediately
+                    </label>
+                    <div className="admin-row-actions">
+                      <button className="admin-btn admin-btn-primary" onClick={saveBlogPost} disabled={busyId === 'blog-save'}>
+                        {busyId === 'blog-save' ? 'Saving…' : blogEditingId ? 'Update post' : 'Create post'}
+                      </button>
+                      <button className="admin-btn" onClick={closeBlogForm}>Cancel</button>
+                    </div>
                   </div>
                 </div>
-              ))}
+              )}
+
+              {blogLoading ? (
+                <p className="admin-empty">Loading…</p>
+              ) : blogPosts.length === 0 ? (
+                <p className="admin-empty">No posts yet. Hit "New post" to write one.</p>
+              ) : (
+                <div className="admin-list">
+                  {blogPosts.map((post) => (
+                    <div key={post.id} className="admin-list-row">
+                      <div className="admin-list-meta">
+                        <span className="admin-list-primary">
+                          {post.title}
+                          {post.published
+                            ? <span className="admin-badge admin-badge--published" style={{ marginLeft: 8 }}>Published</span>
+                            : <span className="admin-badge" style={{ marginLeft: 8 }}>Draft</span>}
+                        </span>
+                        <span className="admin-muted">
+                          /blog/{post.slug}
+                          {post.published_at ? ` · ${new Date(post.published_at).toLocaleDateString()}` : ''}
+                          {post.author_username ? ` · @${post.author_username}` : ''}
+                        </span>
+                        <span className="admin-muted" style={{ fontStyle: 'italic' }}>
+                          {post.body.slice(0, 120)}{post.body.length > 120 ? '…' : ''}
+                        </span>
+                      </div>
+                      <div className="admin-row-actions" style={{ flexShrink: 0 }}>
+                        <button className="admin-btn" onClick={() => openEditBlogForm(post)}>Edit</button>
+                        <a className="admin-btn" href={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">View</a>
+                        <button className="admin-btn admin-btn-danger" onClick={() => deleteBlogPost(post.id, post.title)} disabled={busyId === `blog-del-${post.id}`}>Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
-        </section>
-      )}
 
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* ABOUT EDITOR TAB                                                  */}
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {activeTab === 'about' && (
-        <section className="surface cms-section">
-          <h2 className="cms-h2">About page editor</h2>
-          <p className="cms-desc">Edit the text shown on the <a href="/about" target="_blank" rel="noopener noreferrer">/about</a> page. Plain text — line breaks are preserved.</p>
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* ABOUT EDITOR                                                      */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'about' && (
+            <div className="admin-card">
+              <p className="admin-card-desc">Edit the text shown on the <a href="/about" target="_blank" rel="noopener noreferrer">/about</a> page. Plain text — line breaks are preserved.</p>
 
-          {aboutLoading ? (
-            <p style={{ color: 'var(--body-text-muted)', fontSize: 13 }}>Loading…</p>
-          ) : (
-            <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
-              <textarea
-                className="form-input"
-                value={aboutBody}
-                onChange={(e) => setAboutBody(e.target.value)}
-                rows={20}
-                style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }}
-                placeholder="About page content…"
-              />
-              <div className="cms-actions">
-                <button className="btn btn-primary" onClick={saveAboutContent} disabled={aboutSaving}>
-                  {aboutSaving ? 'Saving…' : 'Save changes'}
-                </button>
-                <button className="btn" onClick={loadAboutContent} disabled={aboutLoading || aboutSaving}>
-                  Reset to saved
-                </button>
+              {aboutLoading ? (
+                <p className="admin-empty">Loading…</p>
+              ) : (
+                <div style={{ display: 'grid', gap: 10 }}>
+                  <textarea
+                    className="admin-input"
+                    value={aboutBody}
+                    onChange={(e) => setAboutBody(e.target.value)}
+                    rows={20}
+                    style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }}
+                    placeholder="About page content…"
+                  />
+                  <div className="admin-row-actions">
+                    <button className="admin-btn admin-btn-primary" onClick={saveAboutContent} disabled={aboutSaving}>
+                      {aboutSaving ? 'Saving…' : 'Save changes'}
+                    </button>
+                    <button className="admin-btn" onClick={loadAboutContent} disabled={aboutLoading || aboutSaving}>
+                      Reset to saved
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* ACHIEVEMENTS                                                      */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'achievements' && (
+            <div className="admin-card">
+              <p className="admin-card-desc">Grant or revoke any achievement badge for any user.</p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    className="admin-input"
+                    placeholder="Search user…"
+                    value={achQuery}
+                    onChange={(e) => { setAchQuery(e.target.value); setAchSelectedUser(null); }}
+                    style={{ minWidth: 220 }}
+                  />
+                  {achOptions.length > 0 && (
+                    <div className="admin-dropdown">
+                      {achOptions.map((opt) => (
+                        <button key={opt.id} className="admin-dropdown-item" onClick={() => { setAchSelectedUser(opt); setAchQuery(opt.username); setAchOptions([]); }}>
+                          @{opt.username}{opt.display_name ? ` (${opt.display_name})` : ''}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <select className="admin-input admin-select" value={achType} onChange={(e) => setAchType(e.target.value)}>
+                  <optgroup label="Special">
+                    <option value="og">og</option>
+                    <option value="staff">staff</option>
+                    <option value="verified">verified</option>
+                  </optgroup>
+                  <optgroup label="Community">
+                    <option value="acotw">acotw — Album Cover of the Week</option>
+                    <option value="poh">poh — Picture of the Hour</option>
+                    <option value="contributor">contributor</option>
+                    <option value="certified_loner">certified_loner</option>
+                  </optgroup>
+                  <optgroup label="Milestones">
+                    <option value="milestone_1">milestone_1 — 1 upload</option>
+                    <option value="milestone_50">milestone_50 — 50 uploads</option>
+                    <option value="milestone_100">milestone_100 — 100 uploads</option>
+                    <option value="milestone_250">milestone_250 — 250 uploads</option>
+                    <option value="milestone_500">milestone_500 — 500 uploads</option>
+                    <option value="milestone_1000">milestone_1000 — 1000 uploads</option>
+                  </optgroup>
+                  <optgroup label="Social">
+                    <option value="first_friend">first_friend</option>
+                    <option value="friends_5">friends_5 — 5 friends</option>
+                    <option value="friends_25">friends_25 — 25 friends</option>
+                    <option value="first_collection">first_collection</option>
+                  </optgroup>
+                </select>
+                <input className="admin-input" placeholder="Note (optional)" value={achNote} onChange={(e) => setAchNote(e.target.value)} style={{ minWidth: 200 }} />
+                <button className="admin-btn admin-btn-primary" disabled={!achSelectedUser || busyId === 'ach-grant'} onClick={() => awardAchievement('grant')}>Grant</button>
+                <button className="admin-btn" disabled={!achSelectedUser || busyId === 'ach-revoke'} onClick={() => awardAchievement('revoke')}>Revoke</button>
               </div>
+              {achSelectedUser && <p className="admin-muted" style={{ marginTop: 8 }}>Selected: @{achSelectedUser.username}</p>}
             </div>
           )}
-        </section>
-      )}
+
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/* HALL OF FAME (POH)                                                */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'poh' && (
+            <div className="admin-card">
+              <p className="admin-card-desc">Pin standout comments to the Hall of Fame. Awards the author a POH achievement badge.</p>
+
+              {(pohPins.length > 0 || recentComments.length > 0) && (
+                <div style={{ display: 'grid', gap: 16 }}>
+                  {pohPins.length > 0 && (
+                    <div>
+                      <h3 className="admin-card-subtitle">Current pins ({pohPins.length})</h3>
+                      <div className="admin-list">
+                        {pohPins.map((pin) => (
+                          <div key={pin.id} className="admin-list-row">
+                            <div className="admin-list-meta">
+                              <span className="admin-list-primary">@{pin.author_username}</span>
+                              <span className="admin-muted" style={{ fontStyle: 'italic' }}>"{pin.comment_content.slice(0, 80)}{pin.comment_content.length > 80 ? '…' : ''}"</span>
+                              {pin.cover_title && <span className="admin-muted">{pin.cover_title}{pin.cover_artist ? ` — ${pin.cover_artist}` : ''}</span>}
+                            </div>
+                            <div className="admin-row-actions">
+                              <button className="admin-btn" disabled={busyId === `unpin-${pin.id}`} onClick={() => unpinComment(pin.id)}>Unpin</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {recentComments.length > 0 && (
+                    <div>
+                      <h3 className="admin-card-subtitle">Recent comments</h3>
+                      <div className="admin-list">
+                        {recentComments.map((c) => (
+                          <div key={c.id} className="admin-list-row">
+                            <div className="admin-list-meta">
+                              <span className="admin-list-primary">@{c.author_username}</span>
+                              <span className="admin-muted" style={{ fontStyle: 'italic' }}>"{c.content.slice(0, 100)}{c.content.length > 100 ? '…' : ''}"</span>
+                              {c.cover_title && <span className="admin-muted">{c.cover_title}{c.cover_artist ? ` — ${c.cover_artist}` : ''}</span>}
+                            </div>
+                            <div className="admin-row-actions">
+                              {c.is_already_pinned ? (
+                                <span className="admin-badge admin-badge--op">Pinned</span>
+                              ) : (
+                                <button className="admin-btn admin-btn-primary" disabled={busyId === `pin-${c.id}`} onClick={() => pinComment(c)}>Pin to POH</button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {pohPins.length === 0 && recentComments.length === 0 && (
+                <p className="admin-empty">Click "Refresh" above to load pins and recent comments.</p>
+              )}
+            </div>
+          )}
+
+        </div>
+      </main>
     </div>
   );
 }

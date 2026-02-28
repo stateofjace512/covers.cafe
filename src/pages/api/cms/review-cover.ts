@@ -82,27 +82,16 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   // decision === 'deny'
-  const { error: updateErr } = await sb
-    .from('covers_cafe_covers')
-    .update({
-      moderation_status: 'denied',
-      moderation_reason: reason ?? null,
-      moderation_decided_at: now,
-      moderation_decided_by: operator.id,
-      is_public: false,
-    })
-    .eq('id', coverId);
-
-  if (updateErr) return json({ ok: false, message: updateErr.message }, 500);
-
-  // Delete from Cloudflare to avoid orphaned images
+  // 1. Delete from Cloudflare first (awaited, so we know it happened)
   if (isCfPath(cover.storage_path)) {
-    deleteFromCf(cfImageIdFromPath(cover.storage_path)).catch((err) => {
-      console.error('[cms/review-cover] CF delete error:', err);
-    });
+    try {
+      await deleteFromCf(cfImageIdFromPath(cover.storage_path));
+    } catch (err) {
+      console.error('[cms/review-cover] CF delete error (continuing):', err);
+    }
   }
 
-  // Notify uploader
+  // 2. Notify uploader before deleting the row (so we still have cover metadata)
   sb.from('covers_cafe_notifications')
     .insert({
       user_id: cover.user_id,
@@ -117,6 +106,14 @@ export const POST: APIRoute = async ({ request }) => {
       created_at: now,
     })
     .then(() => {}).catch(() => {});
+
+  // 3. Permanently delete the cover row from the database
+  const { error: deleteErr } = await sb
+    .from('covers_cafe_covers')
+    .delete()
+    .eq('id', coverId);
+
+  if (deleteErr) return json({ ok: false, message: deleteErr.message }, 500);
 
   return json({ ok: true, decision: 'denied' }, 200);
 };

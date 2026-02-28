@@ -42,8 +42,8 @@ export const GET: APIRoute = async ({ request }) => {
       .order('banned_at', { ascending: false }),
     sb
       .from('covers_cafe_operator_roles')
-      .select('user_id, can_be_removed')
-      .eq('role', 'operator'),
+      .select('user_id, role, can_be_removed')
+      .order('created_at', { ascending: true }),
     sb
       .from('covers_cafe_covers')
       .select('id', { count: 'exact', head: true })
@@ -88,8 +88,9 @@ export const GET: APIRoute = async ({ request }) => {
       ...b,
       username: usernameMap.get(b.user_id) ?? null,
     })),
-    operators: (operators ?? []).map((o: { user_id: string; can_be_removed: boolean }) => ({
+    operators: (operators ?? []).map((o: { user_id: string; role: string; can_be_removed: boolean }) => ({
       user_id: o.user_id,
+      role: o.role,
       username: usernameMap.get(o.user_id) ?? null,
       can_be_removed: o.can_be_removed,
     })),
