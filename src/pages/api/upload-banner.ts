@@ -43,7 +43,7 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const arrayBuffer = await file.arrayBuffer();
     resizedBuffer = await sharp(Buffer.from(arrayBuffer))
-      .resize(1200, 700, { fit: 'cover', position: 'centre' })
+      .resize(1920, 1080, { fit: 'cover', position: 'centre' })
       .jpeg({ quality: 88 })
       .toBuffer();
   } catch {

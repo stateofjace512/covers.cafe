@@ -3278,10 +3278,17 @@
 .artist-detail-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 
 /* ── Banner strip — avatar anchored to bottom-left ── */
+/* Fixed aspect ratios keep clip percentages mathematically constant at any
+   viewport width, so the editor guide overlays are always accurate:
+   Desktop 3:1 display + 1.78:1 stored image → bg-cover clips exactly 20% top/bottom.
+   Mobile 3:2 display + 1.78:1 stored image → bg-cover clips exactly 8% from each side. */
 .artist-profile-banner {
-  width: 100%; height: 160px;
+  width: 100%; aspect-ratio: 3 / 1;
   background-size: cover; background-position: center;
   flex-shrink: 0; position: relative;
+}
+@media (max-width: 640px) {
+  .artist-profile-banner { aspect-ratio: 3 / 2; }
 }
 /* Avatar sits at the bottom-left of the banner, half overlapping into the content section */
 .artist-profile-banner .artist-detail-avatar {
@@ -3384,12 +3391,53 @@
   height: 40px; width: 100%; border: 1px solid var(--body-card-border); margin-top: 4px;
 }
 
-/* ── Banner preview in EditProfile ── */
-.banner-preview {
-  margin-top: 8px; border: 1px solid var(--body-card-border);
-  overflow: hidden; max-width: 400px;
+/* ── Banner editor in EditProfile ── */
+.banner-edit-container {
+  position: relative;
+  width: 100%; max-width: 640px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--body-card-border);
+  margin-top: 8px;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  display: block;
 }
-.banner-preview-img { width: 100%; height: 120px; object-fit: cover; display: block; }
+.banner-edit-container:active { cursor: grabbing; }
+.banner-edit-img {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+  transform-origin: center;
+}
+/* ── Crop guide overlays ── */
+/* Desktop 3:1 display vs 1.78:1 stored image: bg-cover scales to fill width,
+   clips exactly (1/1.78 - 1/3) / (1/1.78) / 2 = 20.4% top and bottom.
+   Mobile 3:2 display vs 1.78:1 stored image: bg-cover scales to fill height,
+   clips exactly (1.78 - 1.5) / 1.78 / 2 = 7.9% from each side.
+   Both percentages are constant at any viewport width. */
+.banner-guide { position: absolute; pointer-events: none; box-sizing: border-box; }
+.banner-guide-desktop {
+  top: 20%; bottom: 20%; left: 0; right: 0;
+  border: 1px dashed rgba(255, 255, 255, 0.7);
+}
+.banner-guide-mobile {
+  top: 0; bottom: 0; left: 8%; right: 8%;
+  border: 1px dashed rgba(255, 200, 60, 0.75);
+}
+.banner-guide-label {
+  position: absolute; top: 3px; left: 4px;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; white-space: nowrap;
+  color: #fff; background: rgba(0, 0, 0, 0.5);
+  padding: 1px 5px;
+}
+
+.banner-zoom-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+.banner-zoom-row input[type="range"] { flex: 1; }
 
 /* ── Dark-theme overrides ── */
 [data-theme="dark"] .pinned-card { border-color: #6b3d1f; background: #3d1a05; }
