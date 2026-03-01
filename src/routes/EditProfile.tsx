@@ -185,23 +185,24 @@ export default function EditProfile() {
     if (!ctx) throw new Error('Canvas unavailable');
     // Draw the 3:1 crop into the center band (what desktop shows)
     ctx.drawImage(img, sx, sy, srcCropW, srcCropH, 0, CENTER_Y, TARGET_W, CENTER_H);
-    // Fill top band with source content above the 3:1 crop (extra context for mobile)
-    const extraSrcH = srcCropH * CENTER_Y / CENTER_H;
-    const topSrcY = sy - extraSrcH;
-    if (topSrcY >= 0) {
-      ctx.drawImage(img, sx, topSrcY, srcCropW, extraSrcH, 0, 0, TARGET_W, CENTER_Y);
-    } else if (sy > 0) {
-      const availCanvasH = Math.round(sy * CENTER_Y / extraSrcH);
-      ctx.drawImage(img, sx, 0, srcCropW, sy, 0, CENTER_Y - availCanvasH, TARGET_W, availCanvasH);
+    // Fill top band: stretch whatever source content exists above the crop to fill the
+    // full band. If the crop is already at the top edge, repeat the topmost strip.
+    if (sy > 0) {
+      ctx.drawImage(img, sx, 0, srcCropW, sy, 0, 0, TARGET_W, CENTER_Y);
+    } else {
+      const edgeH = Math.max(1, Math.ceil(srcCropH * 0.05));
+      ctx.drawImage(img, sx, 0, srcCropW, edgeH, 0, 0, TARGET_W, CENTER_Y);
     }
-    // Fill bottom band with source content below the 3:1 crop (extra context for mobile)
+    // Fill bottom band: stretch whatever source content exists below the crop to fill
+    // the full band. If the crop is already at the bottom edge, repeat the bottommost strip.
     const botSrcY = sy + srcCropH;
     const botAvail = img.height - botSrcY;
-    if (botAvail >= extraSrcH) {
-      ctx.drawImage(img, sx, botSrcY, srcCropW, extraSrcH, 0, CENTER_Y + CENTER_H, TARGET_W, CENTER_Y);
-    } else if (botAvail > 0) {
-      const availCanvasH = Math.round(botAvail * CENTER_Y / extraSrcH);
-      ctx.drawImage(img, sx, botSrcY, srcCropW, botAvail, 0, CENTER_Y + CENTER_H, TARGET_W, availCanvasH);
+    if (botAvail > 0) {
+      ctx.drawImage(img, sx, botSrcY, srcCropW, botAvail, 0, CENTER_Y + CENTER_H, TARGET_W, CENTER_Y);
+    } else {
+      const edgeH = Math.max(1, Math.ceil(srcCropH * 0.05));
+      const edgeSrcY = Math.max(0, sy + srcCropH - edgeH);
+      ctx.drawImage(img, sx, edgeSrcY, srcCropW, edgeH, 0, CENTER_Y + CENTER_H, TARGET_W, CENTER_Y);
     }
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.88));
     if (!blob) throw new Error('Could not encode image');
