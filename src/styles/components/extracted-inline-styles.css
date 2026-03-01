@@ -3279,9 +3279,15 @@
 
 /* ── Banner strip — avatar anchored to bottom-left ── */
 .artist-profile-banner {
-  width: 100%; height: 160px;
+  width: 100%; height: 220px;
   background-size: cover; background-position: center;
   flex-shrink: 0; position: relative;
+}
+@media (max-width: 900px) {
+  .artist-profile-banner { height: 185px; }
+}
+@media (max-width: 640px) {
+  .artist-profile-banner { height: 150px; }
 }
 /* Avatar sits at the bottom-left of the banner, half overlapping into the content section */
 .artist-profile-banner .artist-detail-avatar {
@@ -3384,12 +3390,64 @@
   height: 40px; width: 100%; border: 1px solid var(--body-card-border); margin-top: 4px;
 }
 
-/* ── Banner preview in EditProfile ── */
-.banner-preview {
-  margin-top: 8px; border: 1px solid var(--body-card-border);
-  overflow: hidden; max-width: 400px;
+/* ── Banner editor in EditProfile ── */
+.banner-edit-container {
+  position: relative;
+  width: 100%; max-width: 600px;
+  aspect-ratio: 3 / 1;
+  overflow: hidden;
+  border: 1px solid var(--body-card-border);
+  margin-top: 8px;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  display: block;
 }
-.banner-preview-img { width: 100%; height: 120px; object-fit: cover; display: block; }
+.banner-edit-container:active { cursor: grabbing; }
+.banner-edit-img {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+  transform-origin: center;
+}
+
+/* ── Crop guide overlays ── */
+/* Desktop guide: banner is very wide on desktop → crops top/bottom ~15% */
+.banner-guide { position: absolute; pointer-events: none; box-sizing: border-box; }
+.banner-guide-desktop {
+  top: 15%; bottom: 15%; left: 0; right: 0;
+  border: 1px dashed rgba(255, 255, 255, 0.7);
+}
+/* Mobile guide: narrow portrait phones → crops sides ~10% */
+.banner-guide-mobile {
+  top: 0; bottom: 0; left: 10%; right: 10%;
+  border: 1px dashed rgba(255, 200, 60, 0.75);
+}
+.banner-guide-label {
+  position: absolute; top: 3px; left: 4px;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; white-space: nowrap;
+  color: #fff; background: rgba(0, 0, 0, 0.5);
+  padding: 1px 5px; pointer-events: none;
+}
+
+/* Legend below the editor */
+.banner-guide-legend {
+  display: flex; gap: 16px; flex-wrap: wrap; margin-top: 5px;
+}
+.banner-guide-legend-desktop {
+  border-top: 1px dashed rgba(255, 255, 255, 0.85);
+  padding-top: 3px;
+}
+.banner-guide-legend-mobile {
+  border-top: 1px dashed rgba(255, 200, 60, 0.85);
+  padding-top: 3px;
+}
+
+.banner-zoom-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+.banner-zoom-row input[type="range"] { flex: 1; }
 
 /* ── Dark-theme overrides ── */
 [data-theme="dark"] .pinned-card { border-color: #6b3d1f; background: #3d1a05; }

@@ -77,6 +77,9 @@ export default function EditProfile() {
   const [bannerOffsetX, setBannerOffsetX] = useState(0);
   const [bannerOffsetY, setBannerOffsetY] = useState(0);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  const bannerContainerRef = useRef<HTMLDivElement>(null);
+  const isDraggingBanner = useRef(false);
+  const bannerDragStart = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
 
   // Profile theme
   const [profileTheme, setProfileTheme] = useState<string | null>(null);
@@ -147,7 +150,7 @@ export default function EditProfile() {
     const img = new Image();
     img.src = bannerPreview;
     await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
-    const TARGET_W = 1200, TARGET_H = 400;
+    const TARGET_W = 1500, TARGET_H = 500;
     // Crop a 3:1 region from the source image using zoom and offset
     const srcAspect = img.width / img.height;
     const targetAspect = TARGET_W / TARGET_H;
@@ -188,6 +191,51 @@ export default function EditProfile() {
     }
     if (!json.ok || !json.url) throw new Error(json.message ?? 'Banner upload failed');
     return json.url;
+  };
+
+  // ── Banner drag-to-reposition ────────────────────────────────────────────────
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!isDraggingBanner.current || !bannerContainerRef.current) return;
+      const containerW = bannerContainerRef.current.offsetWidth;
+      const containerH = bannerContainerRef.current.offsetHeight;
+      const dx = e.clientX - bannerDragStart.current.x;
+      const dy = e.clientY - bannerDragStart.current.y;
+      setBannerOffsetX(Math.max(-1, Math.min(1, bannerDragStart.current.offsetX + (2 * dx) / containerW)));
+      setBannerOffsetY(Math.max(-1, Math.min(1, bannerDragStart.current.offsetY + (2 * dy) / containerH)));
+    };
+    const onUp = () => { isDraggingBanner.current = false; };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, []);
+
+  const handleBannerMouseDown = (e: React.MouseEvent) => {
+    isDraggingBanner.current = true;
+    bannerDragStart.current = { x: e.clientX, y: e.clientY, offsetX: bannerOffsetX, offsetY: bannerOffsetY };
+    e.preventDefault();
+  };
+
+  const handleBannerWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    setBannerZoom(z => Math.max(1, Math.min(3, z + (e.deltaY > 0 ? -0.1 : 0.1))));
+  };
+
+  const handleBannerTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    isDraggingBanner.current = true;
+    bannerDragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, offsetX: bannerOffsetX, offsetY: bannerOffsetY };
+  };
+
+  const handleBannerTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggingBanner.current || !bannerContainerRef.current || e.touches.length !== 1) return;
+    e.preventDefault();
+    const containerW = bannerContainerRef.current.offsetWidth;
+    const containerH = bannerContainerRef.current.offsetHeight;
+    const dx = e.touches[0].clientX - bannerDragStart.current.x;
+    const dy = e.touches[0].clientY - bannerDragStart.current.y;
+    setBannerOffsetX(Math.max(-1, Math.min(1, bannerDragStart.current.offsetX + (2 * dx) / containerW)));
+    setBannerOffsetY(Math.max(-1, Math.min(1, bannerDragStart.current.offsetY + (2 * dy) / containerH)));
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -405,31 +453,48 @@ export default function EditProfile() {
           <button type="button" className="btn btn-secondary" onClick={() => bannerInputRef.current?.click()}><UploadDownloadIcon size={14} /> Upload banner</button>
           {bannerPreview && (
             <>
-              <div className="banner-preview">
+              <div
+                ref={bannerContainerRef}
+                className="banner-edit-container"
+                onMouseDown={handleBannerMouseDown}
+                onWheel={handleBannerWheel}
+                onTouchStart={handleBannerTouchStart}
+                onTouchMove={handleBannerTouchMove}
+                onTouchEnd={() => { isDraggingBanner.current = false; }}
+              >
                 <img
                   src={bannerPreview}
                   alt="Banner preview"
-                  className="banner-preview-img"
+                  className="banner-edit-img"
                   style={{
                     transform: `scale(${bannerZoom}) translate(${bannerOffsetX * 50 / bannerZoom}%, ${bannerOffsetY * 50 / bannerZoom}%)`,
                     transformOrigin: 'center',
                   }}
                 />
+                <div className="banner-guide banner-guide-desktop">
+                  <span className="banner-guide-label">Desktop</span>
+                </div>
+                <div className="banner-guide banner-guide-mobile">
+                  <span className="banner-guide-label">Mobile</span>
+                </div>
               </div>
-              <label className="form-hint">Zoom</label>
-              <input type="range" min="1" max="3" step="0.1" value={bannerZoom} onChange={(e) => setBannerZoom(parseFloat(e.target.value))} />
-              <label className="form-hint">Position X</label>
-              <input type="range" min="-1" max="1" step="0.05" value={bannerOffsetX} onChange={(e) => setBannerOffsetX(parseFloat(e.target.value))} />
-              <label className="form-hint">Position Y</label>
-              <input type="range" min="-1" max="1" step="0.05" value={bannerOffsetY} onChange={(e) => setBannerOffsetY(parseFloat(e.target.value))} />
+              <p className="form-hint banner-guide-legend">
+                <span className="banner-guide-legend-desktop">— Desktop crop</span>
+                <span className="banner-guide-legend-mobile">— Mobile crop</span>
+              </p>
+              <div className="banner-zoom-row">
+                <label className="form-hint">Zoom</label>
+                <input type="range" min="1" max="3" step="0.05" value={bannerZoom} onChange={(e) => setBannerZoom(parseFloat(e.target.value))} />
+              </div>
+              <p className="form-hint">Drag the image to reposition · Scroll to zoom</p>
             </>
           )}
           {!bannerPreview && profile?.banner_url && (
-            <div className="banner-preview">
-              <img src={profile.banner_url} alt="Current banner" className="banner-preview-img" />
+            <div className="banner-edit-container" style={{ pointerEvents: 'none', cursor: 'default' }}>
+              <img src={profile.banner_url} alt="Current banner" className="banner-edit-img" style={{ objectFit: 'cover' }} />
             </div>
           )}
-          <span className="form-hint">Displayed at the top of your profile. Saved as 1200×400.</span>
+          <span className="form-hint">Displayed at the top of your profile. Saved as 1500×500.</span>
         </div>
 
         {/* Profile Theme */}
