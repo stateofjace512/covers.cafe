@@ -1908,7 +1908,7 @@
         .avatar-edit-outer { position: relative; width: 100%; max-width: 240px; overflow: hidden; border: 1px solid var(--body-card-border); margin-top: 8px; cursor: grab; user-select: none; touch-action: none; }
         .avatar-edit-outer:active { cursor: grabbing; }
         .avatar-edit-img { display: block; width: 100%; height: auto; pointer-events: none; user-select: none; transform-origin: center center; }
-        .avatar-crop-window { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); aspect-ratio: 1 / 1; border-radius: 50%; border: 2px solid rgba(255,255,255,0.85); box-shadow: 0 0 0 2000px rgba(0,0,0,0.5); pointer-events: none; z-index: 2; box-sizing: border-box; }
+        .avatar-crop-window { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); aspect-ratio: 1 / 1; border: 2px solid rgba(255,255,255,0.85); box-shadow: 0 0 0 2000px rgba(0,0,0,0.5); pointer-events: none; z-index: 2; box-sizing: border-box; }
 
         .form-input {
           width: 100%; padding: 8px 12px; border-radius: 0;
