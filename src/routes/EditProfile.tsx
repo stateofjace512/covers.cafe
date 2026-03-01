@@ -480,12 +480,19 @@ export default function EditProfile() {
                     transformOrigin: 'center',
                   }}
                 />
+                <div className="banner-guide banner-guide-desktop">
+                  <span className="banner-guide-label">Desktop</span>
+                </div>
+                <div className="banner-guide banner-guide-mobile">
+                  <span className="banner-guide-label">Mobile</span>
+                </div>
               </div>
+              <p className="form-hint">Desktop crops top &amp; bottom · Mobile crops sides · Keep important content inside both guides</p>
               <div className="banner-zoom-row">
                 <label className="form-hint">Zoom</label>
                 <input type="range" min="1" max="3" step="0.05" value={bannerZoom} onChange={(e) => setBannerZoom(parseFloat(e.target.value))} />
               </div>
-              <p className="form-hint">Drag the image to reposition · Scroll to zoom</p>
+              <p className="form-hint">Drag to reposition · Scroll to zoom</p>
             </>
           )}
           {!bannerPreview && profile?.banner_url && (

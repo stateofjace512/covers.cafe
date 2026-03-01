@@ -3278,13 +3278,17 @@
 .artist-detail-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 
 /* ── Banner strip — avatar anchored to bottom-left ── */
-/* Exactly 16:9, matching the stored 1920×1080 image and the editor preview.
-   No secondary crop, no re-centering — what the user set is what is shown. */
+/* Fixed height so the banner doesn't take over the page. The stored 1920×1080
+   image is wider than these display containers, so background-size: cover
+   always clips something — that's what the editor guide overlays show. */
 .artist-profile-banner {
-  width: 100%;
-  aspect-ratio: 16 / 9;
+  width: 100%; height: 280px;
   background-size: cover; background-position: center;
   flex-shrink: 0; position: relative;
+}
+@media (max-width: 640px) {
+  /* Narrower viewport: 1.5:1 display AR vs 1.78:1 image → clips sides instead */
+  .artist-profile-banner { height: 250px; }
 }
 /* Avatar sits at the bottom-left of the banner, half overlapping into the content section */
 .artist-profile-banner .artist-detail-avatar {
@@ -3409,7 +3413,28 @@
   pointer-events: none;
   transform-origin: center;
 }
-
+/* ── Crop guide overlays ── */
+/* Desktop (>640px): banner is 280px tall. At ~900px wide, display AR ≈ 3.2:1 vs
+   the stored 1.78:1 → background-size:cover clips ~22% from top and bottom.
+   Mobile (≤640px): banner is 250px tall. At ~375px wide, display AR ≈ 1.5:1 vs
+   1.78:1 → background-size:cover clips ~8% from each side.
+   Users should keep important content inside BOTH guide boxes. */
+.banner-guide { position: absolute; pointer-events: none; box-sizing: border-box; }
+.banner-guide-desktop {
+  top: 22%; bottom: 22%; left: 0; right: 0;
+  border: 1px dashed rgba(255, 255, 255, 0.7);
+}
+.banner-guide-mobile {
+  top: 0; bottom: 0; left: 8%; right: 8%;
+  border: 1px dashed rgba(255, 200, 60, 0.75);
+}
+.banner-guide-label {
+  position: absolute; top: 3px; left: 4px;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; white-space: nowrap;
+  color: #fff; background: rgba(0, 0, 0, 0.5);
+  padding: 1px 5px;
+}
 
 .banner-zoom-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
 .banner-zoom-row input[type="range"] { flex: 1; }
