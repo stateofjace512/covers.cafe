@@ -79,7 +79,7 @@ export default function EditProfile() {
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const bannerContainerRef = useRef<HTMLDivElement>(null);
   const isDraggingBanner = useRef(false);
-  const bannerDragStart = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
+  const bannerDragStart = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0, zoom: 1 });
 
   // Profile theme
   const [profileTheme, setProfileTheme] = useState<string | null>(null);
@@ -146,12 +146,11 @@ export default function EditProfile() {
 
   const uploadBanner = async (): Promise<string | null> => {
     if (!user || !session || !bannerPreview) return null;
-    // Canvas crop with zoom/position, then resize to ≤1200×400 for upload.
     const img = new Image();
     img.src = bannerPreview;
     await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
-    const TARGET_W = 1500, TARGET_H = 500;
-    // Crop a 3:1 region from the source image using zoom and offset
+    const TARGET_W = 1920, TARGET_H = 1080;
+    // Crop a 16:9 region from the source image using zoom and offset
     const srcAspect = img.width / img.height;
     const targetAspect = TARGET_W / TARGET_H;
     // Base crop: fit the target aspect ratio into the image
@@ -194,6 +193,14 @@ export default function EditProfile() {
   };
 
   // ── Banner drag-to-reposition ────────────────────────────────────────────────
+  // When zoom decreases, re-clamp offsets so the image never shows empty space.
+  // At zoom z, the max safe offset is (z - 1) in each axis.
+  useEffect(() => {
+    const max = Math.max(0, bannerZoom - 1);
+    setBannerOffsetX(x => Math.max(-max, Math.min(max, x)));
+    setBannerOffsetY(y => Math.max(-max, Math.min(max, y)));
+  }, [bannerZoom]);
+
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       if (!isDraggingBanner.current || !bannerContainerRef.current) return;
@@ -201,8 +208,9 @@ export default function EditProfile() {
       const containerH = bannerContainerRef.current.offsetHeight;
       const dx = e.clientX - bannerDragStart.current.x;
       const dy = e.clientY - bannerDragStart.current.y;
-      setBannerOffsetX(Math.max(-1, Math.min(1, bannerDragStart.current.offsetX + (2 * dx) / containerW)));
-      setBannerOffsetY(Math.max(-1, Math.min(1, bannerDragStart.current.offsetY + (2 * dy) / containerH)));
+      const max = Math.max(0, bannerDragStart.current.zoom - 1);
+      setBannerOffsetX(Math.max(-max, Math.min(max, bannerDragStart.current.offsetX + (2 * dx) / containerW)));
+      setBannerOffsetY(Math.max(-max, Math.min(max, bannerDragStart.current.offsetY + (2 * dy) / containerH)));
     };
     const onUp = () => { isDraggingBanner.current = false; };
     window.addEventListener('mousemove', onMove);
@@ -212,7 +220,7 @@ export default function EditProfile() {
 
   const handleBannerMouseDown = (e: React.MouseEvent) => {
     isDraggingBanner.current = true;
-    bannerDragStart.current = { x: e.clientX, y: e.clientY, offsetX: bannerOffsetX, offsetY: bannerOffsetY };
+    bannerDragStart.current = { x: e.clientX, y: e.clientY, offsetX: bannerOffsetX, offsetY: bannerOffsetY, zoom: bannerZoom };
     e.preventDefault();
   };
 
@@ -224,7 +232,7 @@ export default function EditProfile() {
   const handleBannerTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length !== 1) return;
     isDraggingBanner.current = true;
-    bannerDragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, offsetX: bannerOffsetX, offsetY: bannerOffsetY };
+    bannerDragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, offsetX: bannerOffsetX, offsetY: bannerOffsetY, zoom: bannerZoom };
   };
 
   const handleBannerTouchMove = (e: React.TouchEvent) => {
@@ -234,8 +242,9 @@ export default function EditProfile() {
     const containerH = bannerContainerRef.current.offsetHeight;
     const dx = e.touches[0].clientX - bannerDragStart.current.x;
     const dy = e.touches[0].clientY - bannerDragStart.current.y;
-    setBannerOffsetX(Math.max(-1, Math.min(1, bannerDragStart.current.offsetX + (2 * dx) / containerW)));
-    setBannerOffsetY(Math.max(-1, Math.min(1, bannerDragStart.current.offsetY + (2 * dy) / containerH)));
+    const max = Math.max(0, bannerDragStart.current.zoom - 1);
+    setBannerOffsetX(Math.max(-max, Math.min(max, bannerDragStart.current.offsetX + (2 * dx) / containerW)));
+    setBannerOffsetY(Math.max(-max, Math.min(max, bannerDragStart.current.offsetY + (2 * dy) / containerH)));
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -472,16 +481,10 @@ export default function EditProfile() {
                   }}
                 />
                 <div className="banner-guide banner-guide-desktop">
-                  <span className="banner-guide-label">Desktop</span>
-                </div>
-                <div className="banner-guide banner-guide-mobile">
-                  <span className="banner-guide-label">Mobile</span>
+                  <span className="banner-guide-label">Desktop safe zone</span>
                 </div>
               </div>
-              <p className="form-hint banner-guide-legend">
-                <span className="banner-guide-legend-desktop">— Desktop crop</span>
-                <span className="banner-guide-legend-mobile">— Mobile crop</span>
-              </p>
+              <p className="form-hint">Keep important content inside the guide. Wide desktop screens crop ~20% from top and bottom.</p>
               <div className="banner-zoom-row">
                 <label className="form-hint">Zoom</label>
                 <input type="range" min="1" max="3" step="0.05" value={bannerZoom} onChange={(e) => setBannerZoom(parseFloat(e.target.value))} />
@@ -494,7 +497,7 @@ export default function EditProfile() {
               <img src={profile.banner_url} alt="Current banner" className="banner-edit-img" style={{ objectFit: 'cover' }} />
             </div>
           )}
-          <span className="form-hint">Displayed at the top of your profile. Saved as 1500×500.</span>
+          <span className="form-hint">Displayed at the top of your profile. Saved as 1920×1080 (16:9).</span>
         </div>
 
         {/* Profile Theme */}
