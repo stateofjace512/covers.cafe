@@ -9,6 +9,7 @@ import TeaIcon from '../components/TeaIcon';
 import MoonIcon from '../components/MoonIcon';
 import SunIcon from '../components/SunIcon';
 import SettingSlideIcon from '../components/SettingSlideIcon';
+import MonitorIcon from '../components/MonitorIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -67,19 +68,24 @@ export default function EditProfile() {
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarZoom, setAvatarZoom] = useState(1);
-  const [avatarOffsetX, setAvatarOffsetX] = useState(0);
-  const [avatarOffsetY, setAvatarOffsetY] = useState(0);
+  const [avatarTranslateX, setAvatarTranslateX] = useState(0);
+  const [avatarTranslateY, setAvatarTranslateY] = useState(0);
+  const [avatarCropWindowPct, setAvatarCropWindowPct] = useState(100);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const avatarContainerRef = useRef<HTMLDivElement>(null);
+  const isDraggingAvatar = useRef(false);
+  const avatarDragStart = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
 
   // Banner
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [bannerZoom, setBannerZoom] = useState(1);
-  const [bannerOffsetX, setBannerOffsetX] = useState(0);
-  const [bannerOffsetY, setBannerOffsetY] = useState(0);
+  // Pixel translation of the image within the editor (centre-anchored, in container px).
+  const [bannerTranslateX, setBannerTranslateX] = useState(0);
+  const [bannerTranslateY, setBannerTranslateY] = useState(0);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const bannerContainerRef = useRef<HTMLDivElement>(null);
   const isDraggingBanner = useRef(false);
-  const bannerDragStart = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0, zoom: 1 });
+  const bannerDragStart = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
 
   // Profile theme
   const [profileTheme, setProfileTheme] = useState<string | null>(null);
@@ -122,13 +128,15 @@ export default function EditProfile() {
     canvas.width = 500; canvas.height = 500;
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
-    const minSide = Math.min(img.width, img.height);
-    const cropSide = minSide / Math.max(avatarZoom, 1);
-    // Center crop, then apply offset (offset is -1..1 fraction of the remaining space)
-    const maxOffsetX = (img.width - cropSide) / 2;
-    const maxOffsetY = (img.height - cropSide) / 2;
-    const sx = maxOffsetX + avatarOffsetX * maxOffsetX;
-    const sy = maxOffsetY + avatarOffsetY * maxOffsetY;
+    // Crop size: min(imgW, imgH) / zoom (same square side regardless of orientation)
+    const cropSide = Math.min(img.width, img.height) / avatarZoom;
+    // Container width drives the pixel scale; height scales proportionally.
+    const containerW = avatarContainerRef.current?.offsetWidth ?? 240;
+    const pxScale = img.width / (containerW * avatarZoom);
+    const sx_center = img.width  / 2 - avatarTranslateX * pxScale;
+    const sy_center = img.height / 2 - avatarTranslateY * pxScale;
+    const sx = Math.max(0, Math.min(img.width  - cropSide, sx_center - cropSide / 2));
+    const sy = Math.max(0, Math.min(img.height - cropSide, sy_center - cropSide / 2));
     ctx.drawImage(img, sx, sy, cropSide, cropSide, 0, 0, 500, 500);
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
     if (!blob) return null;
@@ -150,28 +158,51 @@ export default function EditProfile() {
     img.src = bannerPreview;
     await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
     const TARGET_W = 1920, TARGET_H = 1080;
-    // Crop a 16:9 region from the source image using zoom and offset
-    const srcAspect = img.width / img.height;
-    const targetAspect = TARGET_W / TARGET_H;
-    // Base crop: fit the target aspect ratio into the image
-    let cropW: number, cropH: number;
-    if (srcAspect > targetAspect) {
-      cropH = img.height / bannerZoom;
-      cropW = cropH * targetAspect;
-    } else {
-      cropW = img.width / bannerZoom;
-      cropH = cropW / targetAspect;
-    }
-    const maxOffsetX = (img.width - cropW) / 2;
-    const maxOffsetY = (img.height - cropH) / 2;
-    const sx = maxOffsetX + bannerOffsetX * maxOffsetX;
-    const sy = maxOffsetY + bannerOffsetY * maxOffsetY;
+    // Desktop displays a 3:1 center band of the stored 1920×1080 image (clips 220px
+    // top+bottom with background-size:cover). We capture the 3:1 region the user
+    // positioned using bannerTranslateX/Y + bannerZoom, then embed it in that center
+    // band. Top/bottom bands are filled with adjacent source content for mobile.
+    const DISPLAY_ASPECT = 3.0;
+    const CENTER_H = Math.round(TARGET_W / DISPLAY_ASPECT); // 640px
+    const CENTER_Y = Math.round((TARGET_H - CENTER_H) / 2); // 220px
+    // Source crop size: zoom=1 → full-width 3:1 crop; zoom>1 → zoomed in.
+    const srcCropW = img.width / bannerZoom;
+    const srcCropH = srcCropW / DISPLAY_ASPECT;
+    // Container dimensions (image is display:block width:100% height:auto so
+    // container height = containerW * imgH / imgW — same pixel aspect as the source).
+    const containerW = bannerContainerRef.current?.offsetWidth ?? 640;
+    // Pixel scale factor: one container pixel = this many source pixels.
+    const pxScale = img.width / (containerW * bannerZoom);
+    // Center of the crop in source coordinates (derived from CSS scale+translate).
+    const sx_center = img.width  / 2 - bannerTranslateX * pxScale;
+    const sy_center = img.height / 2 - bannerTranslateY * pxScale;
+    const sx = Math.max(0, Math.min(img.width  - srcCropW, sx_center - srcCropW / 2));
+    const sy = Math.max(0, Math.min(img.height - srcCropH, sy_center - srcCropH / 2));
     const canvas = document.createElement('canvas');
     canvas.width = TARGET_W;
     canvas.height = TARGET_H;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas unavailable');
-    ctx.drawImage(img, sx, sy, cropW, cropH, 0, 0, TARGET_W, TARGET_H);
+    // Draw the 3:1 crop into the center band (what desktop shows)
+    ctx.drawImage(img, sx, sy, srcCropW, srcCropH, 0, CENTER_Y, TARGET_W, CENTER_H);
+    // Fill top band with source content above the 3:1 crop (extra context for mobile)
+    const extraSrcH = srcCropH * CENTER_Y / CENTER_H;
+    const topSrcY = sy - extraSrcH;
+    if (topSrcY >= 0) {
+      ctx.drawImage(img, sx, topSrcY, srcCropW, extraSrcH, 0, 0, TARGET_W, CENTER_Y);
+    } else if (sy > 0) {
+      const availCanvasH = Math.round(sy * CENTER_Y / extraSrcH);
+      ctx.drawImage(img, sx, 0, srcCropW, sy, 0, CENTER_Y - availCanvasH, TARGET_W, availCanvasH);
+    }
+    // Fill bottom band with source content below the 3:1 crop (extra context for mobile)
+    const botSrcY = sy + srcCropH;
+    const botAvail = img.height - botSrcY;
+    if (botAvail >= extraSrcH) {
+      ctx.drawImage(img, sx, botSrcY, srcCropW, extraSrcH, 0, CENTER_Y + CENTER_H, TARGET_W, CENTER_Y);
+    } else if (botAvail > 0) {
+      const availCanvasH = Math.round(botAvail * CENTER_Y / extraSrcH);
+      ctx.drawImage(img, sx, botSrcY, srcCropW, botAvail, 0, CENTER_Y + CENTER_H, TARGET_W, availCanvasH);
+    }
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.88));
     if (!blob) throw new Error('Could not encode image');
     const form = new FormData();
@@ -193,58 +224,127 @@ export default function EditProfile() {
   };
 
   // ── Banner drag-to-reposition ────────────────────────────────────────────────
-  // When zoom decreases, re-clamp offsets so the image never shows empty space.
-  // At zoom z, the max safe offset is (z - 1) in each axis.
+  // Translations are in container pixels (centre-anchored). The crop window is
+  // always 3:1 full-width at the vertical centre; clamping keeps it inside the image.
+  function clampBannerTranslate(tx: number, ty: number, zoom: number): { tx: number; ty: number } {
+    if (!bannerContainerRef.current) return { tx, ty };
+    const cW = bannerContainerRef.current.offsetWidth;
+    const cH = bannerContainerRef.current.offsetHeight;
+    const maxTx = Math.max(0, cW  * (zoom - 1) / 2);
+    const maxTy = Math.max(0, (cH * zoom - cW / 3) / 2);
+    return { tx: Math.max(-maxTx, Math.min(maxTx, tx)), ty: Math.max(-maxTy, Math.min(maxTy, ty)) };
+  }
+
   useEffect(() => {
-    const max = Math.max(0, bannerZoom - 1);
-    setBannerOffsetX(x => Math.max(-max, Math.min(max, x)));
-    setBannerOffsetY(y => Math.max(-max, Math.min(max, y)));
+    const { tx, ty } = clampBannerTranslate(bannerTranslateX, bannerTranslateY, bannerZoom);
+    setBannerTranslateX(tx);
+    setBannerTranslateY(ty);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bannerZoom]);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
-      if (!isDraggingBanner.current || !bannerContainerRef.current) return;
-      const containerW = bannerContainerRef.current.offsetWidth;
-      const containerH = bannerContainerRef.current.offsetHeight;
+      if (!isDraggingBanner.current) return;
       const dx = e.clientX - bannerDragStart.current.x;
       const dy = e.clientY - bannerDragStart.current.y;
-      const max = Math.max(0, bannerDragStart.current.zoom - 1);
-      setBannerOffsetX(Math.max(-max, Math.min(max, bannerDragStart.current.offsetX + (2 * dx) / containerW)));
-      setBannerOffsetY(Math.max(-max, Math.min(max, bannerDragStart.current.offsetY + (2 * dy) / containerH)));
+      const rawTx = bannerDragStart.current.offsetX + dx;
+      const rawTy = bannerDragStart.current.offsetY + dy;
+      const { tx, ty } = clampBannerTranslate(rawTx, rawTy, bannerZoom);
+      setBannerTranslateX(tx);
+      setBannerTranslateY(ty);
     };
     const onUp = () => { isDraggingBanner.current = false; };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bannerZoom]);
 
   const handleBannerMouseDown = (e: React.MouseEvent) => {
     isDraggingBanner.current = true;
-    bannerDragStart.current = { x: e.clientX, y: e.clientY, offsetX: bannerOffsetX, offsetY: bannerOffsetY, zoom: bannerZoom };
+    bannerDragStart.current = { x: e.clientX, y: e.clientY, offsetX: bannerTranslateX, offsetY: bannerTranslateY };
     e.preventDefault();
-  };
-
-  const handleBannerWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    setBannerZoom(z => Math.max(1, Math.min(3, z + (e.deltaY > 0 ? -0.1 : 0.1))));
   };
 
   const handleBannerTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length !== 1) return;
     isDraggingBanner.current = true;
-    bannerDragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, offsetX: bannerOffsetX, offsetY: bannerOffsetY, zoom: bannerZoom };
+    bannerDragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, offsetX: bannerTranslateX, offsetY: bannerTranslateY };
   };
 
   const handleBannerTouchMove = (e: React.TouchEvent) => {
-    if (!isDraggingBanner.current || !bannerContainerRef.current || e.touches.length !== 1) return;
+    if (!isDraggingBanner.current || e.touches.length !== 1) return;
     e.preventDefault();
-    const containerW = bannerContainerRef.current.offsetWidth;
-    const containerH = bannerContainerRef.current.offsetHeight;
     const dx = e.touches[0].clientX - bannerDragStart.current.x;
     const dy = e.touches[0].clientY - bannerDragStart.current.y;
-    const max = Math.max(0, bannerDragStart.current.zoom - 1);
-    setBannerOffsetX(Math.max(-max, Math.min(max, bannerDragStart.current.offsetX + (2 * dx) / containerW)));
-    setBannerOffsetY(Math.max(-max, Math.min(max, bannerDragStart.current.offsetY + (2 * dy) / containerH)));
+    const rawTx = bannerDragStart.current.offsetX + dx;
+    const rawTy = bannerDragStart.current.offsetY + dy;
+    const { tx, ty } = clampBannerTranslate(rawTx, rawTy, bannerZoom);
+    setBannerTranslateX(tx);
+    setBannerTranslateY(ty);
+  };
+
+  // ── Avatar drag-to-reposition ─────────────────────────────────────────────────
+  // Crop window is a circle sized min(containerW, containerH); image pans under it.
+  function clampAvatarTranslate(tx: number, ty: number, zoom: number): { tx: number; ty: number } {
+    if (!avatarContainerRef.current) return { tx, ty };
+    const cW = avatarContainerRef.current.offsetWidth;
+    const cH = avatarContainerRef.current.offsetHeight;
+    const cropSize = Math.min(cW, cH);
+    const maxTx = Math.max(0, (cW * zoom - cropSize) / 2);
+    const maxTy = Math.max(0, (cH * zoom - cropSize) / 2);
+    return { tx: Math.max(-maxTx, Math.min(maxTx, tx)), ty: Math.max(-maxTy, Math.min(maxTy, ty)) };
+  }
+
+  useEffect(() => {
+    const { tx, ty } = clampAvatarTranslate(avatarTranslateX, avatarTranslateY, avatarZoom);
+    setAvatarTranslateX(tx);
+    setAvatarTranslateY(ty);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [avatarZoom]);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!isDraggingAvatar.current) return;
+      const dx = e.clientX - avatarDragStart.current.x;
+      const dy = e.clientY - avatarDragStart.current.y;
+      const { tx, ty } = clampAvatarTranslate(avatarDragStart.current.offsetX + dx, avatarDragStart.current.offsetY + dy, avatarZoom);
+      setAvatarTranslateX(tx);
+      setAvatarTranslateY(ty);
+    };
+    const onUp = () => { isDraggingAvatar.current = false; };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [avatarZoom]);
+
+  const handleAvatarMouseDown = (e: React.MouseEvent) => {
+    isDraggingAvatar.current = true;
+    avatarDragStart.current = { x: e.clientX, y: e.clientY, offsetX: avatarTranslateX, offsetY: avatarTranslateY };
+    e.preventDefault();
+  };
+
+  const handleAvatarTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    isDraggingAvatar.current = true;
+    avatarDragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, offsetX: avatarTranslateX, offsetY: avatarTranslateY };
+  };
+
+  const handleAvatarTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggingAvatar.current || e.touches.length !== 1) return;
+    e.preventDefault();
+    const dx = e.touches[0].clientX - avatarDragStart.current.x;
+    const dy = e.touches[0].clientY - avatarDragStart.current.y;
+    const { tx, ty } = clampAvatarTranslate(avatarDragStart.current.offsetX + dx, avatarDragStart.current.offsetY + dy, avatarZoom);
+    setAvatarTranslateX(tx);
+    setAvatarTranslateY(ty);
+  };
+
+  const handleAvatarImgLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth: nW, naturalHeight: nH } = e.currentTarget;
+    // Crop window is min(nW,nH)/nW of container width, expressed as a percentage.
+    setAvatarCropWindowPct(Math.min(nW, nH) / nW * 100);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -422,29 +522,45 @@ export default function EditProfile() {
             if (!picked) return;
             setAvatarPreview(URL.createObjectURL(picked));
             setAvatarZoom(1);
-            setAvatarOffsetX(0);
-            setAvatarOffsetY(0);
+            setAvatarTranslateX(0);
+            setAvatarTranslateY(0);
+            setAvatarCropWindowPct(100);
           }} />
           <button type="button" className="btn btn-secondary" onClick={() => avatarInputRef.current?.click()}><UploadDownloadIcon size={14} /> Upload image</button>
           {avatarPreview && (
             <>
-              <div className="avatar-crop-preview">
+              <div
+                ref={avatarContainerRef}
+                className="avatar-edit-outer"
+                onMouseDown={handleAvatarMouseDown}
+                onTouchStart={handleAvatarTouchStart}
+                onTouchMove={handleAvatarTouchMove}
+                onTouchEnd={() => { isDraggingAvatar.current = false; }}
+              >
                 <img
                   src={avatarPreview}
-                  alt="Avatar crop preview"
+                  alt="Avatar preview"
+                  className="avatar-edit-img"
+                  onLoad={handleAvatarImgLoad}
                   style={{
-                    transform: `scale(${avatarZoom}) translate(${avatarOffsetX * 50 / avatarZoom}%, ${avatarOffsetY * 50 / avatarZoom}%)`,
+                    transform: `translateX(${avatarTranslateX}px) translateY(${avatarTranslateY}px) scale(${avatarZoom})`,
+                    transformOrigin: 'center center',
                   }}
                 />
+                <div className="avatar-crop-window" style={{ width: `${avatarCropWindowPct}%` }} />
               </div>
-              <label className="form-hint">Zoom</label>
-              <input type="range" min="1" max="2.5" step="0.1" value={avatarZoom} onChange={(e) => setAvatarZoom(parseFloat(e.target.value))} />
-              <label className="form-hint">Position X</label>
-              <input type="range" min="-1" max="1" step="0.05" value={avatarOffsetX} onChange={(e) => setAvatarOffsetX(parseFloat(e.target.value))} />
-              <label className="form-hint">Position Y</label>
-              <input type="range" min="-1" max="1" step="0.05" value={avatarOffsetY} onChange={(e) => setAvatarOffsetY(parseFloat(e.target.value))} />
-              <p className="form-hint">Saved as 500×500 square.</p>
+              <div className="banner-zoom-row">
+                <label className="form-hint">Zoom</label>
+                <input type="range" min="1" max="2.5" step="0.1" value={avatarZoom} onChange={(e) => setAvatarZoom(parseFloat(e.target.value))} />
+              </div>
+              <p className="form-hint">Drag to reposition · Circle = crop · Zoom for detail</p>
             </>
+          )}
+          {!avatarPreview && profile?.avatar_url && (
+            <div className="avatar-edit-outer" style={{ pointerEvents: 'none', cursor: 'default' }}>
+              <img src={profile.avatar_url} alt="Current avatar" className="avatar-edit-img" />
+              <div className="avatar-crop-window" style={{ width: '100%' }} />
+            </div>
           )}
         </div>
 
@@ -456,17 +572,18 @@ export default function EditProfile() {
             if (!picked) return;
             setBannerPreview(URL.createObjectURL(picked));
             setBannerZoom(1);
-            setBannerOffsetX(0);
-            setBannerOffsetY(0);
+            setBannerTranslateX(0);
+            setBannerTranslateY(0);
           }} />
           <button type="button" className="btn btn-secondary" onClick={() => bannerInputRef.current?.click()}><UploadDownloadIcon size={14} /> Upload banner</button>
           {bannerPreview && (
             <>
+              {/* Full-image editor: the white-bordered 3:1 window shows exactly what
+                  gets cropped and uploaded for desktop. Drag the image to reposition. */}
               <div
                 ref={bannerContainerRef}
-                className="banner-edit-container"
+                className="banner-edit-outer"
                 onMouseDown={handleBannerMouseDown}
-                onWheel={handleBannerWheel}
                 onTouchStart={handleBannerTouchStart}
                 onTouchMove={handleBannerTouchMove}
                 onTouchEnd={() => { isDraggingBanner.current = false; }}
@@ -476,31 +593,33 @@ export default function EditProfile() {
                   alt="Banner preview"
                   className="banner-edit-img"
                   style={{
-                    transform: `scale(${bannerZoom}) translate(${bannerOffsetX * 50 / bannerZoom}%, ${bannerOffsetY * 50 / bannerZoom}%)`,
-                    transformOrigin: 'center',
+                    transform: `translateX(${bannerTranslateX}px) translateY(${bannerTranslateY}px) scale(${bannerZoom})`,
+                    transformOrigin: 'center center',
                   }}
                 />
-                <div className="banner-guide banner-guide-desktop">
-                  <span className="banner-guide-label">Desktop</span>
-                </div>
-                <div className="banner-guide banner-guide-mobile">
-                  <span className="banner-guide-label">Mobile</span>
+                <div className="banner-crop-window">
+                  <div className="banner-desktop-label">
+                    <MonitorIcon size={10} />
+                    <span>Desktop crop</span>
+                  </div>
+                  <div className="banner-guide banner-guide-mobile">
+                    <span className="banner-guide-label">Mobile</span>
+                  </div>
                 </div>
               </div>
-              <p className="form-hint">Desktop crops top &amp; bottom · Mobile crops sides · Keep important content inside both guides</p>
               <div className="banner-zoom-row">
                 <label className="form-hint">Zoom</label>
                 <input type="range" min="1" max="3" step="0.05" value={bannerZoom} onChange={(e) => setBannerZoom(parseFloat(e.target.value))} />
               </div>
-              <p className="form-hint">Drag to reposition · Scroll to zoom</p>
+              <p className="form-hint">Drag to reposition · White border = desktop crop · Zoom for detail</p>
             </>
           )}
           {!bannerPreview && profile?.banner_url && (
-            <div className="banner-edit-container" style={{ pointerEvents: 'none', cursor: 'default' }}>
+            <div className="banner-edit-outer" style={{ pointerEvents: 'none', cursor: 'default' }}>
               <img src={profile.banner_url} alt="Current banner" className="banner-edit-img" style={{ objectFit: 'cover' }} />
             </div>
           )}
-          <span className="form-hint">Displayed at the top of your profile. Saved as 1920×1080 (16:9).</span>
+          <span className="form-hint">Displayed at the top of your profile. Saved as 1920×1080 with extra context for mobile.</span>
         </div>
 
         {/* Profile Theme */}

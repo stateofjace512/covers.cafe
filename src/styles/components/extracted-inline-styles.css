@@ -1905,8 +1905,10 @@
         [data-theme="dark"] .form-change-limit { background: rgba(255,255,255,0.06); }
         [data-theme="dark"] .form-change-limit--exhausted { background: rgba(200,50,30,0.12); }
         .form-field-error { font-size: 18px; color: #c83220; }
-        .avatar-crop-preview { width: 180px; height: 180px; border-radius: 8px; overflow: hidden; border: 1px solid var(--body-card-border); background: var(--sidebar-bg); }
-        .avatar-crop-preview img { width: 100%; height: 100%; object-fit: cover; transform-origin: center; }
+        .avatar-edit-outer { position: relative; width: 100%; max-width: 240px; overflow: hidden; border: 1px solid var(--body-card-border); margin-top: 8px; cursor: grab; user-select: none; touch-action: none; }
+        .avatar-edit-outer:active { cursor: grabbing; }
+        .avatar-edit-img { display: block; width: 100%; height: auto; pointer-events: none; user-select: none; transform-origin: center center; }
+        .avatar-crop-window { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); aspect-ratio: 1 / 1; border: 2px solid rgba(255,255,255,0.85); box-shadow: 0 0 0 2000px rgba(0,0,0,0.5); pointer-events: none; z-index: 2; box-sizing: border-box; }
 
         .form-input {
           width: 100%; padding: 8px 12px; border-radius: 0;
@@ -3392,38 +3394,53 @@
 }
 
 /* ── Banner editor in EditProfile ── */
-.banner-edit-container {
+/* Full source image is shown; a fixed 3:1 window (white border + dark surround)
+   shows exactly what gets cropped and uploaded for desktop. Users drag the image
+   freely; the window stays centred. Stored image: 1920×1080; desktop shows 3:1. */
+.banner-edit-outer {
   position: relative;
   width: 100%; max-width: 640px;
-  aspect-ratio: 16 / 9;
   overflow: hidden;
   border: 1px solid var(--body-card-border);
   margin-top: 8px;
   cursor: grab;
   user-select: none;
   touch-action: none;
-  display: block;
 }
-.banner-edit-container:active { cursor: grabbing; }
+.banner-edit-outer:active { cursor: grabbing; }
 .banner-edit-img {
-  position: absolute; top: 0; left: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
   display: block;
+  width: 100%;
+  height: auto;
   pointer-events: none;
-  transform-origin: center;
+  user-select: none;
+  transform-origin: center center;
 }
-/* ── Crop guide overlays ── */
-/* Desktop 3:1 display vs 1.78:1 stored image: bg-cover scales to fill width,
-   clips exactly (1/1.78 - 1/3) / (1/1.78) / 2 = 20.4% top and bottom.
-   Mobile 3:2 display vs 1.78:1 stored image: bg-cover scales to fill height,
-   clips exactly (1.78 - 1.5) / 1.78 / 2 = 7.9% from each side.
-   Both percentages are constant at any viewport width. */
+/* 3:1 crop window: full width, centred vertically, dims area outside the crop */
+.banner-crop-window {
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  aspect-ratio: 3 / 1;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 2;
+  box-sizing: border-box;
+}
+/* ── Desktop label + mobile guide (inside crop window) ── */
+.banner-desktop-label {
+  position: absolute; bottom: 6px; left: 6px;
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(59, 130, 246, 0.85);
+  color: #fff;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 3px 7px;
+  pointer-events: none;
+}
 .banner-guide { position: absolute; pointer-events: none; box-sizing: border-box; }
-.banner-guide-desktop {
-  top: 20%; bottom: 20%; left: 0; right: 0;
-  border: 1px dashed rgba(255, 255, 255, 0.7);
-}
 .banner-guide-mobile {
   top: 0; bottom: 0; left: 8%; right: 8%;
   border: 1px dashed rgba(255, 200, 60, 0.75);
