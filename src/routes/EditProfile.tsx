@@ -480,11 +480,7 @@ export default function EditProfile() {
                     transformOrigin: 'center',
                   }}
                 />
-                <div className="banner-guide banner-guide-desktop">
-                  <span className="banner-guide-label">Desktop safe zone</span>
-                </div>
               </div>
-              <p className="form-hint">Keep important content inside the guide. Wide desktop screens crop ~20% from top and bottom.</p>
               <div className="banner-zoom-row">
                 <label className="form-hint">Zoom</label>
                 <input type="range" min="1" max="3" step="0.05" value={bannerZoom} onChange={(e) => setBannerZoom(parseFloat(e.target.value))} />

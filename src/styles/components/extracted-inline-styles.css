@@ -3278,12 +3278,11 @@
 .artist-detail-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 
 /* ── Banner strip — avatar anchored to bottom-left ── */
-/* 16:9 aspect ratio scales naturally with content width; max-height caps it on
-   very wide desktops so the banner doesn't overwhelm the page. */
+/* Exactly 16:9, matching the stored 1920×1080 image and the editor preview.
+   No secondary crop, no re-centering — what the user set is what is shown. */
 .artist-profile-banner {
   width: 100%;
   aspect-ratio: 16 / 9;
-  max-height: 320px;
   background-size: cover; background-position: center;
   flex-shrink: 0; position: relative;
 }
@@ -3411,21 +3410,6 @@
   transform-origin: center;
 }
 
-/* ── Desktop safe-zone guide ── */
-/* Wide desktop screens cap the banner height at 320px, which crops ~20%
-   from the top and bottom of a 16:9 image at typical desktop widths. */
-.banner-guide { position: absolute; pointer-events: none; box-sizing: border-box; }
-.banner-guide-desktop {
-  top: 20%; bottom: 20%; left: 0; right: 0;
-  border: 1px dashed rgba(255, 255, 255, 0.7);
-}
-.banner-guide-label {
-  position: absolute; top: 3px; left: 4px;
-  font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
-  text-transform: uppercase; white-space: nowrap;
-  color: #fff; background: rgba(0, 0, 0, 0.5);
-  padding: 1px 5px; pointer-events: none;
-}
 
 .banner-zoom-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
 .banner-zoom-row input[type="range"] { flex: 1; }
