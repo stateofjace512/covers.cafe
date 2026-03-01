@@ -3392,35 +3392,42 @@
 }
 
 /* ── Banner editor in EditProfile ── */
-/* Editor uses 3:1 to match the desktop profile banner exactly.
-   Stored image is 1920×1080 (16:9); desktop bg-cover clips 20.4% top/bottom
-   leaving a 1920×640 center band — which is 3:1. The editor now shows that
-   center band directly so the selected scale matches what appears on desktop.
-   Mobile (3:2 display) bg-cover fills height and clips ~8% from each side. */
-.banner-edit-container {
+/* Full source image is shown; a fixed 3:1 window (white border + dark surround)
+   shows exactly what gets cropped and uploaded for desktop. Users drag the image
+   freely; the window stays centred. Stored image: 1920×1080; desktop shows 3:1. */
+.banner-edit-outer {
   position: relative;
   width: 100%; max-width: 640px;
-  aspect-ratio: 3 / 1;
   overflow: hidden;
   border: 1px solid var(--body-card-border);
   margin-top: 8px;
   cursor: grab;
   user-select: none;
   touch-action: none;
-  display: block;
 }
-.banner-edit-container:active { cursor: grabbing; }
+.banner-edit-outer:active { cursor: grabbing; }
 .banner-edit-img {
-  position: absolute; top: 0; left: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
   display: block;
+  width: 100%;
+  height: auto;
   pointer-events: none;
-  transform-origin: center;
+  user-select: none;
+  transform-origin: center center;
 }
-/* ── Desktop label + crop guide overlays ── */
-/* The editor IS the desktop view (3:1). Mobile (3:2 stored 16:9) bg-cover
-   fills height and clips (1.78 - 1.5) / 1.78 / 2 ≈ 7.9% from each side. */
+/* 3:1 crop window: full width, centred vertically, dims area outside the crop */
+.banner-crop-window {
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  aspect-ratio: 3 / 1;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 2;
+  box-sizing: border-box;
+}
+/* ── Desktop label + mobile guide (inside crop window) ── */
 .banner-desktop-label {
   position: absolute; bottom: 6px; left: 6px;
   display: flex; align-items: center; gap: 4px;

@@ -75,12 +75,13 @@ export default function EditProfile() {
   // Banner
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [bannerZoom, setBannerZoom] = useState(1);
-  const [bannerOffsetX, setBannerOffsetX] = useState(0);
-  const [bannerOffsetY, setBannerOffsetY] = useState(0);
+  // Pixel translation of the image within the editor (centre-anchored, in container px).
+  const [bannerTranslateX, setBannerTranslateX] = useState(0);
+  const [bannerTranslateY, setBannerTranslateY] = useState(0);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const bannerContainerRef = useRef<HTMLDivElement>(null);
   const isDraggingBanner = useRef(false);
-  const bannerDragStart = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0, zoom: 1 });
+  const bannerDragStart = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
 
   // Profile theme
   const [profileTheme, setProfileTheme] = useState<string | null>(null);
@@ -151,53 +152,50 @@ export default function EditProfile() {
     img.src = bannerPreview;
     await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
     const TARGET_W = 1920, TARGET_H = 1080;
-    // The desktop profile banner is 3:1. The stored 1920×1080 image is displayed
-    // with background-size:cover in a 3:1 container, which clips exactly 220px from
-    // top and bottom (20.4%), leaving a 1920×640 center band visible on desktop.
-    // We crop a 3:1 region (matching the editor preview) and embed it in that center
-    // band. Top/bottom bands are filled with adjacent source pixels for mobile users
-    // (mobile shows the full stored height with sides clipped).
-    const DISPLAY_ASPECT = 3.0; // 3:1, matches desktop banner container
+    // Desktop displays a 3:1 center band of the stored 1920×1080 image (clips 220px
+    // top+bottom with background-size:cover). We capture the 3:1 region the user
+    // positioned using bannerTranslateX/Y + bannerZoom, then embed it in that center
+    // band. Top/bottom bands are filled with adjacent source content for mobile.
+    const DISPLAY_ASPECT = 3.0;
     const CENTER_H = Math.round(TARGET_W / DISPLAY_ASPECT); // 640px
     const CENTER_Y = Math.round((TARGET_H - CENTER_H) / 2); // 220px
-    // Crop a 3:1 region from the source using zoom and offset
-    const srcAspect = img.width / img.height;
-    let cropW: number, cropH: number;
-    if (srcAspect > DISPLAY_ASPECT) {
-      cropH = img.height / bannerZoom;
-      cropW = cropH * DISPLAY_ASPECT;
-    } else {
-      cropW = img.width / bannerZoom;
-      cropH = cropW / DISPLAY_ASPECT;
-    }
-    const maxOffsetX = (img.width - cropW) / 2;
-    const maxOffsetY = (img.height - cropH) / 2;
-    const sx = maxOffsetX + bannerOffsetX * maxOffsetX;
-    const sy = maxOffsetY + bannerOffsetY * maxOffsetY;
+    // Source crop size: zoom=1 → full-width 3:1 crop; zoom>1 → zoomed in.
+    const srcCropW = img.width / bannerZoom;
+    const srcCropH = srcCropW / DISPLAY_ASPECT;
+    // Container dimensions (image is display:block width:100% height:auto so
+    // container height = containerW * imgH / imgW — same pixel aspect as the source).
+    const containerW = bannerContainerRef.current?.offsetWidth ?? 640;
+    // Pixel scale factor: one container pixel = this many source pixels.
+    const pxScale = img.width / (containerW * bannerZoom);
+    // Center of the crop in source coordinates (derived from CSS scale+translate).
+    const sx_center = img.width  / 2 - bannerTranslateX * pxScale;
+    const sy_center = img.height / 2 - bannerTranslateY * pxScale;
+    const sx = Math.max(0, Math.min(img.width  - srcCropW, sx_center - srcCropW / 2));
+    const sy = Math.max(0, Math.min(img.height - srcCropH, sy_center - srcCropH / 2));
     const canvas = document.createElement('canvas');
     canvas.width = TARGET_W;
     canvas.height = TARGET_H;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas unavailable');
     // Draw the 3:1 crop into the center band (what desktop shows)
-    ctx.drawImage(img, sx, sy, cropW, cropH, 0, CENTER_Y, TARGET_W, CENTER_H);
+    ctx.drawImage(img, sx, sy, srcCropW, srcCropH, 0, CENTER_Y, TARGET_W, CENTER_H);
     // Fill top band with source content above the 3:1 crop (extra context for mobile)
-    const extraSrcH = cropH * CENTER_Y / CENTER_H; // source pixels for each extra band
+    const extraSrcH = srcCropH * CENTER_Y / CENTER_H;
     const topSrcY = sy - extraSrcH;
     if (topSrcY >= 0) {
-      ctx.drawImage(img, sx, topSrcY, cropW, extraSrcH, 0, 0, TARGET_W, CENTER_Y);
+      ctx.drawImage(img, sx, topSrcY, srcCropW, extraSrcH, 0, 0, TARGET_W, CENTER_Y);
     } else if (sy > 0) {
       const availCanvasH = Math.round(sy * CENTER_Y / extraSrcH);
-      ctx.drawImage(img, sx, 0, cropW, sy, 0, CENTER_Y - availCanvasH, TARGET_W, availCanvasH);
+      ctx.drawImage(img, sx, 0, srcCropW, sy, 0, CENTER_Y - availCanvasH, TARGET_W, availCanvasH);
     }
     // Fill bottom band with source content below the 3:1 crop (extra context for mobile)
-    const botSrcY = sy + cropH;
+    const botSrcY = sy + srcCropH;
     const botAvail = img.height - botSrcY;
     if (botAvail >= extraSrcH) {
-      ctx.drawImage(img, sx, botSrcY, cropW, extraSrcH, 0, CENTER_Y + CENTER_H, TARGET_W, CENTER_Y);
+      ctx.drawImage(img, sx, botSrcY, srcCropW, extraSrcH, 0, CENTER_Y + CENTER_H, TARGET_W, CENTER_Y);
     } else if (botAvail > 0) {
       const availCanvasH = Math.round(botAvail * CENTER_Y / extraSrcH);
-      ctx.drawImage(img, sx, botSrcY, cropW, botAvail, 0, CENTER_Y + CENTER_H, TARGET_W, availCanvasH);
+      ctx.drawImage(img, sx, botSrcY, srcCropW, botAvail, 0, CENTER_Y + CENTER_H, TARGET_W, availCanvasH);
     }
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.88));
     if (!blob) throw new Error('Could not encode image');
@@ -220,62 +218,64 @@ export default function EditProfile() {
   };
 
   // ── Banner drag-to-reposition ────────────────────────────────────────────────
-  // Offsets are always in [-1, 1]; the canvas formula maps them to actual pixel
-  // bounds so there is no risk of reading outside the source image.
+  // Translations are in container pixels (centre-anchored). The crop window is
+  // always 3:1 full-width at the vertical centre; clamping keeps it inside the image.
+  function clampBannerTranslate(tx: number, ty: number, zoom: number): { tx: number; ty: number } {
+    if (!bannerContainerRef.current) return { tx, ty };
+    const cW = bannerContainerRef.current.offsetWidth;
+    const cH = bannerContainerRef.current.offsetHeight;
+    const maxTx = Math.max(0, cW  * (zoom - 1) / 2);
+    const maxTy = Math.max(0, (cH * zoom - cW / 3) / 2);
+    return { tx: Math.max(-maxTx, Math.min(maxTx, tx)), ty: Math.max(-maxTy, Math.min(maxTy, ty)) };
+  }
+
   useEffect(() => {
-    setBannerOffsetX(x => Math.max(-1, Math.min(1, x)));
-    setBannerOffsetY(y => Math.max(-1, Math.min(1, y)));
+    const { tx, ty } = clampBannerTranslate(bannerTranslateX, bannerTranslateY, bannerZoom);
+    setBannerTranslateX(tx);
+    setBannerTranslateY(ty);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bannerZoom]);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
-      if (!isDraggingBanner.current || !bannerContainerRef.current) return;
-      const containerW = bannerContainerRef.current.offsetWidth;
-      const containerH = bannerContainerRef.current.offsetHeight;
+      if (!isDraggingBanner.current) return;
       const dx = e.clientX - bannerDragStart.current.x;
       const dy = e.clientY - bannerDragStart.current.y;
-      setBannerOffsetX(Math.max(-1, Math.min(1, bannerDragStart.current.offsetX + (2 * dx) / containerW)));
-      setBannerOffsetY(Math.max(-1, Math.min(1, bannerDragStart.current.offsetY + (2 * dy) / containerH)));
+      const rawTx = bannerDragStart.current.offsetX + dx;
+      const rawTy = bannerDragStart.current.offsetY + dy;
+      const { tx, ty } = clampBannerTranslate(rawTx, rawTy, bannerZoom);
+      setBannerTranslateX(tx);
+      setBannerTranslateY(ty);
     };
     const onUp = () => { isDraggingBanner.current = false; };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bannerZoom]);
 
   const handleBannerMouseDown = (e: React.MouseEvent) => {
     isDraggingBanner.current = true;
-    bannerDragStart.current = { x: e.clientX, y: e.clientY, offsetX: bannerOffsetX, offsetY: bannerOffsetY, zoom: bannerZoom };
+    bannerDragStart.current = { x: e.clientX, y: e.clientY, offsetX: bannerTranslateX, offsetY: bannerTranslateY };
     e.preventDefault();
-  };
-
-  const handleBannerWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    if (!bannerContainerRef.current) return;
-    const containerH = bannerContainerRef.current.offsetHeight;
-    // Scroll pans vertically through the image; use Ctrl/Cmd to zoom
-    if (e.ctrlKey || e.metaKey) {
-      setBannerZoom(z => Math.max(1, Math.min(3, z + (e.deltaY > 0 ? -0.1 : 0.1))));
-    } else {
-      setBannerOffsetY(y => Math.max(-1, Math.min(1, y + e.deltaY / containerH)));
-    }
   };
 
   const handleBannerTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length !== 1) return;
     isDraggingBanner.current = true;
-    bannerDragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, offsetX: bannerOffsetX, offsetY: bannerOffsetY, zoom: bannerZoom };
+    bannerDragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, offsetX: bannerTranslateX, offsetY: bannerTranslateY };
   };
 
   const handleBannerTouchMove = (e: React.TouchEvent) => {
-    if (!isDraggingBanner.current || !bannerContainerRef.current || e.touches.length !== 1) return;
+    if (!isDraggingBanner.current || e.touches.length !== 1) return;
     e.preventDefault();
-    const containerW = bannerContainerRef.current.offsetWidth;
-    const containerH = bannerContainerRef.current.offsetHeight;
     const dx = e.touches[0].clientX - bannerDragStart.current.x;
     const dy = e.touches[0].clientY - bannerDragStart.current.y;
-    setBannerOffsetX(Math.max(-1, Math.min(1, bannerDragStart.current.offsetX + (2 * dx) / containerW)));
-    setBannerOffsetY(Math.max(-1, Math.min(1, bannerDragStart.current.offsetY + (2 * dy) / containerH)));
+    const rawTx = bannerDragStart.current.offsetX + dx;
+    const rawTy = bannerDragStart.current.offsetY + dy;
+    const { tx, ty } = clampBannerTranslate(rawTx, rawTy, bannerZoom);
+    setBannerTranslateX(tx);
+    setBannerTranslateY(ty);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -487,17 +487,18 @@ export default function EditProfile() {
             if (!picked) return;
             setBannerPreview(URL.createObjectURL(picked));
             setBannerZoom(1);
-            setBannerOffsetX(0);
-            setBannerOffsetY(0);
+            setBannerTranslateX(0);
+            setBannerTranslateY(0);
           }} />
           <button type="button" className="btn btn-secondary" onClick={() => bannerInputRef.current?.click()}><UploadDownloadIcon size={14} /> Upload banner</button>
           {bannerPreview && (
             <>
+              {/* Full-image editor: the white-bordered 3:1 window shows exactly what
+                  gets cropped and uploaded for desktop. Drag the image to reposition. */}
               <div
                 ref={bannerContainerRef}
-                className="banner-edit-container"
+                className="banner-edit-outer"
                 onMouseDown={handleBannerMouseDown}
-                onWheel={handleBannerWheel}
                 onTouchStart={handleBannerTouchStart}
                 onTouchMove={handleBannerTouchMove}
                 onTouchEnd={() => { isDraggingBanner.current = false; }}
@@ -507,32 +508,33 @@ export default function EditProfile() {
                   alt="Banner preview"
                   className="banner-edit-img"
                   style={{
-                    transform: `scale(${bannerZoom}) translate(${bannerOffsetX * 50 / bannerZoom}%, ${bannerOffsetY * 50 / bannerZoom}%)`,
-                    transformOrigin: 'center',
+                    transform: `translateX(${bannerTranslateX}px) translateY(${bannerTranslateY}px) scale(${bannerZoom})`,
+                    transformOrigin: 'center center',
                   }}
                 />
-                <div className="banner-desktop-label">
-                  <MonitorIcon size={10} />
-                  <span>Desktop view</span>
-                </div>
-                <div className="banner-guide banner-guide-mobile">
-                  <span className="banner-guide-label">Mobile</span>
+                <div className="banner-crop-window">
+                  <div className="banner-desktop-label">
+                    <MonitorIcon size={10} />
+                    <span>Desktop crop</span>
+                  </div>
+                  <div className="banner-guide banner-guide-mobile">
+                    <span className="banner-guide-label">Mobile</span>
+                  </div>
                 </div>
               </div>
-              <p className="form-hint">Preview matches desktop · Scroll to pan · Mobile crops sides (keep important content inside the guide)</p>
               <div className="banner-zoom-row">
                 <label className="form-hint">Zoom</label>
                 <input type="range" min="1" max="3" step="0.05" value={bannerZoom} onChange={(e) => setBannerZoom(parseFloat(e.target.value))} />
               </div>
-              <p className="form-hint">Drag or scroll to reposition · Ctrl+scroll to zoom</p>
+              <p className="form-hint">Drag to reposition · White border = desktop crop · Zoom for detail</p>
             </>
           )}
           {!bannerPreview && profile?.banner_url && (
-            <div className="banner-edit-container" style={{ pointerEvents: 'none', cursor: 'default' }}>
+            <div className="banner-edit-outer" style={{ pointerEvents: 'none', cursor: 'default' }}>
               <img src={profile.banner_url} alt="Current banner" className="banner-edit-img" style={{ objectFit: 'cover' }} />
             </div>
           )}
-          <span className="form-hint">Displayed at the top of your profile. Preview matches desktop. Saved as 1920×1080 with extra context for mobile.</span>
+          <span className="form-hint">Displayed at the top of your profile. Saved as 1920×1080 with extra context for mobile.</span>
         </div>
 
         {/* Profile Theme */}
