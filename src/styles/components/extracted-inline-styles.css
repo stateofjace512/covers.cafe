@@ -3278,17 +3278,17 @@
 .artist-detail-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 
 /* ── Banner strip — avatar anchored to bottom-left ── */
-/* Fixed height so the banner doesn't take over the page. The stored 1920×1080
-   image is wider than these display containers, so background-size: cover
-   always clips something — that's what the editor guide overlays show. */
+/* Fixed aspect ratios keep clip percentages mathematically constant at any
+   viewport width, so the editor guide overlays are always accurate:
+   Desktop 3:1 display + 1.78:1 stored image → bg-cover clips exactly 20% top/bottom.
+   Mobile 3:2 display + 1.78:1 stored image → bg-cover clips exactly 8% from each side. */
 .artist-profile-banner {
-  width: 100%; height: 280px;
+  width: 100%; aspect-ratio: 3 / 1;
   background-size: cover; background-position: center;
   flex-shrink: 0; position: relative;
 }
 @media (max-width: 640px) {
-  /* Narrower viewport: 1.5:1 display AR vs 1.78:1 image → clips sides instead */
-  .artist-profile-banner { height: 250px; }
+  .artist-profile-banner { aspect-ratio: 3 / 2; }
 }
 /* Avatar sits at the bottom-left of the banner, half overlapping into the content section */
 .artist-profile-banner .artist-detail-avatar {
@@ -3414,14 +3414,14 @@
   transform-origin: center;
 }
 /* ── Crop guide overlays ── */
-/* Desktop (>640px): banner is 280px tall. At ~900px wide, display AR ≈ 3.2:1 vs
-   the stored 1.78:1 → background-size:cover clips ~22% from top and bottom.
-   Mobile (≤640px): banner is 250px tall. At ~375px wide, display AR ≈ 1.5:1 vs
-   1.78:1 → background-size:cover clips ~8% from each side.
-   Users should keep important content inside BOTH guide boxes. */
+/* Desktop 3:1 display vs 1.78:1 stored image: bg-cover scales to fill width,
+   clips exactly (1/1.78 - 1/3) / (1/1.78) / 2 = 20.4% top and bottom.
+   Mobile 3:2 display vs 1.78:1 stored image: bg-cover scales to fill height,
+   clips exactly (1.78 - 1.5) / 1.78 / 2 = 7.9% from each side.
+   Both percentages are constant at any viewport width. */
 .banner-guide { position: absolute; pointer-events: none; box-sizing: border-box; }
 .banner-guide-desktop {
-  top: 22%; bottom: 22%; left: 0; right: 0;
+  top: 20%; bottom: 20%; left: 0; right: 0;
   border: 1px dashed rgba(255, 255, 255, 0.7);
 }
 .banner-guide-mobile {
