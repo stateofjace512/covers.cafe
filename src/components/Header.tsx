@@ -119,7 +119,7 @@ export default function Header({ isMobileNavOpen, onToggleMobileNav }: HeaderPro
           {isMobileNavOpen ? <XIcon size={16} /> : <MenuIcon size={16} />}
         </button>
 
-        <span className="header-logo-text">covers<span className="header-logo-dot">.</span>cafe</span>
+        <img src="/site_logo_and_favicon_transp.png" alt="covers.cafe" className="header-logo-text" style={{ height: '22px', width: 'auto' }} />
 
         <form className="header-search-wrap" onSubmit={handleSearch}>
           <SearchIcon size={14} className="header-search-icon" />
