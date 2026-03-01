@@ -9,6 +9,7 @@ import TeaIcon from '../components/TeaIcon';
 import MoonIcon from '../components/MoonIcon';
 import SunIcon from '../components/SunIcon';
 import SettingSlideIcon from '../components/SettingSlideIcon';
+import MonitorIcon from '../components/MonitorIcon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -219,12 +220,11 @@ export default function EditProfile() {
   };
 
   // ── Banner drag-to-reposition ────────────────────────────────────────────────
-  // When zoom decreases, re-clamp offsets so the image never shows empty space.
-  // At zoom z, the max safe offset is (z - 1) in each axis.
+  // Offsets are always in [-1, 1]; the canvas formula maps them to actual pixel
+  // bounds so there is no risk of reading outside the source image.
   useEffect(() => {
-    const max = Math.max(0, bannerZoom - 1);
-    setBannerOffsetX(x => Math.max(-max, Math.min(max, x)));
-    setBannerOffsetY(y => Math.max(-max, Math.min(max, y)));
+    setBannerOffsetX(x => Math.max(-1, Math.min(1, x)));
+    setBannerOffsetY(y => Math.max(-1, Math.min(1, y)));
   }, [bannerZoom]);
 
   useEffect(() => {
@@ -234,9 +234,8 @@ export default function EditProfile() {
       const containerH = bannerContainerRef.current.offsetHeight;
       const dx = e.clientX - bannerDragStart.current.x;
       const dy = e.clientY - bannerDragStart.current.y;
-      const max = Math.max(0, bannerDragStart.current.zoom - 1);
-      setBannerOffsetX(Math.max(-max, Math.min(max, bannerDragStart.current.offsetX + (2 * dx) / containerW)));
-      setBannerOffsetY(Math.max(-max, Math.min(max, bannerDragStart.current.offsetY + (2 * dy) / containerH)));
+      setBannerOffsetX(Math.max(-1, Math.min(1, bannerDragStart.current.offsetX + (2 * dx) / containerW)));
+      setBannerOffsetY(Math.max(-1, Math.min(1, bannerDragStart.current.offsetY + (2 * dy) / containerH)));
     };
     const onUp = () => { isDraggingBanner.current = false; };
     window.addEventListener('mousemove', onMove);
@@ -252,7 +251,14 @@ export default function EditProfile() {
 
   const handleBannerWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    setBannerZoom(z => Math.max(1, Math.min(3, z + (e.deltaY > 0 ? -0.1 : 0.1))));
+    if (!bannerContainerRef.current) return;
+    const containerH = bannerContainerRef.current.offsetHeight;
+    // Scroll pans vertically through the image; use Ctrl/Cmd to zoom
+    if (e.ctrlKey || e.metaKey) {
+      setBannerZoom(z => Math.max(1, Math.min(3, z + (e.deltaY > 0 ? -0.1 : 0.1))));
+    } else {
+      setBannerOffsetY(y => Math.max(-1, Math.min(1, y + e.deltaY / containerH)));
+    }
   };
 
   const handleBannerTouchStart = (e: React.TouchEvent) => {
@@ -268,9 +274,8 @@ export default function EditProfile() {
     const containerH = bannerContainerRef.current.offsetHeight;
     const dx = e.touches[0].clientX - bannerDragStart.current.x;
     const dy = e.touches[0].clientY - bannerDragStart.current.y;
-    const max = Math.max(0, bannerDragStart.current.zoom - 1);
-    setBannerOffsetX(Math.max(-max, Math.min(max, bannerDragStart.current.offsetX + (2 * dx) / containerW)));
-    setBannerOffsetY(Math.max(-max, Math.min(max, bannerDragStart.current.offsetY + (2 * dy) / containerH)));
+    setBannerOffsetX(Math.max(-1, Math.min(1, bannerDragStart.current.offsetX + (2 * dx) / containerW)));
+    setBannerOffsetY(Math.max(-1, Math.min(1, bannerDragStart.current.offsetY + (2 * dy) / containerH)));
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -506,16 +511,20 @@ export default function EditProfile() {
                     transformOrigin: 'center',
                   }}
                 />
+                <div className="banner-desktop-label">
+                  <MonitorIcon size={10} />
+                  <span>Desktop view</span>
+                </div>
                 <div className="banner-guide banner-guide-mobile">
                   <span className="banner-guide-label">Mobile</span>
                 </div>
               </div>
-              <p className="form-hint">Preview matches desktop · Mobile crops sides (keep important content inside the guide)</p>
+              <p className="form-hint">Preview matches desktop · Scroll to pan · Mobile crops sides (keep important content inside the guide)</p>
               <div className="banner-zoom-row">
                 <label className="form-hint">Zoom</label>
                 <input type="range" min="1" max="3" step="0.05" value={bannerZoom} onChange={(e) => setBannerZoom(parseFloat(e.target.value))} />
               </div>
-              <p className="form-hint">Drag to reposition · Scroll to zoom</p>
+              <p className="form-hint">Drag or scroll to reposition · Ctrl+scroll to zoom</p>
             </>
           )}
           {!bannerPreview && profile?.banner_url && (
